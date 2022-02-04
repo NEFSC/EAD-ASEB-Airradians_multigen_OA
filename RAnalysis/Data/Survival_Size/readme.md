@@ -1,10 +1,10 @@
 ### About files in folder 'Survival_Size'
 
-**Juvenile_lengths_maste.csv (and excel worksheet)**
+**Juvenile_lengths_master.csv (and excel worksheet)**
 
 - contains all measurements of size throughout the experiment 
 		
-- note: these data are from complete sets or a randomly chosen subsets measured *non-destructively* for lengths amoung OA treatment and replicate tank;
+- note: these data are from complete sets or randomly chosen subsets measured *non-destructively* for lengths amoung OA treatment and replicate tank;
 		these are not to be confused with the scallops destructively sampled for our suite of physiological measurements (respiration, clearance,ammonia excretion, etc.), as these were chosen based on mean size / size class
 		
 		
