@@ -34,14 +34,8 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
-<<<<<<< HEAD
-# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis") # personal computer
-  setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
-=======
- setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+ setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 # setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis") # Work computer
->>>>>>> 1b36ecc6b29285487d64daeef0b403fd5f2a1a32
-# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -54,245 +48,6 @@ Dry_weights     <- read.csv(file="Data/Respiration/Lengths_Condition_resp_cleara
 
 
 ```
-
-
-```{r dry weight and length data, include=FALSE}
-
-
-# 20210914 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Tissue Dry Weight (DW) vs Shell length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-Length_914           <- lengths         %>% 
-  dplyr::filter(Date %in% '9/14/2021')  %>% 
-  dplyr::select(c("Replicate","pH","Number","Food", "Run", "Food", "Plate", "Length_um"))
-Dryweight_914        <- DWs_Len_914.930 %>% 
-  dplyr::filter(Date %in% '20210914')   %>% 
-  dplyr::filter(Purpose %in% 'resp_filtration') %>% 
-  dplyr::rename(Replicate = Rep)        %>% 
-  dplyr::rename(pH = Treatment)         %>% 
-  dplyr::rename(Number = Num)           %>% 
-  dplyr::select(c("Replicate","pH","Number", "Plate","Run","Scallop_DW_mg"))
-DW_Len_914 <- merge(Length_914, Dryweight_914)
-DW_Len_914$Date <- "9/14/2021"
-
-
-# DW_Len_914 %>% ggplot(aes(x = Length_um, y = Scallop_DW_mg)) +
-#         geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-#         theme_classic() +
-#         ylab("Whole animal dry weight (mg)") +
-#         xlab("Shell length (um)") +
-#         geom_point() + 
-#         geom_smooth(method='lm')
-
-Tissue_DW_1026_subset <- lengths %>%  dplyr::filter(Date == '10/26/2021') #%>% dplyr::filter(Length_um > 10000)  # animals < 10 um shelllength
-fit                   <- lm(Dry_Tissue_weight ~ (Length_um)^2, data = Tissue_DW_1026_subset)
-
-P_DW_v_ShellLen      <- ggplot(data = Tissue_DW_1026_subset, aes(x = (Length_um), y = Dry_Tissue_weight)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = weight ~ Shell.Length) +
-                                theme_classic() +
-                                ylab("Tissue dry weight (mg)") +
-                                xlab("Shell length (um)") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                geom_point() + 
-                                # xlim(0,15) +
-                                geom_smooth(method='lm') # y~0+x if you want it through the origin (0,0)
-                           
-P_DW_v_ShellLen    
-
-
-P_DW_v_ShellLen2      <- ggplot(data = Tissue_DW_1026_subset, aes(x = (Shell.Length)^2, y = weight)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = weight ~ Shell.Length) +
-                                theme_classic() +
-                                ylab("Tissue dry weight (mg)") +
-                                xlab("[ Shell length (um) ]^2") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                geom_point() + 
-                                xlim(0,100) +
-                                annotate(label = sprintf("y = %.3f x\nR² = %.2f", coef(fit), summary(fit)$r.squared),
-                                         geom = "text", x = 80, y = 0.0010, size = 5) +
-                                geom_smooth(method='lm') # y~0+x if you want it through the origin (0,0)
-                           
-P_DW_v_ShellLen2     
-
-
-DW
-
-# 20210914 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-WholeScal_DW_914     <- lengths %>% dplyr::filter(Date %in% '9/14/2021')
-DWs_Len_914          <- DWs_Len_914.930 %>% dplyr::filter(Date %in% '20210914') %>% dplyr::filter(Purpose %in% 'resp_filtration')
-
-
-
-
-# 20210930 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-WholeScal_DW_930     <- lengths %>% dplyr::filter(Date %in% '9/30/2021') %>% dplyr::rename(Rep = Replicate) %>% dplyr::rename(Fed_unfed = Food) %>% dplyr::rename(Treatment = pH)  %>% dplyr::rename(Num = Number)
-DWs_Len_930          <- DWs_Len_914.930 %>% dplyr::filter(Date %in% '20210930') %>% dplyr::filter(Purpose %in% 'resp_filtration') 
-
-MasterDWLength_930 <- merge(WholeScal_DW_930, DWs_Len_930, by = c('Treatment','Num','Rep','Plate','Run', 'Fed_unfed'))
-
-ggplot(data = MasterDWLength_930, aes(x = (Length_um)/1000, y = Scallop_DW_mg)) +
-                                geom_smooth(method = "loess", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-                                geom_point() + 
-                                theme_classic() +
-                                ylab("Whole animal dry weight (mg)") +
-                                xlab("Shell length (mm)") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                xlim(0,6) +
-                                geom_smooth(method='loess') # y~0+x if you want it through the origin (0,0)
-
-ggplot(data = MasterDWLength_930, aes(x = ((Length_um)/1000)^2, y = Scallop_DW_mg)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-                                geom_point() + 
-                                theme_classic() +
-                                ylab("Whole animal dry weight (mg)") +
-                                xlab("[Shell length (mm)]^2") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                xlim(0,35) +
-                                geom_smooth(method='lm') # y~0+x if you want it through the origin (0,0)
-
-
-
-# 20210930 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-
-Length_930           <- lengths         %>% 
-  dplyr::filter(Date %in% '9/30/2021')  %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Length_um"))
-Dryweight_930        <- DWs_Len_914.930 %>% 
-  dplyr::filter(Date %in% '20210930')   %>% 
-  dplyr::filter(Purpose %in% 'resp_filtration') %>% 
-  dplyr::rename(Number = Num)           %>% 
-  dplyr::rename(Replicate = Rep)        %>% 
-  dplyr::rename(pH = Treatment)         %>% 
-  dplyr::rename(Food = Fed_unfed)       %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Scallop_DW_mg"))
-DW_Len_930 <- merge(Length_930, Dryweight_930)
-DW_Len_930$Date <- "9/30/2021"
-
-DW_Len_930 %>% ggplot(aes(x = Length_um, y = Scallop_DW_mg)) +
-        geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-        theme_classic() +
-        ylab("Whole animal dry weight (mg)") +
-        xlab("Shell length (um)") +
-        geom_point() + 
-        geom_smooth(method='lm') + # y~0+x if you want it through the origin (0,0)
-        facet_wrap(~Food)
-
-# 20211026 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Length_1026_Unfed    <- lengths         %>% 
-  dplyr::filter(Date %in% '10/26/2021') %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Length_um"))
-Dryweight_1026_Unfed <- DWs_Len_914.930 %>% 
-  dplyr::filter(Date %in% '20211026')   %>% 
-  dplyr::filter(Purpose %in% 'resp_filtration') %>% 
-  dplyr::rename(Food = Fed_unfed)       %>% 
-  dplyr::rename(Replicate = Rep)        %>% 
-  dplyr::rename(pH = Treatment)         %>% 
-  dplyr::rename(Number = Num)           %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food","Run", "Plate",  "Scallop_DW_mg"))
-DW_Len_1026_unfed <- merge(Length_1026_Unfed, Dryweight_1026_Unfed)
-DW_Len_1026_unfed$Date <- "10/26/2021"
-
-# fed data - 'lengths' has the dry weight for shell and tissue in the 'fed' animals o 10/26/2021
-
-DW_Len_1026_Fed    <- lengths           %>% 
-  dplyr::filter(Date %in% '10/26/2021' & Food %in% 'fed') %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Length_um", 'Dry_Shell_weight', 'Dry_Tissue_weight')) %>% # call the dry weights that were complete separately 
-  dplyr::mutate(Scallop_DW_mg = (Dry_Shell_weight + Dry_Tissue_weight)*1000) %>% # calculate the total animal dry weight and covert to mg ( *1000)- this corresponds with the data we have for smaller animals on previous dates
-  dplyr::select(!c('Dry_Tissue_weight','Dry_Shell_weight')) # omit these to merge to the master file ""
-DW_Len_1026_Fed$Date <- "10/26/2021"
-
-
-# Dry weights for the shell and tissue separately - note ONLY animals from 10/26 had their shell and tissue removed for separate dry weights
-# Shell dry weight
- lengths           %>% 
-  dplyr::filter(Date %in% '10/26/2021' & Food %in% 'fed') %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Length_um", 'Dry_Shell_weight', 'Dry_Tissue_weight')) %>% 
-  ggplot(aes(x = Length_um, y = Dry_Shell_weight)) +
-        geom_smooth(method = "lm", se=FALSE, color="black", formula = Dry_Shell_weight ~ Length_um) +
-        theme_classic() +
-        ylab("Shell dry weight (mg)") +
-        xlab("Shell length (um)") +
-        geom_point() + 
-        geom_smooth(method='lm') # y~0+x if you want it through the origin (0,0)# 
-# Tissue dry weight
-  lengths           %>% 
-  dplyr::filter(Date %in% '10/26/2021' & Food %in% 'fed') %>% 
-  dplyr::select(c("Replicate","pH","Number", "Food", "Run", "Plate","Length_um", 'Dry_Shell_weight', 'Dry_Tissue_weight')) %>% 
-  ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
-        geom_smooth(method = "lm", se=FALSE, color="black", formula = Dry_Tissue_weight ~ Length_um) +
-        theme_classic() +
-        ylab("Tissue dry weight (mg)") +
-        xlab("Shell length (um)") +
-        geom_point() + 
-        geom_smooth(method='lm') # y~0+x if you want it through the origin (0,0)
-  
-#Whole animal dry weight by shell size (10/26 only!) 
-rbind(DW_Len_1026_Fed, DW_Len_1026_unfed) %>% 
-ggplot(aes(x = Length_um, y = Scallop_DW_mg)) +
-        geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-        theme_classic() +
-        ylab("Whole animal dry weight (mg)") +
-        xlab("Shell length (um)") +
-        geom_point() + 
-        geom_smooth(method='lm') + # y~0+x if you want it through the origin (0,0)
-        facet_wrap(~Food)
-
-
-
-
-
-# Explore the DW and shell length relationship in our data...
-Master_SizeStand_dat      <- rbind(DW_Len_1026_unfed, DW_Len_1026_Fed, DW_Len_930, DW_Len_914)
-WholeDW_Shelllength       <- Master_SizeStand_dat[!is.na(Master_SizeStand_dat$Length_um),] %>%  
-                            ggplot(aes(x = Length_um, y = Scallop_DW_mg)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um) +
-                                theme_classic() +
-                                ylab("Whole animal dry weight (mg)") +
-                                xlab("Shell length (um)") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                geom_point() + 
-                                # xlim(0,100) +
-                                # annotate(label = sprintf("y = %.3f x\nR² = %.2f", coef(fit), summary(fit)$r.squared),
-                                #          geom = "text", x = 80, y = 0.0010, size = 5) +
-                                geom_smooth(method='loess')
-WholeDW_Shelllength %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/All_SizeRegression_WholeDW_ShellLength.pdf")
-
-WholeDR_Length_sq_0_5um       <- Master_SizeStand_dat[!is.na(Master_SizeStand_dat$Length_um),] %>%  
-                            dplyr::filter(Length_um < 5000) %>% 
-                            ggplot(aes(x = Length_um^2, y = Scallop_DW_mg)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um^2) +
-                                theme_classic() +
-                                ylab("Whole animal dry weight (mg)") +
-                                xlab("Shell length (um)") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                geom_point() + 
-                                # xlim(0,100) +
-                                # annotate(label = sprintf("y = %.3f x\nR² = %.2f", coef(fit), summary(fit)$r.squared),
-                                #          geom = "text", x = 80, y = 0.0010, size = 5) +
-                                geom_smooth(method='lm')
-WholeDR_Length_sq_0_5um
-
-WholeDR_Length_sq_5um       <- Master_SizeStand_dat[!is.na(Master_SizeStand_dat$Length_um),] %>%  
-                            dplyr::filter(Length_um > 5000) %>% 
-                            ggplot(aes(x = Length_um^2, y = Scallop_DW_mg)) +
-                                geom_smooth(method = "lm", se=FALSE, color="black", formula = Scallop_DW_mg ~ Length_um^2) +
-                                theme_classic() +
-                                ylab("Whole animal dry weight (mg)") +
-                                xlab("Shell length (um)") +
-                                # stat_function(fun=my_eq, colour="red") +
-                                geom_point() + 
-                                # xlim(0,100) +
-                                # annotate(label = sprintf("y = %.3f x\nR² = %.2f", coef(fit), summary(fit)$r.squared),
-                                #          geom = "text", x = 80, y = 0.0010, size = 5) +
-                                geom_smooth(method='lm')
-WholeDR_Length_sq_5um
-```
-
 
 
 ### Merge master resp data frame with lengths
@@ -324,17 +79,17 @@ kable(head(resp.data_merged))
 - solution = we reran this at the end of the LoLin script  for 0-20 minutes and got an Lpc  -0.0296, insert this 
 
 ```{r IMPORTANT correct poor data, echo=TRUE, message = FALSE, warning = FALSE}
-resp.data_merged[108,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lpc
-resp.data_merged[124,c(1:6)] #  C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
-resp.data_merged[109,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
+resp.data_merged[114,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
+resp.data_merged[130,c(1:6)]#  C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
+resp.data_merged[115,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
 
-resp.data_merged[108,4] <- resp.data_merged[108,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
-resp.data_merged[124,4] <- resp.data_merged[124,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
-resp.data_merged[109,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
+resp.data_merged[114,4] <- resp.data_merged[114,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
+resp.data_merged[130,4] <- resp.data_merged[130,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
+resp.data_merged[115,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
 
-resp.data_merged[108,c(1:6)] # -0.0608251
-resp.data_merged[124,c(1:6)] # -0.07603444
-resp.data_merged[109,c(1:6)] # -0.0296
+resp.data_merged[114,c(1:6)] # -0.0608251
+resp.data_merged[130,c(1:6)] # -0.07603444
+resp.data_merged[115,c(1:6)] # -0.0296
 ```
 
 #### Calculate blank rates, view means by day pH_treatment and instrument
@@ -497,16 +252,6 @@ Resp.Master_OM$resp_µmol_L_g_hr <- (Resp.Master_OM$resp_umol_L_hr /
 # TWD_s = standardized dry tissue weight (they used 1 g here)
 # TWD_obs = the observed dry tissue weight
 
-SL_s.Plot <- Resp.Master_OM %>%
-                    ggplot( aes(x=Length_um)) +
-                    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
-                    theme_classic() +
-                    geom_vline(xintercept = 3000, color = "red", linetype = "dashed") +
-                    facet_wrap(~Fed_Unfed)
-SL_s.Plot # view the density plot of shell lengths in both the high food and low food 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_standard_value.pdf"))
-print(SL_s.Plot) # print the model diagnostics 
-dev.off()
 
 
 
@@ -514,12 +259,12 @@ dev.off()
 # [ln(VO2])] = ln(a) + b*(ln(TDW))
 # Allometric coefficient for shell length and respiration rate 
 require(SciViews)
-ln_VO2 <- as.numeric(ln(Resp.Master_OM$resp_umol_L_hr)) # assign resp value
-ln_SL  <- as.numeric(ln(Resp.Master_OM$Length_um)) # assign length value 
-model  <- lm(ln_VO2~ln_SL) # run model for r quared value
+ln_VO2 <- as.numeric(ln( (Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$resp_umol_L_hr)  )) # assign resp value
+ln_TDW  <- as.numeric(ln( (Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$Dry_Tissue_weight)  )) # assign length value 
+model  <- lm(ln_VO2~ln_TDW) # run model for r quared value
 summary(model)
 pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_resp_allometric_coefficient.pdf"))
-plot(ln_SL,ln_VO2) 
+plot((Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$Dry_Tissue_weight),(Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$resp_umol_L_hr)) 
 abline(model)
 legend("topleft",legend=paste("R2 is", (format(summary(model)$r.squared,digits=3)), sep = " ")) 
 dev.off()
@@ -585,7 +330,51 @@ ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
 dev.off()
 
 ```
+####  (2) TDW vs. Raw respiration rate (umol O2 L- hr-1)...
+``` {r TDW vs. raw respiration rate, echo=TRUE, message = FALSE, warning = FALSE}
 
+# by Length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+P_TDW_resp_all <- Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                        ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr, color = as.factor(pCO2))) +
+                         scale_color_manual(values=c("forestgreen","darkorange2"))+
+                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
+                          labs(title = "Raw Resp v. Tissue dry weight (g)", y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
+                          xlab("Tissue dry weight (g)") +
+                          theme(legend.position="none") +
+                          geom_point()
+
+P_TDW_resp_facet <- Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                        ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr, color = as.factor(pCO2))) +
+                         scale_color_manual(values=c("forestgreen","darkorange2"))+
+                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
+                          theme_classic() +
+                           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+ 
+                          labs(y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
+                          xlab("Tissue dry weight (g)") +
+                          geom_point() + 
+                          facet_wrap(~Age*pH, scales = "free")
+
+P_TDW_resp_normed <- Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                    ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_g_TDW_hr , fill = pCO2)) +
+                    theme(panel.grid=element_blank()) +
+                    geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
+                    scale_fill_manual(values=c("white","grey50")) +
+                    geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+                    theme_classic()+ 
+                    facet_wrap(~Age, scales = "free")
+P_TDW_resp_normed
+
+# print in markdown file 
+ggarrange(P_TDW_resp_all, P_TDW_resp_facet,P_TDW_resp_normed,nrow = 3)
+# Export to pdf
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
+ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
+dev.off()
+
+```
 
 #### (2) Whole animal dry weight vs. Raw respiration rate (umol O2 L- hr-1)...
 ```{r Whole dry weight length vs. raw respiration rate, echo=TRUE, message = FALSE, warning = FALSE}
