@@ -31,7 +31,8 @@ library(maditr)
 library(reshape2)
 library(ggpubr)
 
-setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+#setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 ShellLength <- read.csv(file="Data/Survival_Size/Juvenile_lengths_master.csv", header = TRUE) 
 TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master.csv", header = TRUE) 
@@ -73,8 +74,9 @@ library(tidyr)
 TDW_AFDW$Treatment <- as.factor(TDW_AFDW$pH)
 
 
-Alldensity_SDW <-ggplot(data =TDW_AFDW,aes(x=Dry_Shell_weight_g)) + 
-                      geom_density(aes(x = Dry_Shell_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% 
+                      ggplot(aes(x=Dry_Shell_weight_g)) + 
+                      geom_density(aes(x = Dry_Shell_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
                       ggtitle("Shell dry weight (mg)") +
                       facet_wrap( ~ Date_sampled) + 
@@ -82,25 +84,33 @@ Alldensity_SDW <-ggplot(data =TDW_AFDW,aes(x=Dry_Shell_weight_g)) +
 Alldensity_SDW
 
 
-Alldensity_TDW <- TDW_AFDW %>% dplyr::filter(!Dry_Tissue_weight_g < 0) %>% 
+Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% 
                     ggplot(aes(x=Dry_Tissue_weight_g)) + 
-                      geom_density(aes(x = Dry_Tissue_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                      geom_density(aes(x = Dry_Tissue_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
                       ggtitle("Tissue dry weight (mg)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
-Alldensity_TDW
+ Alldensity_TDW
 
 CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% 
                       ggplot(aes(x=Condition_index_drywtRatio_Walne1976)) + 
-                      geom_density(aes(x = Condition_index_drywtRatio_Walne1976, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                      geom_density(aes(x = Condition_index_drywtRatio_Walne1976, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
                       ggtitle("CI (Ratio TDW / SDW)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
 CI_TDW
 
-ggarrange(Alldensity_SDW,Alldensity_TDW,CI_TDW)
+CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_ADFW_div_length < 0) %>% 
+                      ggplot(aes(x=Condition_index_ADFW_div_length)) + 
+                      geom_density(aes(x = Condition_index_ADFW_div_length, group=Treatment, fill=Treatment, ..scaled..),alpha = 0.7, adjust=1.5) + 
+                      theme_bw() +
+                      ggtitle("CI (AFDW / SL)") +
+                      facet_wrap( ~ Date_sampled) + 
+                      scale_fill_brewer(palette = "Set1")
+CI_AFDW
+ggarrange(Alldensity_SDW,Alldensity_TDW,CI_TDW, CI_AFDW)
 ```
 
 
