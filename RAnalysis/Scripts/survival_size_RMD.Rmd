@@ -137,7 +137,7 @@ CI_AFDW        <- TDW_AFDW %>% dplyr::filter(!Condition_index_ADFW_div_length < 
                       ggtitle("CI (AFDW / length * 1000)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
-CI_TDW
+CI_AFDW
 
 ggarrange(Alldensity_length,Alldensity_AFDW,CI_AFDW)
 
