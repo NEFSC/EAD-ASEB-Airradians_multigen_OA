@@ -14,7 +14,7 @@ library(rMR)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis")
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::
@@ -199,9 +199,10 @@ new_table             <- rbind(cumulative_resp_table, df_total) # bind the new t
 write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
 
 
-# AFTER VISUAL INSECTIN OF PLOTS....
-# we have one positive Lpc alue from C1 RR_9.30.21_PM_Plate_1_Run_2.csv (check the plot to see! )
-# looks to have a great linear decline of O2 before the 15 minute mark before a jump in the data, the A1 - D1 were closest to the pump inflow to the waterbath so it is a possibility that water mayhave leaked in here.. 
+# AFTER VISUAL INSPECTION OF PLOTS....
+# we have the follwoing rates that need to be rerun... (check the diagnostic plots and see for yourself!)
+# C1 RR_9.30.21_PM_Plate_1_Run_2.csv -- positive Lpc, Lolin called portion of the data with positive rate
+# looks to have a great linear decline of O2 before the 15 minute mark before a jump in the data, the A1 - D1 were closest to the pump inflow to the waterbath so it is a possibility that water may have leaked in here.. 
 
 # load the data to run it 
 resp_rerun          <- read.csv(file = "Data/Respiration/20210930/RR_9.30.21_PM_Plate_1_Run_2.csv", header = TRUE,skip = 51)# %>% 
