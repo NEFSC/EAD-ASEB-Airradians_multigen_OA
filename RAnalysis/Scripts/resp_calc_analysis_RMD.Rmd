@@ -34,18 +34,21 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
-setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
-# setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis") # Work computer
+# setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA /RAnalysis") # personal computer
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+resp.data              <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
+                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+start.end_resp.data    <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
+                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
+start.end_resp.data$Filename[start.end_resp.data$Filename == "run3_raw.txt" ] <- "run_3_raw.txt"
 
-resp.data       <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
-                      dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
-# exp_metadata    <- read.csv(file="Data/ExperimentMetadata.csv", header=T) # treatment assignments to 'Chamber_Tank'
-lengths         <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
-resp.ref        <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
-Dry_weights     <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+resp.ref               <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% 
+                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
 
+lengths                <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+Dry_weights            <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
 
 ```
 
@@ -53,10 +56,12 @@ Dry_weights     <- read.csv(file="Data/Respiration/Lengths_Condition_resp_cleara
 ### Merge master resp data frame with lengths
 
 ```{r merge resp with length data and treatment IDs, echo=FALSE}
+nrow(resp.data) == nrow(start.end_resp.data) # MUST be TRUE
+resp_all_raw <- merge(resp.data, start.end_resp.data)
 
 # merge the exp_metadata with the resp.data
 resp.ref_length_merged                 <- merge(resp.ref, lengths) # all TRUE allows us to keep the blanks
-resp.data_merged                       <- merge(resp.data, resp.ref_length_merged) %>% # out master file moving forward....
+resp.data_merged                       <- merge(resp_all_raw, resp.ref_length_merged) %>% # out master file moving forward....
                                             dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                                             dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data")))
 kable(head(resp.data_merged))
@@ -80,16 +85,25 @@ kable(head(resp.data_merged))
 
 ```{r IMPORTANT correct poor data, echo=TRUE, message = FALSE, warning = FALSE}
 resp.data_merged[114,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
-resp.data_merged[130,c(1:6)]#  C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
+resp.data_merged[130,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
 resp.data_merged[115,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
+resp.data_merged[35,c(1:6)]   # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
+resp.data_merged[40,c(1:6)]   # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
 
+# change according to diagnostics of plots and in Lolin script 
 resp.data_merged[114,4] <- resp.data_merged[114,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
 resp.data_merged[130,4] <- resp.data_merged[130,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
 resp.data_merged[115,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
+resp.data_merged[35,4] <- -0.0209
+resp.data_merged[40,4] <- -0.0124
 
+
+# double check if correct
 resp.data_merged[114,c(1:6)] # -0.0608251
 resp.data_merged[130,c(1:6)] # -0.07603444
 resp.data_merged[115,c(1:6)] # -0.0296
+resp.data_merged[35,c(1:6)]  # -0.0209
+resp.data_merged[40,c(1:6)]  # -0.0124
 ```
 
 #### Calculate blank rates, view means by day pH_treatment and instrument
@@ -102,7 +116,7 @@ blanks_total <- data.frame() # start dataframe
 blanks.table <- data.frame(matrix(nrow = 1,ncol = 5)) # make a table template
 colnames(blanks.table)<-c('Date', 'Channel', 'mean_Lpc', 'mean_Leq' , 'mean_Lz') # names for comuns in the for loop
 
-blanks_all_raw <- data.frame(merge(resp.ref, resp.data, by = c('Date', 'Channel', 'Filename')) %>% 
+blanks_all_raw <- data.frame(merge(resp.ref, resp_all_raw, by = c('Date', 'Channel', 'Filename')) %>% 
                   dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                   dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>% 
                   dplyr::filter(Chamber_tank  == 'blank') %>% 
@@ -111,17 +125,37 @@ blanks_all_raw <- data.frame(merge(resp.ref, resp.data, by = c('Date', 'Channel'
                   dplyr::filter(!Date == '10/26/2021'  | !Channel == "CH8" | !Run == "2" )) # omit a bad blank that contained a bad seal, noted on the respiration sampling day during the trial 
 # kable((blanks_all_raw)[,c(1:3,6,8,12:14)])
 blanks_means <- blanks_all_raw %>% 
-     dplyr::group_by(Date, Run, filetype) %>% 
+     dplyr::filter(!Date %in% '2/2/2022') %>% # omuit 2/2/2022 - all other dates have positive rates for all runs and treatments to normalize data
+     dplyr::group_by(Date, pH, filetype) %>% # grouped by date, pH, and instrument - similar amoung Runs
+     dplyr::filter(Chamber_tank == "blank") %>% 
+     dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
+     dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
+                      BLANK.sd.Lpc   = sd(abs(Lpc)),
+                      BLANK.mean_Leq = mean(abs(Leq)), 
+                      BLANK.mean_Lz  = mean(abs(Lz)),
+                      
+                      start.end_mean  = mean(Rate_mgO2_hour),
+                      start.end_sd  = mean(Rate_mgO2_hour),
+                      n = n())
+kable(blanks_means)
+
+
+blanks_means_0202 <- blanks_all_raw %>% 
+     dplyr::filter(Date %in% '2/2/2022') %>% 
+     dplyr::group_by(Date, Run, filetype) %>% # data on 2/2/22 specifically, positive blanks by run yields NAs - data witin RUN are similar amoung tretaments
      dplyr::filter(Chamber_tank == "blank") %>% 
      dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
      dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
                       BLANK.sd.Lpc   = sd(abs(Lpc)),
                       BLANK.mean_Leq = mean(abs(Leq)), 
                       BLANK.mean_Lz = mean(abs(Lz)),
-                      n = n())
-kable(blanks_means)
+                      
+                      start.end_mean  = mean(Rate_mgO2_hour),
+                      start.end_sd  = mean(Rate_mgO2_hour),
+                      n = n()) 
+kable(blanks_means_0202) # you see here an N of 1 for both runs 1 and 2 due to positive blanks that were omitted
 
-
+blanks_means_MASTER <- rbind(blanks_means, blanks_means_0202)
 ```
 
 
@@ -131,8 +165,17 @@ kable(blanks_means)
 
 ```{r merge blanks_means for a master file, echo=FALSE}
 
-Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date",  "Run", "filetype")) %>% # NOTE: this repeats for every distinct length value
-  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) # ommits respiration rate values showing an increase in O2 over time 
+Resp.Master_1 <- merge(resp.data_merged, blanks_means, by=c("Date", "pH","filetype")) %>% # NOTE: this repeats for every distinct length value
+  dplyr::filter(!Date %in% '2/2/2022') %>% 
+  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) %>%  # Lolin calculated resp (used for SMR actual rates)
+  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
+
+Resp.Master_2 <- merge(resp.data_merged, blanks_means_0202, by=c("Date", "Run","filetype")) %>% 
+  dplyr::filter(Date %in% '2/2/2022') %>% 
+  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) %>%  # Lolin calculated resp (used for SMR actual rates)
+  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
+
+Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
 
 ```
 
@@ -161,7 +204,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                                    
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022')  & Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 waused ch9 vessel on 2/2/2022
+                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 used ch9 vessel on 2/2/2022
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
@@ -169,9 +212,18 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
                                    
                                    filetype == "SDR_data" ~ 1.7)) %>% # 24-well plate - 1700ul 
-  dplyr::mutate(resp_umol_L_hr =( ( ((abs(resp_blankStand))* (1/32)) *  # convert mg O2 to umol O2 (note that the resp_blank_stand is negative raw data from LoLin.R)
-                                      (volume/1000) ) * # convert to Liters
-                                      60) ) %>% #  convert per minutes to per hours
+  
+  # true rates calculated using LoLinRscript
+  dplyr::mutate(resp_mg_L_hr   = ((abs(resp_blankStand)) *  # currently as just mg O2 per minute
+                                      (volume/1000) * # correct Liters - mg per L per min
+                                       60))  %>% # convert rate per minutes to rate per hour
+  dplyr::mutate(resp_umol_L_hr = (((resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
+  
+  # simplified start end rates used to compare O:N ratios
+  dplyr::mutate(start.end_resp_mg_L_hr   = (start.end_resp_blankStand*(volume/1000)))  %>% # convert rate per minutes to rate per hour
+  dplyr::mutate(start.end_resp_umol_L_hr = (((start.end_resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                          
+  
+  
   dplyr::mutate(Age = case_when(Date == '9/14/2021' ~ 50, Date == '9/30/2021' ~ 66, Date == '10/26/2021' ~ 92)) %>% 
   dplyr::mutate(Fed_Unfed = case_when(Fed_Unfed == 'F' ~ "High food", is.na(Fed_Unfed) ~ "High food", Fed_Unfed == 'U' ~ "Low food")) %>% 
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
@@ -184,12 +236,6 @@ Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand > 0) # call the v
 ### Relationship between Whole dry weight  v. Shell length 
 
 ```{r DW v shell length plot,  echo=TRUE, message = FALSE, warning = FALSE}
-Resp.Master_OM %>% ggplot(aes(x = Length_um, y = resp_µmol_L_SL.StzedRate)) +
-                                geom_smooth(method = "loess") +
-                                theme_classic() +
-                                ylab("Scallop_WholeDW_mg") +
-                                xlab("Length_um") +
-                                geom_point() 
 
 Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
                                 geom_smooth(method = "loess") +
@@ -197,6 +243,22 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
                                 ylab("Scallop_TissueDW_mg") +
                                 xlab("Length_um") +
                                 geom_point() 
+
+
+Resp.Master_OM %>% ggplot(aes(x = whole_Dry_weight, y = Dry_Tissue_weight)) +
+                                geom_smooth(method = "loess") +
+                                theme_classic() +
+                                ylab("Scallop_TissueDW_mg") +
+                                xlab("whole_Dry_weight") +
+                                geom_point() 
+
+Resp.Master_OM %>% ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr)) +
+                                geom_smooth(method = "loess") +
+                                theme_classic() +
+                                ylab("resp_umol_L_hr") +
+                                xlab("Dry_Tissue_weight") +
+                                geom_point() 
+
 ```
 
 
@@ -204,10 +266,8 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
 
 ##### (1) shell length: umol L-1 O2 mm shell length hour-1
 ##### (2) whole dry weight: umol L-1 O2 g whole dry weight hour-1 
-##### (3) Standardized by shell length (allometric coefficient)
 
-
-```{r Calculate Resp Rates , echo=TRUE, message = FALSE, warning = FALSE}
+```{r Calculate Resp Rates & WRTIE CSV, echo=TRUE, message = FALSE, warning = FALSE}
 # Resp.Master_OM <- Resp.Master_OM[!is.na(Resp.Master_OM$Length_um),]
 
 # (1) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -215,32 +275,28 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
 Resp.Master_OM$resp_µmol_L_mm_Length_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
+Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr/ # multiple by 1000 to convert mmol/ O2 to umol/L O2
+              (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
+# (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# NORMALIZED for Tissue Dry weight (TDW)
 Resp.Master_OM$resp_µmol_L_g_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Dry_Tissue_weight)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
+Resp.Master_OM$start.end_resp_µmol_L_g_TDW_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+              (Resp.Master_OM$Dry_Tissue_weight)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
-write.csv(Resp.Master_OM, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
+write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
+
+```
 
 
+### Try allometric coefficient (b) of TDW and resp data
 
-resp_means <- Resp.Master_OM %>% 
-      dplyr::filter(Date %in% '2/2/2022') %>% 
-     dplyr::group_by(Date, pH) %>% 
-     dplyr::summarise(mean_resp_gTDW = mean(resp_µmol_L_g_TDW_hr),
-                      mean_resp_umolL = mean(resp_umol_L_hr),
-                      sd_resp_gTDW = sd(resp_µmol_L_g_TDW_hr), 
-                      sd_resp_umolL = sd(resp_umol_L_hr),
-                      n = n())
-resp_means
+* note: not all phys dates contain tissue dry weight (TDW) due to siz and fragility of the cell for accurate dissections
 
-
-# (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# NORMALIZED for Whole animal dry weight (g)
-Resp.Master_OM$resp_µmol_L_g_hr <- (Resp.Master_OM$resp_umol_L_hr / 
-              (Resp.Master_OM$resp_µmol_L_SL.StzedRate/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
-
-# (3) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Standardized by shell length (allometric coefficient)
+```{r allometric coefficient calc, echo=TRUE, message = FALSE, warning = FALSE}
 
 # ABOUT:
 # Pilditch and Grant (1999) Effect of temperature fluctuations and food supply on the growth and metabolism of juvenile sea scallops
@@ -253,8 +309,6 @@ Resp.Master_OM$resp_µmol_L_g_hr <- (Resp.Master_OM$resp_umol_L_hr /
 # TWD_obs = the observed dry tissue weight
 
 
-
-
 # b = the coefficient estimated empirically by fitting the allometric equation below
 # [ln(VO2])] = ln(a) + b*(ln(TDW))
 # Allometric coefficient for shell length and respiration rate 
@@ -263,7 +317,7 @@ ln_VO2 <- as.numeric(ln( (Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight
 ln_TDW  <- as.numeric(ln( (Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$Dry_Tissue_weight)  )) # assign length value 
 model  <- lm(ln_VO2~ln_TDW) # run model for r quared value
 summary(model)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_resp_allometric_coefficient.pdf"))
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/Shell_length_resp_allometric_coefficient.pdf"))
 plot((Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$Dry_Tissue_weight),(Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),]$resp_umol_L_hr)) 
 abline(model)
 legend("topleft",legend=paste("R2 is", (format(summary(model)$r.squared,digits=3)), sep = " ")) 
@@ -289,7 +343,7 @@ Resp.Master_OM$resp_µmol_L_SL.StzedRate <- ((SL_s / SL_obs)^b)*Resp.Master_OM$r
 ```
 
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
-write.csv(Resp.Master_OM, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
+write.csv(Resp.Master_OM, "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 
 
 
@@ -325,7 +379,7 @@ P_Length_resp_facet <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_umol_L_hr),] %>
 # print in markdown file 
 ggarrange(P_Length_resp_all, P_Length_resp_facet,nrow = 2)
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
 ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
 dev.off()
 
@@ -370,7 +424,7 @@ P_TDW_resp_normed
 # print in markdown file 
 ggarrange(P_TDW_resp_all, P_TDW_resp_facet,P_TDW_resp_normed,nrow = 3)
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
 ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
 dev.off()
 
@@ -407,7 +461,7 @@ P_WholeDW_resp_facet <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_umol_L_hr),] %
 # print in markdown file 
 ggarrange(P_WholeDW_resp_all, P_WholeDW_resp_facet,ncol = 2)
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/WholeDW_resp_raw.pdf"), width = 10, height = 6)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/WholeDW_resp_raw.pdf"), width = 10, height = 6)
 ggarrange(P_WholeDW_resp_all, P_WholeDW_resp_facet,ncol = 2) 
 dev.off()
 
@@ -445,7 +499,7 @@ P_SLStzd_resp_facet <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_µmol_L_SL.Stze
 # print in markdown file 
 ggarrange(P_SLStzd_resp_all, P_SLStzd_resp_facet,ncol = 2)
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Shell_length_standardized_rate_resp_raw.pdf"), width = 10, height = 6)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Shell_length_standardized_rate_resp_raw.pdf"), width = 10, height = 6)
 ggarrange(P_SLStzd_resp_all, P_SLStzd_resp_facet,ncol = 2) 
 dev.off()
 
@@ -595,7 +649,7 @@ Resp_SLStand   <- ggplot(data=RespSumTab_SLStzd, aes(x=Age, y=resp_µmol_L_SL.St
 
 # Print assembled plot from previous chunks....  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # both shell length and whole dry weight used for standardizing respiration rate - view the diagnostic pots for this here (good visual!)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/All_Respiration_normalized_summary.pdf"), width = 10, height = 12)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/All_Respiration_normalized_summary.pdf"), width = 10, height = 12)
 ggarrange(P_SLStzd_resp_all, Resp_SLStand, NA,
           P_Length_resp_all ,Length_time, Resp_LengthStand,
           P_WholeDW_resp_all, WholeDW_time, Resp_DryWgtStand, ncol = 3, nrow = 3, heights=c(1,1))
@@ -605,7 +659,7 @@ dev.off()
 ggarrange(Resp_SLStand,
           Resp_LengthStand,
           Resp_DryWgtStand, ncol = 1,nrow = 3) %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Standardized_resp_rates.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Standardized_resp_rates.pdf")
 
 
 ```
@@ -618,8 +672,8 @@ ggarrange(Resp_SLStand,
 
 
 ```{r load master resp file, echo=FALSE}
-# Resp.Master_OM    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # personel computer 
-Resp.Master_OM    <- read.csv(file="C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # work computer
+# Resp.Master_OM    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # personel computer 
+Resp.Master_OM    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA /RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # work computer
 ```
 
 
@@ -678,8 +732,8 @@ LMEmod_0914_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2, random=~1|Chamber_tank, da
 pander(anova(LMEmod_0914_SL), style='rmarkdown') # anova table of lmer
 kable(as.data.frame(anova(LMEmod_0914_SL))) %>%  # print a png of this table
   kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Diagnostics.pdf"))
 check_model(LMEmod_0914_SL) # print the model diagnostics 
 dev.off()
 
@@ -711,7 +765,7 @@ Resp914_Length # print this figure...
 
 # Export the figures to pdf
 ggarrange(Resp914_Length,Resp914_Length_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_length.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_length.pdf")
 
 ```
 
@@ -739,8 +793,8 @@ LMEmod_0914_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2, random=~1|Chamber_tan
 pander(anova(LMEmod_0914_bfactor), style='rmarkdown') # anova table of lmer
 kable(as.data.frame(anova(LMEmod_0914_bfactor))) %>%  # print a png of this table
   kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Diagnostics.pdf"))
 check_model(LMEmod_0914_bfactor) # print the model diagnostics 
 dev.off()
 
@@ -772,7 +826,7 @@ Resp914_bfactor # print this figure...
 
 # Export the figures to pdf
 ggarrange(Resp914_bfactor,Resp914_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_SLStzd.standardized.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_SLStzd.standardized.pdf")
 
 ```
 
@@ -892,8 +946,8 @@ LMEmod_0930_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|random_fa
 pander(anova(LMEmod_0930_SL), style='rmarkdown')
 kable(as.data.frame(anova(LMEmod_0930_SL))) %>% 
   kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
 check_model(LMEmod_0930_SL) 
 dev.off()
 
@@ -923,7 +977,7 @@ Resp930_Length
 
 # Export to pdf
 ggarrange(Resp930_Length,Resp930_Length_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_Figures.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_Figures.pdf")
 
 ```
 
@@ -937,9 +991,9 @@ Resp_0930$pHxFood <- as.factor(Resp_0930$pHxFood)
 
 df_mean <- Resp_0930 %>% 
   dplyr::group_by(pHxFood) %>% 
-  dplyr::summarize(average = mean(resp_µmol_L_m_Length_hr)) %>%
+  dplyr::summarize(average = mean(resp_µmol_L_mm_Length_hr)) %>%
   dplyr::ungroup()
-p.box <- ggplot(Resp_0930, aes(x = pHxFood, y = resp_µmol_L_m_Length_hr)) + geom_boxplot() + geom_point(data= df_mean, mapping = aes(x = pHxFood, y = average),
+p.box <- ggplot(Resp_0930, aes(x = pHxFood, y = resp_µmol_L_mm_Length_hr)) + geom_boxplot() + geom_point(data= df_mean, mapping = aes(x = pHxFood, y = average),
              color="red") 
 p.box.data <- layer_data(p.box) %>%
   select(x, ymin, lower, middle, upper, ymax, outliers, flipped_aes) %>%
@@ -960,19 +1014,19 @@ denisty_box_resp_64DPF <-ggplot(p.box.data) +
                             # vertical lines at Q1 / Q2 / Q3
                             geom_vline(data = . %>% select(pHxFood, lower, mean, upper) %>% gather(key, value, -pHxFood), aes(xintercept = value)) +
                             # density plot
-                            geom_density(data = Resp_0930, aes(x = resp_µmol_L_m_Length_hr, group=pHxFood, fill=pHxFood, ..scaled..), alpha=.4, adjust=1.5) +
+                            geom_density(data = Resp_0930, aes(x = resp_µmol_L_mm_Length_hr, group=pHxFood, fill=pHxFood, ..scaled..), alpha=.4, adjust=1.5) +
                             #  theme
                             theme_classic() +
                             xlim(0, 0.22) +
                             facet_grid(pHxFood ~ .) +
                             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+
                             labs(title = "F1 Scallops: respiration rates 64 DPF)", 
-                                 x = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%m^{-1}~shell~length%.% hr^{-1}~")"),
+                                 x = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1}~")"),
                                  y = "Scaled density") +
                             scale_fill_manual(values=c("grey40", "grey40", "grey85", "grey85"))
 denisty_box_resp_64DPF
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_density_plot.pdf"), width = 5, height = 5)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_density_plot.pdf"), width = 5, height = 5)
 denisty_box_resp_64DPF # print the model diagnostics 
 dev.off()
 
@@ -1003,8 +1057,8 @@ LMEmod_0930_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2 * Food, random=~1|rand
 pander(anova(LMEmod_0930_bfactor), style='rmarkdown') # anova table of lmer
 kable(as.data.frame(anova(LMEmod_0930_bfactor))) %>%  # print a png of this table
   kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Diagnostics.pdf"))
 check_model(LMEmod_0930_bfactor) # print the model diagnostics 
 dev.off()
 
@@ -1034,7 +1088,7 @@ Resp930_bfactor # print this figure...
 
 # Export the figures to pdf
 ggarrange(Resp930_bfactor,Resp930_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_respiration_SLStzd.standardized.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_respiration_SLStzd.standardized.pdf")
 
 ```
 
@@ -1063,8 +1117,8 @@ LMEmod_0930_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|Chamber_t
 pander(anova(LMEmod_0930_SL), style='rmarkdown')
 kable(as.data.frame(anova(LMEmod_0930_SL))) %>% 
   kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
 check_model(LMEmod_0930_SL) 
 dev.off()
 
@@ -1154,8 +1208,8 @@ LMEmod_1026_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|random_fa
 pander(anova(LMEmod_1026_SL), style='rmarkdown')
 kable(as.data.frame(anova(LMEmod_1026_SL))) %>% 
   kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Diagnostics.pdf"))
 check_model(LMEmod_1026_SL) 
 dev.off()
 # tukey posthoc for lmer model
@@ -1197,7 +1251,7 @@ Resp1026_Length
 
 # Export to pdf
 ggarrange(Resp1026_Length, Res1026_Length_reps,nrow = 2) %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_Figures.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_Figures.pdf")
 
 ```
 
@@ -1247,7 +1301,7 @@ denisty_box_resp_92DPF <-ggplot(p.box.data) +
                             scale_fill_manual(values=c("grey40", "grey40", "grey85", "grey85"))
 denisty_box_resp_92DPF
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_density_plot.pdf"), width = 5, height = 5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_density_plot.pdf"), width = 5, height = 5)
 denisty_box_resp_92DPF # print the model diagnostics 
 dev.off()
 
@@ -1278,8 +1332,8 @@ LMEmod_1026_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2 * Food, random=~1|rand
 pander(anova(LMEmod_1026_bfactor), style='rmarkdown') # anova table of lmer
 kable(as.data.frame(anova(LMEmod_1026_bfactor))) %>%  # print a png of this table
   kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp.SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_SLStzed_LME_Diagnostics.pdf"))
+  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp.SLStzed_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_SLStzed_LME_Diagnostics.pdf"))
 check_model(LMEmod_1026_bfactor) # print the model diagnostics 
 dev.off()
 # tukey posthoc for lmer model
@@ -1321,7 +1375,7 @@ Resp1026_bfactor # print this figure...
 
 # Export the figures to pdf
 ggarrange(Resp1026_bfactor,Resp1026_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_respiration_SLStzd.standardized.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_respiration_SLStzd.standardized.pdf")
 
 ```
 
@@ -1396,4 +1450,90 @@ ggarrange(Res1026_WholeDW, Res1026_WholeDW_reps,nrow = 2) %>%
 
 ```
 
+
+
+
+
+
+
+
+
+# 2/2/2022 F1 juvenile scallops
+
+**About**
+
+- two pCO2 treatments 
+
+- *before* we culled and started the food limitation trials
+
+
+#### number of replicates for analysis...
+
+```{r 2/2 replicates, echo=FALSE}
+
+Resp_0202 <- Resp.Master_OM %>% 
+  dplyr::filter(Date %in% '2/2/2022')  %>% # call only 10/14
+  dplyr::select(-Center) 
+
+Resp_0202 %>% dplyr::group_by(pH) %>% dplyr::summarise(n()) # tank replication
+
+Resp_0202 %>% summarySE(measurevar="resp_µmol_L_g_TDW_hr", groupvars=(c("pH"))) %>% 
+      dplyr::mutate(pCO2 = case_when(pH == 8  ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
+```
+
+
+### 2/02/2022 Linear mixed-effects models, diagnostics, and plots
+
+
+#### Length standardized
+
+```{r 10/26 Length standardized, echo=TRUE, message = FALSE, warning = FALSE}
+
+# Shell length standardized (SL) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# Visualize the data with the random effet as treplicate 
+Res0202_Length_reps <- ggboxplot(Resp_0202, x = "pH", y = "resp_µmol_L_g_TDW_hr", color = "Replicate",
+                          add = c("mean_se", "dotplot"),
+                          palette = c("#00AFBB", "#E7B800", "brown", "grey", "purple", "blue", "black", "orange"))
+Res0202_Length_reps
+
+require(nlme)
+# Linear mixed effects model with random effect of Replicate 
+LMmod_0202_SL<-aov(lm(resp_µmol_L_mm_Length_hr ~ pCO2, data=Resp_0202))
+summary(LMmod_0202_SL)
+# |    &nbsp;     | Df |  Sum Sq  | Mean Sq  | F value  | Pr(>F) |
+# |:-------------:|:--:|:--------:|:--------:|:--------:|:------:|
+# |   **pCO2**    | 1  | 1.56e-05 | 1.56e-05 | 0.006697 | 0.9358 |
+# | **Residuals** | 16 | 0.03728  | 0.00233  |    NA    |   NA   |
+pander(anova(LMmod_0202_SL), style='rmarkdown')
+kable(as.data.frame(anova(LMEmod_0222_SL))) %>% 
+  kable_styling() %>%
+  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_LME_Table.png", zoom = 1.5)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_LME_Diagnostics.pdf"))
+check_model(LMEmod_0222_SL) 
+dev.off()
+
+
+# plot
+Resp0202_TDW <- ggplot(Resp_0202, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_g_TDW_hr , fill = pCO2)) +
+              theme(panel.grid=element_blank()) +
+              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
+              scale_fill_manual(values=c("white","grey50")) +
+              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+              theme_classic() +
+              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
+              # scale_y_continuous(expand = c(0, 0), limits = c(0, 250)) +
+              theme(axis.text=element_text(size=8),
+                    axis.title=element_text(size=8,face="bold")) +
+              labs(title = "F1 Scallops: respiration rates on 20210202 (Tissue dry weight stand.)", 
+                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%m^{-1}~shell~length%.% hr^{-1}~")"),
+                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))
+Resp0202_TDW
+
+
+# Export to pdf
+ggarrange(Resp0222_Length, Resp0202_TDW,nrow = 2) %>% 
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_Figures.pdf")
+
+```
 
