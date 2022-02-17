@@ -2,7 +2,7 @@
 # measure respiration rate from raw Loligo output data 
 # using Lolin.R (Olito etal. 201?) for reproducible and non-bias calculation of respiration rates
 
-# Written by: Sam J Gurr (last edit 9/15/2021)
+# Written by: Sam J Gurr (last edit 2/16/2022)
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -11,7 +11,7 @@ library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from git
 library(dplyr)
 library(lubridate)
 library(rMR) 
-
+library(dplyr)
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
@@ -122,7 +122,7 @@ for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
               Resp_loop         <- na.omit(Resp.Data_15sec[,c(3,j)]) # noticed some random rows have 'NaN' - so I will loop the min and Channels to ommit Nas before proceeding
-
+View(Resp_loop)
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
                 if ( (substr(colnames(Resp.Data_15sec)[j],1,2) == 'CH') ) { # loligo measurements need to be converted to mg/L from %air sat - these columns are written as "CH#" 
                   Resp_loop <- Resp_loop %>%  dplyr::filter(!colnames(Resp_loop)[2] %in% 'NaN') # Lolin recorede NAs are written as 'Nan' - wonts run unless removed!
@@ -193,31 +193,76 @@ for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
 # (1) in units of mg/L min-1 (slope of line mg/l / mins in LoLinR - check the plot outputs to see)
 # (2) not normalized for volume chamber 
 # (3) not normalized for blank resp rate 
-# (4) not normalized for a size/individual metric
+# (4) not normalized for a size/individual metric (i.e. Tissue Dry weight, shell length, etc.)
 cumulative_resp_table <- read.csv(file=ouputNAME, header=TRUE) #call the pre existing cumulative table
 new_table             <- rbind(cumulative_resp_table, df_total) # bind the new table from the for loop to the pre exisiting table
 write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
 
 
 # AFTER VISUAL INSPECTION OF PLOTS....
-# we have the follwoing rates that need to be rerun... (check the diagnostic plots and see for yourself!)
-# C1 RR_9.30.21_PM_Plate_1_Run_2.csv -- positive Lpc, Lolin called portion of the data with positive rate
-# looks to have a great linear decline of O2 before the 15 minute mark before a jump in the data, the A1 - D1 were closest to the pump inflow to the waterbath so it is a possibility that water may have leaked in here.. 
+# we have the followoing rates that need to be rerun... (check the diagnostic plots and see for yourself!)
+
+# (1) 20210930_Plate_2_Run_2_C5 https://github.com/SamGurr/Airradians_OA/blob/master/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20210930_Plate_2_Run_2_C5_regression.pdf
+# - solution = call 'Lz' instead of the default Leq
+
+# (2) 20210930_Plate_2_Run_1_C1 https://github.com/SamGurr/Airradians_OA/blob/master/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20210930_Plate_2_Run_1_C1_regression.pdf
+# - solution = call 'Lz' instead of the default Leq
+ 
+# (3) 20210930_Plate_1_Run_2_C1 https://github.com/SamGurr/Airradians_OA/blob/master/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20210930_Plate_1_Run_2_C1_regression.pdf
+# - solution = we reran this at the end of the LoLin script  for 0-20 minutes and got an Lpc  -0.0296, insert this 
+
+# (4) 20220202_Run_1_CH1 https://github.com/SamGurr/Airradians_multigen_OA/blob/main/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20220202_Run_1_CH1_regression.pdf
+# - solution = call data before minute 70, raw data shows a jump of NAs when the sensor was repositioned (likely lost signal and was adjusted) this is artifacually calculating a higher rate (view the pdf above)
+
+# (5) 20220202_run_2_CH5 https://github.com/SamGurr/Airradians_multigen_OA/blob/main/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20220202_run_2_CH5_regression.pdf
+# - solution = call data after minute 80 when the O2 consumption dramatically increases, the original value was both low and extracted from initial data (post handling), the proposed later rate is more representative
+# - NOTE: I ran from minute 80 to 120 and found that the rate increased between 80 - 90 minute mark but evened out at very similar rate to that called < minute 70 (0.0049 and 0.0051) thus, keep the original value for this time point (actually low!)
+
+# (6) 20220202_run3_CH2 https://github.com/SamGurr/Airradians_multigen_OA/blob/main/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/20220202_run3_CH2_regression.pdf
+# - solution = call data after minute 60, the curent call (pdf above) exctracted the initial values, showing a ow rate unrepresentative of the full timeseries
 
 # load the data to run it 
-resp_rerun          <- read.csv(file = "Data/Respiration/20210930/RR_9.30.21_PM_Plate_1_Run_2.csv", header = TRUE,skip = 51)# %>% 
+
+# is the data a csv file? (from LoLin 24-channel SDR dish )
+resp_rerun          <- read.csv(file = "Data/Respiration/20220202/run_1_raw.csv", header = TRUE,skip = 51) #%>% 
                         dplyr::select(c("Relative.time..HH.MM.SS.", "C1..Oxygen.")) %>%  #reads in the data files
                         dplyr::mutate(mgL =  C1..Oxygen.) 
 resp_rerun$date      <- paste((sub("2021.*", "", resp_rerun$Date..DD.MM.YYYY.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
 resp_rerun$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", resp_rerun$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
 resp_rerun$seconds   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])    # secs - calc the sec time series
-resp_rerun$minutes   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])/60 # mins - calc the minute time series                        
+resp_rerun$minutes   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])/60 # mins - calc the minute time series 
+                        
+#is the data a txt file? (from Lolin 8 channel
+resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run_1_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run_2_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run3_raw.txt", header = TRUE,skip = 37)
+resp_rerun$date      <- paste((sub("2022.*", "", resp_rerun$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+resp_rerun$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", resp_rerun$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+resp_rerun$seconds   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])    # secs - calc the sec time series
+resp_rerun$minutes   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])/60 # mins - calc the minute time series
 
-resp_rerun_LoLin <- resp_rerun %>% dplyr::select(c("minutes", "C1..Oxygen.")) %>% dplyr::filter(minutes < 20)
+#to calculate mg per L from air saturation....
+temperature_C        <- as.numeric(resp_rerun$CH1.temp...C.[1])
+barromP_kPa          <- as.numeric(resp_rerun$Barometric.pressure..hPa.[1]) / 10
+salinity.pp.thou     <- as.numeric(resp_rerun$Salinity....[1])
+                       
+resp_rerun_LoLin <- resp_rerun[seq(1, nrow(resp_rerun), 15), ]  %>% # data every 15 seconds to decrease the run time
+                    dplyr::filter(!colnames(resp_rerun)[2] %in% 'NaN') %>% # Lolin recorede NAs are written as 'Nan' - wonts run unless removed!
+                    #dplyr::select(c("minutes", "CH1.O2...air.sat..")) %>% # run 1 ch 1 20220202
+                    #dplyr::select(c("minutes", "CH5.O2...air.sat..")) %>% # run 2 ch 5 20220202
+                    dplyr::select(c("minutes", "CH2.O2...air.sat..")) %>% # run 3 ch 2 20220202
+                    #dplyr::filter(minutes < 70) %>% # less than minute 70 - the data we want to call
+                    #dplyr::filter(minutes > 80 & minutes < 120) %>% # after minute 80
+                    dplyr::filter(minutes > 50 & minutes < 80) %>% # after minute 60
+                    dplyr::mutate(mgL = (DO.unit.convert(as.numeric(CH2.O2...air.sat..),  # DO in percent air sat to be converted to mgL - uses an R package from loligo rMR
+                                                         DO.units.in = "pct", DO.units.out ="mg/L", 
+                                                         bar.units.in = "kPa", bar.press = barromP_kPa, bar.units.out = "kpa",
+                                                         temp.C = temperature_C, 
+                                                         salinity.units = "pp.thou", salinity = salinity.pp.thou)))
 
 model <- rankLocReg(
   xall    = as.numeric(resp_rerun_LoLin[, 1]), 
-  yall    = as.numeric(resp_rerun_LoLin[, 2]), # call x as the minute timeseries and y as the mg L-1 O2 
+  yall    = as.numeric(resp_rerun_LoLin[, 3]), # call x as the minute timeseries and y as the mg L-1 O2 
   alpha   = 0.4,  # alpha was assigned earlier as 0.4 by the authors default suggestions - review Olito et al. and their github page for details
   method  = "pc", 
   verbose = TRUE) 
