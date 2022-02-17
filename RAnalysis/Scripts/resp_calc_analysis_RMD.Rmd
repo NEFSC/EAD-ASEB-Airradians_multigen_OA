@@ -35,17 +35,20 @@ library(hrbrthemes)
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
 # setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA /RAnalysis") # personal computer
-  setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA /RAnalysis") # Work computer
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+resp.data              <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
+                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+start.end_resp.data    <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
+                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
+start.end_resp.data$Filename[start.end_resp.data$Filename == "run3_raw.txt" ] <- "run_3_raw.txt"
 
-resp.data       <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
-                      dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
-# exp_metadata    <- read.csv(file="Data/ExperimentMetadata.csv", header=T) # treatment assignments to 'Chamber_Tank'
-lengths         <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
-resp.ref        <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
-Dry_weights     <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+resp.ref               <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% 
+                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
 
+lengths                <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+Dry_weights            <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
 
 ```
 
@@ -53,10 +56,12 @@ Dry_weights     <- read.csv(file="Data/Respiration/Lengths_Condition_resp_cleara
 ### Merge master resp data frame with lengths
 
 ```{r merge resp with length data and treatment IDs, echo=FALSE}
+nrow(resp.data) == nrow(start.end_resp.data) # MUST be TRUE
+resp_all_raw <- merge(resp.data, start.end_resp.data)
 
 # merge the exp_metadata with the resp.data
 resp.ref_length_merged                 <- merge(resp.ref, lengths) # all TRUE allows us to keep the blanks
-resp.data_merged                       <- merge(resp.data, resp.ref_length_merged) %>% # out master file moving forward....
+resp.data_merged                       <- merge(resp_all_raw, resp.ref_length_merged) %>% # out master file moving forward....
                                             dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                                             dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data")))
 kable(head(resp.data_merged))
@@ -82,21 +87,18 @@ kable(head(resp.data_merged))
 resp.data_merged[114,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
 resp.data_merged[130,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
 resp.data_merged[115,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
-resp.data_merged[35,c(1:6)]   # 	2/2/2022	CH1	run_1_raw.txt  -0.0209	-0.02714124	-0.0271412; data change Lpc to -0.0209
+resp.data_merged[35,c(1:6)]   # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
 resp.data_merged[40,c(1:6)]   # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
 
-
-
-# 20220202 ch1 run 1  = -0.0209
-# 
-# 20220202 ch2 run 3 = -0.0124
-
+# change according to diagnostics of plots and in Lolin script 
 resp.data_merged[114,4] <- resp.data_merged[114,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
 resp.data_merged[130,4] <- resp.data_merged[130,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
 resp.data_merged[115,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
 resp.data_merged[35,4] <- -0.0209
 resp.data_merged[40,4] <- -0.0124
 
+
+# double check if correct
 resp.data_merged[114,c(1:6)] # -0.0608251
 resp.data_merged[130,c(1:6)] # -0.07603444
 resp.data_merged[115,c(1:6)] # -0.0296
@@ -114,7 +116,7 @@ blanks_total <- data.frame() # start dataframe
 blanks.table <- data.frame(matrix(nrow = 1,ncol = 5)) # make a table template
 colnames(blanks.table)<-c('Date', 'Channel', 'mean_Lpc', 'mean_Leq' , 'mean_Lz') # names for comuns in the for loop
 
-blanks_all_raw <- data.frame(merge(resp.ref, resp.data, by = c('Date', 'Channel', 'Filename')) %>% 
+blanks_all_raw <- data.frame(merge(resp.ref, resp_all_raw, by = c('Date', 'Channel', 'Filename')) %>% 
                   dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                   dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>% 
                   dplyr::filter(Chamber_tank  == 'blank') %>% 
@@ -130,7 +132,10 @@ blanks_means <- blanks_all_raw %>%
      dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
                       BLANK.sd.Lpc   = sd(abs(Lpc)),
                       BLANK.mean_Leq = mean(abs(Leq)), 
-                      BLANK.mean_Lz = mean(abs(Lz)),
+                      BLANK.mean_Lz  = mean(abs(Lz)),
+                      
+                      start.end_mean  = mean(Rate_mgO2_hour),
+                      start.end_sd  = mean(Rate_mgO2_hour),
                       n = n())
 kable(blanks_means)
 
@@ -144,10 +149,10 @@ blanks_means_0202 <- blanks_all_raw %>%
                       BLANK.sd.Lpc   = sd(abs(Lpc)),
                       BLANK.mean_Leq = mean(abs(Leq)), 
                       BLANK.mean_Lz = mean(abs(Lz)),
+                      
+                      start.end_mean  = mean(Rate_mgO2_hour),
+                      start.end_sd  = mean(Rate_mgO2_hour),
                       n = n()) 
-blanks_means_0202_8   <- as.data.frame(blanks_means_0202 %>% mutate(pH = 8.0))
-blanks_means_0202_7.5 <- as.data.frame(blanks_means_0202 %>% mutate(pH = 7.5))
-blanks_means_0202     <- rbind(blanks_means_0202_8, blanks_means_0202_7.5)
 kable(blanks_means_0202) # you see here an N of 1 for both runs 1 and 2 due to positive blanks that were omitted
 
 blanks_means_MASTER <- rbind(blanks_means, blanks_means_0202)
@@ -162,11 +167,13 @@ blanks_means_MASTER <- rbind(blanks_means, blanks_means_0202)
 
 Resp.Master_1 <- merge(resp.data_merged, blanks_means, by=c("Date", "pH","filetype")) %>% # NOTE: this repeats for every distinct length value
   dplyr::filter(!Date %in% '2/2/2022') %>% 
-  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) # ommits respiration rate values showing an increase in O2 over time 
+  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) %>%  # Lolin calculated resp (used for SMR actual rates)
+  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
 
 Resp.Master_2 <- merge(resp.data_merged, blanks_means_0202, by=c("Date", "Run","filetype")) %>% 
   dplyr::filter(Date %in% '2/2/2022') %>% 
-  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc)
+  dplyr::mutate(resp_blankStand = Lpc - BLANK.mean_Lpc) %>%  # Lolin calculated resp (used for SMR actual rates)
+  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
 
 Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
 
@@ -197,7 +204,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                                    
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022')  & Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 waused ch9 vessel on 2/2/2022
+                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 used ch9 vessel on 2/2/2022
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
@@ -205,10 +212,18 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                                    filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
                                    
                                    filetype == "SDR_data" ~ 1.7)) %>% # 24-well plate - 1700ul 
-  dplyr::mutate(resp_mg_L_hr =((abs(resp_blankStand)) *  # currently as just mg O2 per minute
+  
+  # true rates calculated using LoLinRscript
+  dplyr::mutate(resp_mg_L_hr   = ((abs(resp_blankStand)) *  # currently as just mg O2 per minute
                                       (volume/1000) * # correct Liters - mg per L per min
                                        60))  %>% # convert rate per minutes to rate per hour
   dplyr::mutate(resp_umol_L_hr = (((resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
+  
+  # simplified start end rates used to compare O:N ratios
+  dplyr::mutate(start.end_resp_mg_L_hr   = (start.end_resp_blankStand*(volume/1000)))  %>% # convert rate per minutes to rate per hour
+  dplyr::mutate(start.end_resp_umol_L_hr = (((start.end_resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                          
+  
+  
   dplyr::mutate(Age = case_when(Date == '9/14/2021' ~ 50, Date == '9/30/2021' ~ 66, Date == '10/26/2021' ~ 92)) %>% 
   dplyr::mutate(Fed_Unfed = case_when(Fed_Unfed == 'F' ~ "High food", is.na(Fed_Unfed) ~ "High food", Fed_Unfed == 'U' ~ "Low food")) %>% 
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
@@ -251,10 +266,8 @@ Resp.Master_OM %>% ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr)) +
 
 ##### (1) shell length: umol L-1 O2 mm shell length hour-1
 ##### (2) whole dry weight: umol L-1 O2 g whole dry weight hour-1 
-##### (3) Standardized by shell length (allometric coefficient)
 
-
-```{r Calculate Resp Rates , echo=TRUE, message = FALSE, warning = FALSE}
+```{r Calculate Resp Rates & WRTIE CSV, echo=TRUE, message = FALSE, warning = FALSE}
 # Resp.Master_OM <- Resp.Master_OM[!is.na(Resp.Master_OM$Length_um),]
 
 # (1) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -262,32 +275,28 @@ Resp.Master_OM %>% ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr)) +
 Resp.Master_OM$resp_µmol_L_mm_Length_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
+Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr/ # multiple by 1000 to convert mmol/ O2 to umol/L O2
+              (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
+# (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# NORMALIZED for Tissue Dry weight (TDW)
 Resp.Master_OM$resp_µmol_L_g_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+              (Resp.Master_OM$Dry_Tissue_weight)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
+Resp.Master_OM$start.end_resp_µmol_L_g_TDW_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Dry_Tissue_weight)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 
+```
 
 
-resp_means <- Resp.Master_OM %>% 
-      dplyr::filter(Date %in% '2/2/2022') %>% 
-     dplyr::group_by(Date, pH) %>% 
-     dplyr::summarise(mean_resp_gTDW = mean(resp_µmol_L_g_TDW_hr),
-                      mean_resp_umolL = mean(resp_umol_L_hr),
-                      sd_resp_gTDW = sd(resp_µmol_L_g_TDW_hr), 
-                      sd_resp_umolL = sd(resp_umol_L_hr),
-                      n = n())
-resp_means
+### Try allometric coefficient (b) of TDW and resp data
 
+* note: not all phys dates contain tissue dry weight (TDW) due to siz and fragility of the cell for accurate dissections
 
-# (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# NORMALIZED for Whole animal dry weight (g)
-Resp.Master_OM$resp_µmol_L_g_hr <- (Resp.Master_OM$resp_umol_L_hr / 
-              (Resp.Master_OM$resp_µmol_L_SL.StzedRate/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
-
-# (3) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Standardized by shell length (allometric coefficient)
+```{r allometric coefficient calc, echo=TRUE, message = FALSE, warning = FALSE}
 
 # ABOUT:
 # Pilditch and Grant (1999) Effect of temperature fluctuations and food supply on the growth and metabolism of juvenile sea scallops
@@ -298,8 +307,6 @@ Resp.Master_OM$resp_µmol_L_g_hr <- (Resp.Master_OM$resp_umol_L_hr /
 # R_obs = observed rate 
 # TWD_s = standardized dry tissue weight (they used 1 g here)
 # TWD_obs = the observed dry tissue weight
-
-
 
 
 # b = the coefficient estimated empirically by fitting the allometric equation below
