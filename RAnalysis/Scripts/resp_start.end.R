@@ -3,8 +3,7 @@
 
 # Written by: Sam J Gurr (last edit 9/15/2021)
 
-# LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+# LOAD PACKAGES ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(devtools) # devtools::install_github # use devtools to instlal github link
 library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from github
 library(dplyr)
@@ -13,10 +12,10 @@ library(rMR)
 library(dplyr)
 library(stringr)
 
-# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
-# CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::
+# CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 path.p    <- "Data/Respiration" #the location of all your respirometry files 
 
 
@@ -154,5 +153,4 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
 # write the table 
 write.table(df_total,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
 
-# View(df_total)
 
