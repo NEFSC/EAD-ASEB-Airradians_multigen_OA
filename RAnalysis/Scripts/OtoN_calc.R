@@ -25,10 +25,16 @@ RespExcretion_Master <- merge(Resp_Master,Excretion_Master) # only 18 values as 
 
 # CALCULATE O:N :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 Master_table <- as.data.frame(RespExcretion_Master %>% 
-                  dplyr::select(c('Date',  'pH', 'Replicate', 'Dry_Tissue_weight', 'resp_umol_L_hr', 'start.end_resp_umol_L_hr', 'Nitrogen_ug_mL_hr')) %>% 
-                  dplyr::rename(c('RESP_umol_L_hr' = 'resp_umol_L_hr', 'RESP.start.end_umol_L_hr' = 'start.end_resp_umol_L_hr', 'NITROGEN_ug_mL_hr' = 'Nitrogen_ug_mL_hr')) %>% 
-                  dplyr::mutate('ON_RESP.LoLinR' = ((RESP_umol_L_hr*14)/(NITROGEN_ug_mL_hr)*1000)) %>% 
-                  dplyr::mutate('ON_RESP.start.end' = ((RESP.start.end_umol_L_hr*14)/(NITROGEN_ug_mL_hr)*1000)))
+                  dplyr::select(c('Date',  'pH', 'Replicate', 'volume', 'Dry_Tissue_weight', 'resp_mg_L_hr', 'resp_umol_L_hr', 'start.end_resp_mg_L_hr', 'Nitrogen_ug_mL_hr')) %>% 
+                  dplyr::rename(c('RESP_mg.O2_L_hr' = 'resp_mg_L_hr', 
+                                  'RESP.startend_resp_mg.O2_L_hr' = 'start.end_resp_mg_L_hr', 
+                                  'NITROGEN_ug.N2_mL_hr' = 'Nitrogen_ug_mL_hr')) %>% 
+                  dplyr::mutate('NITROGEN_ug.N2_L_hr'          =  (NITROGEN_ug.N2_mL_hr*(volume/1000))) %>%                   
+                  dplyr::mutate('RESP_mg.O2_L_g.tissue_hr'              =  (RESP_mg.O2_L_hr) / (Dry_Tissue_weight))                      %>% 
+                  dplyr::mutate('RESP.startend_mg.O2_L_g.tissue_hr'     =  (RESP.startend_resp_mg.O2_L_hr) / (Dry_Tissue_weight))        %>% 
+
+                  dplyr::mutate('ON_RESP.LoLinR'                 =  ( (RESP_mg.O2_L_g.tissue_hr/16) / (NITROGEN_ug.N2_L_g.tissue_hr/14)) )    %>% 
+                  dplyr::mutate('ON_RESP.start.end'              =  ( (RESP.startend_mg.O2_L_g.tissue_hr/16) / (NITROGEN_ug.N2_L_g.tissue_hr/14)))  )
 View(Master_table)
 
 # Summary (means SE):::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
