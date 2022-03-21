@@ -44,7 +44,7 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 5:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
@@ -86,10 +86,10 @@ for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                   } else if (folder.names.table[i,] == '20220202'){ 
                     Resp.Data_15sec = Resp.Data[seq(1, nrow(Resp.Data), 15), ] # for now we will run the whole dataset to see...
                     Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
-                       }
-                        else { # note this should only call the txt files in 20211026 becuase there are no _raw.txt files in 20210930
+                       } else { # note this should only call the txt files in 20211026 becuase there are no _raw.txt files in 20210930
                         Resp.Data_15sec = Resp.Data[seq(1, nrow(Resp.Data), 15), ] # for now we will run the whole dataset to see...
-                        Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
+                        # Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
+                        # Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
                                 }
         
           } else { 
@@ -111,8 +111,8 @@ for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                   if (folder.names.table[i,] == '20210930'){
                     Resp.Data_15sec = Resp.Data  %>%  dplyr::filter(minutes < 40) # SDR data is already taken every 15 seconds, truncate for < 40 minutes in runs as the records start to show noise and undesirable data for O2 consumption (ran whole record and observed ALL Lolin plots to make this decision) 
                      } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
+                        # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
                         Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
-                    # Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes < 40) # for now we will run the whole dataset to see...
                             }
             }# clean these column names to make things easier - first 3 characters
             
@@ -121,8 +121,13 @@ for(i in 4:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               # inside 'j' loop - for each 'raw' txt file 'm', call each O2 sensor/resp chamber 'j' for analysis
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
-              Resp_loop         <- na.omit(Resp.Data_15sec[,c(3,j)]) # noticed some random rows have 'NaN' - so I will loop the min and Channels to ommit Nas before proceeding
-View(Resp_loop)
+              Resp_loop         <- (Resp.Data_15sec[,c(3,j)]) %>% 
+                                              dplyr::filter((Resp.Data_15sec[,c(3,j)])[,2] > 80) %>%
+                                              dplyr::filter(!(Resp.Data_15sec[,c(3,j)])[,2] %in% 'NaN') %>% # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
+                                              dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
+                                              dplyr::filter(minutes > max(minutes) -20) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
+
+
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
                 if ( (substr(colnames(Resp.Data_15sec)[j],1,2) == 'CH') ) { # loligo measurements need to be converted to mg/L from %air sat - these columns are written as "CH#" 
                   Resp_loop <- Resp_loop %>%  dplyr::filter(!colnames(Resp_loop)[2] %in% 'NaN') # Lolin recorede NAs are written as 'Nan' - wonts run unless removed!

@@ -34,8 +34,8 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
-# setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA /RAnalysis") # personal computer
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+ setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 resp.data              <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
