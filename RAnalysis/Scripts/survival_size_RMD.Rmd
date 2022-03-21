@@ -31,8 +31,8 @@ library(maditr)
 library(reshape2)
 library(ggpubr)
 
-#setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 ShellLength <- read.csv(file="Data/Survival_Size/Juvenile_lengths_master.csv", header = TRUE) 
 TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master.csv", header = TRUE) 
@@ -46,14 +46,14 @@ library(dplyr)
 library(tidyr)
 ShellLength$Treatment <- as.factor(ShellLength$Treatment)
 
-Alldensity <- ggplot(data = ShellLength, aes(x=Length_um)) + 
-                geom_density(aes(x = Length_um, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+Alldensity <- ggplot(data = ShellLength, aes(x=Length_mm)) + 
+                geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                 theme_bw() +
                 facet_wrap( ~ Age_DPF) + 
                 scale_fill_brewer(palette = "Set1")
 
-density_182DPF <- ShellLength %>% 
-                  dplyr::filter(Age_DPF %in% 182) %>% 
+density_217DPF <- ShellLength %>% 
+                  dplyr::filter(Age_DPF %in% 217) %>% 
                   ggplot(aes(x=Length_um)) + 
                     geom_density(aes(x = Length_um, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                     theme_bw() +
@@ -63,10 +63,48 @@ pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airrad
 print(Alldensity) # print the model diagnostics 
 dev.off()
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density_182DPF.pdf"), width = 8, height = 6)
-print(density_182DPF) # print the model diagnostics 
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density_217DPF.pdf"), width = 8, height = 6)
+print(density_217DPF) # print the model diagnostics 
 dev.off()
 ```
+
+
+```{r, gonad dry weight}
+library(dplyr)
+library(tidyr)
+TDW_AFDW$Treatment        <- as.factor(TDW_AFDW$pH)
+TDW_AFDW$Gonad_proportion <- (TDW_AFDW$Dry_Gonad_weight_g / (TDW_AFDW$Dry_Gonad_weight_g +TDW_AFDW$Dry_Tissue_weight_g) ) * 100
+
+
+
+Allboxplot_gonad     <- ggplot(data = TDW_AFDW, aes(x=Treatment, y=Dry_Gonad_weight_g, fill = Treatment)) + 
+                          geom_boxplot(alpha = 0.2) + 
+                          geom_jitter(position=position_jitter(0.1)) +
+                          theme_bw() +
+                          #facet_wrap( ~ Date_sampled) + 
+                          scale_fill_brewer(palette = "Set1") + 
+                          ggtitle("Gonad dry weight (g) ")
+Allboxplot_gonad
+
+
+Allboxplot_gonad_prop <- ggplot(data = TDW_AFDW, aes(x=Treatment, y=Gonad_proportion, fill = Treatment)) + 
+                          geom_boxplot(alpha = 0.2) + 
+                          geom_jitter(position=position_jitter(0.1)) +
+                          theme_bw() +
+                          #facet_wrap( ~ Date_sampled) + 
+                          scale_fill_brewer(palette = "Set1") + 
+                          ggtitle("Gonad proportion (%) [ gonad wt / (gonad + other tissue wt) ] ")
+Allboxplot_gonad_prop
+
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop)
+
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Gonad_dry_weight.pdf"), width = 12, height = 6)
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop) # print the model diagnostics 
+dev.off()
+
+```
+
+
 
 ```{r, TDW}
 library(dplyr)
@@ -75,25 +113,28 @@ TDW_AFDW$Treatment <- as.factor(TDW_AFDW$pH)
 
 
 Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% 
+                      dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Dry_Shell_weight_g)) + 
                       geom_density(aes(x = Dry_Shell_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
-                      ggtitle("Shell dry weight (mg)") +
+                      ggtitle("Shell dry weight (SDW, g)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
 Alldensity_SDW
 
 
 Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% 
-                    ggplot(aes(x=Dry_Tissue_weight_g)) + 
+                      dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
+                      ggplot(aes(x=Dry_Tissue_weight_g)) + 
                       geom_density(aes(x = Dry_Tissue_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
-                      ggtitle("Tissue dry weight (mg)") +
+                      ggtitle("Tissue dry weight (TDW, g)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
- Alldensity_TDW
+Alldensity_TDW
 
 CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% 
+                      dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Condition_index_drywtRatio_Walne1976)) + 
                       geom_density(aes(x = Condition_index_drywtRatio_Walne1976, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
                       theme_bw() +
@@ -102,15 +143,21 @@ CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne19
                       scale_fill_brewer(palette = "Set1")
 CI_TDW
 
-CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_ADFW_div_length < 0) %>% 
-                      ggplot(aes(x=Condition_index_ADFW_div_length)) + 
-                      geom_density(aes(x = Condition_index_ADFW_div_length, group=Treatment, fill=Treatment, ..scaled..),alpha = 0.7, adjust=1.5) + 
+CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_TotalADFW_div_length < 0) %>% 
+                      dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
+                      ggplot(aes(x=Condition_index_TotalADFW_div_length)) + 
+                      geom_density(aes(x = Condition_index_TotalADFW_div_length, group=Treatment, fill=Treatment, ..scaled..),alpha = 0.7, adjust=1.5) + 
                       theme_bw() +
-                      ggtitle("CI (AFDW / SL)") +
+                      ggtitle("CI (Total AFDW / SL)") +
                       facet_wrap( ~ Date_sampled) + 
                       scale_fill_brewer(palette = "Set1")
 CI_AFDW
+
+
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Condition_indices.pdf"), width = 12, height = 6)
 ggarrange(Alldensity_SDW,Alldensity_TDW,CI_TDW, CI_AFDW)
+dev.off()
+
 ```
 
 
