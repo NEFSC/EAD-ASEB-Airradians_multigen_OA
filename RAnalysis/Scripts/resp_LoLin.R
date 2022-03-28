@@ -12,6 +12,7 @@ library(dplyr)
 library(lubridate)
 library(rMR) 
 library(dplyr)
+library(stringr)
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
@@ -121,9 +122,11 @@ for(i in 5:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               # inside 'j' loop - for each 'raw' txt file 'm', call each O2 sensor/resp chamber 'j' for analysis
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
-              Resp_loop         <- (Resp.Data_15sec[,c(3,j)]) %>% 
-                                              dplyr::filter((Resp.Data_15sec[,c(3,j)])[,2] > 80) %>%
-                                              dplyr::filter(!(Resp.Data_15sec[,c(3,j)])[,2] %in% 'NaN') %>% # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
+              Resp_loopNAsOM    <- (Resp.Data_15sec[,c(3,j)]) %>% 
+                                              dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
+                                              
+              Resp_loop         <- Resp_loopNAsOM %>%                                  
+                                              dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
                                               dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
                                               dplyr::filter(minutes > max(minutes) -20) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
 
@@ -176,16 +179,16 @@ for(i in 5:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                             # save plots every inside loop and name by date_run_vialposition
                           if (gsub(".*_raw.","", file.names.table[m,1]) == "txt") {
                             #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", sub("_raw.*","",file.names.table[m,1]),"_",colnames(Resp_loop)[2],"_regression.pdf"))
-                            pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", sub("_raw.*","",file.names.table[m,1]),"_",colnames(Resp_loop)[2],"_regression.pdf"))
+                            pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", sub("_raw.*","",file.names.table[m,1]),"_",colnames(Resp_loop)[2],"_regression.pdf"))
                             plot(model)
                             dev.off()
                             } else if (folder.names.table[i,] == '20210930') {
                               #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr( (sub(".*M_","",file.names.table[m,1])), 1,13),"_",colnames(Resp_loop)[2],"_regression.pdf"))
-                              pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr( (sub(".*M_","",file.names.table[m,1])), 1,13),"_",colnames(Resp_loop)[2],"_regression.pdf"))
+                              pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr( (sub(".*M_","",file.names.table[m,1])), 1,13),"_",colnames(Resp_loop)[2],"_regression.pdf"))
                               plot(model)
                               dev.off() } else { # just for the SDR run on 20211025 .csv file 
                                 #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
-                                pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
+                                pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
                                 plot(model)
                                 dev.off()
                                 }
