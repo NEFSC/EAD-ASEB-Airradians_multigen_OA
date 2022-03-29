@@ -14,6 +14,7 @@ library(stringr)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 path.p    <- "Data/Respiration" #the location of all your respirometry files 
@@ -152,5 +153,6 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
 
 # write the table 
 write.table(df_total,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
+write.table(df_total,"C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
 
 

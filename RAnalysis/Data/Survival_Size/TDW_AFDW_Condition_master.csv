@@ -1,442 +1,442 @@
-Date_sampled,pH,Tank_Replicate,pH_Replicate,Shell_length_mm,New_tin_ID,Shell_Tin_ID,Shell_Tin_Weight_g,Dry_Shell_Tin_Weight_g,Dry_Shell_weight_g,Tissue_Tin_ID,Tissue_Tin_Weight_g,Dry_Tissue_Tin_Weight_g,Dry_Tissue_weight_g,Gonad_Tin_ID,Gonad_stage,Gonad_Tin_Weight_g,Dry_Gonad_Tin_Weight_g,Dry_Gonad_weight_g,Whole_animal_dry_weight_g,Condition_index_drywtRatio_Walne1976,Shell_ash_weight_g_with_tin,Tissue_ash_weight_with_g_tin,Gonad_ash_weight_g_with_tin,Total_ash_weight_g_with_tin,TotalAFDW_g,Condition_index_TotalADFW_div_length,notes
-9/14/2021,7.5,A,7.5_A,1.97048,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.869,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,B,7.5_B,2.09718,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.418,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,C,7.5_C,2.88012,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.185,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,D,7.5_D,2.72653,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.958,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,A,7.5_A,2.21222,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.812,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,B,7.5_B,2.82212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.733,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,C,7.5_C,2.68751,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.379,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,D,7.5_D,2.6591,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.821,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,A,7.5_A,2.25305,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.638,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,B,7.5_B,3.16395,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.028,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,C,7.5_C,2.15083,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.646,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,7.5,D,7.5_D,1.91671,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.575,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,A,8_A,1.73749,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,B,8_B,2.70979,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,C,8_C,2.28173,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,D,8_D,2.69297,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.982,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,A,8_A,2.974,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.765,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,B,8_B,2.10965,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.326,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,C,8_C,2.45271,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.008,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,D,8_D,3.49129,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.619,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,A,8_A,1.97436,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.556,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,B,8_B,2.13934,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.718,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,C,8_C,1.79606,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.37,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/14/2021,8,D,8_D,2.96972,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.944,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,A,7.5_A,3.74003,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.447,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,B,7.5_B,3.56109,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.31,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,C,7.5_C,3.40603,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.443,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,D,7.5_D,3.23679,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.862,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,A,7.5_A,2.53563,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.701,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,B,7.5_B,2.71797,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.384,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,C,7.5_C,3.91636,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.153,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,D,7.5_D,3.90023,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.805,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,A,7.5_A,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.817,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,B,7.5_B,2.73468,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.652,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,C,7.5_C,2.64679,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.122,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,D,7.5_D,4.07455,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.863,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,A,7.5_A,3.82627,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.107,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,B,7.5_B,4.47419,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,6.821,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,C,7.5_C,5.21802,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.898,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,D,7.5_D,3.66137,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.718,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,A,7.5_A,5.20282,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.981,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,B,7.5_B,3.97107,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.345,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,C,7.5_C,3.42545,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.781,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,7.5,D,7.5_D,5.31122,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.096,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,A,8_A,3.72656,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.777,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,B,8_B,4.27799,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,5.198,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,C,8_C,3.0219,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.602,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,D,8_D,5.54594,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,13.734,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,A,8_A,3.83344,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.283,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,B,8_B,5.08403,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.496,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,C,8_C,2.99494,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.79,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,D,8_D,3.10214,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.123,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,A,8_A,5.08044,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.619,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,B,8_B,4.72511,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,7.79,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,C,8_C,3.5286,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.149,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,D,8_D,3.35375,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.027,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,A,8_A,2.56909,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.218,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,B,8_B,4.93921,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,9.948,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,C,8_C,3.00854,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.894,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,D,8_D,4.13083,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.762,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,A,8_A,4.5324,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,7.887,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,B,8_B,3.84153,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.529,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,C,8_C,2.29139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.801,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-9/30/2021,8,D,8_D,3.56903,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.801,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights"
-10/26/2021,8,A,8_A,13.28,NA,NA,0.4112,0.5637,0.1525,NA,0.4072,0.4191,0.0119,NA,NA,,,,0.1644,7.803278689,NA,NA,NA,0.5596,0.012,0.903614458,used for dry weights and condition only
-10/26/2021,8,A,8_A,9.47,NA,NA,0.4139,0.4746,0.0607,NA,0.4114,0.4166,0.0052,NA,NA,,,,0.0659,8.566721582,NA,NA,NA,0.472,0.0053,0.559662091,used for dry weights and condition only
-10/26/2021,8,A,8_A,13.01,NA,NA,0.41,0.5543,0.1443,NA,0.4106,0.4209,0.0103,NA,NA,,,,0.1546,7.137907138,NA,NA,NA,0.5543,0.0109,0.837817064,used for dry weights and condition only
-10/26/2021,8,A,8_A,9.85,NA,NA,0.416,0.4839,0.0679,NA,0.4075,0.4136,0.0061,NA,NA,,,,0.074,8.983799705,NA,NA,NA,0.4757,0.0058,0.588832487,used for dry weights and condition only
-10/26/2021,8,A,8_A,12.64,NA,NA,0.4125,0.5326,0.1201,NA,0.4115,0.4242,0.0127,NA,NA,,,,0.1328,10.57452123,NA,NA,NA,0.5328,0.0115,0.909810127,used for dry weights and condition only
-10/26/2021,8,A,8_A,11.76,NA,NA,0.4094,0.516,0.1066,NA,0.407,0.4173,0.0103,NA,NA,,,,0.1169,9.662288931,NA,NA,NA,0.5156,0.0083,0.705782313,used for dry weights and condition only
-10/26/2021,8,A,8_A,7.45,NA,NA,0.411,0.4371,0.0261,NA,0.4086,0.4111,0.0025,NA,NA,,,,0.0286,9.578544061,NA,NA,NA,0.435,0.0022,0.295302013,used for dry weights and condition only
-10/26/2021,8,A,8_A,6.92,NA,NA,0.4082,0.4338,0.0256,NA,0.4089,0.4113,0.0024,NA,NA,,,,0.028,9.375,NA,NA,NA,0.4351,0.0018,0.260115607,used for dry weights and condition only
-10/26/2021,8,A,8_A,9.99,NA,6A2,0.4188,0.4868,0.068,6A1,0.4162,0.4227,0.0065,NA,NA,,,,0.0745,9.558823529,NA,NA,NA,0.4855,0.0052,0.520520521,used for dry weights and condition only
-10/26/2021,8,A,8_A,7.19,NA,6A4,0.4233,0.4482,0.0249,6A3,0.4155,0.41779,0.00229,NA,NA,,,,0.02719,9.196787149,NA,NA,NA,0.4403,0.00239,0.33240612,used for dry weights and condition only
-10/26/2021,8,A,8_A,4.39,NA,6A6,0.4161,0.4215,0.0054,6A5,0.4076,0.4081,0.0005,NA,NA,,,,0.0059,9.259259259,NA,NA,NA,0.412,0.0015,0.341685649,used for dry weights and condition only
-10/26/2021,8,B,8_B,13.21,NA,6A8,0.4113,0.5631,0.1518,6A7,0.41,0.4257,0.0157,NA,NA,,,,0.1675,10.34255599,NA,NA,NA,0.5691,0.0084,0.635881908,used for dry weights and condition only
-10/26/2021,8,B,8_B,9.19,NA,6A10,0.4126,0.4568,0.0442,6A9,0.4102,0.4142,0.004,NA,NA,,,,0.0482,9.049773756,NA,NA,NA,0.4559,0.0025,0.272034821,used for dry weights and condition only
-10/26/2021,8,B,8_B,8.56,NA,6A12,0.4104,0.4578,0.0474,6A11,0.4162,0.4212,0.005,NA,NA,,,,0.0524,10.54852321,NA,NA,NA,0.4652,0.0034,0.397196262,used for dry weights and condition only
-10/26/2021,8,B,8_B,5.86,NA,6B4,0.4129,0.4245,0.0116,6B3,0.4151,0.4159,0.0008,NA,NA,,,,0.0124,6.896551724,NA,NA,NA,0.4275,0,0,used for dry weights and condition only
-10/26/2021,8,B,8_B,5.77,NA,6B6,0.4123,0.4239,0.0116,6B5,0.4114,0.4121,0.0007,NA,NA,,,,0.0123,6.034482759,NA,NA,NA,0.4227,0.001,0.173310225,used for dry weights and condition only
-10/26/2021,8,B,8_B,6.04,NA,6B8,0.4171,0.4235,0.0064,6B7,0.4101,0.4113,0.0012,NA,NA,,,,0.0076,18.75,NA,NA,NA,0.4216,-0.0039,-0.645695364,used for dry weights and condition only
-10/26/2021,8,B,8_B,11.08,NA,6B10,0.4195,0.5112,0.0917,6B9,0.419,0.4276,0.0086,NA,NA,,,,0.1003,9.378407852,NA,NA,NA,0.5142,0.0051,0.460288809,used for dry weights and condition only
-10/26/2021,8,B,8_B,5.73,NA,6B12,0.4163,0.4285,0.0122,6B11,0.4188,0.4203,0.0015,NA,NA,,,,0.0137,12.29508197,NA,NA,NA,0.431,0.0015,0.261780105,used for dry weights and condition only
-10/26/2021,8,B,8_B,8.68,NA,6C2,0.4137,0.4521,0.0384,6C1,0.414,0.4179,0.0039,NA,NA,,,,0.0423,10.15625,NA,NA,NA,0.4536,0.0027,0.311059908,used for dry weights and condition only
-10/26/2021,8,B,8_B,12.5,NA,6B2,0.4107,0.5398,0.1291,6B1,0.4186,0.433,0.0144,NA,NA,,,,0.1435,11.15414407,NA,NA,NA,0.5527,0.0094,0.752,used for dry weights and condition only
-10/26/2021,8,C,8_C,14.7,NA,6C4,0.4114,0.5822,0.1708,6C3,0.414,0.4337,0.0197,NA,NA,,,,0.1905,11.53395785,NA,NA,NA,0.591,0.0135,0.918367347,used for dry weights and condition only
-10/26/2021,8,C,8_C,13.42,NA,6C6,0.4089,0.5808,0.1719,6C5,0.4156,0.4331,0.0175,NA,NA,,,,0.1894,10.18033741,NA,NA,NA,0.5844,0.0206,1.535022355,used for dry weights and condition only
-10/26/2021,8,C,8_C,11.69,NA,6C8,0.4153,0.5229,0.1076,6C7,0.4187,0.4301,0.0114,NA,NA,,,,0.119,10.59479554,NA,NA,NA,0.5352,0.0025,0.213857998,used for dry weights and condition only
-10/26/2021,8,C,8_C,4.59,NA,6C10,0.4156,0.4224,0.0068,6C9,0.4158,0.4165,0.0007,NA,NA,,,,0.0075,10.29411765,NA,NA,NA,0.422,0.0013,0.283224401,used for dry weights and condition only
-10/26/2021,8,D,8_D,11.66,NA,5C8,0.42,0.524,0.104,5C7,0.4174,0.4293,0.0119,NA,NA,,,,0.1159,11.44230769,NA,NA,NA,0.5241,0.0092,0.789022299,used for dry weights and condition only
-10/26/2021,8,D,8_D,11.75,NA,5C10,0.4192,0.5272,0.108,5C9,0.4159,0.4281,0.0122,NA,NA,,,,0.1202,11.2962963,NA,NA,NA,0.5258,0.0103,0.876595745,used for dry weights and condition only
-10/26/2021,8,D,8_D,8.84,NA,5C12,0.418,0.4612,0.0432,5C11,0.4217,0.4259,0.0042,NA,NA,,,,0.0474,9.722222222,NA,NA,NA,0.4652,0.0039,0.441176471,used for dry weights and condition only
-10/26/2021,8,D,8_D,8.05,NA,5B2,0.4126,0.4507,0.0381,5B1,0.4078,0.4113,0.0035,NA,NA,,,,0.0416,9.186351706,NA,NA,NA,0.4459,0.0035,0.434782609,used for dry weights and condition only
-10/26/2021,8,D,8_D,7.76,NA,5B4,0.4107,0.4404,0.0297,5B3,0.4157,0.416,0.0003,NA,NA,,,,0.03,1.01010101,NA,NA,NA,0.4442,0.0015,0.193298969,no tissue?
-10/26/2021,8,D,8_D,7.75,NA,5A10,0.4147,0.4445,0.0298,5A9,0.4129,0.4159,0.003,NA,NA,,,,0.0328,10.06711409,NA,NA,NA,0.4426,0.0031,0.4,used for dry weights and condition only
-10/26/2021,8,D,8_D,7.02,NA,5A12,0.4135,0.4366,0.0231,5A11,0.4154,0.4175,0.0021,NA,NA,,,,0.0252,9.090909091,NA,NA,NA,0.4379,0.0027,0.384615385,used for dry weights and condition only
-10/26/2021,8,D,8_D,7.13,NA,5C2,0.4116,0.4347,0.0231,5C1,0.4113,0.4134,0.0021,NA,NA,,,,0.0252,9.090909091,NA,NA,NA,0.4342,0.0023,0.322580645,used for dry weights and condition only
-10/26/2021,8,D,8_D,7.52,NA,5C4,0.4187,0.428,0.0093,5C3,0.4214,0.422,0.0006,NA,NA,,,,0.0099,6.451612903,NA,NA,NA,0.4307,0.0006,0.079787234,used for dry weights and condition only
-10/26/2021,8,D,8_D,4.49,NA,5C6,0.4222,0.428,0.0058,5C5,0.4195,0.4203,0.0008,NA,NA,,,,0.0066,13.79310345,NA,NA,NA,0.4256,0.0005,0.111358575,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,7.58,NA,5C4,0.4177,0.4437,0.026,5C3,0.4118,0.4146,0.0028,NA,NA,,,,0.0288,10.76923077,NA,NA,NA,0.4378,0.0028,0.36939314,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,10.75,NA,5C6,0.4147,0.4972,0.0825,5C5,0.4126,0.4207,0.0081,NA,NA,,,,0.0906,9.818181818,NA,NA,NA,0.4963,0.0069,0.641860465,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,7.09,NA,5C8,0.41,0.4331,0.0231,5C7,0.4112,0.4126,0.0014,NA,NA,,,,0.0245,6.060606061,NA,NA,NA,0.434,0.0017,0.23977433,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,6.98,NA,5C10,0.4171,0.4366,0.0195,5C9,0.416,0.4195,0.0035,NA,NA,,,,0.023,17.94871795,NA,NA,NA,0.4356,0.0034,0.487106017,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,11.54,NA,5C12,0.4143,0.5162,0.1019,5C11,0.412,0.4211,0.0091,NA,NA,,,,0.111,8.930323847,NA,NA,NA,0.5134,0.0096,0.831889082,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,6.6,NA,5B6,0.4142,0.4325,0.0183,5B5,0.4156,0.4175,0.0019,NA,NA,,,,0.0202,10.38251366,NA,NA,NA,0.434,0.0018,0.272727273,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,6.85,NA,5B8,0.412,0.4324,0.0204,5B7,0.4141,0.4163,0.0022,NA,NA,,,,0.0226,10.78431373,NA,NA,NA,0.4344,0.0023,0.335766423,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,6.3,NA,5B10,0.4203,0.4335,0.0132,5B9,0.408,0.4096,0.0016,NA,NA,,,,0.0148,12.12121212,NA,NA,NA,0.4209,0.0019,0.301587302,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,6.81,NA,5B12,0.4138,0.4351,0.0213,5B11,0.4139,0.4157,0.0018,NA,NA,,,,0.0231,8.450704225,NA,NA,NA,0.4351,0.0019,0.279001468,used for dry weights and condition only
-10/26/2021,7.5,A,7.5_A,5.6,NA,5C2,0.4116,0.4234,0.0118,5C1,0.4113,0.4139,0.0026,NA,NA,,,,0.0144,22.03389831,NA,NA,NA,0.4227,0.003,0.535714286,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,5.92,NA,4A10,0.4148,0.4294,0.0146,4A9,0.4177,0.4195,0.0018,NA,NA,,,,0.0164,12.32876712,NA,NA,NA,0.4328,0.0013,0.219594595,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,9.44,NA,4A12,0.4135,0.4711,0.0576,4A11,0.4163,0.4219,0.0056,NA,NA,,,,0.0632,9.722222222,NA,NA,NA,0.4759,0.0036,0.381355932,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,5.24,NA,4B2,0.412,0.4205,0.0085,4B1,0.4204,0.4213,0.0009,NA,NA,,,,0.0094,10.58823529,NA,NA,NA,0.4292,0.0006,0.114503817,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,6.71,NA,4B4,0.4121,0.4318,0.0197,4B3,0.417,0.4194,0.0024,NA,NA,,,,0.0221,12.18274112,NA,NA,NA,0.4373,0.0018,0.268256334,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,6.32,NA,4A2,0.4144,0.431,0.0166,4A1,0.41,0.4116,0.0016,NA,NA,,,,0.0182,9.638554217,NA,NA,NA,0.427,0.0012,0.189873418,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,7.19,NA,4A4,0.4149,0.4396,0.0247,4A3,0.4109,0.4137,0.0028,NA,NA,,,,0.0275,11.33603239,NA,NA,NA,0.4371,0.0013,0.180806676,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,5.76,NA,4A6,0.4183,0.4285,0.0102,4A5,0.4139,0.4148,0.0009,NA,NA,,,,0.0111,8.823529412,NA,NA,NA,0.4246,0.0004,0.069444444,used for dry weights and condition only
-10/26/2021,7.5,B,7.5_B,4.96,NA,4A8,0.4095,0.4182,0.0087,4A7,0.4094,0.4105,0.0011,NA,NA,,,,0.0098,12.64367816,NA,NA,NA,0.4182,0.001,0.201612903,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.15,NA,4C4,0.416,0.4416,0.0256,4C3,0.4111,0.4143,0.0032,NA,NA,,,,0.0288,12.5,NA,NA,NA,0.4368,0.0031,0.433566434,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.91,NA,4C6,0.4084,0.4402,0.0318,4C5,0.4165,0.4205,0.004,NA,NA,,,,0.0358,12.57861635,NA,NA,NA,0.4489,0.0034,0.429835651,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.08,NA,4C8,0.4104,0.4328,0.0224,4C7,0.4097,0.4125,0.0028,NA,NA,,,,0.0252,12.5,NA,NA,NA,0.4323,0.0026,0.367231638,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,6.06,NA,4C10,0.4094,0.4249,0.0155,4C9,0.4119,0.4138,0.0019,NA,NA,,,,0.0174,12.25806452,NA,NA,NA,0.4272,0.0021,0.346534654,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,5.8,NA,4C12,0.4114,0.423,0.0116,4C11,0.4139,0.4155,0.0016,NA,NA,,,,0.0132,13.79310345,NA,NA,NA,0.4256,0.0015,0.25862069,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.04,NA,4B6,0.4079,0.4325,0.0246,4B5,0.4144,0.4164,0.002,NA,NA,,,,0.0266,8.130081301,NA,NA,NA,0.4379,0.0031,0.440340909,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.25,NA,4B8,0.4144,0.4393,0.0249,4B7,0.4097,0.4124,0.0027,NA,NA,,,,0.0276,10.84337349,NA,NA,NA,0.4358,0.0015,0.206896552,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,7.98,NA,4B10,0.4153,0.449,0.0337,4B9,0.4161,0.4202,0.0041,NA,NA,,,,0.0378,12.16617211,NA,NA,NA,0.449,0.0049,0.614035088,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,5.95,NA,4B12,0.4114,0.4277,0.0163,4B11,0.4179,0.4189,0.001,NA,NA,,,,0.0173,6.134969325,NA,NA,NA,0.4342,0.001,0.168067227,used for dry weights and condition only
-10/26/2021,7.5,C,7.5_C,5.97,NA,4C2,0.4134,0.4269,0.0135,4C1,0.4151,0.4172,0.0021,NA,NA,,,,0.0156,15.55555556,NA,NA,NA,0.4287,0.002,0.335008375,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,4.6,NA,4A12,0.4098,0.4139,0.0041,4A11,0.4208,0.4219,0.0011,NA,NA,,,,0.0052,26.82926829,NA,NA,NA,0.432,-0.006,-1.304347826,"used for dry weights and condition only, shell fell apart likley underestimted"
-10/26/2021,7.5,D,7.5_D,8.55,NA,4B2,0.4096,0.4556,0.046,4B1,0.4201,0.4244,0.0043,NA,NA,,,,0.0503,9.347826087,NA,NA,NA,0.6246,-0.1542,-18.03508772,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,8.1,NA,4B4,0.4114,0.4459,0.0345,4B3,0.4179,0.4223,0.0044,NA,NA,,,,0.0389,12.75362319,NA,NA,NA,0.4526,0.0042,0.518518519,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,5.43,NA,4B6,0.4093,0.4209,0.0116,4B5,0.4193,0.4204,0.0011,NA,NA,,,,0.0127,9.482758621,NA,NA,NA,0.4297,0.0023,0.423572744,"used for dry weights and condition only, shell fell apart likley underestimted"
-10/26/2021,7.5,D,7.5_D,8.8,NA,4B8,0.4107,0.4528,0.0421,4B7,0.4135,0.419,0.0055,NA,NA,,,,0.0476,13.06413302,NA,NA,NA,0.4564,0.0047,0.534090909,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,7.64,NA,4A2,0.4162,0.4481,0.0319,4A1,0.4075,0.4112,0.0037,NA,NA,,,,0.0356,11.59874608,NA,NA,NA,0.4402,0.0029,0.379581152,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,6.17,NA,4A4,0.4135,0.4292,0.0157,4A3,0.4124,0.414,0.0016,NA,NA,,,,0.0173,10.1910828,NA,NA,NA,0.428,0.0017,0.275526742,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,6.79,NA,4A6,0.4168,0.4407,0.0239,4A5,0.4104,0.4129,0.0025,NA,NA,,,,0.0264,10.46025105,NA,NA,NA,0.4345,0.0023,0.338733432,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,7.98,NA,4A8,0.4126,0.4472,0.0346,4A7,0.4113,0.4149,0.0036,NA,NA,,,,0.0382,10.40462428,NA,NA,NA,0.4458,0.0037,0.463659148,used for dry weights and condition only
-10/26/2021,7.5,D,7.5_D,6.75,NA,4A10,0.4102,0.4288,0.0186,4A9,0.4154,0.4177,0.0023,NA,NA,,,,0.0209,12.3655914,NA,NA,NA,0.4342,0.0021,0.311111111,used for dry weights and condition only
-10/26/2021,8,A,8_A,12.61,NA,NA,0.4106,0.5517,0.1411,NA,0.4128,0.4259,0.0131,NA,NA,,,,0.1542,9.284195606,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,B,8_B,8.94,NA,NA,0.409,0.4571,0.0481,NA,0.4168,0.4237,0.0069,NA,NA,,,,0.055,14.34511435,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,C,8_C,14.07,NA,NA,0.4196,0.5996,0.18,NA,0.4132,0.4326,0.0194,NA,NA,,,,0.1994,10.77777778,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,D,8_D,8.65,NA,NA,0.4136,0.4575,0.0439,NA,0.4118,0.4156,0.0038,NA,NA,,,,0.0477,8.656036446,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,A,8_A,14.31,NA,NA,0.4188,0.5912,0.1724,NA,0.4115,0.4275,0.016,NA,NA,,,,0.1884,9.280742459,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,B,8_B,11.61,NA,NA,0.4108,0.4954,0.0846,NA,0.4108,0.424,0.0132,NA,NA,,,,0.0978,15.60283688,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,C,8_C,12.53,NA,NA,0.4095,0.5424,0.1329,NA,0.4219,0.4362,0.0143,NA,NA,,,,0.1472,10.7599699,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,8,D,8_D,11.4,NA,NA,0.4137,0.5085,0.0948,NA,0.4135,0.4235,0.01,NA,NA,,,,0.1048,10.54852321,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,A,7.5_A,8.9,NA,NA,0.4111,0.4596,0.0485,NA,0.4139,0.4182,0.0043,NA,NA,,,,0.0528,8.865979381,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,B,7.5_B,7.03,NA,NA,0.4193,0.4459,0.0266,NA,0.4114,0.4144,0.003,NA,NA,,,,0.0296,11.27819549,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,C,7.5_C,7.4,NA,NA,0.4058,0.433,0.0272,NA,0.4154,0.4184,0.003,NA,NA,,,,0.0302,11.02941176,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,D,7.5_D,7.42,NA,NA,0.417,0.4445,0.0275,NA,0.4126,0.415,0.0024,NA,NA,,,,0.0299,8.727272727,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,A,7.5_A,13.49,NA,NA,0.4133,0.5504,0.1371,NA,0.4124,0.4267,0.0143,NA,NA,,,,0.1514,10.43034282,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,B,7.5_B,10.1,NA,NA,0.4118,0.4807,0.0689,NA,0.4117,0.4191,0.0074,NA,NA,,,,0.0763,10.74020319,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,C,7.5_C,9.55,NA,NA,0.4109,0.4686,0.0577,NA,0.418,0.4255,0.0075,NA,NA,,,,0.0652,12.9982669,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,D,7.5_D,8.89,NA,NA,0.4112,0.4531,0.0419,NA,0.4149,0.4202,0.0053,NA,NA,,,,0.0472,12.64916468,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,B,7.5_B,9.51,NA,NA,0.4087,0.4668,0.0581,NA,0.4157,0.4222,0.0065,NA,NA,,,,0.0646,11.18760757,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-10/26/2021,7.5,C,7.5_C,9.71,NA,NA,0.4107,0.4729,0.0622,NA,0.4097,0.4164,0.0067,NA,NA,,,,0.0689,10.77170418,NA,NA,NA,NA,NA,NA,scallops used for RR and CR
-12/2/2021,8,C,8_C,18.6,1,4A1,1.1858,1.608,0.4222,4A1,0.4128,0.4648,0.052,NA,NA,,,,0.4742,12.31643771,NA,NA,NA,0.8422,0.0448,2.408602151,used for dry weights and condition only
-12/2/2021,8,C,8_C,18.1,2,4A2,1.1737,1.55,0.3763,4A2,0.4156,0.4543,0.0387,NA,NA,,,,0.415,10.2843476,NA,NA,NA,0.7984,0.0322,1.779005525,used for dry weights and condition only
-12/2/2021,8,C,8_C,14.1,3,4A3,1.1745,1.3455,0.171,4A3,0.4193,0.4416,0.0223,NA,NA,,,,0.1933,13.04093567,NA,NA,NA,0.593,0.0196,1.390070922,used for dry weights and condition only
-12/2/2021,8,C,8_C,11.5,4,4A4,1.1805,1.2877,0.1072,4A4,0.4112,0.4242,0.013,NA,NA,,,,0.1202,12.12686567,NA,NA,NA,0.5195,0.0119,1.034782609,used for dry weights and condition only
-12/2/2021,8,C,8_C,10.6,5,4A5,1.188,1.2674,0.0794,4A5,0.4114,0.4212,0.0098,NA,NA,,,,0.0892,12.34256927,NA,NA,NA,0.4913,0.0093,0.877358491,used for dry weights and condition only
-12/2/2021,8,C,8_C,11,6,4A6,1.1643,1.265,0.1007,4A6,0.4175,0.4256,0.0081,NA,NA,,,,0.1088,8.043694141,NA,NA,NA,0.5175,0.0088,0.8,used for dry weights and condition only
-12/2/2021,8,C,8_C,10.4,7,4A7,1.1717,1.2394,0.0677,4A7,0.4092,0.4153,0.0061,NA,NA,,,,0.0738,9.010339734,NA,NA,NA,0.4774,0.0056,0.538461539,used for dry weights and condition only
-12/2/2021,8,C,8_C,5.8,8,4A8,1.1813,1.1963,0.015,4A8,0.4206,0.4219,0.0013,NA,NA,,,,0.0163,8.666666667,NA,NA,NA,0.4365,0.0004,0.068965517,used for dry weights and condition only
-12/2/2021,8,C,8_C,5.1,9,4A9,1.1833,1.1922,0.0089,4A9,0.4131,0.4138,0.0007,NA,NA,,,,0.0096,7.865168539,NA,NA,NA,0.4226,0.0001,0.019607843,used for dry weights and condition only
-12/2/2021,8,C,8_C,5.5,10,4A10,1.1695,1.1802,0.0107,4A10,0.4205,0.4216,0.0011,NA,NA,,,,0.0118,10.28037383,NA,NA,NA,0.432,0.0003,0.054545455,used for dry weights and condition only
-12/2/2021,8,B,8_B,3.6,11,4A11,1.1822,1.1849,0.0027,4A11,0.4136,0.4129,-0.0007,NA,NA,,,,0.002,-25.92592593,NA,NA,NA,0.4176,-0.002,-0.555555556,"used for dry weights and condition only, negative (dry tissue - tin)"
-12/2/2021,7.5,C,7.5_C,23,12,4A12,1.1779,1.8194,0.6415,4A12,0.4171,0.5027,0.0856,NA,NA,,,,0.7271,13.34372564,NA,NA,NA,1.0745,0.0697,3.030434783,used for dry weights and condition only
-12/2/2021,8,B,8_B,4.8,13,4B1,1.183,1.1902,0.0072,4B1,0.4179,0.4187,0.0008,NA,NA,,,,0.008,11.11111111,NA,NA,NA,0.4265,-0.0006,-0.125,used for dry weights and condition only
-12/2/2021,8,B,8_B,4.8,14,4B2,1.1857,1.1931,0.0074,4B2,0.4137,0.4136,-1.00E-04,NA,NA,,,,7.30E-03,-1.35E+00,NA,NA,NA,0.4208,0.0002,0.041666667,"used for dry weights and condition only, negative (dry tissue - tin) - labeled 'not good' by Genevieve"
-12/2/2021,7.5,C,7.5_C,22.1,15,4B3,1.1979,1.7228,0.5249,4B3,0.4172,0.4993,0.0821,NA,NA,,,,0.607,15.64107449,NA,NA,NA,0.9557,0.0685,3.099547511,used for dry weights and condition only
-12/2/2021,8,B,8_B,14.2,16,4B4,1.182,1.3758,0.1938,4B4,0.4145,0.4398,0.0253,NA,NA,,,,0.2191,13.05469556,NA,NA,NA,0.612,0.0216,1.521126761,used for dry weights and condition only
-12/2/2021,8,B,8_B,10.7,17,4B5,1.171,1.252,0.081,4B5,0.4132,0.4235,0.0103,NA,NA,,,,0.0913,12.71604938,NA,NA,NA,0.4957,0.0088,0.822429907,used for dry weights and condition only
-12/2/2021,8,B,8_B,10.7,18,4B6,1.1834,1.2512,0.0678,4B6,0.4087,0.4181,0.0094,NA,NA,,,,0.0772,13.86430678,NA,NA,NA,0.4784,0.0075,0.700934579,used for dry weights and condition only
-12/2/2021,8,B,8_B,9.8,19,4B7,1.1695,1.2235,0.054,4B7,0.4191,0.43,0.0109,NA,NA,,,,0.0649,20.18518519,NA,NA,NA,0.4726,0.0114,1.163265306,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,18.5,20,4B8,1.1805,1.5406,0.3601,4B8,0.4078,0.451,0.0432,NA,NA,,,,0.4033,11.99666759,NA,NA,NA,0.7713,0.0398,2.151351351,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,12.8,21,4B9,1.1834,1.2973,0.1139,4B9,0.4111,0.427,0.0159,NA,NA,,,,0.1298,13.9596137,NA,NA,NA,0.5274,0.0135,1.0546875,used for dry weights and condition only
-12/2/2021,8,B,8_B,7.9,22,4B10,1.1686,1.2026,0.034,4B10,0.4182,0.4226,0.0044,NA,NA,,,,0.0384,12.94117647,NA,NA,NA,0.4528,0.0038,0.481012658,used for dry weights and condition only
-12/2/2021,8,B,8_B,20.7,23,4B11,1.1855,1.7206,0.5351,4B11,0.4074,0.4772,0.0698,NA,NA,,,,0.6049,13.04429079,NA,NA,NA,0.955,0.0573,2.768115942,used for dry weights and condition only
-12/2/2021,8,B,8_B,19,24,4B12,1.1829,1.5537,0.3708,4B12,0.4122,0.4747,0.0625,NA,NA,,,,0.4333,16.85544768,NA,NA,NA,0.795,0.0505,2.657894737,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,11.8,25,4C1,1.1838,1.2749,0.0911,4C1,0.4151,0.4282,0.0131,NA,NA,,,,0.1042,14.37980241,NA,NA,NA,0.5082,0.0111,0.940677966,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,12,26,4C2,1.1727,1.2725,0.0998,4C2,0.4173,0.4308,0.0135,NA,NA,,,,0.1133,13.52705411,NA,NA,NA,0.5208,0.0098,0.816666667,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,10.4,27,4C3,1.1663,1.228,0.0617,4C3,0.4165,0.4265,0.01,NA,NA,,,,0.0717,16.20745543,NA,NA,NA,0.4795,0.0087,0.836538462,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,5.4,28,4C4,1.1816,1.1903,0.0087,4C4,0.4152,0.4161,0.0009,NA,NA,,,,0.0096,10.34482759,NA,NA,NA,0.4246,0.0002,0.037037037,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,5.7,29,4C5,1.2709,1.2808,0.0099,4C5,0.4174,0.4194,0.002,NA,NA,,,,0.0119,20.2020202,NA,NA,NA,0.4282,0.0011,0.192982456,used for dry weights and condition only
-12/2/2021,7.5,C,7.5_C,5,30,4C6,1.2664,1.275,0.0086,4C6,0.414,0.4148,0.0008,NA,NA,,,,0.0094,9.302325581,NA,NA,NA,0.423,0.0004,0.08,used for dry weights and condition only
-12/2/2021,8,A,8_A,21.9,31,4C7,1.2648,1.8794,0.6146,4C7,0.411,0.4901,0.0791,NA,NA,,,,0.6937,12.87015945,NA,NA,NA,1.0589,0.0458,2.091324201,used for dry weights and condition only
-12/2/2021,8,A,8_A,20.2,32,4C8,1.2713,1.7561,0.4848,4C8,0.4157,0.4797,0.064,NA,NA,,,,0.5488,13.20132013,NA,NA,NA,0.9226,0.0419,2.074257426,used for dry weights and condition only
-12/2/2021,8,A,8_A,15,33,4C9,1.2677,1.4725,0.2048,4C9,0.4105,0.4392,0.0287,NA,NA,,,,0.2335,14.01367188,NA,NA,NA,0.625,0.019,1.266666667,used for dry weights and condition only
-12/2/2021,8,A,8_A,10.2,34,4C10,1.287,1.355,0.068,4C10,0.4133,0.4227,0.0094,NA,NA,,,,0.0774,13.82352941,NA,NA,NA,0.4834,0.0073,0.715686275,used for dry weights and condition only
-12/2/2021,8,A,8_A,10.9,35,4C11,1.2904,1.365,0.0746,4C11,0.4162,0.4267,0.0105,NA,NA,,,,0.0851,14.07506702,NA,NA,NA,0.4914,0.0099,0.908256881,used for dry weights and condition only
-12/2/2021,8,A,8_A,10.9,36,4C12,1.2652,1.3334,0.0682,4C12,0.4177,0.428,0.0103,NA,NA,,,,0.0785,15.1026393,NA,NA,NA,0.4911,0.0051,0.467889908,used for dry weights and condition only
-12/2/2021,8,A,8_A,12.3,37,5A1,1.1803,1.3144,0.1341,5A1,0.414,0.4303,0.0163,NA,NA,,,,0.1504,12.15510813,NA,NA,NA,0.5543,0.0101,0.821138211,used for dry weights and condition only
-12/2/2021,8,A,8_A,5.4,38,5A2,1.2752,1.2856,0.0104,5A2,0.4105,0.4116,0.0011,NA,NA,,,,0.0115,10.57692308,NA,NA,NA,0.4211,0.0009,0.166666667,used for dry weights and condition only
-12/2/2021,8,A,8_A,5.8,39,5A3,1.2735,1.2849,0.0114,5A3,0.4136,0.4142,0.0006,NA,NA,,,,0.012,5.263157895,NA,NA,NA,0.4248,0.0008,0.137931035,used for dry weights and condition only
-12/2/2021,8,A,8_A,3.9,40,5A4,1.2706,1.275,0.0044,5A4,0.4126,0.4127,1.00E-04,NA,NA,,,,4.50E-03,2.27E+00,NA,NA,NA,0.4171,0,0,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,21.7,41,5A5,1.2718,1.8687,0.5969,5A5,0.4127,0.4931,0.0804,NA,NA,,,,0.6773,13.4695929,NA,NA,NA,1.0248,0.0652,3.004608295,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,21.3,42,5A6,1.2524,1.7901,0.5377,5A6,0.4173,0.4981,0.0808,NA,NA,,,,0.6185,15.02696671,NA,NA,NA,0.9656,0.0702,3.295774648,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,19.1,43,5A7,1.2843,1.6764,0.3921,5A7,0.4174,0.4727,0.0553,NA,NA,,,,0.4474,14.10354501,NA,NA,NA,0.8196,0.0452,2.366492147,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,12.2,44,5A8,1.2848,1.3967,0.1119,5A8,0.4119,0.4252,0.0133,NA,NA,,,,0.1252,11.88561215,NA,NA,NA,0.524,0.0131,1.073770492,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,12.9,45,5A9,1.2706,1.3683,0.0977,5A9,0.417,0.4316,0.0146,NA,NA,,,,0.1123,14.94370522,NA,NA,NA,0.517,0.0123,0.953488372,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,11.9,46,5A10,1.282,1.3792,0.0972,5A10,0.416,0.4293,0.0133,NA,NA,,,,0.1105,13.68312757,NA,NA,NA,0.5146,0.0119,1,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,11.9,47,5A11,1.2697,1.3624,0.0927,5A11,0.4125,0.4265,0.014,NA,NA,,,,0.1067,15.10248112,NA,NA,NA,0.5068,0.0124,1.042016807,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,5.7,48,5A12,1.2754,1.2824,0.007,5A12,0.4172,0.4173,1.00E-04,NA,NA,,,,7.10E-03,1.43E+00,NA,NA,NA,0.4255,-0.0012,-0.210526316,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,5.7,49,5B1,1.2515,1.26,0.0085,5B1,0.4148,0.4159,0.0011,NA,NA,,,,0.0096,12.94117647,NA,NA,NA,0.4231,0.0013,0.228070175,used for dry weights and condition only
-12/2/2021,7.5,A,7.5_A,5.6,50,5B2,1.2535,1.2605,0.007,5B2,0.4126,0.4143,0.0017,NA,NA,,,,0.0087,24.28571429,NA,NA,NA,0.4201,0.0012,0.214285714,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,20.8,51,5B3,1.2623,1.8023,0.54,5B3,0.4149,0.4821,0.0672,NA,NA,,,,0.6072,12.44444444,NA,NA,NA,0.9637,0.0584,2.807692308,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,18.9,52,5B4,1.2761,1.607,0.3309,5B4,0.4155,0.4649,0.0494,NA,NA,,,,0.3803,14.92898157,NA,NA,NA,0.7539,0.0419,2.216931217,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,17.2,53,5B5,1.2661,1.5631,0.297,5B5,0.4222,0.4549,0.0327,NA,NA,,,,0.3297,11.01010101,NA,NA,NA,0.7237,0.0282,1.639534884,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,11.1,54,5B6,1.2715,1.3506,0.0791,5B6,0.4126,0.4222,0.0096,NA,NA,,,,0.0887,12.13653603,NA,NA,NA,0.4929,0.0084,0.756756757,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,12.1,55,5B7,1.2713,1.366,0.0947,5B7,0.4093,0.4232,0.0139,NA,NA,,,,0.1086,14.67793031,NA,NA,NA,0.5068,0.0111,0.917355372,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,11.6,56,5B8,1.2583,1.3434,0.0851,5B8,0.4143,0.4227,0.0084,NA,NA,,,,0.0935,9.870740306,NA,NA,NA,0.5011,0.0067,0.577586207,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,10.1,57,5B9,1.2698,1.3343,0.0645,5B9,0.4108,0.4195,0.0087,NA,NA,,,,0.0732,13.48837209,NA,NA,NA,0.4773,0.0067,0.663366337,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,5.3,58,5B10,1.2835,1.2913,0.0078,5B10,0.4103,0.4103,0,NA,NA,,,,0.0078,0,NA,NA,NA,0.4185,-0.0004,-0.075471698,"used for dry weights and condition only, zero (dry tissue - tin)"
-12/2/2021,7.5,D,7.5_D,5,59,5B11,1.2604,1.2678,0.0074,5B11,0.4154,0.4156,0.0002,NA,NA,,,,0.0076,2.702702703,NA,NA,NA,0.4233,-0.0003,-0.06,used for dry weights and condition only
-12/2/2021,7.5,D,7.5_D,5.3,60,5B12,1.2715,1.2781,0.0066,5B12,0.4098,0.41,0.0002,NA,NA,,,,0.0068,3.03030303,NA,NA,NA,0.4174,-0.0008,-0.150943396,used for dry weights and condition only
-12/2/2021,8,D,8_D,21.1,61,5C1,1.295,1.7794,0.4844,5C1,0.4142,0.4787,0.0645,NA,NA,,,,0.5489,13.31544178,NA,NA,NA,0.9076,0.0555,2.630331754,used for dry weights and condition only
-12/2/2021,8,D,8_D,18.9,62,5C2,1.2826,1.6073,0.3247,5C2,0.4135,0.4613,0.0478,NA,NA,,,,0.3725,14.72128118,NA,NA,NA,0.7456,0.0404,2.137566138,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,19.9,63,5C3,1.2687,1.7073,0.4386,5C3,0.4116,0.4725,0.0609,NA,NA,,,,0.4995,13.88508892,NA,NA,NA,0.8589,0.0522,2.623115578,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,19.7,64,5C4,1.2883,1.783,0.4947,5C4,0.4073,0.4677,0.0604,NA,NA,,,,0.5551,12.20941985,NA,NA,NA,0.9099,0.0525,2.664974619,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,11.3,65,5C5,1.273,1.361,0.088,5C5,0.4103,0.423,0.0127,NA,NA,,,,0.1007,14.43181818,NA,NA,NA,0.5007,0.0103,0.911504425,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,13,66,5C6,1.2778,1.4138,0.136,5C6,0.4149,0.4306,0.0157,NA,NA,,,,0.1517,11.54411765,NA,NA,NA,0.5538,0.0128,0.984615385,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,11.3,67,5C7,1.2646,1.3642,0.0996,5C7,0.4176,0.4297,0.0121,NA,NA,,,,0.1117,12.14859438,NA,NA,NA,0.518,0.0113,1,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,11.3,68,5C8,1.2668,1.3404,0.0736,5C8,0.4175,0.427,0.0095,NA,NA,,,,0.0831,12.9076087,NA,NA,NA,0.4928,0.0078,0.690265487,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,5.5,69,5C9,1.2638,1.2716,0.0078,5C9,0.4164,0.4168,0.0004,NA,NA,,,,0.0082,5.128205128,NA,NA,NA,0.4242,0.0004,0.072727273,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,5.5,70,5C10,1.2725,1.2833,0.0108,5C10,0.4146,0.4154,0.0008,NA,NA,,,,0.0116,7.407407407,NA,NA,NA,0.4253,0.0009,0.163636364,used for dry weights and condition only
-12/2/2021,7.5,B,7.5_B,5.5,71,5C11,1.2659,1.276,0.0101,5C11,0.4123,0.4133,0.001,NA,NA,,,,0.0111,9.900990099,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,7.5,B,7.5_B,16.8,72,5C12,1.2658,1.532,0.2662,5C12,0.4156,0.4485,0.0329,NA,NA,,,,0.2991,12.35912847,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,8,D,8_D,18.5,73,6A1,1.2778,1.6297,0.3519,6A1,0.4155,0.4676,0.0521,NA,NA,,,,0.404,14.80534243,NA,NA,NA,0.7845,0.035,1.891891892,used for dry weights and condition only
-12/2/2021,8,D,8_D,14.3,74,6A2,1.2699,1.4152,0.1453,6A2,0.4138,0.4347,0.0209,NA,NA,,,,0.1662,14.38403304,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,8,D,8_D,13.3,75,6A3,1.2744,1.4201,0.1457,6A3,0.4147,0.4322,0.0175,NA,NA,,,,0.1632,12.01098147,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,8,D,8_D,11.2,76,6A4,1.2704,1.3673,0.0969,6A4,0.4168,0.4289,0.0121,NA,NA,,,,0.109,12.4871001,NA,NA,NA,0.5002,0.0256,2.285714286,used for dry weights and condition only
-12/2/2021,8,D,8_D,11.1,77,6A5,1.2777,1.3625,0.0848,6A5,0.4109,0.4192,0.0083,NA,NA,,,,0.0931,9.787735849,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,8,D,8_D,5.7,78,6A6,1.2901,1.2853,-0.0048,6A6,0.4119,0.4129,0.001,NA,NA,,,,-0.0038,-20.83333333,NA,NA,NA,NA,NA,NA,"used for dry weights and condition only, negative"
-12/2/2021,8,D,8_D,5.9,79,6A7,1.2689,1.2836,0.0147,6A7,0.415,0.4164,0.0014,NA,NA,,,,0.0161,9.523809524,NA,NA,NA,NA,NA,NA,error - dropped
-12/2/2021,8,D,8_D,6.7,80,6A8,1.2804,1.2873,0.0069,6A8,0.4131,0.4139,0.0008,NA,NA,,,,0.0077,11.5942029,NA,NA,NA,NA,NA,NA,error - dropped
-2/2/2022,7.5,A,7.5_A,14.9,81,81,1.2687,1.5134,0.2447,81,0.411,0.45,0.039,NA,NA,,,,0.2837,15.93788312,NA,NA,NA,0.6535,0.0412,2.765100671,scallops used for RR and CR
-2/2/2022,7.5,B,7.5_B,13.6,82,82,1.2658,1.4405,0.1747,82,0.4082,0.4405,0.0323,NA,NA,,,,0.207,18.48883801,NA,NA,NA,0.5835,0.0317,2.330882353,scallops used for RR and CR
-2/2/2022,7.5,C,7.5_C,14,83,83,1.2766,1.4782,0.2016,83,0.4175,0.4452,0.0277,NA,NA,,,,0.2293,13.74007937,NA,NA,NA,0.6177,0.0291,2.078571429,scallops used for RR and CR
-2/2/2022,8,A,8_A,14.35,84,84,1.2599,1.4786,0.2187,84,0.4141,0.4476,0.0335,NA,NA,,,,0.2522,15.31778692,NA,NA,NA,0.619,0.0473,3.296167247,scallops used for RR and CR
-2/2/2022,8,B,8_B,13.8,85,85,1.2857,1.4943,0.2086,85,0.4145,0.448,0.0335,NA,NA,,,,0.2421,16.05944391,NA,NA,NA,0.6286,0.028,2.028985507,scallops used for RR and CR
-2/2/2022,8,C,8_C,14.4,86,86,1.2563,1.4615,0.2052,86,0.4095,0.443,0.0335,NA,NA,,,,0.2387,16.32553606,NA,NA,NA,0.6212,0.027,1.875,scallops used for RR and CR
-2/2/2022,7.5,H,7.5_H,14.6,87,87,1.2937,1.4972,0.2035,87,0.4138,0.4457,0.0319,NA,NA,,,,0.2354,15.67567568,NA,NA,NA,0.62,0.0292,2,"used for dry weights and condition only, hemolymph extraction attempted"
-2/2/2022,7.5,D,7.5_D,14.75,88,88,1.2738,1.479,0.2052,88,0.4121,0.4324,0.0203,NA,NA,,,,0.2255,9.892787524,NA,NA,NA,0.6201,0.0175,1.186440678,scallops used for RR and CR
-2/2/2022,7.5,E,7.5_E,13.2,89,89,1.2711,1.4182,0.1471,89,0.4112,0.4376,0.0264,NA,NA,,,,0.1735,17.94697485,NA,NA,NA,0.5629,0.0218,1.651515152,scallops used for RR and CR
-2/2/2022,7.5,F,7.5_F,13,90,90,1.2673,1.4323,0.165,90,0.4088,0.4361,0.0273,NA,NA,,,,0.1923,16.54545455,NA,NA,NA,0.5757,0.0254,1.953846154,scallops used for RR and CR
-2/2/2022,8,D,8_D,14,91,91,1.2648,1.472,0.2072,91,0.4101,0.4455,0.0354,NA,NA,,,,0.2426,17.08494208,NA,NA,NA,0.6197,0.033,2.357142857,scallops used for RR and CR
-2/2/2022,8,E,8_E,14.8,92,92,1.2783,1.5155,0.2372,92,0.4129,0.4511,0.0382,NA,NA,,,,0.2754,16.10455312,NA,NA,NA,0.6533,0.035,2.364864865,scallops used for RR and CR
-2/2/2022,8,F,8_F,14.2,93,93,1.2638,1.4582,0.1944,93,0.4158,0.4513,0.0355,NA,NA,,,,0.2299,18.26131687,NA,NA,NA,0.6148,0.0309,2.176056338,scallops used for RR and CR
-2/2/2022,7.5,B,7.5_B,13.5,94,94,1.2778,1.4364,0.1586,94,0.414,0.4405,0.0265,NA,NA,,,,0.1851,16.70870113,NA,NA,NA,0.5758,0.0233,1.725925926,used for dry weights and condition only
-2/2/2022,7.5,A,7.5_A,13.7,95,95,1.2565,1.4474,0.1909,95,0.4091,0.4417,0.0326,NA,NA,,,,0.2235,17.07700367,NA,NA,NA,0.6043,0.0283,2.065693431,used for dry weights and condition only
-2/2/2022,7.5,E,7.5_E,14.1,96,96,1.2757,1.4779,0.2022,96,0.4173,0.4525,0.0352,NA,NA,,,,0.2374,17.40850643,NA,NA,NA,0.624,0.0307,2.177304965,used for dry weights and condition only
-2/2/2022,7.5,F,7.5_F,13.8,97,97,1.2812,1.4868,0.2056,97,0.411,0.4456,0.0346,NA,NA,,,,0.2402,16.82879377,NA,NA,NA,0.624,0.0272,1.971014493,used for dry weights and condition only
-2/2/2022,7.5,G,7.5_G,13.65,98,98,1.2513,1.4525,0.2012,98,0.4126,0.4452,0.0326,NA,NA,,,,0.2338,16.2027833,NA,NA,NA,0.5996,0.0468,3.428571429,used for dry weights and condition only
-2/2/2022,7.5,D,7.5_D,13.5,99,99,1.2656,1.4376,0.172,99,0.4108,0.4385,0.0277,NA,NA,,,,0.1997,16.10465116,NA,NA,NA,0.5768,0.0337,2.496296296,used for dry weights and condition only
-2/2/2022,8,A,8_A,13.5,100,100,1.2872,1.4447,0.1575,100,0.4099,0.4407,0.0308,NA,NA,,,,0.1883,19.55555556,NA,NA,NA,0.5872,0.011,0.814814815,used for dry weights and condition only
-2/2/2022,8,D,8_D,14.3,101,101,1.2705,1.4606,0.1901,101,0.4074,0.4409,0.0335,NA,NA,,,,0.2236,17.62230405,NA,NA,NA,0.5932,0.0378,2.643356643,used for dry weights and condition only
-2/2/2022,8,B,8_B,14.4,102,102,1.2755,1.4849,0.2094,102,0.4108,0.4354,0.0246,NA,NA,,,,0.234,11.747851,NA,NA,NA,0.608,0.0368,2.555555556,used for dry weights and condition only
-2/2/2022,8,E,8_E,13.7,103,103,1.2746,1.4399,0.1653,103,0.4141,0.4427,0.0286,NA,NA,,,,0.1939,17.30187538,NA,NA,NA,0.5896,0.0184,1.343065693,used for dry weights and condition only
-2/2/2022,8,H,8_H,14.1,104,104,1.2718,1.4827,0.2109,104,0.4096,0.4435,0.0339,NA,NA,,,,0.2448,16.07396871,NA,NA,NA,0.6156,0.0388,2.75177305,used for dry weights and condition only
-2/2/2022,8,G,8_G,14.1,105,105,1.28,1.4589,0.1789,105,0.4142,0.4469,0.0327,NA,NA,,,,0.2116,18.2783678,NA,NA,NA,0.6075,0.0183,1.29787234,used for dry weights and condition only
-2/2/2022,8,F,8_F,13.2,106,106,1.2712,1.4527,0.1815,106,0.4146,0.4465,0.0319,NA,NA,,,,0.2134,17.57575758,NA,NA,NA,0.6053,0.0227,1.71969697,"used for dry weights and condition only, hemolymph extraction attempted"
-2/2/2022,8,G,8_G,14,107,107,1.2865,1.4379,0.1514,107,0.4162,0.4485,0.0323,NA,NA,,,,0.1837,21.334214,NA,NA,NA,0.5829,0.017,1.214285714,scallops used for RR and CR
-2/2/2022,8,H,8_H,14,108,108,1.281,1.4816,0.2006,108,0.4127,0.4472,0.0345,NA,NA,,,,0.2351,17.19840479,NA,NA,NA,0.638,0.0098,0.7,scallops used for RR and CR
-2/2/2022,8,C,8_C,14.8,109,109,1.2827,1.5155,0.2328,109,0.411,0.4507,0.0397,NA,NA,,,,0.2725,17.0532646,NA,NA,NA,0.6488,0.0347,2.344594595,scallops used for RR and CR
-2/2/2022,7.5,G,7.5_G,14,110,110,1.2502,1.423,0.1728,110,0.4102,0.4464,0.0362,NA,NA,,,,0.209,20.94907407,NA,NA,NA,0.5884,0.0308,2.2,scallops used for RR and CR
-2/2/2022,7.5,H,7.5_H,13.6,111,111,1.2639,1.4369,0.173,111,0.4121,0.4445,0.0324,NA,NA,,,,0.2054,18.7283237,NA,NA,NA,0.5888,0.0287,2.110294118,scallops used for RR and CR
-2/2/2022,7.5,C,7.5_C,15.1,112,112,1.2554,1.4935,0.2381,112,0.4148,0.4572,0.0424,NA,NA,,,,0.2805,17.80764385,NA,NA,NA,0.6575,0.0378,2.503311258,scallops used for RR and CR
-2/28/2022,8,A,8_A,19.4,113,113,1.2607,1.8549,0.5942,113,0.4149,0.5123,0.0974,NA,NA,,,,0.6916,16.39178728,NA,NA,NA,1.0219,0.0846,4.360824742,used for dry weights and condition only
-2/28/2022,8,A,8_A,20.2,114,114,1.2509,2.0208,0.7699,114,0.4094,0.5276,0.1182,NA,NA,,,,0.8881,15.3526432,NA,NA,NA,1.199,0.0985,4.876237624,used for dry weights and condition only
-2/28/2022,8,A,8_A,21.25,115,115,1.2661,2.1792,0.9131,115,0.4163,0.5527,0.1364,NA,NA,,,,1.0495,14.93812288,NA,NA,NA,1.3493,0.1165,5.482352941,used for dry weights and condition only
-2/28/2022,8,A,8_A,18.1,116,116,1.2513,1.8049,0.5536,116,0.4115,0.5062,0.0947,NA,NA,,,,0.6483,17.10621387,NA,NA,NA,0.9785,0.0813,4.491712707,used for dry weights and condition only
-2/28/2022,8,A,8_A,16.5,117,117,1.2635,1.6837,0.4202,117,0.4072,0.4724,0.0652,NA,NA,,,,0.4854,15.51642075,NA,NA,NA,0.8347,0.0579,3.509090909,used for dry weights and condition only
-2/28/2022,8,B,8_B,15.8,118,118,1.274,1.6064,0.3324,118,0.4102,0.4671,0.0569,NA,NA,,,,0.3893,17.1179302,NA,NA,NA,0.7494,0.0501,3.170886076,used for dry weights and condition only
-2/28/2022,8,B,8_B,18.6,119,119,1.2656,1.7466,0.481,119,0.4206,0.5006,0.08,NA,NA,,,,0.561,16.63201663,NA,NA,NA,0.9137,0.0679,3.650537634,used for dry weights and condition only
-2/28/2022,8,B,8_B,18,120,120,1.2529,1.7607,0.5078,120,0.4079,0.4867,0.0788,NA,NA,,,,0.5866,15.51792044,NA,NA,NA,0.9252,0.0693,3.85,used for dry weights and condition only
-2/28/2022,8,B,8_B,18.1,121,121,1.2836,1.8298,0.5462,121,0.4123,0.4962,0.0839,NA,NA,,,,0.6301,15.36067375,NA,NA,NA,0.9711,0.0713,3.939226519,used for dry weights and condition only
-2/28/2022,8,B,8_B,16.9,122,122,1.2574,1.6298,0.3724,122,0.4112,0.4626,0.0514,NA,NA,,,,0.4238,13.80236305,NA,NA,NA,0.7907,0.0443,2.621301775,used for dry weights and condition only
-3/2/2022,8,A,8_A,21.9,123,123,1.2511,2.0494,0.7983,123,0.4162,0.5684,0.1522,NA,NA,,,,0.9505,19.06551422,NA,NA,NA,1.2442,0.1225,5.593607306,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,A,8_A,21.25,124,124,1.2461,2.0287,0.7826,124,0.414,0.5389,0.1249,NA,NA,,,,0.9075,15.95962177,NA,NA,NA,1.2157,0.1058,4.978823529,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,B,8_B,23.5,125,125,1.2578,2.3547,1.0969,125,0.421,0.6423,0.2213,NA,NA,,,,1.3182,20.17503875,NA,NA,NA,1.5567,0.1825,7.765957447,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,C,8_C,22.25,126,126,1.2626,2.0624,0.7998,126,0.4175,0.578,0.1605,NA,NA,,,,0.9603,20.06751688,NA,NA,NA,1.2484,0.1294,5.815730337,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,D,8_D,21.1,127,127,1.2568,1.9699,0.7131,127,0.4124,0.5287,0.1163,NA,NA,,,,0.8294,16.30907306,NA,NA,NA,1.1461,0.0957,4.535545024,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,F,8_F,20.6,128,128,1.2646,2.0139,0.7493,128,0.4095,0.542,0.1325,NA,NA,,,,0.8818,17.68317096,NA,NA,NA,1.1799,0.1114,5.40776699,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,D,7.5_D,22.9,129,129,1.2543,2.176,0.9217,129,0.4121,0.5929,0.1808,NA,NA,,,,1.1025,19.61592709,NA,NA,NA,1.3649,0.1497,6.537117904,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,A,7.5_A,23.8,130,130,1.2542,2.2558,1.0016,130,0.4095,0.6208,0.2113,NA,NA,,,,1.2129,21.09624601,NA,NA,NA,1.453,0.1694,7.117647059,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,G,8_G,22.1,131,131,1.2555,2.0239,0.7684,131,0.4136,0.5306,0.117,NA,NA,,,,0.8854,15.22644456,NA,NA,NA,1.208,0.091,4.117647059,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,F,7.5_F,21.9,132,132,1.2491,1.9887,0.7396,132,0.4114,0.568,0.1566,NA,NA,,,,0.8962,21.17360736,NA,NA,NA,1.1879,0.1197,5.465753425,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,E,7.5_E,23,133,133,1.2931,2.2974,1.0043,133,0.4137,0.6221,0.2084,NA,NA,,,,1.2127,20.75077168,NA,NA,NA,1.4689,0.1575,6.847826087,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,E,8_E,23,134,134,1.263,2.0299,0.7669,134,0.4146,0.5245,0.1099,NA,NA,,,,0.8768,14.33042118,NA,NA,NA,1.2086,0.0828,3.6,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,H,8_H,19.4,135,135,1.2864,1.9441,0.6577,135,0.4141,0.5291,0.115,NA,NA,,,,0.7727,17.48517561,NA,NA,NA,1.0958,0.091,4.690721649,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,C,8_C,22.65,136,136,1.2558,1.9885,0.7327,136,0.4136,0.5635,0.1499,NA,NA,,,,0.8826,20.45857786,NA,NA,NA,1.1782,0.118,5.209713024,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,H,7.5_H,20.2,137,137,1.2682,1.9708,0.7026,137,0.4169,0.5336,0.1167,NA,NA,,,,0.8193,16.60973527,NA,NA,NA,1.1597,0.0765,3.787128713,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,7.5,G,7.5_G,22.25,138,138,1.2911,2.0616,0.7705,138,0.4162,0.5662,0.15,NA,NA,,,,0.9205,19.467878,NA,NA,NA,1.2375,0.0992,4.458426966,depurated for RR and BD BUT used for dry weights and condition only
-3/2/2022,8,A,8_A,20.2,139,139,1.2544,1.9092,0.6548,139,0.4139,0.5402,0.1263,NA,NA,,,,0.7811,19.28833232,NA,NA,NA,1.0784,0.1166,5.772277228,scallops used for RR and BD
-3/2/2022,8,B,8_B,20.35,140,140,1.2639,1.8847,0.6208,140,0.4121,0.4924,0.0803,NA,NA,,,,0.7011,12.93492268,NA,NA,NA,1.0416,0.0716,3.518427518,scallops used for RR and BD
-3/2/2022,8,C,8_C,21.9,141,141,1.2669,2.1112,0.8443,141,0.4159,0.5706,0.1547,NA,NA,,,,0.999,18.32287102,NA,NA,NA,1.2646,0.1503,6.863013699,scallops used for RR and BD
-3/2/2022,8,D,8_D,23.9,142,142,1.2764,2.2557,0.9793,142,0.4194,0.6154,0.196,NA,NA,,,,1.1753,20.01429593,NA,NA,NA,1.4204,0.1743,7.292887029,scallops used for RR and BD
-3/2/2022,8,E,8_E,21,143,143,1.2627,1.8965,0.6338,143,0.4102,0.5277,0.1175,NA,NA,,,,0.7513,18.53897128,NA,NA,NA,1.0544,0.1071,5.1,scallops used for RR and BD
-3/2/2022,8,F,8_F,23.7,144,144,1.2511,2.3287,1.0776,144,0.4149,0.6075,0.1926,NA,NA,,,,1.2702,17.87305122,NA,NA,NA,1.5089,0.1762,7.434599156,scallops used for RR and BD
-3/2/2022,8,G,8_G,21.2,145,145,1.269,2.0401,0.7711,145,0.4206,0.5626,0.142,NA,NA,,,,0.9131,18.41525094,NA,NA,NA,1.2047,0.129,6.08490566,scallops used for RR and BD
-3/2/2022,8,H,8_H,22.05,146,146,1.2665,2.1484,0.8819,146,0.415,0.5555,0.1405,NA,NA,,,,1.0224,15.93151151,NA,NA,NA,1.3062,0.1312,5.950113379,scallops used for RR and BD
-3/2/2022,7.5,A,7.5_A,22.2,147,147,1.2833,2.1205,0.8372,147,0.41,0.5863,0.1763,NA,NA,,,,1.0135,21.05828954,NA,NA,NA,1.258,0.1655,7.454954955,scallops used for RR and BD
-3/2/2022,7.5,B,7.5_B,21.35,148,148,1.2529,2.0331,0.7802,148,0.4129,0.5565,0.1436,NA,NA,,,,0.9238,18.40553704,NA,NA,NA,1.204,0.1327,6.215456674,scallops used for RR and BD
-3/2/2022,7.5,C,7.5_C,23.75,149,149,1.2466,2.2493,1.0027,149,0.4141,0.5862,0.1721,NA,NA,,,,1.1748,17.16365812,NA,NA,NA,1.4329,0.156,6.568421053,scallops used for RR and BD
-3/2/2022,7.5,D,7.5_D,22.4,150,150,1.2586,2.201,0.9424,150,0.4099,0.6067,0.1968,NA,NA,,,,1.1392,20.88285229,NA,NA,NA,1.3679,0.1812,8.089285714,scallops used for RR and BD
-3/2/2022,7.5,E,7.5_E,23.45,151,151,1.2864,2.3949,1.1085,151,0.4142,0.6137,0.1995,NA,NA,,,,1.308,17.99729364,NA,NA,NA,1.5338,0.1884,8.034115139,scallops used for RR and BD
-3/2/2022,7.5,F,7.5_F,23.9,152,152,1.2588,2.363,1.1042,152,0.4148,0.6573,0.2425,NA,NA,,,,1.3467,21.96160116,NA,NA,NA,1.5384,0.2231,9.334728033,scallops used for RR and BD
-3/2/2022,7.5,G,7.5_G,24.3,153,153,1.2593,2.3551,1.0958,153,0.4176,0.6657,0.2481,NA,NA,,,,1.3439,22.64099288,NA,NA,NA,1.5319,0.2296,9.448559671,scallops used for RR and BD
-3/2/2022,7.5,H,7.5_H,23.5,154,154,1.2741,2.4981,1.224,154,0.417,0.6412,0.2242,NA,NA,,,,1.4482,18.31699346,NA,NA,NA,1.6545,0.2107,8.965957447,scallops used for RR and BD
-2/28/2022,8,G,8_G,16.5,155,155,1.2608,1.6058,0.345,155,0.4088,0.4591,0.0503,NA,NA,,,,0.3953,14.57971014,NA,NA,NA,0.7595,0.0446,2.703030303,used for dry weights and condition only
-2/28/2022,8,G,8_G,19.4,156,156,1.2563,1.8161,0.5598,156,0.4108,0.5009,0.0901,NA,NA,,,,0.6499,16.09503394,NA,NA,NA,0.9806,0.0801,4.128865979,used for dry weights and condition only
-2/28/2022,8,G,8_G,21.4,157,157,1.2569,2.0983,0.8414,157,0.4118,0.5464,0.1346,NA,NA,,,,0.976,15.99714761,NA,NA,NA,1.2612,0.1266,5.91588785,used for dry weights and condition only
-2/28/2022,8,G,8_G,15.35,158,158,1.2557,1.5866,0.3309,158,0.4111,0.4583,0.0472,NA,NA,,,,0.3781,14.26412814,NA,NA,NA,0.7461,0.0431,2.80781759,used for dry weights and condition only
-2/28/2022,8,G,8_G,23,159,159,1.2488,2.1362,0.8874,159,0.4148,0.586,0.1712,NA,NA,,,,1.0586,19.29231463,NA,NA,NA,1.322,0.1514,6.582608696,used for dry weights and condition only
-2/28/2022,8,H,8_H,22.95,160,160,1.2725,2.2233,0.9508,160,0.4072,0.5729,0.1657,NA,NA,,,,1.1165,17.42742953,NA,NA,NA,1.3761,0.1476,6.431372549,used for dry weights and condition only
-2/28/2022,8,H,8_H,15.55,161,161,1.2724,1.5764,0.304,161,0.4167,0.4693,0.0526,NA,NA,,,,0.3566,17.30263158,NA,NA,NA,0.726,0.0473,3.041800643,used for dry weights and condition only
-2/28/2022,8,H,8_H,20.08,162,162,1.2676,2.0072,0.7396,162,0.4207,0.5491,0.1284,NA,NA,,,,0.868,17.36073553,NA,NA,NA,1.1744,0.1143,5.692231076,used for dry weights and condition only
-2/28/2022,8,H,8_H,16.25,163,163,1.2475,1.6283,0.3808,163,0.4181,0.4848,0.0667,NA,NA,,,,0.4475,17.5157563,NA,NA,NA,0.8047,0.0609,3.747692308,used for dry weights and condition only
-2/28/2022,8,H,8_H,17.4,164,164,1.2616,1.6656,0.404,164,0.4127,0.4708,0.0581,NA,NA,,,,0.4621,14.38118812,NA,NA,NA,0.8323,0.0425,2.442528736,used for dry weights and condition only
-2/28/2022,8,D,8_D,18.1,165,165,1.2625,1.8193,0.5568,165,0.4156,0.5032,0.0876,NA,NA,,,,0.6444,15.73275862,NA,NA,NA,0.9821,0.0779,4.303867403,used for dry weights and condition only
-2/28/2022,8,D,8_D,15.8,166,166,1.2578,1.6444,0.3866,166,0.4092,0.4708,0.0616,NA,NA,,,,0.4482,15.93378169,NA,NA,NA,0.8041,0.0533,3.373417722,used for dry weights and condition only
-2/28/2022,8,D,8_D,17.1,167,167,1.2754,1.7606,0.4852,167,0.4189,0.4886,0.0697,NA,NA,,,,0.5549,14.36521022,NA,NA,NA,0.9104,0.0634,3.707602339,used for dry weights and condition only
-2/28/2022,8,D,8_D,15.75,168,168,1.2819,1.581,0.2991,168,0.4124,0.4652,0.0528,NA,NA,,,,0.3519,17.65295888,NA,NA,NA,0.717,0.0473,3.003174603,used for dry weights and condition only
-2/28/2022,8,D,8_D,23.95,169,169,1.2602,2.2583,0.9981,169,0.4122,0.6069,0.1947,NA,NA,,,,1.1928,19.50706342,NA,NA,NA,1.4344,0.1706,7.123173278,used for dry weights and condition only
-2/28/2022,8,F,8_F,18.4,170,170,1.2704,1.8211,0.5507,170,0.4131,0.5033,0.0902,NA,NA,,,,0.6409,16.3791538,NA,NA,NA,0.9656,0.0884,4.804347826,used for dry weights and condition only
-2/28/2022,8,F,8_F,18.9,171,171,1.2619,1.8239,0.562,171,0.4152,0.5048,0.0896,NA,NA,,,,0.6516,15.9430605,NA,NA,NA,0.987,0.0798,4.222222222,used for dry weights and condition only
-2/28/2022,8,F,8_F,15.9,172,172,1.2483,1.6125,0.3642,172,0.4141,0.4766,0.0625,NA,NA,,,,0.4267,17.1609006,NA,NA,NA,0.7858,0.055,3.459119497,used for dry weights and condition only
-2/28/2022,8,F,8_F,15.1,173,173,1.2582,1.5618,0.3036,173,0.4099,0.4576,0.0477,NA,NA,,,,0.3513,15.71146245,NA,NA,NA,0.7177,0.0435,2.880794702,used for dry weights and condition only
-2/28/2022,8,F,8_F,19.85,174,174,1.2634,1.7954,0.532,174,0.408,0.5082,0.1002,NA,NA,,,,0.6322,18.83458647,NA,NA,NA,0.955,0.0852,4.292191436,used for dry weights and condition only
-2/28/2022,8,E,8_E,15,175,175,1.2598,1.5296,0.2698,175,0.4184,0.462,0.0436,NA,NA,,,,0.3134,16.16011861,NA,NA,NA,0.6939,0.0379,2.526666667,used for dry weights and condition only
-2/28/2022,8,E,8_E,19.3,176,176,1.2597,1.8197,0.56,176,0.4141,0.5231,0.109,NA,NA,,,,0.669,19.46428571,NA,NA,NA,0.9915,0.0916,4.74611399,used for dry weights and condition only
-2/28/2022,8,E,8_E,21,177,177,1.2609,1.9841,0.7232,177,0.4144,0.5458,0.1314,NA,NA,,,,0.8546,18.16924779,NA,NA,NA,1.1577,0.1113,5.3,used for dry weights and condition only
-2/28/2022,8,E,8_E,17.7,178,178,1.2516,1.6413,0.3897,178,0.4129,0.4809,0.068,NA,NA,,,,0.4577,17.44931999,NA,NA,NA,0.8111,0.0595,3.361581921,used for dry weights and condition only
-2/28/2022,8,E,8_E,17.85,179,179,1.2683,1.7627,0.4944,179,0.4086,0.4902,0.0816,NA,NA,,,,0.576,16.50485437,NA,NA,NA,0.9124,0.0722,4.044817927,used for dry weights and condition only
-2/28/2022,7.5,B,7.5_B,21.1,180,180,1.2636,2.0274,0.7638,180,0.4094,0.539,0.1296,NA,NA,,,,0.8934,16.96779262,NA,NA,NA,1.189,0.1138,5.393364929,used for dry weights and condition only
-2/28/2022,7.5,B,7.5_B,16.3,181,181,1.2575,1.638,0.3805,181,0.4127,0.4695,0.0568,NA,NA,,,,0.4373,14.92772668,NA,NA,NA,0.8011,0.0489,3,used for dry weights and condition only
-2/28/2022,7.5,B,7.5_B,19.4,182,182,1.2603,1.8395,0.5792,182,0.4156,0.5235,0.1079,NA,NA,,,,0.6871,18.62914365,NA,NA,NA,1.0074,0.0953,4.912371134,used for dry weights and condition only
-2/28/2022,7.5,B,7.5_B,15.5,183,183,1.2624,1.5649,0.3025,183,0.414,0.47,0.056,NA,NA,,,,0.3585,18.51239669,NA,NA,NA,0.7199,0.0526,3.393548387,used for dry weights and condition only
-2/28/2022,7.5,B,7.5_B,18.3,184,184,1.2746,1.7833,0.5087,184,0.413,0.5009,0.0879,NA,NA,,,,0.5966,17.27933949,NA,NA,NA,0.9304,0.0792,4.327868852,used for dry weights and condition only
-2/28/2022,7.5,H,7.5_H,16.25,185,185,1.27,1.5535,0.2835,185,0.4117,0.4656,0.0539,NA,NA,,,,0.3374,19.01234568,NA,NA,NA,0.7008,0.0483,2.972307692,used for dry weights and condition only
-2/28/2022,7.5,H,7.5_H,20.05,186,186,1.2558,1.9912,0.7354,186,0.4081,0.5246,0.1165,NA,NA,,,,0.8519,15.84171879,NA,NA,NA,1.1536,0.1064,5.306733167,used for dry weights and condition only
-2/28/2022,7.5,H,7.5_H,17.8,187,187,1.2602,1.7446,0.4844,187,0.4094,0.482,0.0726,NA,NA,,,,0.557,14.98761354,NA,NA,NA,0.8915,0.0749,4.207865169,used for dry weights and condition only
-2/28/2022,7.5,H,7.5_H,20.07,188,188,1.2459,1.9294,0.6835,188,0.4103,0.5242,0.1139,NA,NA,,,,0.7974,16.66422824,NA,NA,NA,1.105,0.1027,5.117090184,used for dry weights and condition only
-2/28/2022,7.5,G,7.5_G,16.6,189,189,1.2741,1.6753,0.4012,189,0.4122,0.4761,0.0639,NA,NA,,,,0.4651,15.92721834,NA,NA,NA,0.8175,0.0598,3.602409639,used for dry weights and condition only
-2/28/2022,7.5,G,7.5_G,17.4,190,190,1.2493,1.7564,0.5071,190,0.4146,0.4937,0.0791,NA,NA,,,,0.5862,15.59850128,NA,NA,NA,0.9281,0.0727,4.17816092,used for dry weights and condition only
-2/28/2022,7.5,G,7.5_G,16.1,191,191,1.2591,1.6001,0.341,191,0.4131,0.4712,0.0581,NA,NA,,,,0.3991,17.03812317,NA,NA,NA,0.759,0.0532,3.304347826,used for dry weights and condition only
-2/28/2022,7.5,G,7.5_G,20.05,192,192,1.256,1.9034,0.6474,192,0.4149,0.5415,0.1266,NA,NA,,,,0.774,19.55514365,NA,NA,NA,1.068,0.1209,6.029925187,used for dry weights and condition only
-2/28/2022,7.5,G,7.5_G,18.6,193,193,1.2794,1.7927,0.5133,193,0.4087,0.5018,0.0931,NA,NA,,,,0.6064,18.1375414,NA,NA,NA,0.9266,0.0885,4.758064516,used for dry weights and condition only
-2/28/2022,7.5,C,7.5_C,15.8,194,194,1.2794,1.6343,0.3549,194,0.4176,0.4672,0.0496,NA,NA,,,,0.4045,13.97576782,NA,NA,NA,0.7752,0.0469,2.96835443,used for dry weights and condition only
-2/28/2022,7.5,C,7.5_C,17,195,195,1.2568,1.6572,0.4004,195,0.4187,0.4869,0.0682,NA,NA,,,,0.4686,17.03296703,NA,NA,NA,0.8252,0.0621,3.652941176,used for dry weights and condition only
-2/28/2022,7.5,C,7.5_C,20.05,196,196,1.2696,1.9574,0.6878,196,0.4159,0.5324,0.1165,NA,NA,,,,0.8043,16.93806339,NA,NA,NA,1.1151,0.1051,5.241895262,used for dry weights and condition only
-2/28/2022,7.5,C,7.5_C,19.05,197,197,1.2849,1.8719,0.587,197,0.4137,0.5122,0.0985,NA,NA,,,,0.6855,16.7802385,NA,NA,NA,1.0164,0.0828,4.346456693,used for dry weights and condition only
-2/28/2022,7.5,C,7.5_C,16,198,198,1.258,1.5434,0.2854,198,0.4184,0.4573,0.0389,NA,NA,,,,0.3243,13.62999299,NA,NA,NA,0.7095,0.0332,2.075,used for dry weights and condition only
-2/28/2022,7.5,F,7.5_F,16.9,199,199,1.2741,1.6298,0.3557,199,0.4132,0.4716,0.0584,NA,NA,,,,0.4141,16.41833005,NA,NA,NA,0.7742,0.0531,3.142011834,used for dry weights and condition only
-2/28/2022,7.5,F,7.5_F,16.6,200,200,1.2502,1.6338,0.3836,200,0.4101,0.4724,0.0623,NA,NA,,,,0.4459,16.24087591,NA,NA,NA,0.7881,0.0679,4.090361446,used for dry weights and condition only
-2/28/2022,7.5,F,7.5_F,20.04,201,201,1.2645,2.0112,0.7467,201,0.4081,0.5354,0.1273,NA,NA,,,,0.874,17.04834606,NA,NA,NA,1.1661,0.116,5.788423154,used for dry weights and condition only
-2/28/2022,7.5,F,7.5_F,19.8,202,202,1.2552,1.7865,0.5313,202,0.4086,0.5011,0.0925,NA,NA,,,,0.6238,17.41012611,NA,NA,NA,0.9483,0.0841,4.247474747,used for dry weights and condition only
-2/28/2022,7.5,F,7.5_F,16,203,203,1.2579,1.5649,0.307,203,0.4126,0.4673,0.0547,NA,NA,,,,0.3617,17.81758958,NA,NA,NA,0.7253,0.049,3.0625,used for dry weights and condition only
-2/28/2022,7.5,A,7.5_A,15.5,204,204,1.2651,1.5592,0.2941,204,0.4132,0.4629,0.0497,NA,NA,,,,0.3438,16.89901394,NA,NA,NA,0.7119,0.0451,2.909677419,used for dry weights and condition only
-2/28/2022,7.5,A,7.5_A,22.8,205,205,1.2648,2.31,1.0452,205,0.4074,0.5856,0.1782,NA,NA,,,,1.2234,17.04936854,NA,NA,NA,1.4658,0.165,7.236842105,used for dry weights and condition only
-2/28/2022,7.5,A,7.5_A,22.6,206,206,1.2606,2.3007,1.0401,206,0.4094,0.5735,0.1641,NA,NA,,,,1.2042,15.7773291,NA,NA,NA,1.4629,0.1507,6.668141593,used for dry weights and condition only
-2/28/2022,7.5,A,7.5_A,19.4,207,207,1.2584,1.8928,0.6344,207,0.4105,0.5231,0.1126,NA,NA,,,,0.747,17.74905422,NA,NA,NA,1.0546,0.1029,5.304123711,used for dry weights and condition only
-2/28/2022,7.5,A,7.5_A,20.9,208,208,1.2748,1.9699,0.6951,208,0.4103,0.5552,0.1449,NA,NA,,,,0.84,20.84592145,NA,NA,NA,1.1202,0.1301,6.224880383,used for dry weights and condition only
-2/28/2022,7.5,E,7.5_E,21.6,209,209,1.2673,2.0167,0.7494,209,0.409,0.5737,0.1647,NA,NA,,,,0.9141,21.97758207,NA,NA,NA,1.1718,0.1513,7.00462963,used for dry weights and condition only
-2/28/2022,7.5,E,7.5_E,21.05,210,210,1.2736,2.0375,0.7639,210,0.4112,0.5624,0.1512,NA,NA,,,,0.9151,19.79316664,NA,NA,NA,1.1887,0.1376,6.536817102,used for dry weights and condition only
-2/28/2022,7.5,E,7.5_E,19.65,211,211,1.2626,1.8084,0.5458,211,0.4087,0.511,0.1023,NA,NA,,,,0.6481,18.74312935,NA,NA,NA,0.9631,0.0937,4.768447837,used for dry weights and condition only
-2/28/2022,7.5,E,7.5_E,14.3,212,212,1.2593,1.5167,0.2574,212,0.4141,0.4549,0.0408,NA,NA,,,,0.2982,15.85081585,NA,NA,NA,0.6733,0.039,2.727272727,used for dry weights and condition only
-2/28/2022,7.5,D,7.5_D,18.3,213,213,1.2622,1.7232,0.461,213,0.4084,0.4866,0.0782,NA,NA,,,,0.5392,16.96312364,NA,NA,NA,0.8722,0.0754,4.120218579,used for dry weights and condition only
-2/28/2022,7.5,D,7.5_D,21.8,214,214,1.2426,2.1837,0.9411,214,0.4069,0.5827,0.1758,NA,NA,,,,1.1169,18.68026777,NA,NA,NA,1.3601,0.1637,7.509174312,used for dry weights and condition only
-2/28/2022,7.5,D,7.5_D,15.9,215,215,1.2704,1.5638,0.2934,215,0.4051,0.4585,0.0534,NA,NA,,,,0.3468,18.200409,NA,NA,NA,0.7067,0.0452,2.842767296,used for dry weights and condition only
-2/28/2022,7.5,D,7.5_D,16.45,216,216,1.2696,1.6286,0.359,216,0.4136,0.4763,0.0627,NA,NA,,,,0.4217,17.46518106,NA,NA,NA,0.7803,0.055,3.343465046,used for dry weights and condition only
-2/28/2022,7.5,D,7.5_D,16.2,217,217,1.1661,1.4984,0.3323,217,0.4123,0.4639,0.0516,NA,NA,,,,0.3839,15.52813723,NA,NA,NA,0.7511,0.0451,2.783950617,used for dry weights and condition only
-2/28/2022,8,C,8_C,15.2,218,218,1.1623,1.5169,0.3546,218,0.4182,0.4664,0.0482,NA,NA,,,,0.4028,13.5927806,NA,NA,NA,0.7785,0.0425,2.796052632,used for dry weights and condition only
-2/28/2022,8,C,8_C,23.05,219,219,1.1618,2.0752,0.9134,219,0.4088,0.5617,0.1529,NA,NA,,,,1.0663,16.73965404,NA,NA,NA,1.3312,0.1439,6.242950108,used for dry weights and condition only
-2/28/2022,8,C,8_C,16.2,220,220,1.1623,1.5042,0.3419,220,0.4125,0.4662,0.0537,NA,NA,,,,0.3956,15.70634689,NA,NA,NA,0.762,0.0461,2.845679012,used for dry weights and condition only
-2/28/2022,8,C,8_C,22.05,221,221,1.1659,1.9503,0.7844,221,0.4104,0.5782,0.1678,NA,NA,,,,0.9522,21.39214686,NA,NA,NA,1.2171,0.1455,6.598639456,used for dry weights and condition only
-2/28/2022,8,C,8_C,20.55,222,222,1.1562,1.8538,0.6976,222,0.4059,0.5281,0.1222,NA,NA,,,,0.8198,17.51720183,NA,NA,NA,1.115,0.1107,5.386861314,used for dry weights and condition only
-3/16/2022,8,A,8_A,25.6,223,223,1.169,2.5414,1.3724,223,0.4062,0.5699,0.1637,223,2,0.4222,0.463,0.0408,1.5769,11.58363997,,,,,,,
-3/16/2022,8,A,8_A,23.8,224,224,1.1763,2.0878,0.9115,224,0.4128,0.4968,0.084,224,1,0.4049,0.4621,0.0572,1.0527,8.671415299,,,,,,,
-3/16/2022,8,A,8_A,22.3,225,225,1.1847,1.9644,0.7797,225,0.4035,0.5094,0.1059,225,2,0.4172,0.4632,0.046,0.9316,12.82548141,,,,,,,
-3/16/2022,8,A,8_A,24.75,226,226,1.1681,2.2818,1.1137,226,0.4096,0.5602,0.1506,226,2,0.4105,0.4646,0.0541,1.3184,12.89604384,,,,,,,
-3/16/2022,8,B,8_B,27.8,227,227,1.1704,2.4121,1.2417,227,0.4107,0.5924,0.1817,227,3,0.4156,0.5086,0.093,1.5164,13.61354612,,,,,,,
-3/16/2022,8,B,8_B,29.7,228,228,1.1736,3.0669,1.8933,228,0.4078,0.6546,0.2468,228,3,0.4166,0.5614,0.1448,2.2849,12.1093175,,,,,,,
-3/16/2022,8,B,8_B,28.4,229,229,1.1909,2.6362,1.4453,229,0.4127,0.5793,0.1666,229,1,0.4192,0.519,0.0998,1.7117,10.78247363,,,,,,,
-3/16/2022,8,C,8_C,26.3,230,230,1.1899,2.4954,1.3055,230,0.4172,0.5721,0.1549,230,1,0.411,0.4153,0.0043,1.4647,11.82623301,,,,,,,
-3/16/2022,8,B,8_B,27.4,231,231,1.1651,2.6722,1.5071,231,0.4103,0.6185,0.2082,231,3,0.4147,0.4997,0.085,1.8003,13.07706802,,,,,,,
-3/16/2022,8,C,8_C,26.6,232,232,1.1646,2.5626,1.398,232,0.4093,0.5731,0.1638,232,2,0.4119,0.5059,0.094,1.6558,10.97855228,,,,,,,
-3/16/2022,8,C,8_C,26.4,233,233,1.1947,2.6602,1.4655,233,0.4143,0.5781,0.1638,233,2,0.4116,0.4418,0.0302,1.6595,10.951394,,,,,,,
-3/16/2022,8,C,8_C,25,234,234,1.198,2.5135,1.3155,234,0.4179,0.5832,0.1653,234,2,0.4114,0.442,0.0306,1.5114,12.27991977,,,,,,,
-3/16/2022,8,D,8_D,29.1,235,235,1.1612,2.8162,1.655,235,0.4159,0.6511,0.2352,235,3-Feb,0.4103,0.534,0.1237,2.0139,13.2231405,,,,,,,
-3/16/2022,8,D,8_D,26.1,236,236,1.1947,2.5025,1.3078,236,0.4098,0.5957,0.1859,236,2,0.4207,0.4581,0.0374,1.5311,13.81950639,,,,,,,
-3/16/2022,8,D,8_D,23,237,237,1.1697,2.1347,0.965,237,0.4118,0.5437,0.1319,237,1,0.4138,0.4201,0.0063,1.1032,13.57973849,,,,,,,
-3/16/2022,8,D,8_D,28.95,238,238,1.2035,2.8397,1.6362,238,0.4117,0.632,0.2203,238,2,0.4198,0.5034,0.0836,1.9401,12.80962903,,,,,,,
-3/16/2022,7.5,A,7.5_A,26.1,239,239,1.1844,2.447,1.2626,239,0.4148,0.5992,0.1844,239,3,0.4123,0.5119,0.0996,1.5466,13.53692556,,,,,,,
-3/16/2022,7.5,A,7.5_A,26.4,240,240,1.2045,2.7102,1.5057,240,0.4074,0.5935,0.1861,240,3-Feb,0.4131,0.4907,0.0776,1.7694,11.75393166,,,,,,,
-3/16/2022,7.5,A,7.5_A,25.8,241,241,1.1651,2.5751,1.41,241,0.418,0.6284,0.2104,241,3,0.4107,0.4898,0.0791,1.6995,14.12933987,,,,,,,
-3/16/2022,7.5,B,7.5_B,23.6,242,242,1.1756,2.1018,0.9262,242,0.4042,0.5259,0.1217,242,2,0.411,0.4535,0.0425,1.0904,12.56322907,,,,,,,
-3/16/2022,7.5,B,7.5_B,24,243,243,1.1645,2.0918,0.9273,243,0.4109,0.5386,0.1277,243,2,0.4119,0.4511,0.0392,1.0942,13.21262287,,,,,,,
-3/16/2022,7.5,B,7.5_B,22.6,244,244,1.1939,2.0846,0.8907,244,0.4119,0.5511,0.1392,244,3-Feb,0.4196,0.4641,0.0445,1.0744,14.88451668,,,,,,,
-3/16/2022,7.5,C,7.5_C,27.8,245,245,1.158,2.7516,1.5936,245,0.4148,0.6148,0.2,245,3,0.4104,0.4989,0.0885,1.8821,11.88989953,,,,,,,
-3/16/2022,7.5,C,7.5_C,23.8,246,246,1.1653,2.1246,0.9593,246,0.4093,0.5601,0.1508,246,2,0.4143,0.4603,0.046,1.1561,15.00049736,,,,,,,
-3/16/2022,7.5,C,7.5_C,21.8,247,247,1.1677,1.946,0.7783,247,0.4108,0.5231,0.1123,247,2,0.4119,0.4429,0.031,0.9216,13.8761893,,,,,,,
-3/16/2022,7.5,D,7.5_D,24.1,248,248,1.1911,2.1571,0.966,248,0.4087,0.5459,0.1372,248,2,0.4062,0.4357,0.0295,1.1327,13.78201909,,,,,,,
-3/16/2022,7.5,A,7.5_A,24.75,249,249,1.1881,2.3808,1.1927,249,0.4102,0.6004,0.1902,249,NA,0.4113,0.4776,0.0663,1.4492,15.10722796,,,,,,,
-3/16/2022,7.5,D,7.5_D,25.5,250,250,1.1867,2.4357,1.249,250,0.4153,0.5892,0.1739,250,2,0.4081,0.4409,0.0328,1.4557,13.5668591,,,,,,,
-3/16/2022,8,E,8_E,26.5,251,251,1.2,2.631,1.431,251,0.4077,0.5938,0.1861,251,2,0.4129,0.4416,0.0287,1.6458,12.74919504,,,,,,,
-3/16/2022,7.5,D,7.5_D,19.5,252,252,1.1676,1.7584,0.5908,252,0.4204,0.5009,0.0805,252,2,0.4106,0.422,0.0114,0.6827,13.36765194,,,,,,,
-3/16/2022,8,E,8_E,30.4,253,253,1.1863,3.3403,2.154,253,0.4056,0.7001,0.2945,253,4,0.4118,0.5417,0.1299,2.5784,12.8946101,,,,,,,
-3/16/2022,8,F,8_F,21.4,254,254,1.1831,2.1019,0.9188,254,0.4124,0.5318,0.1194,254,0,0.4116,NA,0,1.0382,12.99521114,,,,,,,
-3/16/2022,7.5,B,7.5_B,22.5,255,255,1.1814,2.1282,0.9468,255,0.4111,0.5578,0.1467,255,2,0.4089,0.4644,0.0555,1.149,14.63633643,,,,,,,
-3/16/2022,8,G,8_G,29.6,256,256,1.1791,3.2771,2.098,256,0.4157,0.7437,0.328,256,3,0.4208,0.532,0.1112,2.5372,14.84700344,,,,,,,
-3/16/2022,8,E,8_E,29.4,257,257,1.1775,2.8734,1.6959,257,0.4149,0.6199,0.205,257,2-Jan,0.4084,0.4275,0.0191,1.92,11.95335277,,,,,,,
-3/16/2022,7.5,C,7.5_C,21.3,258,258,1.172,1.9941,0.8221,258,0.4131,0.5306,0.1175,258,NA,0.4093,0.4438,0.0345,0.9741,13.71702078,,,,,,,
-3/16/2022,8,H,8_H,27.1,259,259,1.1749,2.9574,1.7825,259,0.4073,0.6414,0.2341,259,3,0.4084,0.5316,0.1232,2.1398,12.28420003,,,,,,,
-3/16/2022,8,F,8_F,28.5,260,260,1.1942,2.687,1.4928,260,0.4086,0.6426,0.234,260,4,0.4126,0.5304,0.1178,1.8446,14.52874705,,,,,,,
-3/16/2022,7.5,E,7.5_E,24.9,261,261,1.169,2.3425,1.1735,261,0.406,0.5652,0.1592,261,2,0.4097,0.4263,0.0166,1.3493,13.37702714,,,,,,,
-3/16/2022,8,G,8_G,22.2,262,262,1.1752,1.9438,0.7686,262,0.4121,0.5117,0.0996,262,2,0.4099,0.423,0.0131,0.8813,12.74146092,,,,,,,
-3/16/2022,8,F,8_F,25.4,263,263,1.1634,2.6078,1.4444,263,0.4074,0.5881,0.1807,263,2,0.4102,0.427,0.0168,1.6419,12.36654804,,,,,,,
-3/16/2022,7.5,F,7.5_F,24.1,264,264,1.1616,2.4084,1.2468,264,0.4118,0.5704,0.1586,264,2,0.4126,0.4691,0.0565,1.4619,12.16910918,,,,,,,
-3/16/2022,8,H,8_H,26.5,265,265,1.1755,2.3112,1.1357,265,0.4141,0.571,0.1569,265,3,0.4124,0.4759,0.0635,1.3561,13.08372248,,,,,,,
-3/16/2022,7.5,G,7.5_G,24.6,266,266,1.1846,2.2409,1.0563,266,0.4127,0.5779,0.1652,266,2,0.4091,0.4511,0.042,1.2635,15.04142766,,,,,,,
-3/16/2022,8,G,8_G,25.3,267,267,1.1715,2.3,1.1285,267,0.4094,0.5637,0.1543,267,2,0.4117,0.4449,0.0332,1.316,13.28225876,,,,,,,
-3/16/2022,7.5,E,7.5_E,24.6,268,268,1.1871,2.2654,1.0783,268,0.4149,0.5704,0.1555,268,3-Feb,0.4111,0.4439,0.0328,1.2666,13.99513995,,,,,,,
-3/16/2022,7.5,H,7.5_H,24.2,269,269,1.1848,2.1976,1.0128,269,0.4135,0.5316,0.1181,269,2,0.4133,0.4591,0.0458,1.1767,11.1562441,,,,,,,
-3/16/2022,7.5,D,7.5_D,26.45,270,270,1.1679,2.5745,1.4066,270,0.4198,0.6086,0.1888,270,2,0.4085,0.5285,0.12,1.7154,12.36735229,,,,,,,
-3/16/2022,7.5,F,7.5_F,22.1,271,271,1.1722,1.9814,0.8092,271,0.4197,0.5239,0.1042,271,2,0.4158,0.4316,0.0158,0.9292,12.63030303,,,,,,,
-3/16/2022,8,E,8_E,27.5,272,272,1.1785,2.8116,1.6331,272,0.4128,0.6019,0.1891,272,1,0.4069,0.452,0.0451,1.8673,11.26802527,,,,,,,
-3/16/2022,8,H,8_H,22.9,273,273,1.184,2.0297,0.8457,273,0.4193,0.5336,0.1143,273,2,0.4115,0.4306,0.0191,0.9791,13.21692877,,,,,,,
-3/16/2022,8,F,8_F,26.9,274,274,1.1938,2.8861,1.6923,274,0.4099,0.611,0.2011,274,3,0.4108,0.4985,0.0877,1.9811,11.29775281,,,,,,,
-3/16/2022,8,G,8_G,25,275,275,1.1818,2.2784,1.0966,275,0.4178,0.5741,0.1563,275,1,0.4105,0.4172,0.0067,1.2596,14.16659114,,,,,,,
-3/16/2022,7.5,G,7.5_G,16.1,276,276,1.1742,1.4997,0.3255,276,0.4123,0.4582,0.0459,276,0/1,0.4192,0.4204,0.0012,0.3726,14.04958678,,,,,,,
-3/16/2022,7.5,E,7.5_E,24.3,277,277,1.1941,2.3401,1.146,277,0.4089,0.5517,0.1428,277,3-Feb,0.4134,0.4814,0.068,1.3568,11.76276771,,,,,,,
-3/16/2022,8,H,8_H,24.2,278,278,1.1859,2.1392,0.9533,278,0.4088,0.534,0.1252,278,3,0.4115,0.4573,0.0458,1.1243,12.53127815,,,,,,,
-3/16/2022,7.5,E,7.5_E,24.3,279,279,1.1846,2.5143,1.3297,279,0.4171,0.5916,0.1745,279,2,0.413,0.4577,0.0447,1.5489,12.69644936,,,,,,,
-3/16/2022,7.5,H,7.5_H,22.6,280,280,1.1684,2.0869,0.9185,280,0.4136,0.5295,0.1159,280,3,0.4101,0.4444,0.0343,1.0687,12.16414777,,,,,,,
-3/16/2022,7.5,F,7.5_F,NA,281,281,1.1797,2.237,1.0573,281,0.4228,0.561,0.1382,281,3,0.412,0.4456,0.0336,1.2291,12.6684389,,,,,,,
-3/16/2022,7.5,F,7.5_F,19.7,282,282,1.1849,1.5819,0.397,282,0.4085,0.4633,0.0548,282,0,0.4106,NA,0,0.4518,13.80352645,,,,,,,
-3/16/2022,7.5,G,7.5_G,21.5,283,283,1.1897,1.9783,0.7886,283,0.413,0.5269,0.1139,283,3-Feb,0.417,0.4727,0.0557,0.9582,13.49046547,,,,,,,
-3/16/2022,7.5,H,7.5_H,23.55,284,284,1.1819,2.1383,0.9564,284,0.4173,0.5436,0.1263,284,3,0.4194,0.4406,0.0212,1.1039,12.91939444,,,,,,,
-3/16/2022,7.5,G,7.5_G,19.3,285,285,1.1767,1.6321,0.4554,285,0.414,0.4714,0.0574,285,1,0.4122,0.4159,0.0037,0.5165,12.50272272,,,,,,,
-3/16/2022,7.5,H,7.5_H,22.6,286,286,1.1851,2.03,0.8449,286,0.4113,0.5326,0.1213,286,3,0.4153,0.4474,0.0321,0.9983,13.83124287,,,,,,,
+Date_sampled,pH,Tank_Replicate,pH_Replicate,Shell_length_mm,New_tin_ID,Shell_Tin_ID,Shell_Tin_Weight_g,Dry_Shell_Tin_Weight_g,Dry_Shell_weight_g,Tissue_Tin_ID,Tissue_Tin_Weight_g,Dry_Tissue_Tin_Weight_g,Dry_Tissue_weight_g,Gonad_Tin_ID,Gonad_stage,Gonad_Tin_Weight_g,Dry_Gonad_Tin_Weight_g,Dry_Gonad_weight_g,Whole_animal_dry_weight_g,Condition_index_drywtRatio_Walne1976,Shell_ash_weight_g_with_tin,Tissue_ash_weight_with_g_tin,Gonad_ash_weight_g_with_tin,Total_ash_weight_g_with_tin,TotalAFDW_g,Condition_index_TotalADFW_div_length,notes,
+9/14/2021,7.5,A,7.5_A,1.97048,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.869,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,B,7.5_B,2.09718,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.418,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,C,7.5_C,2.88012,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.185,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,D,7.5_D,2.72653,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.958,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,A,7.5_A,2.21222,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.812,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,B,7.5_B,2.82212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.733,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,C,7.5_C,2.68751,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.379,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,D,7.5_D,2.6591,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.821,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,A,7.5_A,2.25305,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.638,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,B,7.5_B,3.16395,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.028,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,C,7.5_C,2.15083,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.646,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,7.5,D,7.5_D,1.91671,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.575,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,A,8_A,1.73749,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,B,8_B,2.70979,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,C,8_C,2.28173,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,D,8_D,2.69297,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.982,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,A,8_A,2.974,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.765,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,B,8_B,2.10965,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.326,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,C,8_C,2.45271,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.008,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,D,8_D,3.49129,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.619,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,A,8_A,1.97436,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.556,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,B,8_B,2.13934,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.718,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,C,8_C,1.79606,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.37,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/14/2021,8,D,8_D,2.96972,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.944,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,A,7.5_A,3.74003,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.447,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,B,7.5_B,3.56109,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.31,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,C,7.5_C,3.40603,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.443,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,D,7.5_D,3.23679,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.862,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,A,7.5_A,2.53563,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.701,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,B,7.5_B,2.71797,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.384,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,C,7.5_C,3.91636,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.153,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,D,7.5_D,3.90023,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.805,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,A,7.5_A,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.817,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,B,7.5_B,2.73468,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.652,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,C,7.5_C,2.64679,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.122,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,D,7.5_D,4.07455,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.863,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,A,7.5_A,3.82627,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.107,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,B,7.5_B,4.47419,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,6.821,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,C,7.5_C,5.21802,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.898,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,D,7.5_D,3.66137,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.718,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,A,7.5_A,5.20282,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.981,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,B,7.5_B,3.97107,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.345,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,C,7.5_C,3.42545,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.781,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,7.5,D,7.5_D,5.31122,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.096,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,A,8_A,3.72656,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.777,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,B,8_B,4.27799,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,5.198,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,C,8_C,3.0219,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.602,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,D,8_D,5.54594,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,13.734,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,A,8_A,3.83344,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.283,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,B,8_B,5.08403,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.496,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,C,8_C,2.99494,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.79,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,D,8_D,3.10214,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,2.123,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,A,8_A,5.08044,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,11.619,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,B,8_B,4.72511,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,7.79,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,C,8_C,3.5286,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.149,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,D,8_D,3.35375,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,3.027,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,A,8_A,2.56909,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.218,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,B,8_B,4.93921,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,9.948,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,C,8_C,3.00854,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,1.894,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,D,8_D,4.13083,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.762,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,A,8_A,4.5324,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,7.887,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,B,8_B,3.84153,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.529,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,C,8_C,2.29139,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,0.801,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+9/30/2021,8,D,8_D,3.56903,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,,,,4.801,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",
+10/26/2021,8,A,8_A,13.28,NA,NA,0.4112,0.5637,0.1525,NA,0.4072,0.4191,0.0119,NA,NA,,,,0.1644,7.803278689,NA,NA,NA,0.5596,0.012,0.903614458,used for dry weights and condition only,
+10/26/2021,8,A,8_A,9.47,NA,NA,0.4139,0.4746,0.0607,NA,0.4114,0.4166,0.0052,NA,NA,,,,0.0659,8.566721582,NA,NA,NA,0.472,0.0053,0.559662091,used for dry weights and condition only,
+10/26/2021,8,A,8_A,13.01,NA,NA,0.41,0.5543,0.1443,NA,0.4106,0.4209,0.0103,NA,NA,,,,0.1546,7.137907138,NA,NA,NA,0.5543,0.0109,0.837817064,used for dry weights and condition only,
+10/26/2021,8,A,8_A,9.85,NA,NA,0.416,0.4839,0.0679,NA,0.4075,0.4136,0.0061,NA,NA,,,,0.074,8.983799705,NA,NA,NA,0.4757,0.0058,0.588832487,used for dry weights and condition only,
+10/26/2021,8,A,8_A,12.64,NA,NA,0.4125,0.5326,0.1201,NA,0.4115,0.4242,0.0127,NA,NA,,,,0.1328,10.57452123,NA,NA,NA,0.5328,0.0115,0.909810127,used for dry weights and condition only,
+10/26/2021,8,A,8_A,11.76,NA,NA,0.4094,0.516,0.1066,NA,0.407,0.4173,0.0103,NA,NA,,,,0.1169,9.662288931,NA,NA,NA,0.5156,0.0083,0.705782313,used for dry weights and condition only,
+10/26/2021,8,A,8_A,7.45,NA,NA,0.411,0.4371,0.0261,NA,0.4086,0.4111,0.0025,NA,NA,,,,0.0286,9.578544061,NA,NA,NA,0.435,0.0022,0.295302013,used for dry weights and condition only,
+10/26/2021,8,A,8_A,6.92,NA,NA,0.4082,0.4338,0.0256,NA,0.4089,0.4113,0.0024,NA,NA,,,,0.028,9.375,NA,NA,NA,0.4351,0.0018,0.260115607,used for dry weights and condition only,
+10/26/2021,8,A,8_A,9.99,NA,6A2,0.4188,0.4868,0.068,6A1,0.4162,0.4227,0.0065,NA,NA,,,,0.0745,9.558823529,NA,NA,NA,0.4855,0.0052,0.520520521,used for dry weights and condition only,
+10/26/2021,8,A,8_A,7.19,NA,6A4,0.4233,0.4482,0.0249,6A3,0.4155,0.41779,0.00229,NA,NA,,,,0.02719,9.196787149,NA,NA,NA,0.4403,0.00239,0.33240612,used for dry weights and condition only,
+10/26/2021,8,A,8_A,4.39,NA,6A6,0.4161,0.4215,0.0054,6A5,0.4076,0.4081,0.0005,NA,NA,,,,0.0059,9.259259259,NA,NA,NA,0.412,0.0015,0.341685649,used for dry weights and condition only,
+10/26/2021,8,B,8_B,13.21,NA,6A8,0.4113,0.5631,0.1518,6A7,0.41,0.4257,0.0157,NA,NA,,,,0.1675,10.34255599,NA,NA,NA,0.5691,0.0084,0.635881908,used for dry weights and condition only,
+10/26/2021,8,B,8_B,9.19,NA,6A10,0.4126,0.4568,0.0442,6A9,0.4102,0.4142,0.004,NA,NA,,,,0.0482,9.049773756,NA,NA,NA,0.4559,0.0025,0.272034821,used for dry weights and condition only,
+10/26/2021,8,B,8_B,8.56,NA,6A12,0.4104,0.4578,0.0474,6A11,0.4162,0.4212,0.005,NA,NA,,,,0.0524,10.54852321,NA,NA,NA,0.4652,0.0034,0.397196262,used for dry weights and condition only,
+10/26/2021,8,B,8_B,5.86,NA,6B4,0.4129,0.4245,0.0116,6B3,0.4151,0.4159,0.0008,NA,NA,,,,0.0124,6.896551724,NA,NA,NA,0.4275,0,0,used for dry weights and condition only,
+10/26/2021,8,B,8_B,5.77,NA,6B6,0.4123,0.4239,0.0116,6B5,0.4114,0.4121,0.0007,NA,NA,,,,0.0123,6.034482759,NA,NA,NA,0.4227,0.001,0.173310225,used for dry weights and condition only,
+10/26/2021,8,B,8_B,6.04,NA,6B8,0.4171,0.4235,0.0064,6B7,0.4101,0.4113,0.0012,NA,NA,,,,0.0076,18.75,NA,NA,NA,0.4216,-0.0039,-0.645695364,used for dry weights and condition only,
+10/26/2021,8,B,8_B,11.08,NA,6B10,0.4195,0.5112,0.0917,6B9,0.419,0.4276,0.0086,NA,NA,,,,0.1003,9.378407852,NA,NA,NA,0.5142,0.0051,0.460288809,used for dry weights and condition only,
+10/26/2021,8,B,8_B,5.73,NA,6B12,0.4163,0.4285,0.0122,6B11,0.4188,0.4203,0.0015,NA,NA,,,,0.0137,12.29508197,NA,NA,NA,0.431,0.0015,0.261780105,used for dry weights and condition only,
+10/26/2021,8,B,8_B,8.68,NA,6C2,0.4137,0.4521,0.0384,6C1,0.414,0.4179,0.0039,NA,NA,,,,0.0423,10.15625,NA,NA,NA,0.4536,0.0027,0.311059908,used for dry weights and condition only,
+10/26/2021,8,B,8_B,12.5,NA,6B2,0.4107,0.5398,0.1291,6B1,0.4186,0.433,0.0144,NA,NA,,,,0.1435,11.15414407,NA,NA,NA,0.5527,0.0094,0.752,used for dry weights and condition only,
+10/26/2021,8,C,8_C,14.7,NA,6C4,0.4114,0.5822,0.1708,6C3,0.414,0.4337,0.0197,NA,NA,,,,0.1905,11.53395785,NA,NA,NA,0.591,0.0135,0.918367347,used for dry weights and condition only,
+10/26/2021,8,C,8_C,13.42,NA,6C6,0.4089,0.5808,0.1719,6C5,0.4156,0.4331,0.0175,NA,NA,,,,0.1894,10.18033741,NA,NA,NA,0.5844,0.0206,1.535022355,used for dry weights and condition only,
+10/26/2021,8,C,8_C,11.69,NA,6C8,0.4153,0.5229,0.1076,6C7,0.4187,0.4301,0.0114,NA,NA,,,,0.119,10.59479554,NA,NA,NA,0.5352,0.0025,0.213857998,used for dry weights and condition only,
+10/26/2021,8,C,8_C,4.59,NA,6C10,0.4156,0.4224,0.0068,6C9,0.4158,0.4165,0.0007,NA,NA,,,,0.0075,10.29411765,NA,NA,NA,0.422,0.0013,0.283224401,used for dry weights and condition only,
+10/26/2021,8,D,8_D,11.66,NA,5C8,0.42,0.524,0.104,5C7,0.4174,0.4293,0.0119,NA,NA,,,,0.1159,11.44230769,NA,NA,NA,0.5241,0.0092,0.789022299,used for dry weights and condition only,
+10/26/2021,8,D,8_D,11.75,NA,5C10,0.4192,0.5272,0.108,5C9,0.4159,0.4281,0.0122,NA,NA,,,,0.1202,11.2962963,NA,NA,NA,0.5258,0.0103,0.876595745,used for dry weights and condition only,
+10/26/2021,8,D,8_D,8.84,NA,5C12,0.418,0.4612,0.0432,5C11,0.4217,0.4259,0.0042,NA,NA,,,,0.0474,9.722222222,NA,NA,NA,0.4652,0.0039,0.441176471,used for dry weights and condition only,
+10/26/2021,8,D,8_D,8.05,NA,5B2,0.4126,0.4507,0.0381,5B1,0.4078,0.4113,0.0035,NA,NA,,,,0.0416,9.186351706,NA,NA,NA,0.4459,0.0035,0.434782609,used for dry weights and condition only,
+10/26/2021,8,D,8_D,7.76,NA,5B4,0.4107,0.4404,0.0297,5B3,0.4157,0.416,0.0003,NA,NA,,,,0.03,1.01010101,NA,NA,NA,0.4442,0.0015,0.193298969,no tissue?,
+10/26/2021,8,D,8_D,7.75,NA,5A10,0.4147,0.4445,0.0298,5A9,0.4129,0.4159,0.003,NA,NA,,,,0.0328,10.06711409,NA,NA,NA,0.4426,0.0031,0.4,used for dry weights and condition only,
+10/26/2021,8,D,8_D,7.02,NA,5A12,0.4135,0.4366,0.0231,5A11,0.4154,0.4175,0.0021,NA,NA,,,,0.0252,9.090909091,NA,NA,NA,0.4379,0.0027,0.384615385,used for dry weights and condition only,
+10/26/2021,8,D,8_D,7.13,NA,5C2,0.4116,0.4347,0.0231,5C1,0.4113,0.4134,0.0021,NA,NA,,,,0.0252,9.090909091,NA,NA,NA,0.4342,0.0023,0.322580645,used for dry weights and condition only,
+10/26/2021,8,D,8_D,7.52,NA,5C4,0.4187,0.428,0.0093,5C3,0.4214,0.422,0.0006,NA,NA,,,,0.0099,6.451612903,NA,NA,NA,0.4307,0.0006,0.079787234,used for dry weights and condition only,
+10/26/2021,8,D,8_D,4.49,NA,5C6,0.4222,0.428,0.0058,5C5,0.4195,0.4203,0.0008,NA,NA,,,,0.0066,13.79310345,NA,NA,NA,0.4256,0.0005,0.111358575,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,7.58,NA,5C4,0.4177,0.4437,0.026,5C3,0.4118,0.4146,0.0028,NA,NA,,,,0.0288,10.76923077,NA,NA,NA,0.4378,0.0028,0.36939314,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,10.75,NA,5C6,0.4147,0.4972,0.0825,5C5,0.4126,0.4207,0.0081,NA,NA,,,,0.0906,9.818181818,NA,NA,NA,0.4963,0.0069,0.641860465,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,7.09,NA,5C8,0.41,0.4331,0.0231,5C7,0.4112,0.4126,0.0014,NA,NA,,,,0.0245,6.060606061,NA,NA,NA,0.434,0.0017,0.23977433,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,6.98,NA,5C10,0.4171,0.4366,0.0195,5C9,0.416,0.4195,0.0035,NA,NA,,,,0.023,17.94871795,NA,NA,NA,0.4356,0.0034,0.487106017,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,11.54,NA,5C12,0.4143,0.5162,0.1019,5C11,0.412,0.4211,0.0091,NA,NA,,,,0.111,8.930323847,NA,NA,NA,0.5134,0.0096,0.831889082,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,6.6,NA,5B6,0.4142,0.4325,0.0183,5B5,0.4156,0.4175,0.0019,NA,NA,,,,0.0202,10.38251366,NA,NA,NA,0.434,0.0018,0.272727273,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,6.85,NA,5B8,0.412,0.4324,0.0204,5B7,0.4141,0.4163,0.0022,NA,NA,,,,0.0226,10.78431373,NA,NA,NA,0.4344,0.0023,0.335766423,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,6.3,NA,5B10,0.4203,0.4335,0.0132,5B9,0.408,0.4096,0.0016,NA,NA,,,,0.0148,12.12121212,NA,NA,NA,0.4209,0.0019,0.301587302,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,6.81,NA,5B12,0.4138,0.4351,0.0213,5B11,0.4139,0.4157,0.0018,NA,NA,,,,0.0231,8.450704225,NA,NA,NA,0.4351,0.0019,0.279001468,used for dry weights and condition only,
+10/26/2021,7.5,A,7.5_A,5.6,NA,5C2,0.4116,0.4234,0.0118,5C1,0.4113,0.4139,0.0026,NA,NA,,,,0.0144,22.03389831,NA,NA,NA,0.4227,0.003,0.535714286,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,5.92,NA,4A10,0.4148,0.4294,0.0146,4A9,0.4177,0.4195,0.0018,NA,NA,,,,0.0164,12.32876712,NA,NA,NA,0.4328,0.0013,0.219594595,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,9.44,NA,4A12,0.4135,0.4711,0.0576,4A11,0.4163,0.4219,0.0056,NA,NA,,,,0.0632,9.722222222,NA,NA,NA,0.4759,0.0036,0.381355932,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,5.24,NA,4B2,0.412,0.4205,0.0085,4B1,0.4204,0.4213,0.0009,NA,NA,,,,0.0094,10.58823529,NA,NA,NA,0.4292,0.0006,0.114503817,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,6.71,NA,4B4,0.4121,0.4318,0.0197,4B3,0.417,0.4194,0.0024,NA,NA,,,,0.0221,12.18274112,NA,NA,NA,0.4373,0.0018,0.268256334,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,6.32,NA,4A2,0.4144,0.431,0.0166,4A1,0.41,0.4116,0.0016,NA,NA,,,,0.0182,9.638554217,NA,NA,NA,0.427,0.0012,0.189873418,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,7.19,NA,4A4,0.4149,0.4396,0.0247,4A3,0.4109,0.4137,0.0028,NA,NA,,,,0.0275,11.33603239,NA,NA,NA,0.4371,0.0013,0.180806676,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,5.76,NA,4A6,0.4183,0.4285,0.0102,4A5,0.4139,0.4148,0.0009,NA,NA,,,,0.0111,8.823529412,NA,NA,NA,0.4246,0.0004,0.069444444,used for dry weights and condition only,
+10/26/2021,7.5,B,7.5_B,4.96,NA,4A8,0.4095,0.4182,0.0087,4A7,0.4094,0.4105,0.0011,NA,NA,,,,0.0098,12.64367816,NA,NA,NA,0.4182,0.001,0.201612903,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.15,NA,4C4,0.416,0.4416,0.0256,4C3,0.4111,0.4143,0.0032,NA,NA,,,,0.0288,12.5,NA,NA,NA,0.4368,0.0031,0.433566434,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.91,NA,4C6,0.4084,0.4402,0.0318,4C5,0.4165,0.4205,0.004,NA,NA,,,,0.0358,12.57861635,NA,NA,NA,0.4489,0.0034,0.429835651,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.08,NA,4C8,0.4104,0.4328,0.0224,4C7,0.4097,0.4125,0.0028,NA,NA,,,,0.0252,12.5,NA,NA,NA,0.4323,0.0026,0.367231638,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,6.06,NA,4C10,0.4094,0.4249,0.0155,4C9,0.4119,0.4138,0.0019,NA,NA,,,,0.0174,12.25806452,NA,NA,NA,0.4272,0.0021,0.346534654,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,5.8,NA,4C12,0.4114,0.423,0.0116,4C11,0.4139,0.4155,0.0016,NA,NA,,,,0.0132,13.79310345,NA,NA,NA,0.4256,0.0015,0.25862069,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.04,NA,4B6,0.4079,0.4325,0.0246,4B5,0.4144,0.4164,0.002,NA,NA,,,,0.0266,8.130081301,NA,NA,NA,0.4379,0.0031,0.440340909,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.25,NA,4B8,0.4144,0.4393,0.0249,4B7,0.4097,0.4124,0.0027,NA,NA,,,,0.0276,10.84337349,NA,NA,NA,0.4358,0.0015,0.206896552,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,7.98,NA,4B10,0.4153,0.449,0.0337,4B9,0.4161,0.4202,0.0041,NA,NA,,,,0.0378,12.16617211,NA,NA,NA,0.449,0.0049,0.614035088,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,5.95,NA,4B12,0.4114,0.4277,0.0163,4B11,0.4179,0.4189,0.001,NA,NA,,,,0.0173,6.134969325,NA,NA,NA,0.4342,0.001,0.168067227,used for dry weights and condition only,
+10/26/2021,7.5,C,7.5_C,5.97,NA,4C2,0.4134,0.4269,0.0135,4C1,0.4151,0.4172,0.0021,NA,NA,,,,0.0156,15.55555556,NA,NA,NA,0.4287,0.002,0.335008375,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,4.6,NA,4A12,0.4098,0.4139,0.0041,4A11,0.4208,0.4219,0.0011,NA,NA,,,,0.0052,26.82926829,NA,NA,NA,0.432,-0.006,-1.304347826,"used for dry weights and condition only, shell fell apart likley underestimted",
+10/26/2021,7.5,D,7.5_D,8.55,NA,4B2,0.4096,0.4556,0.046,4B1,0.4201,0.4244,0.0043,NA,NA,,,,0.0503,9.347826087,NA,NA,NA,0.6246,-0.1542,-18.03508772,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,8.1,NA,4B4,0.4114,0.4459,0.0345,4B3,0.4179,0.4223,0.0044,NA,NA,,,,0.0389,12.75362319,NA,NA,NA,0.4526,0.0042,0.518518519,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,5.43,NA,4B6,0.4093,0.4209,0.0116,4B5,0.4193,0.4204,0.0011,NA,NA,,,,0.0127,9.482758621,NA,NA,NA,0.4297,0.0023,0.423572744,"used for dry weights and condition only, shell fell apart likley underestimted",
+10/26/2021,7.5,D,7.5_D,8.8,NA,4B8,0.4107,0.4528,0.0421,4B7,0.4135,0.419,0.0055,NA,NA,,,,0.0476,13.06413302,NA,NA,NA,0.4564,0.0047,0.534090909,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,7.64,NA,4A2,0.4162,0.4481,0.0319,4A1,0.4075,0.4112,0.0037,NA,NA,,,,0.0356,11.59874608,NA,NA,NA,0.4402,0.0029,0.379581152,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,6.17,NA,4A4,0.4135,0.4292,0.0157,4A3,0.4124,0.414,0.0016,NA,NA,,,,0.0173,10.1910828,NA,NA,NA,0.428,0.0017,0.275526742,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,6.79,NA,4A6,0.4168,0.4407,0.0239,4A5,0.4104,0.4129,0.0025,NA,NA,,,,0.0264,10.46025105,NA,NA,NA,0.4345,0.0023,0.338733432,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,7.98,NA,4A8,0.4126,0.4472,0.0346,4A7,0.4113,0.4149,0.0036,NA,NA,,,,0.0382,10.40462428,NA,NA,NA,0.4458,0.0037,0.463659148,used for dry weights and condition only,
+10/26/2021,7.5,D,7.5_D,6.75,NA,4A10,0.4102,0.4288,0.0186,4A9,0.4154,0.4177,0.0023,NA,NA,,,,0.0209,12.3655914,NA,NA,NA,0.4342,0.0021,0.311111111,used for dry weights and condition only,
+10/26/2021,8,A,8_A,12.61,NA,NA,0.4106,0.5517,0.1411,NA,0.4128,0.4259,0.0131,NA,NA,,,,0.1542,9.284195606,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,B,8_B,8.94,NA,NA,0.409,0.4571,0.0481,NA,0.4168,0.4237,0.0069,NA,NA,,,,0.055,14.34511435,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,C,8_C,14.07,NA,NA,0.4196,0.5996,0.18,NA,0.4132,0.4326,0.0194,NA,NA,,,,0.1994,10.77777778,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,D,8_D,8.65,NA,NA,0.4136,0.4575,0.0439,NA,0.4118,0.4156,0.0038,NA,NA,,,,0.0477,8.656036446,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,A,8_A,14.31,NA,NA,0.4188,0.5912,0.1724,NA,0.4115,0.4275,0.016,NA,NA,,,,0.1884,9.280742459,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,B,8_B,11.61,NA,NA,0.4108,0.4954,0.0846,NA,0.4108,0.424,0.0132,NA,NA,,,,0.0978,15.60283688,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,C,8_C,12.53,NA,NA,0.4095,0.5424,0.1329,NA,0.4219,0.4362,0.0143,NA,NA,,,,0.1472,10.7599699,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,8,D,8_D,11.4,NA,NA,0.4137,0.5085,0.0948,NA,0.4135,0.4235,0.01,NA,NA,,,,0.1048,10.54852321,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,A,7.5_A,8.9,NA,NA,0.4111,0.4596,0.0485,NA,0.4139,0.4182,0.0043,NA,NA,,,,0.0528,8.865979381,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,B,7.5_B,7.03,NA,NA,0.4193,0.4459,0.0266,NA,0.4114,0.4144,0.003,NA,NA,,,,0.0296,11.27819549,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,C,7.5_C,7.4,NA,NA,0.4058,0.433,0.0272,NA,0.4154,0.4184,0.003,NA,NA,,,,0.0302,11.02941176,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,D,7.5_D,7.42,NA,NA,0.417,0.4445,0.0275,NA,0.4126,0.415,0.0024,NA,NA,,,,0.0299,8.727272727,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,A,7.5_A,13.49,NA,NA,0.4133,0.5504,0.1371,NA,0.4124,0.4267,0.0143,NA,NA,,,,0.1514,10.43034282,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,B,7.5_B,10.1,NA,NA,0.4118,0.4807,0.0689,NA,0.4117,0.4191,0.0074,NA,NA,,,,0.0763,10.74020319,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,C,7.5_C,9.55,NA,NA,0.4109,0.4686,0.0577,NA,0.418,0.4255,0.0075,NA,NA,,,,0.0652,12.9982669,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,D,7.5_D,8.89,NA,NA,0.4112,0.4531,0.0419,NA,0.4149,0.4202,0.0053,NA,NA,,,,0.0472,12.64916468,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,B,7.5_B,9.51,NA,NA,0.4087,0.4668,0.0581,NA,0.4157,0.4222,0.0065,NA,NA,,,,0.0646,11.18760757,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+10/26/2021,7.5,C,7.5_C,9.71,NA,NA,0.4107,0.4729,0.0622,NA,0.4097,0.4164,0.0067,NA,NA,,,,0.0689,10.77170418,NA,NA,NA,NA,NA,NA,scallops used for RR and CR,
+12/2/2021,8,C,8_C,18.6,1,4A1,1.1858,1.608,0.4222,4A1,0.4128,0.4648,0.052,NA,NA,,,,0.4742,12.31643771,NA,NA,NA,0.8422,0.0448,2.408602151,used for dry weights and condition only,
+12/2/2021,8,C,8_C,18.1,2,4A2,1.1737,1.55,0.3763,4A2,0.4156,0.4543,0.0387,NA,NA,,,,0.415,10.2843476,NA,NA,NA,0.7984,0.0322,1.779005525,used for dry weights and condition only,
+12/2/2021,8,C,8_C,14.1,3,4A3,1.1745,1.3455,0.171,4A3,0.4193,0.4416,0.0223,NA,NA,,,,0.1933,13.04093567,NA,NA,NA,0.593,0.0196,1.390070922,used for dry weights and condition only,
+12/2/2021,8,C,8_C,11.5,4,4A4,1.1805,1.2877,0.1072,4A4,0.4112,0.4242,0.013,NA,NA,,,,0.1202,12.12686567,NA,NA,NA,0.5195,0.0119,1.034782609,used for dry weights and condition only,
+12/2/2021,8,C,8_C,10.6,5,4A5,1.188,1.2674,0.0794,4A5,0.4114,0.4212,0.0098,NA,NA,,,,0.0892,12.34256927,NA,NA,NA,0.4913,0.0093,0.877358491,used for dry weights and condition only,
+12/2/2021,8,C,8_C,11,6,4A6,1.1643,1.265,0.1007,4A6,0.4175,0.4256,0.0081,NA,NA,,,,0.1088,8.043694141,NA,NA,NA,0.5175,0.0088,0.8,used for dry weights and condition only,
+12/2/2021,8,C,8_C,10.4,7,4A7,1.1717,1.2394,0.0677,4A7,0.4092,0.4153,0.0061,NA,NA,,,,0.0738,9.010339734,NA,NA,NA,0.4774,0.0056,0.538461539,used for dry weights and condition only,
+12/2/2021,8,C,8_C,5.8,8,4A8,1.1813,1.1963,0.015,4A8,0.4206,0.4219,0.0013,NA,NA,,,,0.0163,8.666666667,NA,NA,NA,0.4365,0.0004,0.068965517,used for dry weights and condition only,
+12/2/2021,8,C,8_C,5.1,9,4A9,1.1833,1.1922,0.0089,4A9,0.4131,0.4138,0.0007,NA,NA,,,,0.0096,7.865168539,NA,NA,NA,0.4226,0.0001,0.019607843,used for dry weights and condition only,
+12/2/2021,8,C,8_C,5.5,10,4A10,1.1695,1.1802,0.0107,4A10,0.4205,0.4216,0.0011,NA,NA,,,,0.0118,10.28037383,NA,NA,NA,0.432,0.0003,0.054545455,used for dry weights and condition only,
+12/2/2021,8,B,8_B,3.6,11,4A11,1.1822,1.1849,0.0027,4A11,0.4136,0.4129,-0.0007,NA,NA,,,,0.002,-25.92592593,NA,NA,NA,0.4176,-0.002,-0.555555556,"used for dry weights and condition only, negative (dry tissue - tin)",
+12/2/2021,7.5,C,7.5_C,23,12,4A12,1.1779,1.8194,0.6415,4A12,0.4171,0.5027,0.0856,NA,NA,,,,0.7271,13.34372564,NA,NA,NA,1.0745,0.0697,3.030434783,used for dry weights and condition only,
+12/2/2021,8,B,8_B,4.8,13,4B1,1.183,1.1902,0.0072,4B1,0.4179,0.4187,0.0008,NA,NA,,,,0.008,11.11111111,NA,NA,NA,0.4265,-0.0006,-0.125,used for dry weights and condition only,
+12/2/2021,8,B,8_B,4.8,14,4B2,1.1857,1.1931,0.0074,4B2,0.4137,0.4136,-1.00E-04,NA,NA,,,,7.30E-03,-1.35E+00,NA,NA,NA,0.4208,0.0002,0.041666667,"used for dry weights and condition only, negative (dry tissue - tin) - labeled 'not good' by Genevieve",
+12/2/2021,7.5,C,7.5_C,22.1,15,4B3,1.1979,1.7228,0.5249,4B3,0.4172,0.4993,0.0821,NA,NA,,,,0.607,15.64107449,NA,NA,NA,0.9557,0.0685,3.099547511,used for dry weights and condition only,
+12/2/2021,8,B,8_B,14.2,16,4B4,1.182,1.3758,0.1938,4B4,0.4145,0.4398,0.0253,NA,NA,,,,0.2191,13.05469556,NA,NA,NA,0.612,0.0216,1.521126761,used for dry weights and condition only,
+12/2/2021,8,B,8_B,10.7,17,4B5,1.171,1.252,0.081,4B5,0.4132,0.4235,0.0103,NA,NA,,,,0.0913,12.71604938,NA,NA,NA,0.4957,0.0088,0.822429907,used for dry weights and condition only,
+12/2/2021,8,B,8_B,10.7,18,4B6,1.1834,1.2512,0.0678,4B6,0.4087,0.4181,0.0094,NA,NA,,,,0.0772,13.86430678,NA,NA,NA,0.4784,0.0075,0.700934579,used for dry weights and condition only,
+12/2/2021,8,B,8_B,9.8,19,4B7,1.1695,1.2235,0.054,4B7,0.4191,0.43,0.0109,NA,NA,,,,0.0649,20.18518519,NA,NA,NA,0.4726,0.0114,1.163265306,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,18.5,20,4B8,1.1805,1.5406,0.3601,4B8,0.4078,0.451,0.0432,NA,NA,,,,0.4033,11.99666759,NA,NA,NA,0.7713,0.0398,2.151351351,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,12.8,21,4B9,1.1834,1.2973,0.1139,4B9,0.4111,0.427,0.0159,NA,NA,,,,0.1298,13.9596137,NA,NA,NA,0.5274,0.0135,1.0546875,used for dry weights and condition only,
+12/2/2021,8,B,8_B,7.9,22,4B10,1.1686,1.2026,0.034,4B10,0.4182,0.4226,0.0044,NA,NA,,,,0.0384,12.94117647,NA,NA,NA,0.4528,0.0038,0.481012658,used for dry weights and condition only,
+12/2/2021,8,B,8_B,20.7,23,4B11,1.1855,1.7206,0.5351,4B11,0.4074,0.4772,0.0698,NA,NA,,,,0.6049,13.04429079,NA,NA,NA,0.955,0.0573,2.768115942,used for dry weights and condition only,
+12/2/2021,8,B,8_B,19,24,4B12,1.1829,1.5537,0.3708,4B12,0.4122,0.4747,0.0625,NA,NA,,,,0.4333,16.85544768,NA,NA,NA,0.795,0.0505,2.657894737,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,11.8,25,4C1,1.1838,1.2749,0.0911,4C1,0.4151,0.4282,0.0131,NA,NA,,,,0.1042,14.37980241,NA,NA,NA,0.5082,0.0111,0.940677966,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,12,26,4C2,1.1727,1.2725,0.0998,4C2,0.4173,0.4308,0.0135,NA,NA,,,,0.1133,13.52705411,NA,NA,NA,0.5208,0.0098,0.816666667,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,10.4,27,4C3,1.1663,1.228,0.0617,4C3,0.4165,0.4265,0.01,NA,NA,,,,0.0717,16.20745543,NA,NA,NA,0.4795,0.0087,0.836538462,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,5.4,28,4C4,1.1816,1.1903,0.0087,4C4,0.4152,0.4161,0.0009,NA,NA,,,,0.0096,10.34482759,NA,NA,NA,0.4246,0.0002,0.037037037,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,5.7,29,4C5,1.2709,1.2808,0.0099,4C5,0.4174,0.4194,0.002,NA,NA,,,,0.0119,20.2020202,NA,NA,NA,0.4282,0.0011,0.192982456,used for dry weights and condition only,
+12/2/2021,7.5,C,7.5_C,5,30,4C6,1.2664,1.275,0.0086,4C6,0.414,0.4148,0.0008,NA,NA,,,,0.0094,9.302325581,NA,NA,NA,0.423,0.0004,0.08,used for dry weights and condition only,
+12/2/2021,8,A,8_A,21.9,31,4C7,1.2648,1.8794,0.6146,4C7,0.411,0.4901,0.0791,NA,NA,,,,0.6937,12.87015945,NA,NA,NA,1.0589,0.0458,2.091324201,used for dry weights and condition only,
+12/2/2021,8,A,8_A,20.2,32,4C8,1.2713,1.7561,0.4848,4C8,0.4157,0.4797,0.064,NA,NA,,,,0.5488,13.20132013,NA,NA,NA,0.9226,0.0419,2.074257426,used for dry weights and condition only,
+12/2/2021,8,A,8_A,15,33,4C9,1.2677,1.4725,0.2048,4C9,0.4105,0.4392,0.0287,NA,NA,,,,0.2335,14.01367188,NA,NA,NA,0.625,0.019,1.266666667,used for dry weights and condition only,
+12/2/2021,8,A,8_A,10.2,34,4C10,1.287,1.355,0.068,4C10,0.4133,0.4227,0.0094,NA,NA,,,,0.0774,13.82352941,NA,NA,NA,0.4834,0.0073,0.715686275,used for dry weights and condition only,
+12/2/2021,8,A,8_A,10.9,35,4C11,1.2904,1.365,0.0746,4C11,0.4162,0.4267,0.0105,NA,NA,,,,0.0851,14.07506702,NA,NA,NA,0.4914,0.0099,0.908256881,used for dry weights and condition only,
+12/2/2021,8,A,8_A,10.9,36,4C12,1.2652,1.3334,0.0682,4C12,0.4177,0.428,0.0103,NA,NA,,,,0.0785,15.1026393,NA,NA,NA,0.4911,0.0051,0.467889908,used for dry weights and condition only,
+12/2/2021,8,A,8_A,12.3,37,5A1,1.1803,1.3144,0.1341,5A1,0.414,0.4303,0.0163,NA,NA,,,,0.1504,12.15510813,NA,NA,NA,0.5543,0.0101,0.821138211,used for dry weights and condition only,
+12/2/2021,8,A,8_A,5.4,38,5A2,1.2752,1.2856,0.0104,5A2,0.4105,0.4116,0.0011,NA,NA,,,,0.0115,10.57692308,NA,NA,NA,0.4211,0.0009,0.166666667,used for dry weights and condition only,
+12/2/2021,8,A,8_A,5.8,39,5A3,1.2735,1.2849,0.0114,5A3,0.4136,0.4142,0.0006,NA,NA,,,,0.012,5.263157895,NA,NA,NA,0.4248,0.0008,0.137931035,used for dry weights and condition only,
+12/2/2021,8,A,8_A,3.9,40,5A4,1.2706,1.275,0.0044,5A4,0.4126,0.4127,1.00E-04,NA,NA,,,,4.50E-03,2.27E+00,NA,NA,NA,0.4171,0,0,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,21.7,41,5A5,1.2718,1.8687,0.5969,5A5,0.4127,0.4931,0.0804,NA,NA,,,,0.6773,13.4695929,NA,NA,NA,1.0248,0.0652,3.004608295,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,21.3,42,5A6,1.2524,1.7901,0.5377,5A6,0.4173,0.4981,0.0808,NA,NA,,,,0.6185,15.02696671,NA,NA,NA,0.9656,0.0702,3.295774648,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,19.1,43,5A7,1.2843,1.6764,0.3921,5A7,0.4174,0.4727,0.0553,NA,NA,,,,0.4474,14.10354501,NA,NA,NA,0.8196,0.0452,2.366492147,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,12.2,44,5A8,1.2848,1.3967,0.1119,5A8,0.4119,0.4252,0.0133,NA,NA,,,,0.1252,11.88561215,NA,NA,NA,0.524,0.0131,1.073770492,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,12.9,45,5A9,1.2706,1.3683,0.0977,5A9,0.417,0.4316,0.0146,NA,NA,,,,0.1123,14.94370522,NA,NA,NA,0.517,0.0123,0.953488372,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,11.9,46,5A10,1.282,1.3792,0.0972,5A10,0.416,0.4293,0.0133,NA,NA,,,,0.1105,13.68312757,NA,NA,NA,0.5146,0.0119,1,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,11.9,47,5A11,1.2697,1.3624,0.0927,5A11,0.4125,0.4265,0.014,NA,NA,,,,0.1067,15.10248112,NA,NA,NA,0.5068,0.0124,1.042016807,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,5.7,48,5A12,1.2754,1.2824,0.007,5A12,0.4172,0.4173,1.00E-04,NA,NA,,,,7.10E-03,1.43E+00,NA,NA,NA,0.4255,-0.0012,-0.210526316,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,5.7,49,5B1,1.2515,1.26,0.0085,5B1,0.4148,0.4159,0.0011,NA,NA,,,,0.0096,12.94117647,NA,NA,NA,0.4231,0.0013,0.228070175,used for dry weights and condition only,
+12/2/2021,7.5,A,7.5_A,5.6,50,5B2,1.2535,1.2605,0.007,5B2,0.4126,0.4143,0.0017,NA,NA,,,,0.0087,24.28571429,NA,NA,NA,0.4201,0.0012,0.214285714,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,20.8,51,5B3,1.2623,1.8023,0.54,5B3,0.4149,0.4821,0.0672,NA,NA,,,,0.6072,12.44444444,NA,NA,NA,0.9637,0.0584,2.807692308,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,18.9,52,5B4,1.2761,1.607,0.3309,5B4,0.4155,0.4649,0.0494,NA,NA,,,,0.3803,14.92898157,NA,NA,NA,0.7539,0.0419,2.216931217,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,17.2,53,5B5,1.2661,1.5631,0.297,5B5,0.4222,0.4549,0.0327,NA,NA,,,,0.3297,11.01010101,NA,NA,NA,0.7237,0.0282,1.639534884,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,11.1,54,5B6,1.2715,1.3506,0.0791,5B6,0.4126,0.4222,0.0096,NA,NA,,,,0.0887,12.13653603,NA,NA,NA,0.4929,0.0084,0.756756757,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,12.1,55,5B7,1.2713,1.366,0.0947,5B7,0.4093,0.4232,0.0139,NA,NA,,,,0.1086,14.67793031,NA,NA,NA,0.5068,0.0111,0.917355372,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,11.6,56,5B8,1.2583,1.3434,0.0851,5B8,0.4143,0.4227,0.0084,NA,NA,,,,0.0935,9.870740306,NA,NA,NA,0.5011,0.0067,0.577586207,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,10.1,57,5B9,1.2698,1.3343,0.0645,5B9,0.4108,0.4195,0.0087,NA,NA,,,,0.0732,13.48837209,NA,NA,NA,0.4773,0.0067,0.663366337,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,5.3,58,5B10,1.2835,1.2913,0.0078,5B10,0.4103,0.4103,0,NA,NA,,,,0.0078,0,NA,NA,NA,0.4185,-0.0004,-0.075471698,"used for dry weights and condition only, zero (dry tissue - tin)",
+12/2/2021,7.5,D,7.5_D,5,59,5B11,1.2604,1.2678,0.0074,5B11,0.4154,0.4156,0.0002,NA,NA,,,,0.0076,2.702702703,NA,NA,NA,0.4233,-0.0003,-0.06,used for dry weights and condition only,
+12/2/2021,7.5,D,7.5_D,5.3,60,5B12,1.2715,1.2781,0.0066,5B12,0.4098,0.41,0.0002,NA,NA,,,,0.0068,3.03030303,NA,NA,NA,0.4174,-0.0008,-0.150943396,used for dry weights and condition only,
+12/2/2021,8,D,8_D,21.1,61,5C1,1.295,1.7794,0.4844,5C1,0.4142,0.4787,0.0645,NA,NA,,,,0.5489,13.31544178,NA,NA,NA,0.9076,0.0555,2.630331754,used for dry weights and condition only,
+12/2/2021,8,D,8_D,18.9,62,5C2,1.2826,1.6073,0.3247,5C2,0.4135,0.4613,0.0478,NA,NA,,,,0.3725,14.72128118,NA,NA,NA,0.7456,0.0404,2.137566138,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,19.9,63,5C3,1.2687,1.7073,0.4386,5C3,0.4116,0.4725,0.0609,NA,NA,,,,0.4995,13.88508892,NA,NA,NA,0.8589,0.0522,2.623115578,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,19.7,64,5C4,1.2883,1.783,0.4947,5C4,0.4073,0.4677,0.0604,NA,NA,,,,0.5551,12.20941985,NA,NA,NA,0.9099,0.0525,2.664974619,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,11.3,65,5C5,1.273,1.361,0.088,5C5,0.4103,0.423,0.0127,NA,NA,,,,0.1007,14.43181818,NA,NA,NA,0.5007,0.0103,0.911504425,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,13,66,5C6,1.2778,1.4138,0.136,5C6,0.4149,0.4306,0.0157,NA,NA,,,,0.1517,11.54411765,NA,NA,NA,0.5538,0.0128,0.984615385,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,11.3,67,5C7,1.2646,1.3642,0.0996,5C7,0.4176,0.4297,0.0121,NA,NA,,,,0.1117,12.14859438,NA,NA,NA,0.518,0.0113,1,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,11.3,68,5C8,1.2668,1.3404,0.0736,5C8,0.4175,0.427,0.0095,NA,NA,,,,0.0831,12.9076087,NA,NA,NA,0.4928,0.0078,0.690265487,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,5.5,69,5C9,1.2638,1.2716,0.0078,5C9,0.4164,0.4168,0.0004,NA,NA,,,,0.0082,5.128205128,NA,NA,NA,0.4242,0.0004,0.072727273,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,5.5,70,5C10,1.2725,1.2833,0.0108,5C10,0.4146,0.4154,0.0008,NA,NA,,,,0.0116,7.407407407,NA,NA,NA,0.4253,0.0009,0.163636364,used for dry weights and condition only,
+12/2/2021,7.5,B,7.5_B,5.5,71,5C11,1.2659,1.276,0.0101,5C11,0.4123,0.4133,0.001,NA,NA,,,,0.0111,9.900990099,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,7.5,B,7.5_B,16.8,72,5C12,1.2658,1.532,0.2662,5C12,0.4156,0.4485,0.0329,NA,NA,,,,0.2991,12.35912847,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,8,D,8_D,18.5,73,6A1,1.2778,1.6297,0.3519,6A1,0.4155,0.4676,0.0521,NA,NA,,,,0.404,14.80534243,NA,NA,NA,0.7845,0.035,1.891891892,used for dry weights and condition only,
+12/2/2021,8,D,8_D,14.3,74,6A2,1.2699,1.4152,0.1453,6A2,0.4138,0.4347,0.0209,NA,NA,,,,0.1662,14.38403304,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,8,D,8_D,13.3,75,6A3,1.2744,1.4201,0.1457,6A3,0.4147,0.4322,0.0175,NA,NA,,,,0.1632,12.01098147,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,8,D,8_D,11.2,76,6A4,1.2704,1.3673,0.0969,6A4,0.4168,0.4289,0.0121,NA,NA,,,,0.109,12.4871001,NA,NA,NA,0.5002,0.0256,2.285714286,used for dry weights and condition only,
+12/2/2021,8,D,8_D,11.1,77,6A5,1.2777,1.3625,0.0848,6A5,0.4109,0.4192,0.0083,NA,NA,,,,0.0931,9.787735849,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,8,D,8_D,5.7,78,6A6,1.2901,1.2853,-0.0048,6A6,0.4119,0.4129,0.001,NA,NA,,,,-0.0038,-20.83333333,NA,NA,NA,NA,NA,NA,"used for dry weights and condition only, negative",
+12/2/2021,8,D,8_D,5.9,79,6A7,1.2689,1.2836,0.0147,6A7,0.415,0.4164,0.0014,NA,NA,,,,0.0161,9.523809524,NA,NA,NA,NA,NA,NA,error - dropped,
+12/2/2021,8,D,8_D,6.7,80,6A8,1.2804,1.2873,0.0069,6A8,0.4131,0.4139,0.0008,NA,NA,,,,0.0077,11.5942029,NA,NA,NA,NA,NA,NA,error - dropped,
+2/2/2022,7.5,A,7.5_A,14.9,81,81,1.2687,1.5134,0.2447,81,0.411,0.45,0.039,NA,NA,,,,0.2837,15.93788312,NA,NA,NA,0.6535,0.0412,2.765100671,scallops used for RR and CR,
+2/2/2022,7.5,B,7.5_B,13.6,82,82,1.2658,1.4405,0.1747,82,0.4082,0.4405,0.0323,NA,NA,,,,0.207,18.48883801,NA,NA,NA,0.5835,0.0317,2.330882353,scallops used for RR and CR,
+2/2/2022,7.5,C,7.5_C,14,83,83,1.2766,1.4782,0.2016,83,0.4175,0.4452,0.0277,NA,NA,,,,0.2293,13.74007937,NA,NA,NA,0.6177,0.0291,2.078571429,scallops used for RR and CR,
+2/2/2022,8,A,8_A,14.35,84,84,1.2599,1.4786,0.2187,84,0.4141,0.4476,0.0335,NA,NA,,,,0.2522,15.31778692,NA,NA,NA,0.619,0.0473,3.296167247,scallops used for RR and CR,
+2/2/2022,8,B,8_B,13.8,85,85,1.2857,1.4943,0.2086,85,0.4145,0.448,0.0335,NA,NA,,,,0.2421,16.05944391,NA,NA,NA,0.6286,0.028,2.028985507,scallops used for RR and CR,
+2/2/2022,8,C,8_C,14.4,86,86,1.2563,1.4615,0.2052,86,0.4095,0.443,0.0335,NA,NA,,,,0.2387,16.32553606,NA,NA,NA,0.6212,0.027,1.875,scallops used for RR and CR,
+2/2/2022,7.5,H,7.5_H,14.6,87,87,1.2937,1.4972,0.2035,87,0.4138,0.4457,0.0319,NA,NA,,,,0.2354,15.67567568,NA,NA,NA,0.62,0.0292,2,"used for dry weights and condition only, hemolymph extraction attempted",
+2/2/2022,7.5,D,7.5_D,14.75,88,88,1.2738,1.479,0.2052,88,0.4121,0.4324,0.0203,NA,NA,,,,0.2255,9.892787524,NA,NA,NA,0.6201,0.0175,1.186440678,scallops used for RR and CR,
+2/2/2022,7.5,E,7.5_E,13.2,89,89,1.2711,1.4182,0.1471,89,0.4112,0.4376,0.0264,NA,NA,,,,0.1735,17.94697485,NA,NA,NA,0.5629,0.0218,1.651515152,scallops used for RR and CR,
+2/2/2022,7.5,F,7.5_F,13,90,90,1.2673,1.4323,0.165,90,0.4088,0.4361,0.0273,NA,NA,,,,0.1923,16.54545455,NA,NA,NA,0.5757,0.0254,1.953846154,scallops used for RR and CR,
+2/2/2022,8,D,8_D,14,91,91,1.2648,1.472,0.2072,91,0.4101,0.4455,0.0354,NA,NA,,,,0.2426,17.08494208,NA,NA,NA,0.6197,0.033,2.357142857,scallops used for RR and CR,
+2/2/2022,8,E,8_E,14.8,92,92,1.2783,1.5155,0.2372,92,0.4129,0.4511,0.0382,NA,NA,,,,0.2754,16.10455312,NA,NA,NA,0.6533,0.035,2.364864865,scallops used for RR and CR,
+2/2/2022,8,F,8_F,14.2,93,93,1.2638,1.4582,0.1944,93,0.4158,0.4513,0.0355,NA,NA,,,,0.2299,18.26131687,NA,NA,NA,0.6148,0.0309,2.176056338,scallops used for RR and CR,
+2/2/2022,7.5,B,7.5_B,13.5,94,94,1.2778,1.4364,0.1586,94,0.414,0.4405,0.0265,NA,NA,,,,0.1851,16.70870113,NA,NA,NA,0.5758,0.0233,1.725925926,used for dry weights and condition only,
+2/2/2022,7.5,A,7.5_A,13.7,95,95,1.2565,1.4474,0.1909,95,0.4091,0.4417,0.0326,NA,NA,,,,0.2235,17.07700367,NA,NA,NA,0.6043,0.0283,2.065693431,used for dry weights and condition only,
+2/2/2022,7.5,E,7.5_E,14.1,96,96,1.2757,1.4779,0.2022,96,0.4173,0.4525,0.0352,NA,NA,,,,0.2374,17.40850643,NA,NA,NA,0.624,0.0307,2.177304965,used for dry weights and condition only,
+2/2/2022,7.5,F,7.5_F,13.8,97,97,1.2812,1.4868,0.2056,97,0.411,0.4456,0.0346,NA,NA,,,,0.2402,16.82879377,NA,NA,NA,0.624,0.0272,1.971014493,used for dry weights and condition only,
+2/2/2022,7.5,G,7.5_G,13.65,98,98,1.2513,1.4525,0.2012,98,0.4126,0.4452,0.0326,NA,NA,,,,0.2338,16.2027833,NA,NA,NA,0.5996,0.0468,3.428571429,used for dry weights and condition only,
+2/2/2022,7.5,D,7.5_D,13.5,99,99,1.2656,1.4376,0.172,99,0.4108,0.4385,0.0277,NA,NA,,,,0.1997,16.10465116,NA,NA,NA,0.5768,0.0337,2.496296296,used for dry weights and condition only,
+2/2/2022,8,A,8_A,13.5,100,100,1.2872,1.4447,0.1575,100,0.4099,0.4407,0.0308,NA,NA,,,,0.1883,19.55555556,NA,NA,NA,0.5872,0.011,0.814814815,used for dry weights and condition only,
+2/2/2022,8,D,8_D,14.3,101,101,1.2705,1.4606,0.1901,101,0.4074,0.4409,0.0335,NA,NA,,,,0.2236,17.62230405,NA,NA,NA,0.5932,0.0378,2.643356643,used for dry weights and condition only,
+2/2/2022,8,B,8_B,14.4,102,102,1.2755,1.4849,0.2094,102,0.4108,0.4354,0.0246,NA,NA,,,,0.234,11.747851,NA,NA,NA,0.608,0.0368,2.555555556,used for dry weights and condition only,
+2/2/2022,8,E,8_E,13.7,103,103,1.2746,1.4399,0.1653,103,0.4141,0.4427,0.0286,NA,NA,,,,0.1939,17.30187538,NA,NA,NA,0.5896,0.0184,1.343065693,used for dry weights and condition only,
+2/2/2022,8,H,8_H,14.1,104,104,1.2718,1.4827,0.2109,104,0.4096,0.4435,0.0339,NA,NA,,,,0.2448,16.07396871,NA,NA,NA,0.6156,0.0388,2.75177305,used for dry weights and condition only,
+2/2/2022,8,G,8_G,14.1,105,105,1.28,1.4589,0.1789,105,0.4142,0.4469,0.0327,NA,NA,,,,0.2116,18.2783678,NA,NA,NA,0.6075,0.0183,1.29787234,used for dry weights and condition only,
+2/2/2022,8,F,8_F,13.2,106,106,1.2712,1.4527,0.1815,106,0.4146,0.4465,0.0319,NA,NA,,,,0.2134,17.57575758,NA,NA,NA,0.6053,0.0227,1.71969697,"used for dry weights and condition only, hemolymph extraction attempted",
+2/2/2022,8,G,8_G,14,107,107,1.2865,1.4379,0.1514,107,0.4162,0.4485,0.0323,NA,NA,,,,0.1837,21.334214,NA,NA,NA,0.5829,0.017,1.214285714,scallops used for RR and CR,
+2/2/2022,8,H,8_H,14,108,108,1.281,1.4816,0.2006,108,0.4127,0.4472,0.0345,NA,NA,,,,0.2351,17.19840479,NA,NA,NA,0.638,0.0098,0.7,scallops used for RR and CR,
+2/2/2022,8,C,8_C,14.8,109,109,1.2827,1.5155,0.2328,109,0.411,0.4507,0.0397,NA,NA,,,,0.2725,17.0532646,NA,NA,NA,0.6488,0.0347,2.344594595,scallops used for RR and CR,
+2/2/2022,7.5,G,7.5_G,14,110,110,1.2502,1.423,0.1728,110,0.4102,0.4464,0.0362,NA,NA,,,,0.209,20.94907407,NA,NA,NA,0.5884,0.0308,2.2,scallops used for RR and CR,
+2/2/2022,7.5,H,7.5_H,13.6,111,111,1.2639,1.4369,0.173,111,0.4121,0.4445,0.0324,NA,NA,,,,0.2054,18.7283237,NA,NA,NA,0.5888,0.0287,2.110294118,scallops used for RR and CR,
+2/2/2022,7.5,C,7.5_C,15.1,112,112,1.2554,1.4935,0.2381,112,0.4148,0.4572,0.0424,NA,NA,,,,0.2805,17.80764385,NA,NA,NA,0.6575,0.0378,2.503311258,scallops used for RR and CR,
+2/28/2022,8,A,8_A,19.4,113,113,1.2607,1.8549,0.5942,113,0.4149,0.5123,0.0974,NA,NA,,,,0.6916,16.39178728,NA,NA,NA,1.0219,0.0846,4.360824742,used for dry weights and condition only,
+2/28/2022,8,A,8_A,20.2,114,114,1.2509,2.0208,0.7699,114,0.4094,0.5276,0.1182,NA,NA,,,,0.8881,15.3526432,NA,NA,NA,1.199,0.0985,4.876237624,used for dry weights and condition only,
+2/28/2022,8,A,8_A,21.25,115,115,1.2661,2.1792,0.9131,115,0.4163,0.5527,0.1364,NA,NA,,,,1.0495,14.93812288,NA,NA,NA,1.3493,0.1165,5.482352941,used for dry weights and condition only,
+2/28/2022,8,A,8_A,18.1,116,116,1.2513,1.8049,0.5536,116,0.4115,0.5062,0.0947,NA,NA,,,,0.6483,17.10621387,NA,NA,NA,0.9785,0.0813,4.491712707,used for dry weights and condition only,
+2/28/2022,8,A,8_A,16.5,117,117,1.2635,1.6837,0.4202,117,0.4072,0.4724,0.0652,NA,NA,,,,0.4854,15.51642075,NA,NA,NA,0.8347,0.0579,3.509090909,used for dry weights and condition only,
+2/28/2022,8,B,8_B,15.8,118,118,1.274,1.6064,0.3324,118,0.4102,0.4671,0.0569,NA,NA,,,,0.3893,17.1179302,NA,NA,NA,0.7494,0.0501,3.170886076,used for dry weights and condition only,
+2/28/2022,8,B,8_B,18.6,119,119,1.2656,1.7466,0.481,119,0.4206,0.5006,0.08,NA,NA,,,,0.561,16.63201663,NA,NA,NA,0.9137,0.0679,3.650537634,used for dry weights and condition only,
+2/28/2022,8,B,8_B,18,120,120,1.2529,1.7607,0.5078,120,0.4079,0.4867,0.0788,NA,NA,,,,0.5866,15.51792044,NA,NA,NA,0.9252,0.0693,3.85,used for dry weights and condition only,
+2/28/2022,8,B,8_B,18.1,121,121,1.2836,1.8298,0.5462,121,0.4123,0.4962,0.0839,NA,NA,,,,0.6301,15.36067375,NA,NA,NA,0.9711,0.0713,3.939226519,used for dry weights and condition only,
+2/28/2022,8,B,8_B,16.9,122,122,1.2574,1.6298,0.3724,122,0.4112,0.4626,0.0514,NA,NA,,,,0.4238,13.80236305,NA,NA,NA,0.7907,0.0443,2.621301775,used for dry weights and condition only,
+3/2/2022,7.5,B,7.5_B,21.9,123,123,1.2511,2.0494,0.7983,123,0.4162,0.5684,0.1522,NA,NA,,,,0.9505,19.06551422,NA,NA,NA,1.2442,0.1225,5.593607306,"scallops used for RR - first run of 7.5 B, not used for BD",
+3/2/2022,8,A,8_A,21.25,124,124,1.2461,2.0287,0.7826,124,0.414,0.5389,0.1249,NA,NA,,,,0.9075,15.95962177,NA,NA,NA,1.2157,0.1058,4.978823529,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,B,8_B,23.5,125,125,1.2578,2.3547,1.0969,125,0.421,0.6423,0.2213,NA,NA,,,,1.3182,20.17503875,NA,NA,NA,1.5567,0.1825,7.765957447,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,C,8_C,22.25,126,126,1.2626,2.0624,0.7998,126,0.4175,0.578,0.1605,NA,NA,,,,0.9603,20.06751688,NA,NA,NA,1.2484,0.1294,5.815730337,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,D,8_D,21.1,127,127,1.2568,1.9699,0.7131,127,0.4124,0.5287,0.1163,NA,NA,,,,0.8294,16.30907306,NA,NA,NA,1.1461,0.0957,4.535545024,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,F,8_F,20.6,128,128,1.2646,2.0139,0.7493,128,0.4095,0.542,0.1325,NA,NA,,,,0.8818,17.68317096,NA,NA,NA,1.1799,0.1114,5.40776699,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,D,7.5_D,22.9,129,129,1.2543,2.176,0.9217,129,0.4121,0.5929,0.1808,NA,NA,,,,1.1025,19.61592709,NA,NA,NA,1.3649,0.1497,6.537117904,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,A,7.5_A,23.8,130,130,1.2542,2.2558,1.0016,130,0.4095,0.6208,0.2113,NA,NA,,,,1.2129,21.09624601,NA,NA,NA,1.453,0.1694,7.117647059,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,G,8_G,22.1,131,131,1.2555,2.0239,0.7684,131,0.4136,0.5306,0.117,NA,NA,,,,0.8854,15.22644456,NA,NA,NA,1.208,0.091,4.117647059,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,F,7.5_F,21.9,132,132,1.2491,1.9887,0.7396,132,0.4114,0.568,0.1566,NA,NA,,,,0.8962,21.17360736,NA,NA,NA,1.1879,0.1197,5.465753425,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,E,7.5_E,23,133,133,1.2931,2.2974,1.0043,133,0.4137,0.6221,0.2084,NA,NA,,,,1.2127,20.75077168,NA,NA,NA,1.4689,0.1575,6.847826087,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,E,8_E,23,134,134,1.263,2.0299,0.7669,134,0.4146,0.5245,0.1099,NA,NA,,,,0.8768,14.33042118,NA,NA,NA,1.2086,0.0828,3.6,scallops used for RR and BD - first run of 8 E not used for BD,
+3/2/2022,8,H,8_H,19.4,135,135,1.2864,1.9441,0.6577,135,0.4141,0.5291,0.115,NA,NA,,,,0.7727,17.48517561,NA,NA,NA,1.0958,0.091,4.690721649,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,C,8_C,22.65,136,136,1.2558,1.9885,0.7327,136,0.4136,0.5635,0.1499,NA,NA,,,,0.8826,20.45857786,NA,NA,NA,1.1782,0.118,5.209713024,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,H,7.5_H,20.2,137,137,1.2682,1.9708,0.7026,137,0.4169,0.5336,0.1167,NA,NA,,,,0.8193,16.60973527,NA,NA,NA,1.1597,0.0765,3.787128713,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,7.5,G,7.5_G,22.25,138,138,1.2911,2.0616,0.7705,138,0.4162,0.5662,0.15,NA,NA,,,,0.9205,19.467878,NA,NA,NA,1.2375,0.0992,4.458426966,depurated for RR and BD BUT used for dry weights and condition only,
+3/2/2022,8,A,8_A,20.2,139,139,1.2544,1.9092,0.6548,139,0.4139,0.5402,0.1263,NA,NA,,,,0.7811,19.28833232,NA,NA,NA,1.0784,0.1166,5.772277228,scallops used for RR and BD,
+3/2/2022,8,B,8_B,20.35,140,140,1.2639,1.8847,0.6208,140,0.4121,0.4924,0.0803,NA,NA,,,,0.7011,12.93492268,NA,NA,NA,1.0416,0.0716,3.518427518,scallops used for RR and BD,
+3/2/2022,8,C,8_C,21.9,141,141,1.2669,2.1112,0.8443,141,0.4159,0.5706,0.1547,NA,NA,,,,0.999,18.32287102,NA,NA,NA,1.2646,0.1503,6.863013699,scallops used for RR and BD,
+3/2/2022,8,D,8_D,23.9,142,142,1.2764,2.2557,0.9793,142,0.4194,0.6154,0.196,NA,NA,,,,1.1753,20.01429593,NA,NA,NA,1.4204,0.1743,7.292887029,scallops used for RR and BD,
+3/2/2022,8,E,8_E,21,143,143,1.2627,1.8965,0.6338,143,0.4102,0.5277,0.1175,NA,NA,,,,0.7513,18.53897128,NA,NA,NA,1.0544,0.1071,5.1,scallops used for RR and BD,
+3/2/2022,8,F,8_F,23.7,144,144,1.2511,2.3287,1.0776,144,0.4149,0.6075,0.1926,NA,NA,,,,1.2702,17.87305122,NA,NA,NA,1.5089,0.1762,7.434599156,scallops used for RR and BD,
+3/2/2022,8,G,8_G,21.2,145,145,1.269,2.0401,0.7711,145,0.4206,0.5626,0.142,NA,NA,,,,0.9131,18.41525094,NA,NA,NA,1.2047,0.129,6.08490566,scallops used for RR and BD,
+3/2/2022,8,H,8_H,22.05,146,146,1.2665,2.1484,0.8819,146,0.415,0.5555,0.1405,NA,NA,,,,1.0224,15.93151151,NA,NA,NA,1.3062,0.1312,5.950113379,scallops used for RR and BD,
+3/2/2022,7.5,A,7.5_A,22.2,147,147,1.2833,2.1205,0.8372,147,0.41,0.5863,0.1763,NA,NA,,,,1.0135,21.05828954,NA,NA,NA,1.258,0.1655,7.454954955,scallops used for RR and BD,
+3/2/2022,7.5,B,7.5_B,21.35,148,148,1.2529,2.0331,0.7802,148,0.4129,0.5565,0.1436,NA,NA,,,,0.9238,18.40553704,NA,NA,NA,1.204,0.1327,6.215456674,scallops used for RR and BD,
+3/2/2022,7.5,C,7.5_C,23.75,149,149,1.2466,2.2493,1.0027,149,0.4141,0.5862,0.1721,NA,NA,,,,1.1748,17.16365812,NA,NA,NA,1.4329,0.156,6.568421053,scallops used for RR and BD,
+3/2/2022,7.5,D,7.5_D,22.4,150,150,1.2586,2.201,0.9424,150,0.4099,0.6067,0.1968,NA,NA,,,,1.1392,20.88285229,NA,NA,NA,1.3679,0.1812,8.089285714,scallops used for RR and BD,
+3/2/2022,7.5,E,7.5_E,23.45,151,151,1.2864,2.3949,1.1085,151,0.4142,0.6137,0.1995,NA,NA,,,,1.308,17.99729364,NA,NA,NA,1.5338,0.1884,8.034115139,scallops used for RR and BD,
+3/2/2022,7.5,F,7.5_F,23.9,152,152,1.2588,2.363,1.1042,152,0.4148,0.6573,0.2425,NA,NA,,,,1.3467,21.96160116,NA,NA,NA,1.5384,0.2231,9.334728033,scallops used for RR and BD,
+3/2/2022,7.5,G,7.5_G,24.3,153,153,1.2593,2.3551,1.0958,153,0.4176,0.6657,0.2481,NA,NA,,,,1.3439,22.64099288,NA,NA,NA,1.5319,0.2296,9.448559671,scallops used for RR and BD,
+3/2/2022,7.5,H,7.5_H,23.5,154,154,1.2741,2.4981,1.224,154,0.417,0.6412,0.2242,NA,NA,,,,1.4482,18.31699346,NA,NA,NA,1.6545,0.2107,8.965957447,scallops used for RR and BD,
+2/28/2022,8,G,8_G,16.5,155,155,1.2608,1.6058,0.345,155,0.4088,0.4591,0.0503,NA,NA,,,,0.3953,14.57971014,NA,NA,NA,0.7595,0.0446,2.703030303,used for dry weights and condition only,
+2/28/2022,8,G,8_G,19.4,156,156,1.2563,1.8161,0.5598,156,0.4108,0.5009,0.0901,NA,NA,,,,0.6499,16.09503394,NA,NA,NA,0.9806,0.0801,4.128865979,used for dry weights and condition only,
+2/28/2022,8,G,8_G,21.4,157,157,1.2569,2.0983,0.8414,157,0.4118,0.5464,0.1346,NA,NA,,,,0.976,15.99714761,NA,NA,NA,1.2612,0.1266,5.91588785,used for dry weights and condition only,
+2/28/2022,8,G,8_G,15.35,158,158,1.2557,1.5866,0.3309,158,0.4111,0.4583,0.0472,NA,NA,,,,0.3781,14.26412814,NA,NA,NA,0.7461,0.0431,2.80781759,used for dry weights and condition only,
+2/28/2022,8,G,8_G,23,159,159,1.2488,2.1362,0.8874,159,0.4148,0.586,0.1712,NA,NA,,,,1.0586,19.29231463,NA,NA,NA,1.322,0.1514,6.582608696,used for dry weights and condition only,
+2/28/2022,8,H,8_H,22.95,160,160,1.2725,2.2233,0.9508,160,0.4072,0.5729,0.1657,NA,NA,,,,1.1165,17.42742953,NA,NA,NA,1.3761,0.1476,6.431372549,used for dry weights and condition only,
+2/28/2022,8,H,8_H,15.55,161,161,1.2724,1.5764,0.304,161,0.4167,0.4693,0.0526,NA,NA,,,,0.3566,17.30263158,NA,NA,NA,0.726,0.0473,3.041800643,used for dry weights and condition only,
+2/28/2022,8,H,8_H,20.08,162,162,1.2676,2.0072,0.7396,162,0.4207,0.5491,0.1284,NA,NA,,,,0.868,17.36073553,NA,NA,NA,1.1744,0.1143,5.692231076,used for dry weights and condition only,
+2/28/2022,8,H,8_H,16.25,163,163,1.2475,1.6283,0.3808,163,0.4181,0.4848,0.0667,NA,NA,,,,0.4475,17.5157563,NA,NA,NA,0.8047,0.0609,3.747692308,used for dry weights and condition only,
+2/28/2022,8,H,8_H,17.4,164,164,1.2616,1.6656,0.404,164,0.4127,0.4708,0.0581,NA,NA,,,,0.4621,14.38118812,NA,NA,NA,0.8323,0.0425,2.442528736,used for dry weights and condition only,
+2/28/2022,8,D,8_D,18.1,165,165,1.2625,1.8193,0.5568,165,0.4156,0.5032,0.0876,NA,NA,,,,0.6444,15.73275862,NA,NA,NA,0.9821,0.0779,4.303867403,used for dry weights and condition only,
+2/28/2022,8,D,8_D,15.8,166,166,1.2578,1.6444,0.3866,166,0.4092,0.4708,0.0616,NA,NA,,,,0.4482,15.93378169,NA,NA,NA,0.8041,0.0533,3.373417722,used for dry weights and condition only,
+2/28/2022,8,D,8_D,17.1,167,167,1.2754,1.7606,0.4852,167,0.4189,0.4886,0.0697,NA,NA,,,,0.5549,14.36521022,NA,NA,NA,0.9104,0.0634,3.707602339,used for dry weights and condition only,
+2/28/2022,8,D,8_D,15.75,168,168,1.2819,1.581,0.2991,168,0.4124,0.4652,0.0528,NA,NA,,,,0.3519,17.65295888,NA,NA,NA,0.717,0.0473,3.003174603,used for dry weights and condition only,
+2/28/2022,8,D,8_D,23.95,169,169,1.2602,2.2583,0.9981,169,0.4122,0.6069,0.1947,NA,NA,,,,1.1928,19.50706342,NA,NA,NA,1.4344,0.1706,7.123173278,used for dry weights and condition only,
+2/28/2022,8,F,8_F,18.4,170,170,1.2704,1.8211,0.5507,170,0.4131,0.5033,0.0902,NA,NA,,,,0.6409,16.3791538,NA,NA,NA,0.9656,0.0884,4.804347826,used for dry weights and condition only,
+2/28/2022,8,F,8_F,18.9,171,171,1.2619,1.8239,0.562,171,0.4152,0.5048,0.0896,NA,NA,,,,0.6516,15.9430605,NA,NA,NA,0.987,0.0798,4.222222222,used for dry weights and condition only,
+2/28/2022,8,F,8_F,15.9,172,172,1.2483,1.6125,0.3642,172,0.4141,0.4766,0.0625,NA,NA,,,,0.4267,17.1609006,NA,NA,NA,0.7858,0.055,3.459119497,used for dry weights and condition only,
+2/28/2022,8,F,8_F,15.1,173,173,1.2582,1.5618,0.3036,173,0.4099,0.4576,0.0477,NA,NA,,,,0.3513,15.71146245,NA,NA,NA,0.7177,0.0435,2.880794702,used for dry weights and condition only,
+2/28/2022,8,F,8_F,19.85,174,174,1.2634,1.7954,0.532,174,0.408,0.5082,0.1002,NA,NA,,,,0.6322,18.83458647,NA,NA,NA,0.955,0.0852,4.292191436,used for dry weights and condition only,
+2/28/2022,8,E,8_E,15,175,175,1.2598,1.5296,0.2698,175,0.4184,0.462,0.0436,NA,NA,,,,0.3134,16.16011861,NA,NA,NA,0.6939,0.0379,2.526666667,used for dry weights and condition only,
+2/28/2022,8,E,8_E,19.3,176,176,1.2597,1.8197,0.56,176,0.4141,0.5231,0.109,NA,NA,,,,0.669,19.46428571,NA,NA,NA,0.9915,0.0916,4.74611399,used for dry weights and condition only,
+2/28/2022,8,E,8_E,21,177,177,1.2609,1.9841,0.7232,177,0.4144,0.5458,0.1314,NA,NA,,,,0.8546,18.16924779,NA,NA,NA,1.1577,0.1113,5.3,used for dry weights and condition only,
+2/28/2022,8,E,8_E,17.7,178,178,1.2516,1.6413,0.3897,178,0.4129,0.4809,0.068,NA,NA,,,,0.4577,17.44931999,NA,NA,NA,0.8111,0.0595,3.361581921,used for dry weights and condition only,
+2/28/2022,8,E,8_E,17.85,179,179,1.2683,1.7627,0.4944,179,0.4086,0.4902,0.0816,NA,NA,,,,0.576,16.50485437,NA,NA,NA,0.9124,0.0722,4.044817927,used for dry weights and condition only,
+2/28/2022,7.5,B,7.5_B,21.1,180,180,1.2636,2.0274,0.7638,180,0.4094,0.539,0.1296,NA,NA,,,,0.8934,16.96779262,NA,NA,NA,1.189,0.1138,5.393364929,used for dry weights and condition only,
+2/28/2022,7.5,B,7.5_B,16.3,181,181,1.2575,1.638,0.3805,181,0.4127,0.4695,0.0568,NA,NA,,,,0.4373,14.92772668,NA,NA,NA,0.8011,0.0489,3,used for dry weights and condition only,
+2/28/2022,7.5,B,7.5_B,19.4,182,182,1.2603,1.8395,0.5792,182,0.4156,0.5235,0.1079,NA,NA,,,,0.6871,18.62914365,NA,NA,NA,1.0074,0.0953,4.912371134,used for dry weights and condition only,
+2/28/2022,7.5,B,7.5_B,15.5,183,183,1.2624,1.5649,0.3025,183,0.414,0.47,0.056,NA,NA,,,,0.3585,18.51239669,NA,NA,NA,0.7199,0.0526,3.393548387,used for dry weights and condition only,
+2/28/2022,7.5,B,7.5_B,18.3,184,184,1.2746,1.7833,0.5087,184,0.413,0.5009,0.0879,NA,NA,,,,0.5966,17.27933949,NA,NA,NA,0.9304,0.0792,4.327868852,used for dry weights and condition only,
+2/28/2022,7.5,H,7.5_H,16.25,185,185,1.27,1.5535,0.2835,185,0.4117,0.4656,0.0539,NA,NA,,,,0.3374,19.01234568,NA,NA,NA,0.7008,0.0483,2.972307692,used for dry weights and condition only,
+2/28/2022,7.5,H,7.5_H,20.05,186,186,1.2558,1.9912,0.7354,186,0.4081,0.5246,0.1165,NA,NA,,,,0.8519,15.84171879,NA,NA,NA,1.1536,0.1064,5.306733167,used for dry weights and condition only,
+2/28/2022,7.5,H,7.5_H,17.8,187,187,1.2602,1.7446,0.4844,187,0.4094,0.482,0.0726,NA,NA,,,,0.557,14.98761354,NA,NA,NA,0.8915,0.0749,4.207865169,used for dry weights and condition only,
+2/28/2022,7.5,H,7.5_H,20.07,188,188,1.2459,1.9294,0.6835,188,0.4103,0.5242,0.1139,NA,NA,,,,0.7974,16.66422824,NA,NA,NA,1.105,0.1027,5.117090184,used for dry weights and condition only,
+2/28/2022,7.5,G,7.5_G,16.6,189,189,1.2741,1.6753,0.4012,189,0.4122,0.4761,0.0639,NA,NA,,,,0.4651,15.92721834,NA,NA,NA,0.8175,0.0598,3.602409639,used for dry weights and condition only,
+2/28/2022,7.5,G,7.5_G,17.4,190,190,1.2493,1.7564,0.5071,190,0.4146,0.4937,0.0791,NA,NA,,,,0.5862,15.59850128,NA,NA,NA,0.9281,0.0727,4.17816092,used for dry weights and condition only,
+2/28/2022,7.5,G,7.5_G,16.1,191,191,1.2591,1.6001,0.341,191,0.4131,0.4712,0.0581,NA,NA,,,,0.3991,17.03812317,NA,NA,NA,0.759,0.0532,3.304347826,used for dry weights and condition only,
+2/28/2022,7.5,G,7.5_G,20.05,192,192,1.256,1.9034,0.6474,192,0.4149,0.5415,0.1266,NA,NA,,,,0.774,19.55514365,NA,NA,NA,1.068,0.1209,6.029925187,used for dry weights and condition only,
+2/28/2022,7.5,G,7.5_G,18.6,193,193,1.2794,1.7927,0.5133,193,0.4087,0.5018,0.0931,NA,NA,,,,0.6064,18.1375414,NA,NA,NA,0.9266,0.0885,4.758064516,used for dry weights and condition only,
+2/28/2022,7.5,C,7.5_C,15.8,194,194,1.2794,1.6343,0.3549,194,0.4176,0.4672,0.0496,NA,NA,,,,0.4045,13.97576782,NA,NA,NA,0.7752,0.0469,2.96835443,used for dry weights and condition only,
+2/28/2022,7.5,C,7.5_C,17,195,195,1.2568,1.6572,0.4004,195,0.4187,0.4869,0.0682,NA,NA,,,,0.4686,17.03296703,NA,NA,NA,0.8252,0.0621,3.652941176,used for dry weights and condition only,
+2/28/2022,7.5,C,7.5_C,20.05,196,196,1.2696,1.9574,0.6878,196,0.4159,0.5324,0.1165,NA,NA,,,,0.8043,16.93806339,NA,NA,NA,1.1151,0.1051,5.241895262,used for dry weights and condition only,
+2/28/2022,7.5,C,7.5_C,19.05,197,197,1.2849,1.8719,0.587,197,0.4137,0.5122,0.0985,NA,NA,,,,0.6855,16.7802385,NA,NA,NA,1.0164,0.0828,4.346456693,used for dry weights and condition only,
+2/28/2022,7.5,C,7.5_C,16,198,198,1.258,1.5434,0.2854,198,0.4184,0.4573,0.0389,NA,NA,,,,0.3243,13.62999299,NA,NA,NA,0.7095,0.0332,2.075,used for dry weights and condition only,
+2/28/2022,7.5,F,7.5_F,16.9,199,199,1.2741,1.6298,0.3557,199,0.4132,0.4716,0.0584,NA,NA,,,,0.4141,16.41833005,NA,NA,NA,0.7742,0.0531,3.142011834,used for dry weights and condition only,
+2/28/2022,7.5,F,7.5_F,16.6,200,200,1.2502,1.6338,0.3836,200,0.4101,0.4724,0.0623,NA,NA,,,,0.4459,16.24087591,NA,NA,NA,0.7881,0.0679,4.090361446,used for dry weights and condition only,
+2/28/2022,7.5,F,7.5_F,20.04,201,201,1.2645,2.0112,0.7467,201,0.4081,0.5354,0.1273,NA,NA,,,,0.874,17.04834606,NA,NA,NA,1.1661,0.116,5.788423154,used for dry weights and condition only,
+2/28/2022,7.5,F,7.5_F,19.8,202,202,1.2552,1.7865,0.5313,202,0.4086,0.5011,0.0925,NA,NA,,,,0.6238,17.41012611,NA,NA,NA,0.9483,0.0841,4.247474747,used for dry weights and condition only,
+2/28/2022,7.5,F,7.5_F,16,203,203,1.2579,1.5649,0.307,203,0.4126,0.4673,0.0547,NA,NA,,,,0.3617,17.81758958,NA,NA,NA,0.7253,0.049,3.0625,used for dry weights and condition only,
+2/28/2022,7.5,A,7.5_A,15.5,204,204,1.2651,1.5592,0.2941,204,0.4132,0.4629,0.0497,NA,NA,,,,0.3438,16.89901394,NA,NA,NA,0.7119,0.0451,2.909677419,used for dry weights and condition only,
+2/28/2022,7.5,A,7.5_A,22.8,205,205,1.2648,2.31,1.0452,205,0.4074,0.5856,0.1782,NA,NA,,,,1.2234,17.04936854,NA,NA,NA,1.4658,0.165,7.236842105,used for dry weights and condition only,
+2/28/2022,7.5,A,7.5_A,22.6,206,206,1.2606,2.3007,1.0401,206,0.4094,0.5735,0.1641,NA,NA,,,,1.2042,15.7773291,NA,NA,NA,1.4629,0.1507,6.668141593,used for dry weights and condition only,
+2/28/2022,7.5,A,7.5_A,19.4,207,207,1.2584,1.8928,0.6344,207,0.4105,0.5231,0.1126,NA,NA,,,,0.747,17.74905422,NA,NA,NA,1.0546,0.1029,5.304123711,used for dry weights and condition only,
+2/28/2022,7.5,A,7.5_A,20.9,208,208,1.2748,1.9699,0.6951,208,0.4103,0.5552,0.1449,NA,NA,,,,0.84,20.84592145,NA,NA,NA,1.1202,0.1301,6.224880383,used for dry weights and condition only,
+2/28/2022,7.5,E,7.5_E,21.6,209,209,1.2673,2.0167,0.7494,209,0.409,0.5737,0.1647,NA,NA,,,,0.9141,21.97758207,NA,NA,NA,1.1718,0.1513,7.00462963,used for dry weights and condition only,
+2/28/2022,7.5,E,7.5_E,21.05,210,210,1.2736,2.0375,0.7639,210,0.4112,0.5624,0.1512,NA,NA,,,,0.9151,19.79316664,NA,NA,NA,1.1887,0.1376,6.536817102,used for dry weights and condition only,
+2/28/2022,7.5,E,7.5_E,19.65,211,211,1.2626,1.8084,0.5458,211,0.4087,0.511,0.1023,NA,NA,,,,0.6481,18.74312935,NA,NA,NA,0.9631,0.0937,4.768447837,used for dry weights and condition only,
+2/28/2022,7.5,E,7.5_E,14.3,212,212,1.2593,1.5167,0.2574,212,0.4141,0.4549,0.0408,NA,NA,,,,0.2982,15.85081585,NA,NA,NA,0.6733,0.039,2.727272727,used for dry weights and condition only,
+2/28/2022,7.5,D,7.5_D,18.3,213,213,1.2622,1.7232,0.461,213,0.4084,0.4866,0.0782,NA,NA,,,,0.5392,16.96312364,NA,NA,NA,0.8722,0.0754,4.120218579,used for dry weights and condition only,
+2/28/2022,7.5,D,7.5_D,21.8,214,214,1.2426,2.1837,0.9411,214,0.4069,0.5827,0.1758,NA,NA,,,,1.1169,18.68026777,NA,NA,NA,1.3601,0.1637,7.509174312,used for dry weights and condition only,
+2/28/2022,7.5,D,7.5_D,15.9,215,215,1.2704,1.5638,0.2934,215,0.4051,0.4585,0.0534,NA,NA,,,,0.3468,18.200409,NA,NA,NA,0.7067,0.0452,2.842767296,used for dry weights and condition only,
+2/28/2022,7.5,D,7.5_D,16.45,216,216,1.2696,1.6286,0.359,216,0.4136,0.4763,0.0627,NA,NA,,,,0.4217,17.46518106,NA,NA,NA,0.7803,0.055,3.343465046,used for dry weights and condition only,
+2/28/2022,7.5,D,7.5_D,16.2,217,217,1.1661,1.4984,0.3323,217,0.4123,0.4639,0.0516,NA,NA,,,,0.3839,15.52813723,NA,NA,NA,0.7511,0.0451,2.783950617,used for dry weights and condition only,
+2/28/2022,8,C,8_C,15.2,218,218,1.1623,1.5169,0.3546,218,0.4182,0.4664,0.0482,NA,NA,,,,0.4028,13.5927806,NA,NA,NA,0.7785,0.0425,2.796052632,used for dry weights and condition only,
+2/28/2022,8,C,8_C,23.05,219,219,1.1618,2.0752,0.9134,219,0.4088,0.5617,0.1529,NA,NA,,,,1.0663,16.73965404,NA,NA,NA,1.3312,0.1439,6.242950108,used for dry weights and condition only,
+2/28/2022,8,C,8_C,16.2,220,220,1.1623,1.5042,0.3419,220,0.4125,0.4662,0.0537,NA,NA,,,,0.3956,15.70634689,NA,NA,NA,0.762,0.0461,2.845679012,used for dry weights and condition only,
+2/28/2022,8,C,8_C,22.05,221,221,1.1659,1.9503,0.7844,221,0.4104,0.5782,0.1678,NA,NA,,,,0.9522,21.39214686,NA,NA,NA,1.2171,0.1455,6.598639456,used for dry weights and condition only,
+2/28/2022,8,C,8_C,20.55,222,222,1.1562,1.8538,0.6976,222,0.4059,0.5281,0.1222,NA,NA,,,,0.8198,17.51720183,NA,NA,NA,1.115,0.1107,5.386861314,used for dry weights and condition only,
+3/16/2022,8,A,8_A,25.6,223,223,1.169,2.5414,1.3724,223,0.4062,0.5699,0.1637,223,2,0.4222,0.463,0.0408,1.5769,11.58363997,,,,,,,,
+3/16/2022,8,A,8_A,23.8,224,224,1.1763,2.0878,0.9115,224,0.4128,0.4968,0.084,224,1,0.4049,0.4621,0.0572,1.0527,8.671415299,,,,,,,,
+3/16/2022,8,A,8_A,22.3,225,225,1.1847,1.9644,0.7797,225,0.4035,0.5094,0.1059,225,2,0.4172,0.4632,0.046,0.9316,12.82548141,,,,,,,,
+3/16/2022,8,A,8_A,24.75,226,226,1.1681,2.2818,1.1137,226,0.4096,0.5602,0.1506,226,2,0.4105,0.4646,0.0541,1.3184,12.89604384,,,,,,,,
+3/16/2022,8,B,8_B,27.8,227,227,1.1704,2.4121,1.2417,227,0.4107,0.5924,0.1817,227,3,0.4156,0.5086,0.093,1.5164,13.61354612,,,,,,,,
+3/16/2022,8,B,8_B,29.7,228,228,1.1736,3.0669,1.8933,228,0.4078,0.6546,0.2468,228,3,0.4166,0.5614,0.1448,2.2849,12.1093175,,,,,,,,
+3/16/2022,8,B,8_B,28.4,229,229,1.1909,2.6362,1.4453,229,0.4127,0.5793,0.1666,229,1,0.4192,0.519,0.0998,1.7117,10.78247363,,,,,,,,
+3/16/2022,8,C,8_C,26.3,230,230,1.1899,2.4954,1.3055,230,0.4172,0.5721,0.1549,230,1,0.411,0.4153,0.0043,1.4647,11.82623301,,,,,,,,
+3/16/2022,8,B,8_B,27.4,231,231,1.1651,2.6722,1.5071,231,0.4103,0.6185,0.2082,231,3,0.4147,0.4997,0.085,1.8003,13.07706802,,,,,,,,
+3/16/2022,8,C,8_C,26.6,232,232,1.1646,2.5626,1.398,232,0.4093,0.5731,0.1638,232,2,0.4119,0.5059,0.094,1.6558,10.97855228,,,,,,,,
+3/16/2022,8,C,8_C,26.4,233,233,1.1947,2.6602,1.4655,233,0.4143,0.5781,0.1638,233,2,0.4116,0.4418,0.0302,1.6595,10.951394,,,,,,,,
+3/16/2022,8,C,8_C,25,234,234,1.198,2.5135,1.3155,234,0.4179,0.5832,0.1653,234,2,0.4114,0.442,0.0306,1.5114,12.27991977,,,,,,,,
+3/16/2022,8,D,8_D,29.1,235,235,1.1612,2.8162,1.655,235,0.4159,0.6511,0.2352,235,3-Feb,0.4103,0.534,0.1237,2.0139,13.2231405,,,,,,,,
+3/16/2022,8,D,8_D,26.1,236,236,1.1947,2.5025,1.3078,236,0.4098,0.5957,0.1859,236,2,0.4207,0.4581,0.0374,1.5311,13.81950639,,,,,,,,
+3/16/2022,8,D,8_D,23,237,237,1.1697,2.1347,0.965,237,0.4118,0.5437,0.1319,237,1,0.4138,0.4201,0.0063,1.1032,13.57973849,,,,,,,,
+3/16/2022,8,D,8_D,28.95,238,238,1.2035,2.8397,1.6362,238,0.4117,0.632,0.2203,238,2,0.4198,0.5034,0.0836,1.9401,12.80962903,,,,,,,,
+3/16/2022,7.5,A,7.5_A,26.1,239,239,1.1844,2.447,1.2626,239,0.4148,0.5992,0.1844,239,3,0.4123,0.5119,0.0996,1.5466,13.53692556,,,,,,,,
+3/16/2022,7.5,A,7.5_A,26.4,240,240,1.2045,2.7102,1.5057,240,0.4074,0.5935,0.1861,240,3-Feb,0.4131,0.4907,0.0776,1.7694,11.75393166,,,,,,,,
+3/16/2022,7.5,A,7.5_A,25.8,241,241,1.1651,2.5751,1.41,241,0.418,0.6284,0.2104,241,3,0.4107,0.4898,0.0791,1.6995,14.12933987,,,,,,,,
+3/16/2022,7.5,B,7.5_B,23.6,242,242,1.1756,2.1018,0.9262,242,0.4042,0.5259,0.1217,242,2,0.411,0.4535,0.0425,1.0904,12.56322907,,,,,,,,
+3/16/2022,7.5,B,7.5_B,24,243,243,1.1645,2.0918,0.9273,243,0.4109,0.5386,0.1277,243,2,0.4119,0.4511,0.0392,1.0942,13.21262287,,,,,,,,
+3/16/2022,7.5,B,7.5_B,22.6,244,244,1.1939,2.0846,0.8907,244,0.4119,0.5511,0.1392,244,3-Feb,0.4196,0.4641,0.0445,1.0744,14.88451668,,,,,,,,
+3/16/2022,7.5,C,7.5_C,27.8,245,245,1.158,2.7516,1.5936,245,0.4148,0.6148,0.2,245,3,0.4104,0.4989,0.0885,1.8821,11.88989953,,,,,,,,
+3/16/2022,7.5,C,7.5_C,23.8,246,246,1.1653,2.1246,0.9593,246,0.4093,0.5601,0.1508,246,2,0.4143,0.4603,0.046,1.1561,15.00049736,,,,,,,,
+3/16/2022,7.5,C,7.5_C,21.8,247,247,1.1677,1.946,0.7783,247,0.4108,0.5231,0.1123,247,2,0.4119,0.4429,0.031,0.9216,13.8761893,,,,,,,,
+3/16/2022,7.5,D,7.5_D,24.1,248,248,1.1911,2.1571,0.966,248,0.4087,0.5459,0.1372,248,2,0.4062,0.4357,0.0295,1.1327,13.78201909,,,,,,,,
+3/16/2022,7.5,A,7.5_A,24.75,249,249,1.1881,2.3808,1.1927,249,0.4102,0.6004,0.1902,249,NA,0.4113,0.4776,0.0663,1.4492,15.10722796,,,,,,,,
+3/16/2022,7.5,D,7.5_D,25.5,250,250,1.1867,2.4357,1.249,250,0.4153,0.5892,0.1739,250,2,0.4081,0.4409,0.0328,1.4557,13.5668591,,,,,,,,
+3/16/2022,8,E,8_E,26.5,251,251,1.2,2.631,1.431,251,0.4077,0.5938,0.1861,251,2,0.4129,0.4416,0.0287,1.6458,12.74919504,,,,,,,,
+3/16/2022,7.5,D,7.5_D,19.5,252,252,1.1676,1.7584,0.5908,252,0.4204,0.5009,0.0805,252,2,0.4106,0.422,0.0114,0.6827,13.36765194,,,,,,,,
+3/16/2022,8,E,8_E,30.4,253,253,1.1863,3.3403,2.154,253,0.4056,0.7001,0.2945,253,4,0.4118,0.5417,0.1299,2.5784,12.8946101,,,,,,,,
+3/16/2022,8,F,8_F,21.4,254,254,1.1831,2.1019,0.9188,254,0.4124,0.5318,0.1194,254,0,0.4116,NA,0,1.0382,12.99521114,,,,,,,,
+3/16/2022,7.5,B,7.5_B,22.5,255,255,1.1814,2.1282,0.9468,255,0.4111,0.5578,0.1467,255,2,0.4089,0.4644,0.0555,1.149,14.63633643,,,,,,,,
+3/16/2022,8,G,8_G,29.6,256,256,1.1791,3.2771,2.098,256,0.4157,0.7437,0.328,256,3,0.4208,0.532,0.1112,2.5372,14.84700344,,,,,,,,
+3/16/2022,8,E,8_E,29.4,257,257,1.1775,2.8734,1.6959,257,0.4149,0.6199,0.205,257,2-Jan,0.4084,0.4275,0.0191,1.92,11.95335277,,,,,,,,
+3/16/2022,7.5,C,7.5_C,21.3,258,258,1.172,1.9941,0.8221,258,0.4131,0.5306,0.1175,258,NA,0.4093,0.4438,0.0345,0.9741,13.71702078,,,,,,,,
+3/16/2022,8,H,8_H,27.1,259,259,1.1749,2.9574,1.7825,259,0.4073,0.6414,0.2341,259,3,0.4084,0.5316,0.1232,2.1398,12.28420003,,,,,,,,
+3/16/2022,8,F,8_F,28.5,260,260,1.1942,2.687,1.4928,260,0.4086,0.6426,0.234,260,4,0.4126,0.5304,0.1178,1.8446,14.52874705,,,,,,,,
+3/16/2022,7.5,E,7.5_E,24.9,261,261,1.169,2.3425,1.1735,261,0.406,0.5652,0.1592,261,2,0.4097,0.4263,0.0166,1.3493,13.37702714,,,,,,,,
+3/16/2022,8,G,8_G,22.2,262,262,1.1752,1.9438,0.7686,262,0.4121,0.5117,0.0996,262,2,0.4099,0.423,0.0131,0.8813,12.74146092,,,,,,,,
+3/16/2022,8,F,8_F,25.4,263,263,1.1634,2.6078,1.4444,263,0.4074,0.5881,0.1807,263,2,0.4102,0.427,0.0168,1.6419,12.36654804,,,,,,,,
+3/16/2022,7.5,F,7.5_F,24.1,264,264,1.1616,2.4084,1.2468,264,0.4118,0.5704,0.1586,264,2,0.4126,0.4691,0.0565,1.4619,12.16910918,,,,,,,,
+3/16/2022,8,H,8_H,26.5,265,265,1.1755,2.3112,1.1357,265,0.4141,0.571,0.1569,265,3,0.4124,0.4759,0.0635,1.3561,13.08372248,,,,,,,,
+3/16/2022,7.5,G,7.5_G,24.6,266,266,1.1846,2.2409,1.0563,266,0.4127,0.5779,0.1652,266,2,0.4091,0.4511,0.042,1.2635,15.04142766,,,,,,,,
+3/16/2022,8,G,8_G,25.3,267,267,1.1715,2.3,1.1285,267,0.4094,0.5637,0.1543,267,2,0.4117,0.4449,0.0332,1.316,13.28225876,,,,,,,,
+3/16/2022,7.5,E,7.5_E,24.6,268,268,1.1871,2.2654,1.0783,268,0.4149,0.5704,0.1555,268,3-Feb,0.4111,0.4439,0.0328,1.2666,13.99513995,,,,,,,,
+3/16/2022,7.5,H,7.5_H,24.2,269,269,1.1848,2.1976,1.0128,269,0.4135,0.5316,0.1181,269,2,0.4133,0.4591,0.0458,1.1767,11.1562441,,,,,,,,
+3/16/2022,7.5,D,7.5_D,26.45,270,270,1.1679,2.5745,1.4066,270,0.4198,0.6086,0.1888,270,2,0.4085,0.5285,0.12,1.7154,12.36735229,,,,,,,,
+3/16/2022,7.5,F,7.5_F,22.1,271,271,1.1722,1.9814,0.8092,271,0.4197,0.5239,0.1042,271,2,0.4158,0.4316,0.0158,0.9292,12.63030303,,,,,,,,
+3/16/2022,8,E,8_E,27.5,272,272,1.1785,2.8116,1.6331,272,0.4128,0.6019,0.1891,272,1,0.4069,0.452,0.0451,1.8673,11.26802527,,,,,,,,
+3/16/2022,8,H,8_H,22.9,273,273,1.184,2.0297,0.8457,273,0.4193,0.5336,0.1143,273,2,0.4115,0.4306,0.0191,0.9791,13.21692877,,,,,,,,
+3/16/2022,8,F,8_F,26.9,274,274,1.1938,2.8861,1.6923,274,0.4099,0.611,0.2011,274,3,0.4108,0.4985,0.0877,1.9811,11.29775281,,,,,,,,
+3/16/2022,8,G,8_G,25,275,275,1.1818,2.2784,1.0966,275,0.4178,0.5741,0.1563,275,1,0.4105,0.4172,0.0067,1.2596,14.16659114,,,,,,,,
+3/16/2022,7.5,G,7.5_G,16.1,276,276,1.1742,1.4997,0.3255,276,0.4123,0.4582,0.0459,276,0/1,0.4192,0.4204,0.0012,0.3726,14.04958678,,,,,,,,
+3/16/2022,7.5,E,7.5_E,24.3,277,277,1.1941,2.3401,1.146,277,0.4089,0.5517,0.1428,277,3-Feb,0.4134,0.4814,0.068,1.3568,11.76276771,,,,,,,,
+3/16/2022,8,H,8_H,24.2,278,278,1.1859,2.1392,0.9533,278,0.4088,0.534,0.1252,278,3,0.4115,0.4573,0.0458,1.1243,12.53127815,,,,,,,,
+3/16/2022,7.5,E,7.5_E,24.3,279,279,1.1846,2.5143,1.3297,279,0.4171,0.5916,0.1745,279,2,0.413,0.4577,0.0447,1.5489,12.69644936,,,,,,,,
+3/16/2022,7.5,H,7.5_H,22.6,280,280,1.1684,2.0869,0.9185,280,0.4136,0.5295,0.1159,280,3,0.4101,0.4444,0.0343,1.0687,12.16414777,,,,,,,,
+3/16/2022,7.5,F,7.5_F,NA,281,281,1.1797,2.237,1.0573,281,0.4228,0.561,0.1382,281,3,0.412,0.4456,0.0336,1.2291,12.6684389,,,,,,,,
+3/16/2022,7.5,F,7.5_F,19.7,282,282,1.1849,1.5819,0.397,282,0.4085,0.4633,0.0548,282,0,0.4106,NA,0,0.4518,13.80352645,,,,,,,,
+3/16/2022,7.5,G,7.5_G,21.5,283,283,1.1897,1.9783,0.7886,283,0.413,0.5269,0.1139,283,3-Feb,0.417,0.4727,0.0557,0.9582,13.49046547,,,,,,,,
+3/16/2022,7.5,H,7.5_H,23.55,284,284,1.1819,2.1383,0.9564,284,0.4173,0.5436,0.1263,284,3,0.4194,0.4406,0.0212,1.1039,12.91939444,,,,,,,,
+3/16/2022,7.5,G,7.5_G,19.3,285,285,1.1767,1.6321,0.4554,285,0.414,0.4714,0.0574,285,1,0.4122,0.4159,0.0037,0.5165,12.50272272,,,,,,,,
+3/16/2022,7.5,H,7.5_H,22.6,286,286,1.1851,2.03,0.8449,286,0.4113,0.5326,0.1213,286,3,0.4153,0.4474,0.0321,0.9983,13.83124287,,,,,,,,

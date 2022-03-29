@@ -42,7 +42,6 @@ resp.data              <- read.csv(file="Output/Respiration/Cumulative_resp_alph
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
 start.end_resp.data    <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
-start.end_resp.data$Filename[start.end_resp.data$Filename == "run3_raw.txt" ] <- "run_3_raw.txt"
 
 resp.ref               <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% 
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
@@ -63,9 +62,11 @@ resp_all_raw <- merge(resp.data, start.end_resp.data)
 resp.ref_length_merged                 <- merge(resp.ref, lengths) # all TRUE allows us to keep the blanks
 resp.data_merged                       <- merge(resp_all_raw, resp.ref_length_merged) %>% # out master file moving forward....
                                             dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
-                                            dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data")))
+                                            dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>% 
+                                            dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+                                            dplyr::arrange(Date_formatted,Run, Channel, .by_group = TRUE)
 kable(head(resp.data_merged))
-
+View(resp.data_merged)
 ```
 
 #### Visual diagnostic plots to correct poor data (3 data points to change..)
@@ -84,26 +85,26 @@ kable(head(resp.data_merged))
 - solution = we reran this at the end of the LoLin script  for 0-20 minutes and got an Lpc  -0.0296, insert this 
 
 ```{r IMPORTANT correct poor data, echo=TRUE, message = FALSE, warning = FALSE}
-resp.data_merged[114,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
-resp.data_merged[130,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
-resp.data_merged[115,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
-resp.data_merged[35,c(1:6)]   # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
-resp.data_merged[40,c(1:6)]   # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
+resp.data_merged[47,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
+resp.data_merged[90,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
+resp.data_merged[84,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
+resp.data_merged[135,c(1:6)]   # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
+resp.data_merged[148,c(1:6)]   # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
 
 # change according to diagnostics of plots and in Lolin script 
-resp.data_merged[114,4] <- resp.data_merged[114,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
-resp.data_merged[130,4] <- resp.data_merged[130,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
-resp.data_merged[115,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
-resp.data_merged[35,4] <- -0.0209
-resp.data_merged[40,4] <- -0.0124
+resp.data_merged[47,4] <- resp.data_merged[47,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
+resp.data_merged[90,4] <- resp.data_merged[90,5] # 20210930_Plate_2_Run_1_C1_regression - Lz and Leq call better regression than Lpc
+resp.data_merged[84,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
+resp.data_merged[135,4] <- -0.0209
+resp.data_merged[148,4] <- -0.0124
 
 
 # double check if correct
-resp.data_merged[114,c(1:6)] # -0.0608251
-resp.data_merged[130,c(1:6)] # -0.07603444
+resp.data_merged[47,c(1:6)] # -0.0608251
+resp.data_merged[90,c(1:6)] # -0.07603444
 resp.data_merged[115,c(1:6)] # -0.0296
-resp.data_merged[35,c(1:6)]  # -0.0209
-resp.data_merged[40,c(1:6)]  # -0.0124
+resp.data_merged[135,c(1:6)]  # -0.0209
+resp.data_merged[148,c(1:6)]  # -0.0124
 ```
 
 #### Calculate blank rates, view means by day pH_treatment and instrument
@@ -122,12 +123,15 @@ blanks_all_raw <- data.frame(merge(resp.ref, resp_all_raw, by = c('Date', 'Chann
                   dplyr::filter(Chamber_tank  == 'blank') %>% 
                   #dplyr::filter(Lpc <0) %>% 
                   dplyr::filter(!Date == '9/30/2021' | !Lpc < -0.035) %>% #omits C6 RR_9.30.21_AM_Plate_1_Run_1.csv	8.0	blank - View the Lolin plot, looks noisy and a fast outlier from the others
-                  dplyr::filter(!Date == '10/26/2021'  | !Channel == "CH8" | !Run == "2" )) # omit a bad blank that contained a bad seal, noted on the respiration sampling day during the trial 
+                  dplyr::filter(!Date == '10/26/2021'  | !Channel == "CH8" | !Run == "2" ) %>% # omit a bad blank that contained a bad seal, noted on the respiration sampling day during the trial 
+                  dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz', 'Rate_mgO2_hour', 'filetype')) %>% 
+                  dplyr::arrange(Date,pH, .by_group = TRUE)) 
 # kable((blanks_all_raw)[,c(1:3,6,8,12:14)])
+
+
 blanks_means <- blanks_all_raw %>% 
-     dplyr::filter(!Date %in% '2/2/2022') %>% # omuit 2/2/2022 - all other dates have positive rates for all runs and treatments to normalize data
-     dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar amoung Runs
-     dplyr::filter(Chamber_tank == "blank") %>% 
+     #dplyr::filter(!Date %in% '2/2/2022') %>% # omuit 2/2/2022 - all other dates have positive rates for all runs and treatments to normalize data
+     dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
      dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
      dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
                       BLANK.sd.Lpc   = sd(abs(Lpc)),
@@ -136,27 +140,16 @@ blanks_means <- blanks_all_raw %>%
                       
                       BLANK.start.end_mean  = mean(Rate_mgO2_hour),
                       BLANK.start.end_sd  = mean(Rate_mgO2_hour),
-                      n = n())
-dups_to_add <- blanks_means[c(6,11),] %>% mutate(pH = 7.5) # only pH 8 contains a positive blank on 9/14 Run 1 and 10/26 Run 2- duplicate and save as pH 7.5 
-blanks_means <- rbind(blanks_means, dups_to_add)
+                      n = n()) %>% 
+      dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+      dplyr::arrange(Date_formatted, Run, pH)
+# kable(blanks_means) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
+dups_to_add <- blanks_means[c(1, 16,19,20,23,26),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)
+              dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment in this dups_to_add dataframe..
+blanks_means <- rbind(blanks_means, dups_to_add) %>%  dplyr::arrange(Date_formatted, Run, pH)
 
-kable(blanks_means)
+kable(blanks_means) # View the inserted duplicates for the other treatment on same run/date
 
-
-blanks_means_0202 <- blanks_all_raw %>% 
-     dplyr::filter(Date %in% '2/2/2022') %>% 
-     dplyr::group_by(Date, Run, filetype) %>% # data on 2/2/22 specifically, positive blanks by run yields NAs - data witin RUN are similar amoung tretaments
-     dplyr::filter(Chamber_tank == "blank") %>% 
-     dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
-     dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
-                      BLANK.sd.Lpc   = sd(abs(Lpc)),
-                      BLANK.mean_Leq = mean(abs(Leq)), 
-                      BLANK.mean_Lz = mean(abs(Lz)),
-                      
-                      BLANK.start.end_mean  = mean(Rate_mgO2_hour),
-                      BLANK.start.end_sd  = mean(Rate_mgO2_hour),
-                      n = n()) 
-kable(blanks_means_0202) # you see here an N of 1 for both runs 1 and 2 due to positive blanks that were omitted
 ```
 
 
@@ -166,19 +159,18 @@ kable(blanks_means_0202) # you see here an N of 1 for both runs 1 and 2 due to p
 
 ```{r merge blanks_means for a master file, echo=FALSE}
 
-Resp.Master_1 <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "filetype")) %>% # NOTE: this repeats for every distinct length value
-  dplyr::filter(!Date %in% '2/2/2022') %>% 
+Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "filetype")) %>% # NOTE: this repeats for every distinct length value
   dplyr::filter(!Lpc > 0) %>% # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline (found 9/14/2021	pH 8	LoLigo_data	CH1)
   dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc)  %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
   dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
-
-Resp.Master_2 <- merge(resp.data_merged, blanks_means_0202, by=c("Date", "Run","filetype")) %>% 
-  dplyr::filter(Date %in% '2/2/2022') %>% 
-  dplyr::filter(!Lpc > 0) %>%  # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline
-  dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc)  %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
-  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
-
-Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
+# 
+# Resp.Master_2 <- merge(resp.data_merged, blanks_means_0202, by=c("Date", "Run","filetype")) %>% 
+#   dplyr::filter(Date %in% '2/2/2022') %>% 
+#   dplyr::filter(!Lpc > 0) %>%  # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline
+#   dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc)  %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
+#   dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
+# 
+# Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
 
 ```
 
@@ -196,24 +188,15 @@ Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
 
 Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
   dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & Date == '9/14/2021' ~ 2.2, # small vessels for loligo system - 22 ml vessels
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021')  & Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 waused ch9 vessel on 2/2/2022
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH7' ~ 68.54551, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('10/26/2021') & Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
-                                   
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022')  & Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 used ch9 vessel on 2/2/2022
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH7' ~ 68.54551, # larger custom vessels measured individually...
-                                   filetype == "LoLigo_data" & Date == c('2/2/2022') & Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
-                                   
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021')                       & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... 
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
+                                   filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 used vessel #9 on and after 2/2/2022 
                                    filetype == "SDR_data" ~ 1.7)) %>% # 24-well plate - 1700ul 
   
   # true rates calculated using LoLinRscript
@@ -227,13 +210,13 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
   dplyr::mutate(start.end_resp_umol_L_hr = (((start.end_resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                          
   
   
-  dplyr::mutate(Age = case_when(Date == '9/14/2021' ~ 50, Date == '9/30/2021' ~ 66, Date == '10/26/2021' ~ 92)) %>% 
+  dplyr::mutate(Age = case_when(Date == '9/14/2021' ~ 50, Date == '9/30/2021' ~ 66, Date == '10/26/2021' ~ 92, Date == '2/2/2022' ~ 190, Date == '3/1/2022' ~ 217)) %>% 
   dplyr::mutate(Fed_Unfed = case_when(Fed_Unfed == 'F' ~ "High food", is.na(Fed_Unfed) ~ "High food", Fed_Unfed == 'U' ~ "Low food")) %>% 
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-print(Resp.outliers) # 25  samples have negative values when corecting for the blank, measning the blank rate was GREATER than the sample resp value
+print(Resp.outliers) # 25  samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 
 ```
 
@@ -292,7 +275,7 @@ Resp.Master_OM$start.end_resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$start.end_res
               (Resp.Master_OM$Dry_Tissue_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
-write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
+write.csv(Resp.Master_OM, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 
 
 View(Resp.Master_OM)
@@ -379,6 +362,15 @@ P_Length_resp_facet <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_umol_L_hr),] %>
                           geom_point() + 
                           facet_wrap(~Age*Food, scales = "free")
 
+P_Length_resp_boxplot <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_umol_L_hr),] %>% 
+                            ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_umol_L_hr , fill = pCO2)) +
+                            theme(panel.grid=element_blank()) +
+                            geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
+                            scale_fill_manual(values=c("white","grey50")) +
+                            geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+                            theme_classic()+ 
+                            facet_wrap(~Age, scales = "free")
+
 # print in markdown file 
 ggarrange(P_Length_resp_all, P_Length_resp_facet,nrow = 2)
 # Export to pdf
@@ -422,7 +414,6 @@ P_TDW_resp_normed <- Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %
                     geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
                     theme_classic()+ 
                     facet_wrap(~Age, scales = "free")
-P_TDW_resp_normed
 
 # print in markdown file 
 ggarrange(P_TDW_resp_all, P_TDW_resp_facet,P_TDW_resp_normed,nrow = 3)
@@ -446,43 +437,43 @@ SumTab_Len      <- Resp.Master_OM[!is.na(Resp.Master_OM$Length_um),] %>%
 SumTab_Len$pCO2 <- factor(SumTab_Len$pCO2, c("500 μatm","800 μatm"))
 ## Use geom_line and geom_point to plot over time
 Length_time    <- ggplot(data=SumTab_Len, aes(x=Age, y=Length_um, color=pCO2)) +
-            geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
-            geom_point()+ 
-            scale_color_manual(values=c("forestgreen","darkorange2"))+
-            geom_errorbar(aes(ymin=Length_um-se, ymax=Length_um+se), width=.2,
-                          position=position_dodge(.1))+
-            theme_bw() +  
-            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-            scale_x_continuous(name ="Age (d)") +
-            labs(title =  "Shell length over time..", 
-                 y = "Shell length (μm)") +
-            scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
-            theme(legend.position="none") +
-            # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
-            facet_wrap(~pCO2)
+                    geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
+                    geom_point()+ 
+                    scale_color_manual(values=c("forestgreen","darkorange2"))+
+                    geom_errorbar(aes(ymin=Length_um-se, ymax=Length_um+se), width=.2,
+                                  position=position_dodge(.1))+
+                    theme_bw() +  
+                    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
+                    scale_x_continuous(name ="Age (d)") +
+                    labs(title =  "Shell length over time..", 
+                         y = "Shell length (μm)") +
+                    scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
+                    theme(legend.position="none") +
+                    # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                    facet_wrap(~pCO2)
 
 
 
 # resp_µmol_L_mm_Length_hr
 RespSumTab_Len      <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_µmol_L_mm_Length_hr),] %>%  
-            summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=c("Age", "pCO2", "Fed_Unfed"))
+                        summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=c("Age", "pCO2", "Fed_Unfed"))
 RespSumTab_Len$pCO2 <- factor(RespSumTab_Len$pCO2, c("500 μatm","800 μatm"))
 ## Use geom_line and geom_point to plot over time
 Resp_LengthStand    <- ggplot(data=RespSumTab_Len, aes(x=Age, y=resp_µmol_L_mm_Length_hr, color=pCO2)) +
-            geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
-            geom_point()+ 
-            scale_color_manual(values=c("forestgreen","darkorange2"))+
-            geom_errorbar(aes(ymin=resp_µmol_L_mm_Length_hr-se, ymax=resp_µmol_L_mm_Length_hr+se), width=.2,
-                          position=position_dodge(.1))+
-            theme_bw() +  
-            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-            scale_x_continuous(name ="Age (d)") +
-            labs(title = "Resp corrected by shell length", 
-                 y = expression(μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1})) +
-            scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
-            theme(legend.position="none") +
-            # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
-            facet_wrap(~pCO2)
+                        geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
+                        geom_point()+ 
+                        scale_color_manual(values=c("forestgreen","darkorange2"))+
+                        geom_errorbar(aes(ymin=resp_µmol_L_mm_Length_hr-se, ymax=resp_µmol_L_mm_Length_hr+se), width=.2,
+                                      position=position_dodge(.1))+
+                        theme_bw() +  
+                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
+                        scale_x_continuous(name ="Age (d)") +
+                        labs(title = "Resp corrected by shell length", 
+                             y = expression(μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1})) +
+                        scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
+                        theme(legend.position="none") +
+                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                        facet_wrap(~pCO2)
 
 
 # Print assembled plot from previous chunks....  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -511,7 +502,7 @@ ggarrange(Resp_SLStand,
 
 ```{r load master resp file, echo=FALSE}
 # Resp.Master_OM    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # personel computer 
-Resp.Master_OM    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # work computer
+Resp.Master_OM    <- read.csv(file="C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # work computer
 ```
 
 
