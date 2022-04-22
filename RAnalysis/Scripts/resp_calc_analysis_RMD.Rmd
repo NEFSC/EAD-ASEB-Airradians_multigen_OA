@@ -34,7 +34,7 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
- setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+ setwd("C:/Users/samjg/Documents/Github_repositories/Cvirginica_hemolymph_OA/RAnalysis") # personal computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -47,7 +47,6 @@ resp.ref               <- read.csv(file="Data/Respiration/Reference_master.csv",
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
 
 lengths                <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
-Dry_weights            <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
 
 ```
 
@@ -102,7 +101,7 @@ resp.data_merged[148,4] <- -0.0124
 # double check if correct
 resp.data_merged[47,c(1:6)] # -0.0608251
 resp.data_merged[90,c(1:6)] # -0.07603444
-resp.data_merged[115,c(1:6)] # -0.0296
+resp.data_merged[84,c(1:6)] # -0.0296
 resp.data_merged[135,c(1:6)]  # -0.0209
 resp.data_merged[148,c(1:6)]  # -0.0124
 ```
@@ -129,24 +128,41 @@ blanks_all_raw <- data.frame(merge(resp.ref, resp_all_raw, by = c('Date', 'Chann
 # kable((blanks_all_raw)[,c(1:3,6,8,12:14)])
 
 
-blanks_means <- blanks_all_raw %>% 
-     #dplyr::filter(!Date %in% '2/2/2022') %>% # omuit 2/2/2022 - all other dates have positive rates for all runs and treatments to normalize data
-     dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
-     dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
-     dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
-                      BLANK.sd.Lpc   = sd(abs(Lpc)),
-                      BLANK.mean_Leq = mean(abs(Leq)), 
-                      BLANK.mean_Lz  = mean(abs(Lz)),
-                      
-                      BLANK.start.end_mean  = mean(Rate_mgO2_hour),
-                      BLANK.start.end_sd  = mean(Rate_mgO2_hour),
-                      n = n()) %>% 
-      dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
-      dplyr::arrange(Date_formatted, Run, pH)
-# kable(blanks_means) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
-dups_to_add <- blanks_means[c(1, 16,19,20,23,26),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)
-              dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment in this dups_to_add dataframe..
-blanks_means <- rbind(blanks_means, dups_to_add) %>%  dplyr::arrange(Date_formatted, Run, pH)
+# mean blanks for the LoLinR output ('Lpc')
+blanks_meansLoLin <- blanks_all_raw %>% 
+                       dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
+                       dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
+                       dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
+                                        #   = sd(abs(Lpc)),
+                                        # BLANK.mean_Leq = mean(abs(Leq)), 
+                                        # BLANK.mean_Lz  = mean(abs(Lz)),
+                                        n = n()) %>% 
+                        dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+                        dplyr::arrange(Date_formatted, Run, pH)
+# kable(blanks_meansLoLin) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
+dups_LoLin        <- blanks_meansLoLin[c(1, 16,19,20,23,26),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)         
+                        dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment in this dataframe..
+blanks_meansLoLin <- rbind(blanks_meansLoLin, dups_LoLin) %>%  dplyr::arrange(Date_formatted, Run, pH)
+
+
+# mean blanks for the start - to - end values ('Rate_mgO2_hour')
+blanks_meansStartEnd <- blanks_all_raw %>% 
+                         dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
+                         dplyr::filter(!Rate_mgO2_hour <0) %>% # ommit blank calls that d/n represent oxygen consumption
+                         dplyr::summarise(BLANK.start.end_mean  = mean(Rate_mgO2_hour),
+                                          # BLANK.start.end_sd  = sd(Rate_mgO2_hour),
+                                          n = n()) %>% 
+                          dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+                          dplyr::arrange(Date_formatted, Run, pH)
+# kable(blanks_meansStartEnd) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
+dups_StartEnd          <- blanks_meansStartEnd[c(1, 16,19,28),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)    
+                          dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment dataframe..
+blanks_meansStartEnd   <- rbind(blanks_meansStartEnd, dups_StartEnd) %>%  dplyr::arrange(Date_formatted, Run, pH)
+
+
+
+
+blanks_means <- merge(blanks_meansLoLin, blanks_meansStartEnd) %>% dplyr::arrange(Date_formatted, Run, pH)
 
 kable(blanks_means) # View the inserted duplicates for the other treatment on same run/date
 
@@ -171,6 +187,11 @@ Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "
 #   dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
 # 
 # Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
+
+
+plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
+
+
 
 ```
 
@@ -372,10 +393,10 @@ P_Length_resp_boxplot <- Resp.Master_OM[!is.na(Resp.Master_OM$resp_umol_L_hr),] 
                             facet_wrap(~Age, scales = "free")
 
 # print in markdown file 
-ggarrange(P_Length_resp_all, P_Length_resp_facet,nrow = 2)
+ggarrange(P_Length_resp_all, P_Length_resp_facet, P_Length_resp_boxplot,nrow = 3)
 # Export to pdf
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
-ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
+ggarrange(P_Length_resp_all, P_Length_resp_facet, P_Length_resp_boxplot,nrow = 3)
 dev.off()
 
 ```
@@ -427,8 +448,6 @@ dev.off()
 ### (1,2, and 3) Assemble Standrdized rate (allometric coeff) and corrected rates for shell length and dry tissue weight...
 ```{r Line plot , echo=TRUE, message = FALSE, warning = FALSE}
 
-
- 
 # Length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # Length_um
@@ -554,12 +573,11 @@ Resp914_Length_reps
 # one way anova 
 LMmod_914_SL <- lm(resp_µmol_L_mm_Length_hr ~ pCO2, data=Resp_0914)
 summary(aov(LMmod_914_SL))
-#             Df    Sum Sq   Mean Sq F value Pr(>F)
-# pCO2         1 0.0000009 8.900e-07   0.007  0.932
-# Residuals   19 0.0022740 1.197e-04  
-# Residuals   51 0.008346 0.0001637  
-shapiro.test(residuals(LMmod_914_SL)) #  0.3276
-leveneTest(LMmod_914_SL) # 0.4131
+# Df  Sum Sq   Mean Sq F value Pr(>F)
+# pCO2         1 1.6e-05 1.601e-05   0.135  0.718
+# Residuals   16 1.9e-03 1.187e-04
+shapiro.test(residuals(LMmod_914_SL)) #  0.592
+leveneTest(LMmod_914_SL) # 0.4815
 
 # Linear mixed-effects model
 require(nlme)
@@ -567,8 +585,8 @@ require(nlme)
 LMEmod_0914_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2, random=~1|Chamber_tank, data=Resp_0914)
 # |     &nbsp;      | numDF | denDF | F-value |  p-value  |
 # |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  13   |  32.12  | 7.699e-05 |
-# |    **pCO2**     |   1   |   6   | 0.02054 |  0.8907   |
+# | **(Intercept)** |   1   |  10   |  30.69  | 0.0002476 |
+# |    **pCO2**     |   1   |   6   | 0.07053 |  0.7995   |
 pander(anova(LMEmod_0914_SL), style='rmarkdown') # anova table of lmer
 kable(as.data.frame(anova(LMEmod_0914_SL))) %>%  # print a png of this table
   kable_styling() %>%
@@ -605,7 +623,7 @@ Resp914_Length # print this figure...
 
 # Export the figures to pdf
 ggarrange(Resp914_Length,Resp914_Length_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_length.pdf")
+  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_length.pdf")
 
 ```
 
@@ -676,7 +694,7 @@ ggarrange(Resp914_bfactor,Resp914_bfactor_reps,nrow = 2) %>%
 ```{r 9/14 Whole dry weight standardized, echo=TRUE, message = FALSE, warning = FALSE}
 
 # Whole animal Dry weight standardized (DW) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Resp914_WholeDW_reps<- ggboxplot(Resp_0914, x = "pH", y = "resp_µmol_L_g_hr", color = "Replicate",
+Resp914_WholeDW_reps<- ggboxplot(Resp_0914, x = "pH", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
                           add = c("mean_se", "dotplot"),
                           palette = c("#00AFBB", "#E7B800", "brown", "grey"))
 Resp914_WholeDW_reps
@@ -953,7 +971,7 @@ ggarrange(Resp930_bfactor,Resp930_bfactor_reps,nrow = 2) %>%
 
 # Visualize the data with the random effet as treplicate 
 Resp_0930$pHxFood   <- paste(Resp_0930$pH, Resp_0930$Food, sep = "_")
-Resp930_WholeDW_reps <- ggboxplot(Resp_0930, x = "pHxFood", y = "resp_µmol_L_g_hr", color = "Replicate",
+Resp930_WholeDW_reps <- ggboxplot(Resp_0930, x = "pHxFood", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
           add = c("mean_se", "dotplot"),
           palette = c("#00AFBB", "#E7B800", "brown", "grey"))
 Resp930_WholeDW_reps
@@ -1022,6 +1040,7 @@ ggarrange(Resp930_WholeDW,Resp930_WholeDW_reps,nrow = 2) %>%
 
 Resp_1026 <- Resp.Master_OM %>% 
   dplyr::filter(Date %in% '10/26/2021')  %>% # call only 10/14
+  dplyr::filter(Food %in% 'fed') %>% 
   dplyr::select(-Center) %>% 
   dplyr::mutate(pHxFood = paste(pH,Food, sep = "_")) %>% 
   dplyr::mutate(random_fact = as.factor(paste(Chamber_tank, Food, sep="_")))
@@ -1247,8 +1266,7 @@ ggarrange(Resp1026_bfactor,Resp1026_bfactor_reps,nrow = 2) %>%
 # Whole animal Dry weight standardized (DW) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # Visualize the data with the random effet as treplicate 
-Resp_1026$pHxFood <- paste(Resp_1026$pH, Resp_1026$Food, sep = "_")
-Res1026_WholeDW_reps <- ggboxplot(Resp_1026, x = "pHxFood", y = "resp_µmol_L_g_hr", color = "Replicate",
+Res1026_WholeDW_reps <- ggboxplot(Resp_1026, x = "pH", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
                           add = c("mean_se", "dotplot"),
                           palette = c("#00AFBB", "#E7B800", "brown", "grey"))
 Res1026_WholeDW_reps
@@ -1256,38 +1274,28 @@ Res1026_WholeDW_reps
 
 require(nlme)
 # Linear mixed effects model with random effect of Replicate 
-LMEmod_1026_DW<-lme(resp_µmol_L_g_hr ~ pCO2 * Food, random=~1|Replicate, data=Resp_1026)
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  27   |  78.28  | 1.833e-09 |
-# |    **pCO2**     |   1   |  27   | 0.01955 |  0.8898   |
-# |    **Food**     |   1   |  27   |  10.16  | 0.003615  |
-# |  **pCO2:Food**  |   1   |  27   |  10.52  | 0.003139  |
+LMEmod_1026_DW<-lme(resp_µmol_L_mg_TDW_hr ~ pCO2, random=~1|Replicate, data=Resp_1026)
+# |     &nbsp;      | numDF | denDF | F-value | p-value  |
+# |:---------------:|:-----:|:-----:|:-------:|:--------:|
+# | **(Intercept)** |   1   |   6   |  18.75  | 0.004928 |
+# |    **pCO2**     |   1   |   6   |  2.914  |  0.1387  |
 pander(anova(LMEmod_1026_DW), style='rmarkdown')
 
 
 
 # linear model without the random effect 
-LMmod_1026_DW <- aov(lm(resp_µmol_L_g_hr~pCO2*Food,data=Resp_1026))
-# |    &nbsp;     | Df |  Sum Sq   |  Mean Sq  | F value |  Pr(>F)  |
-# |:-------------:|:--:|:---------:|:---------:|:-------:|:--------:|
-# |   **pCO2**    | 1  | 4.754e-06 | 4.754e-06 | 0.02044 |  0.8873  |
-# |   **Food**    | 1  |  0.00218  |  0.00218  |  9.376  | 0.004608 |
-# | **pCO2:Food** | 1  | 0.002285  | 0.002285  |  9.828  | 0.003827 |
-# | **Residuals** | 30 | 0.006976  | 0.0002325 |   NA    |    NA    |
+LMmod_1026_DW <- aov(lm(resp_µmol_L_mg_TDW_hr~pCO2,data=Resp_1026))
+# |    &nbsp;     | Df |  Sum Sq  | Mean Sq  | F value | Pr(>F) |
+# |:-------------:|:--:|:--------:|:--------:|:-------:|:------:|
+# |   **pCO2**    | 1  | 0.001184 | 0.001184 |  1.178  | 0.306  |
+# | **Residuals** | 9  | 0.009049 | 0.001005 |   NA    |   NA   |
 pander(summary(LMmod_1026_DW), style='rmarkdown')
-  
-  
 check_model(LMmod_1026_DW) # observe the diagnostics of the model
-shapiro.test(residuals(LMmod_1026_DW)) #  normal - 0.01843
-leveneTest(LMmod_1026_DW) # 0.01179 *
+shapiro.test(residuals(LMmod_1026_DW)) #  normal - 0.3929
+leveneTest(LMmod_1026_DW) # 0.139
 
 
-DF   <- paste( (summary(LMmod_1026_DW)[[1]][["Df"]])[1], (summary(LMmod_1026_DW)[[1]][["Df"]])[2], sep = '/')
-Fval <- (summary(LMmod_1026_DW)[[1]][["F value"]])[1]
-pval <- (summary(LMmod_1026_DW)[[1]][["Pr(>F)"]])[1]
-
-Res1026_WholeDW <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_g_hr , fill = pCO2)) +
+Res1026_WholeDW <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mg_TDW_hr , fill = pCO2)) +
                             theme(panel.grid=element_blank()) +
                             geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
                             scale_fill_manual(values=c("white","grey50")) +
@@ -1299,8 +1307,7 @@ Res1026_WholeDW <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm',
                                   axis.title=element_text(size=8,face="bold")) +
                             labs(title = "F1 Scallops: respiration rates on 20211026 (whole dry weight stand.)", 
                                  y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%g^{-1}~DW%.% hr^{-1}~")"),
-                                 x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-                            facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) # +
+                                 x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))
 Res1026_WholeDW
 
 # Export to pdf
