@@ -128,10 +128,9 @@ dev.off()
 ```{r, TDW}
 library(dplyr)
 library(tidyr)
-TDW_AFDW$Treatment <- as.factor(TDW_AFDW$pH)
 
 
-Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% 
+Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Dry_Shell_weight_g)) + 
                       geom_density(aes(x = Dry_Shell_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -142,7 +141,7 @@ Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>%
 Alldensity_SDW
 
 
-Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% 
+Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Dry_Tissue_weight_g)) + 
                       geom_density(aes(x = Dry_Tissue_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -152,7 +151,7 @@ Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>%
                       scale_fill_brewer(palette = "Set1")
 Alldensity_TDW
 
-CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% 
+CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Condition_index_drywtRatio_Walne1976)) + 
                       geom_density(aes(x = Condition_index_drywtRatio_Walne1976, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -162,7 +161,7 @@ CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne19
                       scale_fill_brewer(palette = "Set1")
 CI_TDW
 
-CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_TotalADFW_div_length < 0) %>% 
+CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_TotalADFW_div_length < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Condition_index_TotalADFW_div_length)) + 
                       geom_density(aes(x = Condition_index_TotalADFW_div_length, group=Treatment, fill=Treatment, ..scaled..),alpha = 0.7, adjust=1.5) + 
