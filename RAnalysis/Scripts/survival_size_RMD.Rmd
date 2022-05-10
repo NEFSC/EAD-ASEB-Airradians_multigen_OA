@@ -31,11 +31,11 @@ library(maditr)
 library(reshape2)
 library(ggpubr)
 
-setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 ShellLength <- read.csv(file="Data/Survival_Size/Juvenile_lengths_master.csv", header = TRUE) 
-TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master.csv", header = TRUE) 
+TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master2.csv", header = TRUE) 
 ```
 
 
@@ -59,11 +59,11 @@ density_217DPF <- ShellLength %>%
                     theme_bw() +
                     scale_fill_brewer(palette = "Set1")
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density.pdf"), width = 8, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density.pdf"), width = 8, height = 6)
 print(Alldensity) # print the model diagnostics 
 dev.off()
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density_217DPF.pdf"), width = 8, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density_217DPF.pdf"), width = 8, height = 6)
 print(density_217DPF) # print the model diagnostics 
 dev.off()
 ```
@@ -74,32 +74,51 @@ library(dplyr)
 library(tidyr)
 TDW_AFDW$Treatment        <- as.factor(TDW_AFDW$pH)
 TDW_AFDW$Gonad_proportion <- (TDW_AFDW$Dry_Gonad_weight_g / (TDW_AFDW$Dry_Gonad_weight_g +TDW_AFDW$Dry_Tissue_weight_g) ) * 100
+Gonad_data                <- (TDW_AFDW %>% dplyr::filter(Dry_Gonad_weight_g > 0)) # not all dates contain data for gonad indices!
 
-
-
-Allboxplot_gonad     <- ggplot(data = TDW_AFDW, aes(x=Treatment, y=Dry_Gonad_weight_g, fill = Treatment)) + 
+Allboxplot_gonad     <- ggplot(data =  Gonad_data, aes(x=Treatment, y=Dry_Gonad_weight_g, fill = Treatment)) + 
                           geom_boxplot(alpha = 0.2) + 
                           geom_jitter(position=position_jitter(0.1)) +
                           theme_bw() +
                           #facet_wrap( ~ Date_sampled) + 
                           scale_fill_brewer(palette = "Set1") + 
-                          ggtitle("Gonad dry weight (g) ")
+                          ggtitle("Gonad dry weight (g) ") + 
+                          facet_wrap(~Date_sampled)
 Allboxplot_gonad
 
 
-Allboxplot_gonad_prop <- ggplot(data = TDW_AFDW, aes(x=Treatment, y=Gonad_proportion, fill = Treatment)) + 
+Allboxplot_gonad_prop <- ggplot(data = Gonad_data, aes(x=Treatment, y=Gonad_proportion, fill = Treatment)) + 
                           geom_boxplot(alpha = 0.2) + 
                           geom_jitter(position=position_jitter(0.1)) +
                           theme_bw() +
                           #facet_wrap( ~ Date_sampled) + 
                           scale_fill_brewer(palette = "Set1") + 
-                          ggtitle("Gonad proportion (%) [ gonad wt / (gonad + other tissue wt) ] ")
+                          ggtitle("Gonad proportion (%) [ gonad wt / (gonad + other tissue wt) ] ") + 
+                          facet_wrap(~Date_sampled)
 Allboxplot_gonad_prop
 
-ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop)
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Gonad_dry_weight.pdf"), width = 12, height = 6)
-ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop) # print the model diagnostics 
+lm_eqn = function(df){
+    m = lm(y ~ x, df);
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(coef(m)[1], digits = 2), 
+              b = format(coef(m)[2], digits = 2), 
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));                 
+}
+eq <- ddply(Gonad_data,(Gonad_data$Date_sampled),lm_eqn)
+Allregress_gonadDW_length <- ggplot(data =  Gonad_data, aes(x = as.numeric(Shell_length_mm), y = Dry_Gonad_weight_g, color = Treatment, group = Treatment)) +
+                            geom_smooth(method = "lm", level = 0.95, color="black", formula = y ~ x) +
+                            geom_point() + 
+                            theme_bw() +
+                            facet_wrap(~Date_sampled) +
+                            ggtitle("Shell length (mm) vs. gonad dry weight (g) - w/95% CI")
+
+
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Gonad_dry_weight.pdf"), width = 10, height = 8)
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length) # print the model diagnostics 
 dev.off()
 
 ```
@@ -154,7 +173,7 @@ CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_TotalADFW_div_len
 CI_AFDW
 
 
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Condition_indices.pdf"), width = 12, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Condition_indices.pdf"), width = 12, height = 6)
 ggarrange(Alldensity_SDW,Alldensity_TDW,CI_TDW, CI_AFDW)
 dev.off()
 
@@ -287,7 +306,7 @@ DryShellWeight_Plot <- DryShelWeight_Summ %>%
 # print in markdown file 
 ggarrange(CI_Plot, Shell_Plot, DryTissueWeight_Plot, DryShellWeight_Plot,nrow = 2, ncol = 2)
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_mutligen_OA/RAnalysis/Output/Survival_Size/CI_Length_92DPF_139DPF.pdf"), width = 12, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_mutligen_OA/RAnalysis/Output/Survival_Size/CI_Length_92DPF_139DPF.pdf"), width = 12, height = 6)
 ggarrange(CI_Plot, Shell_Plot, DryTissueWeight_Plot, DryShellWeight_Plot,nrow = 2, ncol = 2)
 dev.off()
 
@@ -317,7 +336,7 @@ LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, aes(x=Day, y=Survival, co
 LarvaeSurvival_Plot
 
 
-# pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
+# pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
 pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/Larval_survival.pdf"),width=10, height=7)
 LarvaeSurvival_Plot
 dev.off()
@@ -591,14 +610,14 @@ Survival_64DPF <- ggplot(data_64, aes(x =pCO2, (Survival*100) , fill = pCO2)) +
        x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")")) + 
   facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
 
-# pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210930_respiration.pdf"))
- pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_shell_length.pdf"))
+# pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210930_respiration.pdf"))
+ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_shell_length.pdf"))
 # pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_shell_length.pdf"))
 Length_64dpf
 dev.off()
 
 
- pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
+ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
 # pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
 Survival_64DPF
 dev.off()
@@ -714,14 +733,14 @@ Survival_90DPF
 
 
 
-# pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210930_respiration.pdf"))
-# pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_shell_length.pdf"))
+# pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210930_respiration.pdf"))
+# pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_shell_length.pdf"))
 pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20211026_shell_length.pdf"))
 Length_90dpf
 dev.off()
 
 
-pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20211026_survival.pdf"))
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20211026_survival.pdf"))
 # pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
 Survival_90DPF
 dev.off()
