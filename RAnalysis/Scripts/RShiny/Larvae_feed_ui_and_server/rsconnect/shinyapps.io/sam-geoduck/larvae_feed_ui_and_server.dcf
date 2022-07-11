@@ -1,0 +1,11 @@
+name: larvae_feed_ui_and_server
+title:
+username:
+account: sam-geoduck
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6614123
+bundleId: 6083417
+url: https://sam-geoduck.shinyapps.io/larvae_feed_ui_and_server/
+when: 1657343595.59928
+lastSyncTime: 1657343595.59928

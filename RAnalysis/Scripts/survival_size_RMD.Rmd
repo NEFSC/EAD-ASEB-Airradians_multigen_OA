@@ -113,14 +113,33 @@ Allregress_gonadIndex_length <- ggplot(data =  Gonad_data, aes(x = as.numeric(Sh
                             theme_bw() +
                             facet_wrap(~Date_sampled) +
                             ggtitle("Shell length (mm) vs. Gonad index - w/95% CI")
+data <- Gonad_data %>% 
+          dplyr::filter(!Gonad_stage %in% NA) %>% 
+          dplyr::mutate(Date_Treatment = paste(Date_sampled, Treatment, sep = '_')) %>% 
+          dplyr::group_by(Date_Treatment) %>%
+          dplyr::mutate(count = length(Date_Treatment))
+          dplyr::mutate(prop = Gonad_stage / sum(Gonad_data) *100) %>%
+          mutate(ypos = cumsum(prop)- 0.5*prop )
 
 
+Gonad_stage_pichart <- ggplot((Gonad_data %>% 
+                                dplyr::filter(!Gonad_stage %in% NA) %>% 
+                                dplyr::group_by(Date_sampled, Treatment, Gonad_stage) %>%
+                                dplyr::summarize(count = n()) %>%
+                                mutate(freq = count / sum(count)) %>% 
+                                dplyr::mutate(Date_Treatment = paste(Date_sampled, Treatment, sep = '_'))), 
+                             aes(x="", y=freq, fill=Gonad_stage)) +
+                        scale_fill_brewer(palette=4) +
+                        geom_bar(stat="identity", width=1) +
+                        coord_polar("y", start=0) +
+                        theme_void() + 
+                        facet_wrap(~Date_Treatment)
 
 
 ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length)
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Gonad_dry_weight.pdf"), width = 10, height = 8)
-ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length) # print the model diagnostics 
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length, Gonad_satge_pichart) # print the model diagnostics 
 dev.off()
 
 ```
