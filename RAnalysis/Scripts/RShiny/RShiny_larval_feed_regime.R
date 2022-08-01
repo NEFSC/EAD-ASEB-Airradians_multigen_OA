@@ -1,10 +1,10 @@
 
 library(shiny)
 # push lines 4 - 7 to send edits of ui and server scripts to URL
-# rsconnect::setAccountInfo(name='sam-geoduck',
-#                            token='340A1FE56E654C48A346EDD10D0CC45F',
-#                            secret='hmitiSg16pfLx0ckLCu/1+/GByjPw/sdhcjzw4N/')
-# rsconnect::deployApp('C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Scripts/RShiny/Larvae_feed_ui_and_server')
+rsconnect::setAccountInfo(name='sam-geoduck',
+                            token='340A1FE56E654C48A346EDD10D0CC45F',
+                            secret='hmitiSg16pfLx0ckLCu/1+/GByjPw/sdhcjzw4N/')
+rsconnect::deployApp('C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Scripts/RShiny/Larvae_feed_ui_and_server')
 
 
 ui <- shinyUI(fluidPage(

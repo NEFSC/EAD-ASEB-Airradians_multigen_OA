@@ -26,22 +26,22 @@ ui <- shinyUI(fluidPage(
           column(3,
             # numericInput("feed_conical", "target mL per hour continuous feed", 1000 ,min = 0, max = 1000),
             selectInput("algae_species_1", "Choose species for Algae #1:",
-                        list("T-iso", "Pavlova", "Chaetoceros","Nano","Tetraselmis, NA")),
-            numericInput("algae_1", "Algae #1 cells mL-1 (Pav, T-iso, Tet, Nano, Chaet, etc.)", 2000000,min = 0, max = 200000000),
+                        list("T-iso", "Pavlova", "Chaetoceros","Nano","Tetraselmis", "NA")),
+            numericInput("algae_1", "Algae #1 cells mL-1", 2000000,min = 0, max = 200000000),
             numericInput("perc_algae1", "Target % composition of algae #1", 75,min = 0, max = 100) #,
                 ),
     
           column(3,offset =1,
             selectInput("algae_species_2", "Choose species for Algae #2:",
-                       list("T-iso", "Pavlova", "Chaetoceros","Nano","Tetraselmis, NA")),   
-            numericInput("algae_2", "Algae #2 cells mL-1  (Pav, T-iso, Tet, Nano, Chaet, etc.)", 2000000,min = 0, max = 200000000),
+                       list("Chaetoceros", "T-iso", "Pavlova","Nano","Tetraselmis", "NA")),   
+            numericInput("algae_2", "Algae #2 cells mL-1)", 2000000,min = 0, max = 200000000),
             numericInput("perc_algae2", "Target % composition of algae #2", 25,min = 0, max = 100)
                 ),
     
           column(3,offset =1,
             selectInput("algae_species_3", "Choose species for Algae #3:",
-                       list("T-iso", "Pavlova", "Chaetoceros","Nano","Tetraselmis, NA")),   
-            numericInput("algae_3", "Algae #3 cells mL-1  (Pav, T-iso, Tet, Nano, Chaet, etc.)", 2000000,min = 0, max = 200000000),
+                       list("Pavlova", "T-iso", "Chaetoceros","Nano","Tetraselmis", "NA")),   
+            numericInput("algae_3", "Algae #3 cells mL-1", 2000000,min = 0, max = 200000000),
             numericInput("perc_algae3", "Target % composition of algae #3", 0,min = 0, max = 100) #,
                  ),
     
