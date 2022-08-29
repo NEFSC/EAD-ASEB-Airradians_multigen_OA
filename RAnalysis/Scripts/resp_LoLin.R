@@ -11,8 +11,8 @@ library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from git
 library(dplyr)
 library(lubridate)
 library(rMR) 
-library(dplyr)
 library(stringr)
+
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
@@ -63,42 +63,44 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
       }  
 
         # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
-      for(m in 1:nrow(file.names.table)) { # for every raw .txt or csv file 'm' in the subfolder 'i' :::::::::::::::::::::::::::::::::::::
+  # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
+  for(m in 1:nrow(file.names.table)) { # for every raw .txt or csv file 'm' in the subfolder 'i' :::::::::::::::::::::::::::::::::::::
+    
+    if (gsub(".*_raw.","", file.names.table[m,]) == "txt") {
+      Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37) #reads in the data files
+          
+          # for data in 2021 and data in 2022 
+          if (str_split((Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.[1]), "/", simplify = TRUE)[[3]] == "2021") {
+            Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+            Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+          } else {
+            Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+            Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+          }
+          
+      Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
+      Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
+      temperature_C       <- as.numeric(Resp.Data$CH1.temp...C.[1])
+      barromP_kPa         <- as.numeric(Resp.Data$Barometric.pressure..hPa.[1]) / 10
+      salinity.pp.thou    <- as.numeric(Resp.Data$Salinity....[1])
+      Resp.Data           <- Resp.Data %>% # use 'dplyr' 
+        #dplyr::filter(!Phase %in% 'Flush') %>% # remove the initial rows labeled flush
+        dplyr::select(c(date, seconds, minutes, contains(".O2...air.sat"))) # %>%  # call unique column names for the 8 Channels
+      # dplyr::filter(minutes < 40)
+      colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,3) # clean these column names to make things easier - first 3 characters
       
-        if (gsub(".*_raw.","", file.names.table[m,]) == "txt") {
-        Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37) #reads in the data files
-        Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
-        Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-        Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
-        Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
-        temperature_C       <- as.numeric(Resp.Data$CH1.temp...C.[1])
-        barromP_kPa         <- as.numeric(Resp.Data$Barometric.pressure..hPa.[1]) / 10
-        salinity.pp.thou    <- as.numeric(Resp.Data$Salinity....[1])
-        Resp.Data           <- Resp.Data %>% # use 'dplyr' 
-                              #dplyr::filter(!Phase %in% 'Flush') %>% # remove the initial rows labeled flush
-                              dplyr::select(c(date, seconds, minutes, contains(".O2...air.sat"))) # %>%  # call unique column names for the 8 Channels
-                              # dplyr::filter(minutes < 40)
-        colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,3) # clean these column names to make things easier - first 3 characters
-                
-        # Truncate! EVERY 15 SECONDS (note: these txt files are long with measurements every second,trancating reduces the analysis time dramatically)
-        # the loligo recoreded values every second, this slows the model dramatically with >2000 values for each Channel, call every 30 seconds to speed this up
-        # discuss with collaborators on this truncated approach 
-                if (folder.names.table[i,] == '20210914'){
-                 Resp.Data_15sec = Resp.Data[seq(1, nrow(Resp.Data), 15), ] # truncate the loligo system to every 15 seconds (taken every second!) 
-                 Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes < 40) # truncate before 40 minutes as the records start to show noise and undesirable data for O2 consumption (ran whole record and observed ALL Lolin plots to make this decision) 
-                  } else if (folder.names.table[i,] == '20220202'){ 
-                    Resp.Data_15sec = Resp.Data[seq(1, nrow(Resp.Data), 15), ] # for now we will run the whole dataset to see...
-                    Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
-                       } else { # note this should only call the txt files in 20211026 becuase there are no _raw.txt files in 20210930
-                        Resp.Data_15sec = Resp.Data[seq(1, nrow(Resp.Data), 15), ] # for now we will run the whole dataset to see...
-                        # Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
-                        # Resp.Data_15sec = Resp.Data_15sec  %>%  dplyr::filter(minutes > 40  & minutes < 90)   # for now we will run the whole dataset to see...
-                                }
-        
-          } else { 
-            Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
-            Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
-            Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+            } else { 
+              Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
+              
+              # for data in 2021 and data in 2022
+              if (str_split((Resp.Data$Date..DD.MM.YYYY.[1]), "/", simplify = TRUE)[[3]] == "2021") {
+                Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+                Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+              } else {
+                Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+                Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+              }
+            
             Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
             Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
             temperature_C       <- as.numeric(Resp.Data$CH1.temp...C.[1])
@@ -107,6 +109,7 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
             Resp.Data           <- Resp.Data %>% # use 'dplyr' 
               dplyr::select(c(date, seconds, minutes, contains("..Oxygen."))) # call unique column names for the 8 Channels
             colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,2) 
+          } # clean these column names to make things easier - first 3 characters
             
                   # Truncate! EVERY 15 SECONDS (note: these txt files are long with measurements every second,trancating reduces the analysis time dramatically)
                   # the loligo recoreded values every second, this slows the model dramatically with >2000 values for each Channel, call every 30 seconds to speed this up
@@ -124,13 +127,13 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               # inside 'j' loop - for each 'raw' txt file 'm', call each O2 sensor/resp chamber 'j' for analysis
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
-              Resp_loopNAsOM    <- (Resp.Data_15sec[,c(3,j)]) %>% 
+                Resp_loop    <- (Resp.Data_15sec[,c(3,j)]) %>% 
                                               dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
                                               
-              Resp_loop         <- Resp_loopNAsOM %>%                                  
-                                              #dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
-                                              dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
-                                              dplyr::filter(minutes > max(minutes) -40) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
+              # Resp_loop         <- Resp_loopNAsOM %>%                                  
+              #                                 #dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
+              #                                 dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
+              #                                 dplyr::filter(minutes > max(minutes) -40) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
 
 
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
