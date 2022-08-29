@@ -45,13 +45,15 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 5:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
   if (folder.names.table[i,] == '20210930') { # call 24-channel SDR dish data - current form only calls data from 20211026  
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  %>%  dplyr::filter(grepl('RR_', txt.files))
+    } else if (folder.names.table[i,] == '20220829') { # for days when both the loligo system (txt files) or SDR dish (csv files) were used
+        file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))
     } else if (folder.names.table[i,] == '20211026') { # for days when both the loligo system (txt files) or SDR dish (csv files) were used
         file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
         file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
@@ -126,9 +128,9 @@ for(i in 5:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                               dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
                                               
               Resp_loop         <- Resp_loopNAsOM %>%                                  
-                                              dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
+                                              #dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
                                               dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
-                                              dplyr::filter(minutes > max(minutes) -20) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
+                                              dplyr::filter(minutes > max(minutes) -40) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
 
 
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
