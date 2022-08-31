@@ -119,8 +119,9 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                      } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
                         # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
                         Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
+                        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
                             }
-            }# clean these column names to make things easier - first 3 characters
+            # clean these column names to make things easier - first 3 characters
             
 
   
@@ -128,12 +129,9 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
                 Resp_loop    <- (Resp.Data_15sec[,c(3,j)]) %>% 
-                                              dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
-                                              
-              # Resp_loop         <- Resp_loopNAsOM %>%                                  
-              #                                 #dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
-              #                                 dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
-              #                                 dplyr::filter(minutes > max(minutes) -40) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
+                                              dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) %>%  # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
+                                              dplyr::mutate(minutes = as.numeric(minutes)) #  %>% # convert minutes to numeric
+                                             # dplyr::filter(minutes > max(minutes) -60) # call the ___ minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
 
 
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
@@ -193,12 +191,14 @@ for(i in 9:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                               plot(model)
                               dev.off() } else { # just for the SDR run on 20211025 .csv file 
                                 #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
-                                pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
+                                pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 6),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
                                 plot(model)
                                 dev.off()
                                 }
          } # end of inside for loop 'j' (for each sensor column 'j' [a] isolate mins and CH_ for analysis [b] convert CH_ data to mg/L using 'DO.unit.convert' [c] calc respi rates with LoLin R)
+    
      } # end of inside  for loop 'm' (for every 'raw' .txt file 'm' in the subfolder 'i')
+  
 } # end of outside for loop 'i' (for every subfolder 'i')
 
 # merge with the preexisiting table
