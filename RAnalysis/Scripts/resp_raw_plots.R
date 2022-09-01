@@ -16,7 +16,7 @@ library(stringr)
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
-setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+#setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::
 path.p    <- "Data/Respiration" #the location of all your respirometry files 
@@ -89,7 +89,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               
               } else { 
                 
-                Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
+                Resp.Data           <- read.table(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), sep = ',', header = TRUE,skip = 51) #reads in the data files
                 
                 # add the for loop here if/when the 24 channel Loligo (csv raw data outputs) is used in 2022!!!
                 # for data in 2021 and data in 2022 
@@ -167,14 +167,14 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                             print(PLOT)
                             dev.off()
                         
-                        
+                           
                       } else { # just for the SDR run on 20211025 .csv file 
                         date.plot  <- folder.names.table[i,1]
-                        run.plot   <- substr((sub(".*resp_","",file.names.table[m,1])), 1, 5)
+                        run.plot   <- substr((sub(".*resp_","",file.names.table[m,1])), 1, 6)
                         plot_title <- paste(date.plot, run.plot, sep = '_')
                         PLOT <- Resp.Data_15sec %>% 
                           dplyr::select(-c('date', 'seconds')) %>%  
-                          reshape2::melt(id.vars = "minutes",variable.name = "channel", value.name = "mg.L.min") %>%
+                          reshape2::melt(id.vars = "minutes",variable.name = "channel", value.name = "mg.L.min") %>% 
                           ggplot(aes(x = minutes , y = mg.L.min)) +
                           geom_smooth(method = "loess", se=FALSE, color="black", formula = mg.L.min ~ minutes) +
                           theme_classic() +
@@ -186,27 +186,10 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                           facet_wrap(~channel)  
                         
                         #pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_regression.pdf"), width=10, height=12) # 20211026_resp_unfed.csv ONLY
-                        pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_regression.pdf"), width=10, height=12) # 20211026_resp_unfed.csv ONLY
+                        pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 6),"_regression.pdf"), width=10, height=12) # 20211026_resp_unfed.csv ONLY
                         print(PLOT)
                         dev.off()  }
-              
-
-        
-          # if (gsub(".*_raw.","", file.names.table[i,]) == "txt") {
-          #   #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", sub("_raw.*","",file.names.table[m,1]),"_",colnames(Resp_loop)[2],"_regression.pdf"))
-          #   pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", sub("_raw.*","",file.names.table[m,1]),"_regression.pdf"), width=10, height=12)
-          #   print(PLOT)
-          #   dev.off()
-          # } else if (folder.names.table[i,] == '20210930') {
-          #   #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr( (sub(".*M_","",file.names.table[m,1])), 1,13),"_",colnames(Resp_loop)[2],"_regression.pdf"))
-          #   pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", substr( (sub(".*M_","",file.names.table[m,1])), 1,13),"_regression.pdf"), width=10, height=12)
-          #   print(PLOT)
-          #   dev.off() } else { # just for the SDR run on 20211025 .csv file 
-          #     #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
-          #     pdf(paste0("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_raw/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_regression.pdf"), width=10, height=12) # 20211026_resp_unfed.csv ONLY
-          #     print(PLOT)
-          #     dev.off()
-          #   }
+         
       }
 }
 
