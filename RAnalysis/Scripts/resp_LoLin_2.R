@@ -51,14 +51,14 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
   if (folder.names.table[i,] %in% c('20210930','20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
-    file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  %>%  dplyr::filter(grepl('RR_', txt.files))
-  } else if (folder.names.table[i,] == '20211026') { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
-    file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-    file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-    file.names.table     <- rbind(file.names.table1, file.names.table2)
-  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
-    file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-  }  
+      file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  %>%  dplyr::filter(grepl('RR_', txt.files))
+      } else if (folder.names.table[i,] == '20211026') { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
+        file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+        file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+        file.names.table     <- rbind(file.names.table1, file.names.table2)
+      }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
+        file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+      }  
 
         # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
   # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
@@ -117,9 +117,8 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
                      } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
                         # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
                         Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
-                        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
                             }
-            # clean these column names to make things easier - first 3 characters
+            }# clean these column names to make things easier - first 3 characters
             
 
   
@@ -127,9 +126,12 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
               for(j in 4:(ncol(Resp.Data_15sec))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
               
                 Resp_loop    <- (Resp.Data_15sec[,c(3,j)]) %>% 
-                                              dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) %>%  # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
-                                              dplyr::mutate(minutes = as.numeric(minutes)) #  %>% # convert minutes to numeric
-                                             # dplyr::filter(minutes > max(minutes) -60) # call the ___ minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
+                                              dplyr::filter(!str_detect(((Resp.Data_15sec[,c(3,j)])[,2]),"NaN")) # noticed some random rows have 'NaN' - so I will loop the min and Channels to omit Nas before proceeding
+                                              
+              # Resp_loop         <- Resp_loopNAsOM %>%                                  
+              #                                 #dplyr::filter(as.numeric((Resp_loopNAsOM)[,2]) > 80) %>%            
+              #                                 dplyr::mutate(minutes = as.numeric(minutes)) %>%  # convert minutes to numeric
+              #                                 dplyr::filter(minutes > max(minutes) -40) # call the 20 minutes before the end of the trial (avoid the first data points noisy and due to handling stress no resp rate)
 
 
                 # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
@@ -189,14 +191,12 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
                               plot(model)
                               dev.off() } else { # just for the SDR run on 20211025 .csv file 
                                 #pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
-                                pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 6),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
+                                pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/plots_alpha0.4_increm15sec/",folder.names.table[i,1],"_", substr((sub(".*resp_","",file.names.table[m,1])), 1, 5),"_",colnames(Resp_loop)[2],"_regression.pdf")) # 20211026_resp_unfed.csv ONLY
                                 plot(model)
                                 dev.off()
                                 }
          } # end of inside for loop 'j' (for each sensor column 'j' [a] isolate mins and CH_ for analysis [b] convert CH_ data to mg/L using 'DO.unit.convert' [c] calc respi rates with LoLin R)
-    
      } # end of inside  for loop 'm' (for every 'raw' .txt file 'm' in the subfolder 'i')
-  
 } # end of outside for loop 'i' (for every subfolder 'i')
 
 # merge with the preexisiting table
