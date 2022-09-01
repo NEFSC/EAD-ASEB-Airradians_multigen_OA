@@ -2,7 +2,7 @@
 # measure respiration rate from raw Loligo output data 
 # using Lolin.R (Olito etal. 201?) for reproducible and non-bias calculation of respiration rates
 
-# Written by: Sam J Gurr (last edit 2/16/2022)
+# Written by: Sam J Gurr (last edit 8/31/2022)
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -50,31 +50,30 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
-  if (folder.names.table[i,] %in% c('20210930','20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
-    file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  %>%  dplyr::filter(grepl('RR_', txt.files))
-  } else if (folder.names.table[i,] == '20211026') { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
-    file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-    file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-    file.names.table     <- rbind(file.names.table1, file.names.table2)
-  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
-    file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-  }  
+  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
+    file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
+   } else if (folder.names.table[i,] == '20211026') { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
+     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+     file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+     file.names.table     <- rbind(file.names.table1, file.names.table2)
+    }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
+        file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+    }  
 
         # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
   # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
   for(m in 1:nrow(file.names.table)) { # for every raw .txt or csv file 'm' in the subfolder 'i' :::::::::::::::::::::::::::::::::::::
     
     if (gsub(".*_raw.","", file.names.table[m,]) == "txt") {
-      Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37) #reads in the data files
-          
+      Resp.Data <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37) #reads in the data files
           # for data in 2021 and data in 2022 
           if (str_split((Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.[1]), "/", simplify = TRUE)[[3]] == "2021") {
             Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
             Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-          } else {
-            Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
-            Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-          }
+            } else {
+              Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+              Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+            }
           
       Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
       Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
@@ -82,22 +81,22 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
       barromP_kPa         <- as.numeric(Resp.Data$Barometric.pressure..hPa.[1]) / 10
       salinity.pp.thou    <- as.numeric(Resp.Data$Salinity....[1])
       Resp.Data           <- Resp.Data %>% # use 'dplyr' 
-        #dplyr::filter(!Phase %in% 'Flush') %>% # remove the initial rows labeled flush
-        dplyr::select(c(date, seconds, minutes, contains(".O2...air.sat"))) # %>%  # call unique column names for the 8 Channels
+           #dplyr::filter(!Phase %in% 'Flush') %>% # remove the initial rows labeled flush
+            dplyr::select(c(date, seconds, minutes, contains(".O2...air.sat"))) # %>%  # call unique column names for the 8 Channels
       # dplyr::filter(minutes < 40)
       colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,3) # clean these column names to make things easier - first 3 characters
       
-            } else { 
-              Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
+     } else { 
+       Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
               
               # for data in 2021 and data in 2022
               if (str_split((Resp.Data$Date..DD.MM.YYYY.[1]), "/", simplify = TRUE)[[3]] == "2021") {
                 Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
                 Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-              } else {
-                Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
-                Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-              }
+                } else {
+                  Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+                  Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+                }
             
             Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
             Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
@@ -107,19 +106,24 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
             Resp.Data           <- Resp.Data %>% # use 'dplyr' 
               dplyr::select(c(date, seconds, minutes, contains("..Oxygen."))) # call unique column names for the 8 Channels
             colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,2) 
-          } # clean these column names to make things easier - first 3 characters
+     } # clean these column names to make things easier - first 3 characters
             
-                  # Truncate! EVERY 15 SECONDS (note: these txt files are long with measurements every second,trancating reduces the analysis time dramatically)
-                  # the loligo recoreded values every second, this slows the model dramatically with >2000 values for each Channel, call every 30 seconds to speed this up
-                  # discuss with collaborators on this truncated approach 
-                  if (folder.names.table[i,] == '20210930'){
-                    Resp.Data_15sec = Resp.Data  %>%  dplyr::filter(minutes < 40) # SDR data is already taken every 15 seconds, truncate for < 40 minutes in runs as the records start to show noise and undesirable data for O2 consumption (ran whole record and observed ALL Lolin plots to make this decision) 
-                     } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
-                        # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
-                        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
-                        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
-                            }
-            # clean these column names to make things easier - first 3 characters
+    # Truncate! EVERY 15 SECONDS (note: these txt files are long with measurements every second,trancating reduces the analysis time dramatically)
+    # the loligo recoreded values every second, this slows the model dramatically with >2000 values for each Channel, call every 30 seconds to speed this up
+    # discuss with collaborators on this truncated approach 
+    if (folder.names.table[i,] == '20210930'){
+      Resp.Data_15sec = Resp.Data  %>%  dplyr::filter(minutes < 40) # SDR data is already taken every 15 seconds, truncate for < 40 minutes in runs as the records start to show noise and undesirable data for O2 consumption (ran whole record and observed ALL Lolin plots to make this decision) 
+     } else if (folder.names.table[i,] == '20220830' & substr(file.names.table[m,], 5,7) == '799'){
+       Resp.Data_15sec = Resp.Data  %>%  dplyr::filter(minutes >25 & minutes < 120) # plate 1 SDR 799 for 8/30/22 data, ran for ~200 minutes with a dropoff below 5-6 mgL after 120-150 minutes (omit due to hypocia) and noise as the start ( omit before 25 minutes)
+     } else if (folder.names.table[i,] == '20220830' & substr(file.names.table[m,], 5,7) == '873'){
+       Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes >15)  # 60 minute file and all data is very stable, a bit of noise initialy and omitted here
+      } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
+        # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
+        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
+        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
+        Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
+      }
+      # clean these column names to make things easier - first 3 characters
             
 
   
@@ -206,6 +210,8 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
 # (3) not normalized for blank resp rate 
 # (4) not normalized for a size/individual metric (i.e. Tissue Dry weight, shell length, etc.)
 cumulative_resp_table <- read.csv(file=ouputNAME, header=TRUE) #call the pre existing cumulative table
+tail(cumulative_resp_table)
+unique(cumulative_resp_table$Date)
 new_table             <- rbind(cumulative_resp_table, df_total) # bind the new table from the for loop to the pre exisiting table
 write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
 
