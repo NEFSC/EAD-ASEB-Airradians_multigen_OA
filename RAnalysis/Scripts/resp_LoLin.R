@@ -210,8 +210,6 @@ for(i in 10:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
 # (3) not normalized for blank resp rate 
 # (4) not normalized for a size/individual metric (i.e. Tissue Dry weight, shell length, etc.)
 cumulative_resp_table <- read.csv(file=ouputNAME, header=TRUE) #call the pre existing cumulative table
-tail(cumulative_resp_table)
-unique(cumulative_resp_table$Date)
 new_table             <- rbind(cumulative_resp_table, df_total) # bind the new table from the for loop to the pre exisiting table
 write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
 
