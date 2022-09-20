@@ -119,7 +119,7 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
 # SPECIES STANDARDIZATION COEFFICIENT 
 sp_COEF <- 0.62
 
-biodep3 <- BioSamples_merged %>% 
+Biodep_Master <- BioSamples_merged %>% 
   # IER, OER, IRR, ORR corected for species coefficient and animal dry weight
     dplyr::mutate(IER_correct = IER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
     dplyr::mutate(IRR_correct = IRR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>%                
@@ -175,7 +175,112 @@ biodep3 <- BioSamples_merged %>%
   
     dplyr::mutate(AR = OIR - OER_correct) %>% 
   
-    dplyr::mutate(AE = AR / OIR)
+    dplyr::mutate(AE = AR / OIR) %>% 
+  
+    dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", treatment == 7.5 ~ "800 μatm"))
                                 
-View(biodep3)    
+Biodep_Master 
 
+
+# WRITE CSV OF THE MASTER FILE
+write.csv(Biodep_Master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+
+
+
+
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+# 20220202 :::::::::::::::::::::::::::::::
+
+
+
+Biodep_master_0302 <- Biodep_Master %>% filter(Date %in% '20220302') %>% filter(!AE < 0) # call data 
+
+# LME mod -  data 
+LMEmod_0302           <-lme(AE ~ pCO2, random=~1|tank_ID, data=Biodep_master_0302) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+pander(anova(LMEmod_0302), style='rmarkdown') # anova table of lmer
+# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+# :---------------:|:-----:|:-----:|:-------:|:---------:|
+# | **(Intercept)** |   1   |  13   |  169.7  | 7.759e-09 |
+# |    **pCO2**     |   1   |  13   | 0.1398  |  0.7146   |
+  
+shapiro.test(resid(LMEmod_0302)) # 0.6533 -  normal
+qqnorm(resid(LMEmod_0302)) # 
+hist(resid(LMEmod_0302)) # 
+
+
+
+# plotting ::::::::::::::::::::::::::::::::::;;
+
+
+
+AE_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , AE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=10)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Efficiency, F1 Scallops") +
+  facet_wrap(~Date)
+AE_boxplot
+
+
+AR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , AR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=10)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Rate, F1 Scallops") +
+  facet_wrap(~Date)
+AR_boxplot
+
+OIR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , OIR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=10)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Organic Ingestion Rate, F1 Scallops") +
+  facet_wrap(~Date)
+OIR_boxplot
+
+
+FR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , FR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=10)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Filtration Rate, F1 Scallops") +
+  facet_wrap(~Date)
+FR_boxplot
+
+
+# output the plot 
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Master_Biodep_Boxplots.pdf"), width = 10, height= 8)
+ggarrange(AE_boxplot, AR_boxplot, OIR_boxplot, FR_boxplot)
+dev.off()
