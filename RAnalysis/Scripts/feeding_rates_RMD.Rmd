@@ -1898,6 +1898,19 @@ qqnorm(residuals(LMEmod_0202)) # \
 
 ```
 
+```{r consolidate all master boxplots}
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/Master_CR_Boxplots.pdf"), width = 13, height= 8)
+
+ggarrange(
+CR_930_boxplot,
+CR_914_boxplot,
+CR_1026_boxplot,
+CR_0202_boxplot)
+
+dev.off()
+```
+
 
 ```{r, master Clearance rate data }
 
@@ -1907,7 +1920,6 @@ write.csv(ClearanceRate_Master, "C:/Users/samjg/Documents/Github_repositories/Ai
 ```
 
 ## Density plots
-
 
 ```{r, 20210930 Density plots }
 library(dplyr)
@@ -2052,8 +2064,6 @@ density.plot_CR_SESTON_0930 # print the model diagnostics
 dev.off()
 
 ```
-
-
 
 ```{r, 20211026 Density plots }
 library(dplyr)
