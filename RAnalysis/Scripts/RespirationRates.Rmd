@@ -34,7 +34,7 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 
- setwd("C:/Users/samjg/Documents/Github_repositories/Cvirginica_hemolymph_OA/RAnalysis") # personal computer
+ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -48,18 +48,36 @@ resp.ref               <- read.csv(file="Data/Respiration/Reference_master.csv",
 
 lengths                <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
 
+lengths_spat           <- read.csv(file="Data/Respiration/Lengths_larvae_spat_resp.csv", header=T)
+
+
 ```
 
 
 ### Merge master resp data frame with lengths
 
 ```{r merge resp with length data and treatment IDs, echo=FALSE}
+
+# lengths_spat contains early development resp runs
+# as multiple individuals per well (in some cases!) 
+# whereas 'lengths' is for juvenile-adult stage scallops each as one length for each resp value 
+# thus, we need to summarise as a mean for the 'lengths_spat' file before merging with the other file
+head(lengths) # here are the juveniles and adults - a single length individual for each resp channel
+head(lengths_spat) # take a look at it here, you see muliple entries for a single well for the larvae/spat resp runs
+lengths_spat_MEAN <- as.data.frame(lengths_spat %>% 
+                      dplyr::group_by(Date,Run,Plate,Channel) %>% 
+                      dplyr::summarise(Length_um = mean(Length))) # group and summarise as a mean
+lenghts_master <- rbind.fill(lengths, lengths_spat_MEAN) # use rbind.fill to merge including NAs for missing columns
+
+# check the data - ensure all data was run
 nrow(resp.data) == nrow(start.end_resp.data) # MUST be TRUE
 resp_all_raw <- merge(resp.data, start.end_resp.data)
 
 # merge the exp_metadata with the resp.data
-resp.ref_length_merged                 <- merge(resp.ref, lengths) # all TRUE allows us to keep the blanks
-resp.data_merged                       <- merge(resp_all_raw, resp.ref_length_merged) %>% # out master file moving forward....
+resp.ref_length_merged                 <- merge(resp.ref, lenghts_master) # all TRUE allows us to keep the blanks
+nrow(resp.ref_length_merged)
+nrow(lenghts_master)
+resp.data_merged                       <- merge(resp.data, resp.ref_length_merged) %>% # out master file moving forward....
                                             dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                                             dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>% 
                                             dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
