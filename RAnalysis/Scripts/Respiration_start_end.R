@@ -14,7 +14,7 @@ library(stringr)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
-setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+#setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 path.p    <- "Data/Respiration" #the location of all your respirometry files 
@@ -44,8 +44,8 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
-  if (folder.names.table[i,] == '20210930') { # call 24-channel SDR dish data - current form only calls data from 20211026  
-    file.names.table     <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  %>%  dplyr::filter(grepl('RR_', txt.files))
+  if (folder.names.table[i,] %in% c('20210930','20220420', '20220824', '20220422','20220829', '20220830')) { #'20220824',  call 24-channel SDR dish data - current form only calls data from 20211026  
+    file.names.table     <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  
   } else if (folder.names.table[i,] == '20211026') { # for days when both the loligo system (txt files) or SDR dish (csv files) were used
     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
@@ -58,7 +58,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
           for(m in 1:nrow(file.names.table)) { # for every raw .txt or csv file 'm' in the subfolder 'i' :::::::::::::::::::::::::::::::::::::
             
             if (gsub(".*_raw.","", file.names.table[m,]) == "txt") {
-               Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37) #reads in the data files
+               Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37, fileEncoding= "windows-1252") #reads in the data files
                
                # for data in 2021 and data in 2022 
                if (str_split((Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.[1]), "/", simplify = TRUE)[[3]] == "2021") {
@@ -81,7 +81,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
               colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] <- substr( ( colnames(Resp.Data)[c(4:(ncol(Resp.Data)))] ), 1,3) # clean these column names to make things easier - first 3 characters
               
             } else { 
-              Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51) #reads in the data files
+              Resp.Data           <- read.csv(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 51, fileEncoding= "windows-1252") #reads in the data files
               
               # for data in 2021 and data in 2022
               if (str_split((Resp.Data$Date..DD.MM.YYYY.[1]), "/", simplify = TRUE)[[3]] == "2021") {
@@ -136,10 +136,10 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                 resp.table$Date                 <- Resp.Data[1,1]
                                 resp.table$Channel              <- colnames(Resp_loop)[2] 
                                 resp.table$start_min            <- Resp_loop$minutes[1]
-                                resp.table$end_min              <- Resp_loop$minutes[nrow(Resp_loop)]
+                                resp.table$end_min              <- abs(Resp_loop$minutes[nrow(Resp_loop)])
                                 resp.table$O2_start_mgL         <- Resp_loop$mgL[1]
                                 resp.table$O2_end_mgL           <- Resp_loop$mgL[nrow(Resp_loop)]
-                                resp.table$Rate_mgO2_hour       <- ( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / ((Resp_loop$minutes[nrow(Resp_loop)])/60)
+                                resp.table$Rate_mgO2_hour       <- ( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
                                 resp.table$Filename             <- file.names.table[m,1]
                                 
                                 df       <- data.frame(resp.table) # name dataframe for this single row
@@ -149,7 +149,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                   } # end of inside for loop 'j' (for each sensor column 'j' [a] isolate mins and CH_ for analysis [b] convert CH_ data to mg/L using 'DO.unit.convert' [c] calc respi rates with LoLin R)
         } # end of inside  for loop 'm' (for every 'raw' .txt file 'm' in the subfolder 'i')
 } # end of outside for loop 'i' (for every subfolder 'i')
-
+View(df_total)
 
 # write the table 
 write.table(df_total,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
