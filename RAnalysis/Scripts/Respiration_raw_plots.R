@@ -41,16 +41,16 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 11:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
   if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
-  } else if (folder.names.table[i,] == '20211026') { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
-    file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[3,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
-    file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[3,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+  } else if (folder.names.table[i,] %in% c('20211026', '20220922')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
+    file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
+    file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table     <- rbind(file.names.table1, file.names.table2)
   }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE))))  %>%  dplyr::filter(grepl('raw', txt.files))
