@@ -1,49 +1,172 @@
 ---
-title: "F1 Bay Scallops: High vs. Low food availability under OA conditions"
+title: "Growth_and_Survival"
 author: "Samuel Gurr"
-date: "10/12/2021"
+date: "9/30/2021"
 output:
   pdf_document:
     latex_engine: xelatex
 ---
 
-Last updates: october 6, 2021
+Last updates: September 30, 2022
 
 
 ## Load libraries
 
 ```{r libraries, include=FALSE}
 
+# LOAD LIBRARIES 
 library(ggplot2)
+library(tidyverse)
 library(dplyr)
+library(tidyr)
 library(tidyverse)
 library(car)
 library(nlme)
-library(multcompView)
-library(agricolae)
 library(Rmisc)
 library(lmerTest)
 library(lme4)
 library(pander)
 library(performance)
 library(Rmisc)
-library(maditr)
 library(reshape2)
 library(ggpubr)
 
+# SET WORKING DIRECTORY
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
+# LOAD DATA
 ShellLength <- read.csv(file="Data/Survival_Size/Juvenile_lengths_master.csv", header = TRUE) 
-TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master2.csv", header = TRUE) 
+TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master2.csv", header = TRUE) %>% 
+                  dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm")) %>% # create pCO2 column
+                  dplyr::mutate(Shell_length_mm = as.numeric(Shell_length_mm)) # call shell lenght as numeric 
+TDW_AFDW    <- TDW_AFDW[!is.na(TDW_AFDW$Shell_length_mm),]# drop rows that have no date tied to them 
+```
+#  b factor  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+```{r, b factor}
+
+library(ggpmisc)
+
+#  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#  LENGTH VS. WHOLE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+Length_WholeDryWeight_facetted <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=Whole_animal_dry_weight_g, color=pCO2)) +
+                                              geom_point() +
+                                              scale_color_manual(values=c("blue","orange")) +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Whole dry weight (g)")  + 
+                                              theme_classic() +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") +
+                                              facet_wrap(~pCO2)
+# Length_WholeDryWeight + geom_function(fun = function(x) 0.04*exp(x*0.14), colour = "blue") +
+#      coord_cartesian(ylim=c(0,5))
+
+Length_WholeDryWeight_all     <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=Whole_animal_dry_weight_g)) +
+                                              geom_point() +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Whole dry weight (g)")  + 
+                                              theme_classic() +
+                                              ggtitle("F1 Bay scallops - Length vs. Whole Dry weight") +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right")
+Length_WholeDryWeight_all
+# Length_WholeDryWeight + geom_function(fun = function(x) 0.04*exp(x*0.14), colour = "blue") +
+#      coord_cartesian(ylim=c(0,5))
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/WholeDryWeight_v_Length.pdf"), width = 8, height = 8)
+print(ggarrange(Length_WholeDryWeight_all, Length_WholeDryWeight_facetted, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+#  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# LENGTH VERSUS TUSSUE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Length_TissueDryWeight_facetted <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=Dry_Tissue_weight_g, color=pCO2)) +
+                                              geom_point() +
+                                              scale_color_manual(values=c("blue","orange")) +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Tissue dry weight (g)")  + 
+                                              theme_classic() +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") +
+                                              facet_wrap(~pCO2)
+
+Length_TissueDryWeight_all <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=Dry_Tissue_weight_g)) +
+                                              geom_point() +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Tissue dry weight (g)")  + 
+                                              theme_classic() +
+                                              ggtitle("F1 Bay scallops - Length vs. Tissue Dry weight") +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") 
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/TissueDryWeight_v_Length.pdf"), width = 8, height = 8)
+print(ggarrange(Length_TissueDryWeight_all, Length_TissueDryWeight_facetted, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+
+#  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# LENGTH VERSUS Ash weight::::::: ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Length_TotalAFDW_facetted <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & TotalAFDW_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=TotalAFDW_g, color=pCO2)) +
+                                              geom_point() +
+                                              scale_color_manual(values=c("blue","orange")) +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Total ash free dry weight (g)")  + 
+                                              theme_classic() +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") +
+                                              facet_wrap(~pCO2)
+
+Length_TotalAFDW_all <- TDW_AFDW %>% 
+                                   dplyr::filter(Shell_length_mm > 0 & TotalAFDW_g > 0) %>% # just to ensure we are getting correct data
+                                    ggplot(aes(x=Shell_length_mm, y=TotalAFDW_g)) +
+                                              geom_point() +
+                                              theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                              scale_x_continuous(name ="Shell length (mm)") +
+                                              scale_y_continuous(name ="Total ash free dry weight (g)")  + 
+                                              theme_classic() +
+                                              ggtitle("F1 Bay scallops - Length vs. Total ash free dry weight") +
+                                              theme(legend.position="none") +
+                                              geom_smooth(method = loess, color = 'red') +
+                                              ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") 
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/TotalAFDW_v_Length.pdf"), width = 8, height = 8)
+print(ggarrange(Length_TotalAFDW_all, Length_TotalAFDW_facetted, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
 ```
 
 
-# density plots
+#  DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#  DENISTY PLOTS - all shell length
 
-```{r, Shell length}
-library(dplyr)
-library(tidyr)
+```{r, Shell length density plots}
 ShellLength$Treatment <- as.factor(ShellLength$Treatment)
 
 Alldensity <- ggplot(data = ShellLength, aes(x=Length_mm)) + 
@@ -52,19 +175,9 @@ Alldensity <- ggplot(data = ShellLength, aes(x=Length_mm)) +
                 facet_wrap( ~ Age_DPF) + 
                 scale_fill_brewer(palette = "Set1")
 
-density_217DPF <- ShellLength %>% 
-                  dplyr::filter(Age_DPF %in% 217) %>% 
-                  ggplot(aes(x=Length_um)) + 
-                    geom_density(aes(x = Length_um, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
-                    theme_bw() +
-                    scale_fill_brewer(palette = "Set1")
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density.pdf"), width = 8, height = 6)
 print(Alldensity) # print the model diagnostics 
-dev.off()
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density_217DPF.pdf"), width = 8, height = 6)
-print(density_217DPF) # print the model diagnostics 
 dev.off()
 ```
 
