@@ -84,8 +84,7 @@ Length_WholeDryWeight_all     <- TDW_AFDW %>%
                                               geom_smooth(method = loess, color = 'red') +
                                               ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right")
 Length_WholeDryWeight_all
-Length_WholeDryWeight + geom_function(fun = function(x) 0.04*exp(x*0.15), colour = "blue") +
-      coord_cartesian(ylim=c(0,5))
+
 
 
 # Length_DryWeight_all_LOESS_obj <- stats::loess(Whole_animal_dry_weight_g ~ Shell_length_mm, data = (TDW_AFDW%>%dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0)) )
@@ -99,8 +98,6 @@ print(ggarrange(Length_WholeDryWeight_all, Length_WholeDryWeight_facetted, nrow 
 dev.off()
 
 
-
-
 #  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # LENGTH VERSUS TiSSUE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -110,8 +107,8 @@ Length_TissueDryWeight_facetted <- TDW_AFDW %>%
                                               geom_point() +
                                               scale_color_manual(values=c("blue","orange")) +
                                               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                                              scale_x_continuous(name ="Shell length (mm)") +
-                                              scale_y_continuous(name ="Tissue dry weight (g)")  + 
+                                              scale_x_continuous(name ="LOG(Shell length (mm)") +
+                                              scale_y_continuous(name ="LOG(Tissue dry weight (g)")  + 
                                               theme_classic() +
                                               theme(legend.position="none") +
                                               geom_smooth(method = lm, color = 'red') +
@@ -123,10 +120,10 @@ Length_TissueDryWeight_all <- TDW_AFDW %>%
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Dry_Tissue_weight_g))) +
                                               geom_point() +
                                               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                                              scale_x_continuous(name ="Shell length (mm)") +
-                                              scale_y_continuous(name ="Tissue dry weight (g)")  + 
+                                              scale_x_continuous(name ="LOG(Shell length (mm)") +
+                                              scale_y_continuous(name ="LOG(Tissue dry weight (g)")  + 
                                               theme_classic() +
-                                              ggtitle("F1 Bay scallops - Length vs. Tissue Dry weight") +
+                                              ggtitle("F1 Bay scallops - LOG(Length vs. Tissue Dry weight") +
                                               theme(legend.position="none") +
                                               geom_smooth(method = lm, color = 'red') +
                                               ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right")

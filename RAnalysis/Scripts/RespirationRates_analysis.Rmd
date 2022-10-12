@@ -5,9 +5,6 @@ date: "2022-09-30"
 output: html_document
 ---
 
-
-
-
 ```{r setup, include=FALSE}
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -31,7 +28,9 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) # view script REspirationRates_Calc.Rmd for the road to this master file 
+RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %>% 
+              filter(!Food %in% 'unfed') %>% # view script REspirationRates_Calc.Rmd for the road to this master file 
+              dplyr::mutate(resp_umol_L_hr_mg_WDW = resp_umol_L_hr/whole_Dry_weight)
 
 ```
 
@@ -40,7 +39,7 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
 # ALOMETRIC COEFFICIENT (b factor) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 
 
-```{r allometric coefficient calc, echo=TRUE, message = FALSE, warning = FALSE}
+```{r b factor TISSUE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
 
 
 # ABOUT: 
@@ -154,12 +153,9 @@ MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>%
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
                           facet_wrap(~pCO2)
 
-
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/MetabolicScaling_bFactor_OM.pdf"), width = 8, height = 8)
 print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
-
-
-
-
+dev.off()
 
 
 
@@ -170,9 +166,8 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # EXTRAPOLATE TDW TO SMALLER SIZES  + CALC B FACTOR FOR TDW AND MO2 ::::::::::::::::::::::::::::::
 
-RR_master_without_TDW                   <- RR_master[is.na(RR_master$Dry_Tissue_weight),] %>% filter(!Fed_Unfed %in% 'Low food') # call all data with 'NA' instead of TDW value
--12.6+ 3.37(x) = y
-RR_master_without_TDW$Dry_Tissue_weight <- 10^(-12.6+3.37*(log(RR_master_without_TDW$Length_um/1000))) # Calculate a TDW value based on the Local Polynomial Regression Fitting geom_smooth EQ  (file:///C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/TissueDryWeight_v_Length.pdf)
+RR_master_without_TDW                   <- RR_master[is.na(RR_master$Dry_Tissue_weight),]
+RR_master_without_TDW$Dry_Tissue_weight <- 10^(-12.6\+3.37*(log(RR_master_without_TDW$Length_um/1000))) # Calculate a TDW value based on the Local Polynomial Regression Fitting geom_smooth EQ  (file:///C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/TissueDryWeight_v_Length.pdf)
 RR_master_with_TDW                      <- RR_master[!is.na(RR_master$Dry_Tissue_weight),] # call the data that does have TDW to merge with the updated data 
 
 RR_master_newTDW                        <- rbind(RR_master_without_TDW, RR_master_with_TDW) # we now have a new dataset with TDW for the smaller animals and those did not have it measured
@@ -203,10 +198,125 @@ MO2_b.factor_PLOT
 
 ```
 
+
+
+
+
+```{r b factor WHOLE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
+
+# ABOUT: 
+
+# from Bayne text (page 360)
+
+# b is the scaling exponent, 
+# log10_M_O2 = log10_a + (b.factor * log10_Mass) 
+# M_O2 ∝ a*Mass^(b.factor),
+# y   =  m(x)^b.factor
+
+# b = the coefficient estimated empirically by fitting the allometric equation below
+# [ln(VO2])] = ln(a) + b*(ln(TDW))
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
+
+# Note: many ealier rates (larvae - spat F1s) do NOT contain tissue dry weight (TDW) due to size and fragility of the shell for accurate dissections
+# this first part of the chunk I will get b factor for the animals that contain TDW, next we will use the equations from size parameters figures (review Growth_Survival.Rmd outputs) 
+# to extrapolate TDW for smaller individuals to performa metabolic scaling for all size ranges 
+
+
+
+RR_master_OM_WDW            <- RR_master %>% filter(!is.na(resp_umol_L_hr)) %>%  
+                                         dplyr::filter(!is.na(whole_Dry_weight))
+RR_master_OM_WDW$log10_VO2  <- log10(as.numeric(RR_master_OM_WDW$resp_umol_L_hr)) # assign resp value
+RR_master_OM_WDW$log10_WDW  <- log10(as.numeric(RR_master_OM_WDW$whole_Dry_weight)) # assign length value 
+summary(lm(RR_master_OM_WDW$log10_VO2~RR_master_OM_WDW$log10_WDW)) # 0.58873 == b factor
+?ggpmisc
+MO2_b.factorWDW_PLOT <- RR_master_OM_WDW %>% 
+                         ggplot(aes(x=log10_WDW, y=log10_VO2)) +
+                            geom_point() +
+                            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_BodyMass; WDW in g") +
+                            scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                            theme_classic() +
+                            theme(legend.position="none") +
+                            ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                            geom_smooth(method = lm, color = 'red') +
+                            ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
+MO2_b.factorWDW_PLOT
+
+
+
+MO2_b.factorWDW_PLOT_facetted <- RR_master_OM_WDW %>% 
+                                 ggplot(aes(x=log10_WDW, y=log10_VO2, color = pCO2)) +
+                                    geom_point() +
+                                    scale_color_manual(values=c("blue","orange")) +
+                                    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                    scale_x_continuous(name ="log10_BodyMass; WDW in g") +
+                                    scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                                    theme_classic() +
+                                    theme(legend.position="none") +
+                                    ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                                    geom_smooth(method = lm, color = 'red') +
+                                    ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
+                                    facet_wrap(~pCO2)
+MO2_b.factorWDW_PLOT_facetted
+
+
+# OUTPUT PLOTS 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/MetabolicScaling_bFactor_WholeDryWeight.pdf"), width = 8, height = 8)
+print(ggarrange(MO2_b.factorWDW_PLOT, MO2_b.factorWDW_PLOT_facetted, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+
+
+
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# EXTRAPOLATE TDW TO SMALLER SIZES  + CALC B FACTOR FOR TDW AND MO2 ::::::::::::::::::::::::::::::
+
+RR_master_without_WDW                   <- RR_master[is.na(RR_master$whole_Dry_weight),] 
+
+RR_master_without_WDW$whole_Dry_weight <- 10^(-9.71+3.11*(log(RR_master_without_WDW$Length_um/1000))) # Calculate a TDW value based on the Local Polynomial Regression Fitting geom_smooth EQ  (file:///C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/TissueDryWeight_v_Length.pdf)
+RR_master_with_WDW                      <- RR_master[!is.na(RR_master$whole_Dry_weight),] # call the data that does have TDW to merge with the updated data 
+
+RR_master_newWDW                        <- rbind(RR_master_without_WDW, RR_master_with_WDW) # we now have a new dataset with TDW for the smaller animals and those did not have it measured
+
+# repeat the process above for metabolic scaling 
+RR_master_newWDW_OM            <- RR_master_newWDW %>% filter(!is.na(resp_umol_L_hr))
+RR_master_newWDW_OM$log10_VO2  <- log10(as.numeric(RR_master_newWDW_OM$resp_umol_L_hr)) # assign resp value
+RR_master_newWDW_OM$log10_WDW  <- log10(as.numeric(RR_master_newWDW_OM$whole_Dry_weight)) # assign length value 
+summary(lm(RR_master_newWDW_OM$log10_VO2~RR_master_newWDW_OM$log10_WDW)) # 0.71092 == b factor
+
+RR_master_newWDW_OM
+
+
+MO2_b.factorWDW_PLOT <- RR_master_newWDW_OM %>% 
+                       ggplot(aes(x=log10_WDW, y=log10_VO2)) +
+                          geom_point() +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          scale_x_continuous(name ="log10_BodyMass; WDW in g") +
+                          scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                          theme_classic() +
+                          theme(legend.position="none") +
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                          geom_smooth(method = lm, color = 'red') +
+                          ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
+MO2_b.factorWDW_PLOT
+
+
+
+
+```
+
+
+
 # DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 
 
-```{r, View all data, BY mg TDW}
+```{r, by mg TISSUE AND WHOLE}
 unique(as.Date(RR_master$Date, format="%m/%d/%Y"))
 
 RR_formatted <- RR_master %>% 
@@ -220,57 +330,8 @@ RR_formatted <- RR_master %>%
   dplyr::filter(!Fed_Unfed %in% 'Low food')
 
 
-
-ALL.BOXPLOT <- RR_formatted %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_µmol_L_mg_TDW_hr, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-         #ylim(0, 12) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen, scales = "free")
-ALL.BOXPLOT
-
-ALL.BOXPLOT_facetted <- RR_formatted %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_µmol_L_mg_TDW_hr, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-         #ylim(0, 12) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
-ALL.BOXPLOT_facetted
-
-
-# PLOT THE F2S DATA FOR TISSUE DRY WEIGHT CORRECTION
+# TISSUE ---------------------------------------------------------------------------- #
+# PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
 
 F1s.BOXPLOT_TDW_facetted <- RR_formatted %>% 
   dplyr::filter(!Gen %in% 'F2s') %>% 
@@ -286,7 +347,8 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted %>%
                     size=1) +
          scale_fill_manual(values=c("white","grey")) +
          theme_classic() + 
-         ylim(0, 0.2) +
+         #ylim(0, 0.2) +
+         ggtitle("Tissue Dry weight") +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
@@ -300,11 +362,78 @@ F1s.BOXPLOT_TDW_facetted # not that we do not have TDW for 9/14 and 9/30 data
 
 # B factor normalized 
 
-b = 0.863 # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.863 # review the outlier-omitted b factor plot in previous chunk
 
-F1s.BOXPLOT_facetted_bfactor <- RR_formatted %>% 
+F1s.BOXPLOT_TDW_bfactor <- RR_formatted %>% 
   dplyr::filter(!Gen %in% 'F2s') %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNorm = resp_umol_L_hr/(Dry_Tissue_weight^b)) %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNorm = resp_umol_L_hr/(Dry_Tissue_weight^bTDW)) %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNorm, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("white","grey")) +
+         theme_classic() + 
+         ggtitle("b factor") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+F1s.BOXPLOT_TDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Boxplots_bFactor_TissueDryWeight.pdf"), width = 8, height = 8)
+print(ggarrange(F1s.BOXPLOT_TDW_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+
+# whole dry weight  ---------------------------------------------------------------------------- #
+
+
+F1s.BOXPLOT_WDW_facetted <- RR_formatted %>% # WHOLE
+  dplyr::filter(!Gen %in% 'F2s') %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_mg_WDW, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("white","grey")) +
+         theme_classic() + 
+        # ylim(0, 0.2) +
+          ggtitle("Whole Dry weight") +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free")
+F1s.BOXPLOT_WDW_facetted # not that we do not have TDW for 9/14 and 9/30 data 
+
+
+
+# B factor normalized 
+
+bWDW = <add here> # review the outlier-omitted b factor plot in previous chunk
+
+F1s.BOXPLOT_WDW_bfactor <- RR_formatted %>% 
+  dplyr::filter(!Gen %in% 'F2s') %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNorm = resp_umol_L_hr/(Dry_Tissue_weight^bWDW)) %>% 
   ggplot(aes(x = factor(Date), 
              y = resp_umol_L_hr_bFactorNorm, 
              fill = pCO2)) +
@@ -325,11 +454,10 @@ F1s.BOXPLOT_facetted_bfactor <- RR_formatted %>%
                       size=0.4, 
                       linetype = "dashed", 
                       position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
-F1s.BOXPLOT_facetted_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+F1s.BOXPLOT_WDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
 
 
-View(RR_formatted)
 ```
 
 ```{r, F2 larvae and spat}
