@@ -316,6 +316,13 @@ for (i in 1:nrow(ANOVA_Dates)) {
 
 View(AOVdf_total) # view all the anova tests within data 
   
+# WRITE CSV OF THE MASTER FILE
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_ANOVA_table.csv")
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+
+
+
+
 # plotting ::::::::::::::::::::::::::::::::::;;
 
 
@@ -413,6 +420,6 @@ SE_boxplot <- Biodep_Master %>%
 
 # output the plot 
 library(ggpubr)
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Master_Biodep_Boxplots.pdf"), width = 10, height= 8)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots.pdf"), width = 10, height= 8)
 ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
 dev.off()
