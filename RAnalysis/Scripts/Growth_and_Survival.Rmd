@@ -12,7 +12,7 @@ Last updates: September 30, 2022
 
 ## Load libraries
 
-```{r libraries, include=FALSE}
+```{r}
 
 # LOAD LIBRARIES 
 library(ggplot2)
@@ -36,11 +36,13 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA
-ShellLength <- read.csv(file="Data/Survival_Size/Juvenile_lengths_master.csv", header = TRUE) 
-TDW_AFDW    <- read.csv(file="Data/Survival_Size/TDW_AFDW_Condition_master2.csv", header = TRUE) %>% 
-                  dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm")) %>% # create pCO2 column
-                  dplyr::mutate(Shell_length_mm = as.numeric(Shell_length_mm)) # call shell lenght as numeric 
-TDW_AFDW    <- TDW_AFDW[!is.na(TDW_AFDW$Shell_length_mm),]# drop rows that have no date tied to them 
+F1_length        <- read.csv(file="Data/Physiology/Length/F1/cumulative_raw/F1_lengths_raw.csv", header = TRUE) 
+F1_dryweights    <- read.csv(file="Data/Physiology/Dry_weights/F1/cumulative_raw/F1_dry_weights_raw.csv", header = TRUE) %>% 
+                              dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm")) %>% # create pCO2 column
+                              dplyr::mutate(Shell_length_mm = as.numeric(Shell_length_mm)) # call shell lenght as numeric 
+F1_dryweights    <- F1_dryweights[!is.na(F1_dryweights$Shell_length_mm),]# drop rows that have no date tied to them 
+
+
 ```
 #  b factor  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -52,7 +54,7 @@ library(ggpmisc)
 #  LENGTH VS. WHOLE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-Length_WholeDryWeight_facetted <- TDW_AFDW %>% 
+Length_WholeDryWeight_facetted <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Whole_animal_dry_weight_g), color=pCO2)) +
                                               geom_point() +
@@ -68,7 +70,7 @@ Length_WholeDryWeight_facetted <- TDW_AFDW %>%
 # Length_WholeDryWeight + geom_function(fun = function(x) 0.04*exp(x*0.14), colour = "blue") +
 #      coord_cartesian(ylim=c(0,5))
 
-Length_WholeDryWeight_all     <- TDW_AFDW %>% 
+Length_WholeDryWeight_all     <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Whole_animal_dry_weight_g))) +
                                               geom_point() +
@@ -87,10 +89,10 @@ Length_WholeDryWeight_all
 
 
 
-# Length_DryWeight_all_LOESS_obj <- stats::loess(Whole_animal_dry_weight_g ~ Shell_length_mm, data = (TDW_AFDW%>%dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0)) )
+# Length_DryWeight_all_LOESS_obj <- stats::loess(Whole_animal_dry_weight_g ~ Shell_length_mm, data = (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0)) )
 # new_LOESS_data                 <- predict(Length_DryWeight_all_LOESS_obj)
-# new_shellLength_obj <- (TDW_AFDW%>%dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0))$Shell_length_mm
-# plot(new_shellLength_obj, new_LOESS_data) + line(fun = function(x) 0.04*exp(x*0.14), colour = "blue") 
+# new_F1_length_obj <- (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Whole_animal_dry_weight_g > 0))$Shell_length_mm
+# plot(new_F1_length_obj, new_LOESS_data) + line(fun = function(x) 0.04*exp(x*0.14), colour = "blue") 
 
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/WholeDryWeight_v_Length.pdf"), width = 8, height = 8)
@@ -101,7 +103,7 @@ dev.off()
 #  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # LENGTH VERSUS TiSSUE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-Length_TissueDryWeight_facetted <- TDW_AFDW %>% 
+Length_TissueDryWeight_facetted <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Dry_Tissue_weight_g), color=pCO2)) +
                                               geom_point() +
@@ -115,7 +117,7 @@ Length_TissueDryWeight_facetted <- TDW_AFDW %>%
                                               ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") +
                                               facet_wrap(~pCO2)
 
-Length_TissueDryWeight_all <- TDW_AFDW %>% 
+Length_TissueDryWeight_all <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Dry_Tissue_weight_g))) +
                                               geom_point() +
@@ -129,7 +131,7 @@ Length_TissueDryWeight_all <- TDW_AFDW %>%
                                               ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right")
 
 
-Length_TissueDryWeight_spat <- TDW_AFDW %>% 
+Length_TissueDryWeight_spat <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
                                    dplyr::filter(Shell_length_mm < 12) %>% 
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Dry_Tissue_weight_g))) +
@@ -148,12 +150,12 @@ Length_TissueDryWeight_spat + geom_function(fun = function(x) -0.00324 + 0.00079
 
 
 
-Length_TissueWeight_all_LOESS_obj <- stats::loess(Dry_Tissue_weight_g ~ Shell_length_mm, data = (TDW_AFDW%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0)) )
+Length_TissueWeight_all_LOESS_obj <- stats::loess(Dry_Tissue_weight_g ~ Shell_length_mm, data = (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0)) )
 new_LOESS_data                    <- predict(Length_TissueWeight_all_LOESS_obj)
-new_shellLength_obj               <- (TDW_AFDW%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0))$Shell_length_mm
-plot(new_shellLength_obj, new_LOESS_data)
+new_F1_length_obj               <- (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0))$Shell_length_mm
+plot(new_F1_length_obj, new_LOESS_data)
 
-as.data.frame(cbind(new_LOESS_data, new_shellLength_obj)) %>% dplyr::rename(Dry_Tissue_weight_g = new_LOESS_data, Shell_length_mm = new_shellLength_obj ) %>% dplyr::arrange(Shell_length_mm) %>%  dplyr::filter(Shell_length_mm > 6.85)
+as.data.frame(cbind(new_LOESS_data, new_F1_length_obj)) %>% dplyr::rename(Dry_Tissue_weight_g = new_LOESS_data, Shell_length_mm = new_F1_length_obj ) %>% dplyr::arrange(Shell_length_mm) %>%  dplyr::filter(Shell_length_mm > 6.85)
 
 
 
@@ -165,7 +167,7 @@ dev.off()
 #  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # LENGTH VERSUS Ash weight::::::: ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-Length_TotalAFDW_facetted <- TDW_AFDW %>% 
+Length_TotalAFDW_facetted <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & TotalAFDW_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=Shell_length_mm, y=TotalAFDW_g, color=pCO2)) +
                                               geom_point() +
@@ -179,7 +181,7 @@ Length_TotalAFDW_facetted <- TDW_AFDW %>%
                                               ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "right") +
                                               facet_wrap(~pCO2)
 
-Length_TotalAFDW_all <- TDW_AFDW %>% 
+Length_TotalAFDW_all <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & TotalAFDW_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=Shell_length_mm, y=TotalAFDW_g)) +
                                               geom_point() +
@@ -212,16 +214,16 @@ Length_WholeDryWeight + geom_function(fun = function(x) 0.01*exp(x*0.21), colour
 #  DENISTY PLOTS - all shell length
 
 ```{r, Shell length density plots}
-ShellLength$Treatment <- as.factor(ShellLength$Treatment)
+F1_length$Treatment <- as.factor(F1_length$Treatment)
 
-Alldensity <- ggplot(data = ShellLength, aes(x=Length_mm)) + 
+Alldensity <- ggplot(data = F1_length, aes(x=Length_mm)) + 
                 geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                 theme_bw() +
                 facet_wrap( ~ Age_DPF) + 
                 scale_fill_brewer(palette = "Set1")
 
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_ShellLength_density.pdf"), width = 8, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_F1_length_density.pdf"), width = 8, height = 6)
 print(Alldensity) # print the model diagnostics 
 dev.off()
 ```
@@ -230,9 +232,9 @@ dev.off()
 ```{r, gonad dry weight}
 library(dplyr)
 library(tidyr)
-TDW_AFDW$Treatment        <- as.factor(TDW_AFDW$pH)
-TDW_AFDW$Gonad_proportion <- (TDW_AFDW$Dry_Gonad_weight_g / (TDW_AFDW$Dry_Gonad_weight_g +TDW_AFDW$Dry_Tissue_weight_g) ) * 100
-Gonad_data                <- (TDW_AFDW %>% dplyr::filter(Dry_Gonad_weight_g > 0)) # not all dates contain data for gonad indices!
+F1_dryweights$Treatment        <- as.factor(F1_dryweights$pH)
+F1_dryweights$Gonad_proportion <- (F1_dryweights$Dry_Gonad_weight_g / (F1_dryweights$Dry_Gonad_weight_g +F1_dryweights$Dry_Tissue_weight_g) ) * 100
+Gonad_data                <- (F1_dryweights %>% dplyr::filter(Dry_Gonad_weight_g > 0)) # not all dates contain data for gonad indices!
 
 Allboxplot_gonad     <- ggplot(data =  Gonad_data, aes(x=Treatment, y=Dry_Gonad_weight_g, fill = Treatment)) + 
                           geom_boxplot(alpha = 0.2) + 
@@ -309,7 +311,7 @@ library(dplyr)
 library(tidyr)
 
 
-Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
+Alldensity_SDW <-F1_dryweights[!is.na(F1_dryweights$Dry_Shell_weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Dry_Shell_weight_g)) + 
                       geom_density(aes(x = Dry_Shell_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -320,7 +322,7 @@ Alldensity_SDW <-TDW_AFDW[!is.na(TDW_AFDW$Dry_Shell_weight_g),] %>% dplyr::filte
 Alldensity_SDW
 
 
-Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
+Alldensity_TDW <- F1_dryweights[!is.na(F1_dryweights$Dry_Tissue_Tin_Weight_g),] %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Dry_Tissue_weight_g)) + 
                       geom_density(aes(x = Dry_Tissue_weight_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -330,7 +332,7 @@ Alldensity_TDW <- TDW_AFDW[!is.na(TDW_AFDW$Dry_Tissue_Tin_Weight_g),] %>% dplyr:
                       scale_fill_brewer(palette = "Set1")
 Alldensity_TDW
 
-CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
+CI_TDW         <- F1_dryweights %>% dplyr::filter(!Condition_index_drywtRatio_Walne1976 < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Condition_index_drywtRatio_Walne1976)) + 
                       geom_density(aes(x = Condition_index_drywtRatio_Walne1976, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.7,adjust=1.5) + 
@@ -340,7 +342,7 @@ CI_TDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_drywtRatio_Walne19
                       scale_fill_brewer(palette = "Set1")
 CI_TDW
 
-CI_AFDW         <- TDW_AFDW %>% dplyr::filter(!Condition_index_TotalADFW_div_length < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
+CI_AFDW         <- F1_dryweights %>% dplyr::filter(!Condition_index_TotalADFW_div_length < 0) %>% dplyr::filter(!Date_sampled %in% '44,532.00') %>% # weird thing, omt this later!
                       dplyr::filter(!Date_sampled %in% '3/2/2022') %>% # 3/2/22 are just the animals used for respiration rate measurements
                       ggplot(aes(x=Condition_index_TotalADFW_div_length)) + 
                       geom_density(aes(x = Condition_index_TotalADFW_div_length, group=Treatment, fill=Treatment, ..scaled..),alpha = 0.7, adjust=1.5) + 
@@ -363,10 +365,10 @@ dev.off()
 library(dplyr)
 library(tidyr)
 library(ggpubr)
-TDW_AFDW$Treatment <- as.factor(TDW_AFDW$pH)
+F1_dryweights$Treatment <- as.factor(F1_dryweights$pH)
 
 
-Alldensity_length <-ggplot(data =TDW_AFDW,aes(x=Shell_length_mm)) + 
+Alldensity_length <-ggplot(data =F1_dryweights,aes(x=Shell_length_mm)) + 
                       geom_density(aes(x = Shell_length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                       theme_bw() +
                       ggtitle("Length (mm)") +
@@ -375,7 +377,7 @@ Alldensity_length <-ggplot(data =TDW_AFDW,aes(x=Shell_length_mm)) +
 Alldensity_length
 
 
-Alldensity_AFDW <- TDW_AFDW %>% dplyr::filter(!AFDW_g < 0) %>% 
+Alldensity_AFDW <- F1_dryweights %>% dplyr::filter(!AFDW_g < 0) %>% 
                     ggplot(aes(x=AFDW_g)) + 
                       geom_density(aes(x = AFDW_g, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                       theme_bw() +
@@ -384,7 +386,7 @@ Alldensity_AFDW <- TDW_AFDW %>% dplyr::filter(!AFDW_g < 0) %>%
                       scale_fill_brewer(palette = "Set1")
 Alldensity_AFDW
 
-CI_AFDW        <- TDW_AFDW %>% dplyr::filter(!Condition_index_ADFW_div_length < 0) %>% 
+CI_AFDW        <- F1_dryweights %>% dplyr::filter(!Condition_index_ADFW_div_length < 0) %>% 
                     ggplot(aes(x=Condition_index_ADFW_div_length)) + 
                       geom_density(aes(x = Condition_index_ADFW_div_length, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
                       theme_bw() +
@@ -631,22 +633,22 @@ data_51$RFactor <- as.factor(paste(data_51$Replicate, data_51$pH, sep = '_'))
 # One way ANOVA mixed effects model :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # using lmer
-ShellLengthMod_D51 <- lmer(Length_um ~ pCO2 + (1|RFactor),
+F1_lengthMod_D51 <- lmer(Length_um ~ pCO2 + (1|RFactor),
                        data=data_51,
                        REML=TRUE)
-pander(anova(ShellLengthMod_D51), style='rmarkdown')
-check_model(ShellLengthMod_D51) # observe the diagnostics of the model
-shapiro.test(residuals(ShellLengthMod_D51)) # non normal
-leveneTest(residuals(ShellLengthMod_D51) ~ data_51$pCO2)
+pander(anova(F1_lengthMod_D51), style='rmarkdown')
+check_model(F1_lengthMod_D51) # observe the diagnostics of the model
+shapiro.test(residuals(F1_lengthMod_D51)) # non normal
+leveneTest(residuals(F1_lengthMod_D51) ~ data_51$pCO2)
 
 # using lme
-ShellLengthMod_D51 = lme(Length_um ~ pCO2, random=~1|RFactor,
+F1_lengthMod_D51 = lme(Length_um ~ pCO2, random=~1|RFactor,
             data=data_51,
             method="REML")
-pander(Anova(ShellLengthMod_D51), style='rmarkdown')
-check_model(ShellLengthMod_D51) # observe the diagnostics of the model
-shapiro.test(residuals(ShellLengthMod_D51)) # non normal
-leveneTest(residuals(ShellLengthMod_D51) ~ data_51$pCO2)
+pander(Anova(F1_lengthMod_D51), style='rmarkdown')
+check_model(F1_lengthMod_D51) # observe the diagnostics of the model
+shapiro.test(residuals(F1_lengthMod_D51)) # non normal
+leveneTest(residuals(F1_lengthMod_D51) ~ data_51$pCO2)
 
 
 # plot the data
@@ -691,19 +693,19 @@ data_64_length$RFactor <- as.factor(paste(data_64_length$Replicate, data_64_leng
 # Length:::::::::::::::::::::::::::::::::::::::::::::::
 
 # using lmer
-ShellLengthMod_D64 <- lmer(Length_um ~ pCO2*Fed_Unfed + (1|RFactor),
+F1_lengthMod_D64 <- lmer(Length_um ~ pCO2*Fed_Unfed + (1|RFactor),
                        data=data_64_length,
                        REML=TRUE)
-pander(anova(ShellLengthMod_D64), style='rmarkdown') #  **Fed_Unfed**    | 1.198e-111 |
-check_model(ShellLengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D64)) # non normal - 2.2e-16
-leveneTest(residuals(ShellLengthMod_D64) ~ data_64_length$pCO2) # good  0.627
+pander(anova(F1_lengthMod_D64), style='rmarkdown') #  **Fed_Unfed**    | 1.198e-111 |
+check_model(F1_lengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D64)) # non normal - 2.2e-16
+leveneTest(residuals(F1_lengthMod_D64) ~ data_64_length$pCO2) # good  0.627
 
 # using lme
-ShellLengthMod_D64 = lme(Length_um ~ pCO2*Fed_Unfed, random=~1|RFactor,
+F1_lengthMod_D64 = lme(Length_um ~ pCO2*Fed_Unfed, random=~1|RFactor,
             data=data_64_length,
             method="REML")
-pander(Anova(ShellLengthMod_D64), style='rmarkdown') # **Fed_Unfed**    |  643.8  | 1  | 5.012e-142 |
+pander(Anova(F1_lengthMod_D64), style='rmarkdown') # **Fed_Unfed**    |  643.8  | 1  | 5.012e-142 |
 
 # Survival:::::::::::::::::::::::::::::::::::::::::::::
 
@@ -712,18 +714,18 @@ SurvivalMod_D64 <- lmer(Survival ~ pCO2*Fed_Unfed + (1|RFactor),
                        data=data_64,
                        REML=TRUE)
 pander(anova(SurvivalMod_D64), style='rmarkdown') #  no sig effects
-check_model(ShellLengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D64)) # non normal - 2.2e-16
-leveneTest(residuals(ShellLengthMod_D64) ~ data_64$pCO2) # good  0.627
+check_model(F1_lengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D64)) # non normal - 2.2e-16
+leveneTest(residuals(F1_lengthMod_D64) ~ data_64$pCO2) # good  0.627
 
 # using lme
-ShellLengthMod_D64 = lme(Survival ~ pCO2*Fed_Unfed, random=~1|RFactor,
+F1_lengthMod_D64 = lme(Survival ~ pCO2*Fed_Unfed, random=~1|RFactor,
             data=data_64,
             method="REML")
-pander(Anova(ShellLengthMod_D64), style='rmarkdown') # **pCO2**      | 2.791  | 1  |  0.09481
-check_model(ShellLengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D64)) # non normal - 0.002907
-leveneTest(residuals(ShellLengthMod_D64) ~ data_64$pCO2) # good  0.07483 .
+pander(Anova(F1_lengthMod_D64), style='rmarkdown') # **pCO2**      | 2.791  | 1  |  0.09481
+check_model(F1_lengthMod_D64) # observe the diagnosticsdata_64_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D64)) # non normal - 0.002907
+leveneTest(residuals(F1_lengthMod_D64) ~ data_64$pCO2) # good  0.07483 .
 
 
 
@@ -830,19 +832,19 @@ data_90_length$RFactor <- as.factor(paste(data_90_length$Replicate, data_90_leng
 # Length:::::::::::::::::::::::::::::::::::::::::::::::
 
 # using lmer
-ShellLengthMod_D90 <- lmer(Length_um ~ pCO2*Fed_Unfed + (1|RFactor),
+F1_lengthMod_D90 <- lmer(Length_um ~ pCO2*Fed_Unfed + (1|RFactor),
                        data=data_90_length,
                        REML=TRUE)
-pander(anova(ShellLengthMod_D90), style='rmarkdown') # **Fed_Unfed**    | 2.036e-88 
-check_model(ShellLengthMod_D90) # observe the diagnosticsdata_90_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D90)) # non normal 6.026e-15
-leveneTest(residuals(ShellLengthMod_D90) ~ data_90_length$pCO2) # good 0.1583
+pander(anova(F1_lengthMod_D90), style='rmarkdown') # **Fed_Unfed**    | 2.036e-88 
+check_model(F1_lengthMod_D90) # observe the diagnosticsdata_90_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D90)) # non normal 6.026e-15
+leveneTest(residuals(F1_lengthMod_D90) ~ data_90_length$pCO2) # good 0.1583
 
 # using lme
-ShellLengthMod_D90 = lme(Length_um ~ pCO2*Fed_Unfed, random=~1|RFactor,
+F1_lengthMod_D90 = lme(Length_um ~ pCO2*Fed_Unfed, random=~1|RFactor,
             data=data_90_length,
             method="REML")
-pander(Anova(ShellLengthMod_D90), style='rmarkdown') # **Fed_Unfed**    |  579.3  | 1  | 5.206e-128 
+pander(Anova(F1_lengthMod_D90), style='rmarkdown') # **Fed_Unfed**    |  579.3  | 1  | 5.206e-128 
 
 # Survival:::::::::::::::::::::::::::::::::::::::::::::
 
@@ -851,18 +853,18 @@ SurvivalMod_D90 <- lmer(Survival ~ pCO2*Fed_Unfed + (1|RFactor),
                        data=data_90,
                        REML=TRUE)
 pander(anova(SurvivalMod_D90), style='rmarkdown') #  **Fed_Unfed**    | 2.936e-09 |
-# check_model(ShellLengthMod_D90) # observe the diagnostics data_90_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D90)) # non normal 6.026e-15
-leveneTest(residuals(ShellLengthMod_D90) ~ data_90$pCO2) # good  0.627
+# check_model(F1_lengthMod_D90) # observe the diagnostics data_90_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D90)) # non normal 6.026e-15
+leveneTest(residuals(F1_lengthMod_D90) ~ data_90$pCO2) # good  0.627
 
 # using lme
-ShellLengthMod_D90 = lme(Survival ~ pCO2*Fed_Unfed, random=~1|RFactor,
+F1_lengthMod_D90 = lme(Survival ~ pCO2*Fed_Unfed, random=~1|RFactor,
             data=data_90,
             method="REML")
-pander(Anova(ShellLengthMod_D90), style='rmarkdown') #  **Fed_Unfed**    |  236.3  | 1  | 2.526e-53  |
-check_model(ShellLengthMod_D90) # observe the diagnosticsdata_90_length$pCO2 of the model
-shapiro.test(residuals(ShellLengthMod_D90)) #  normal - 0.1661
-leveneTest(residuals(ShellLengthMod_D90) ~ data_90$pCO2) # good  0.5736
+pander(Anova(F1_lengthMod_D90), style='rmarkdown') #  **Fed_Unfed**    |  236.3  | 1  | 2.526e-53  |
+check_model(F1_lengthMod_D90) # observe the diagnosticsdata_90_length$pCO2 of the model
+shapiro.test(residuals(F1_lengthMod_D90)) #  normal - 0.1661
+leveneTest(residuals(F1_lengthMod_D90) ~ data_90$pCO2) # good  0.5736
 
 
 
