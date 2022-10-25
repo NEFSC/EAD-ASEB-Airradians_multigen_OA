@@ -5,6 +5,16 @@
 library(ggplot2)
 library(dplyr)
 library(reshape2)
+library(pander)
+library(dplyr)
+library(kableExtra)
+library(data.table)
+library(stringr)
+library(latex2exp)
+library(Rmisc)
+library(aggregate)
+library(car)
+
 
 ## set working directory
 
@@ -38,30 +48,6 @@ biodep <- read.csv(file="Data/Biodeposition/Raw_masterdata_biodeposition.csv", h
 
 
 
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Blanks as 'water_Blank' ::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-# why?
-# these values grouped by Date and treatment will be called to corect for calculated values downstream in this script
-
-# blanks - as 'water_Input' - call to correct in biodep2 below...
-WaterSamples_dat     <- biodep2 %>%  
-  dplyr::select(c('Date', 'sample_type', 'treatment', 'water_sample_time', 'TPM_mgL',  'PIM_mgL',  'POM_mgL', 'Perc_INORG', 'Perc_ORG')) %>% 
-  dplyr::filter(sample_type %in% 'water_Blank') %>% 
-  dplyr::group_by(Date,treatment)
-# slice(-1) # removes the first timestamp by group 
-# mean for these blanks here...
-WaterSamples_dat_AVE <- WaterSamples_dat %>% 
-  dplyr::select(-c('sample_type', 'water_sample_time')) %>% # %>%  # omit to average across all group_by columns
-  dplyr::group_by(Date,treatment) %>%
-  dplyr::mutate(TPM_mgL = as.numeric(TPM_mgL)) %>% 
-  dplyr::summarise(across(everything(), list(mean)))
-
-WaterSamples_dat_AVE #view your blanks! 
-
-
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Calculations PART1 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -75,7 +61,8 @@ WaterSamples_dat_AVE #view your blanks!
 
 ## Particulate matter (total and particulate inorganic/organic matter)
 biodep2 <- biodep %>% 
-  
+
+    
   # Total particulate matter
   dplyr::mutate(TPM_mgL = case_when(vol_filtered_L > 0 ~ ((dry_filter_weight_mg - initial_filter_weight_mg) / vol_filtered_L) ,
                                     is.na(vol_filtered_L) ~ (dry_filter_weight_mg - initial_filter_weight_mg) )) %>% 
@@ -117,8 +104,48 @@ biodep2 <- biodep %>%
    # Inorganic Rejection Rate (IRR) PIM of pseudofeces/pseudofeces collection time 
   dplyr::mutate(IRR_mghr = case_when(sample_type =='pseudofeces' ~ (PIM_mgL / inclubation_time_hours)) )  # although column reads mgL, feces and pseudofeces are in units of just mg   
   
+View(biodep2)
 
 
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Blanks as 'water_Blank' ::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+# why?
+# these values grouped by Date and treatment will be called to corect for calculated values downstream in this script
+
+# blanks - as 'water_Blank' - call to correct in biodep2 below...
+WaterSamples_blank     <- biodep2 %>%  
+  dplyr::select(c('Date', 'sample_type', 'treatment', 'water_sample_time', 'TPM_mgL',  'PIM_mgL',  'POM_mgL', 'Perc_INORG', 'Perc_ORG')) %>% 
+  dplyr::filter(sample_type %in% 'water_Blank') %>% 
+  dplyr::group_by(Date,treatment)
+View(WaterSamples_blank)
+# slice(-1) # removes the first timestamp by group 
+# mean for these blanks here...
+WaterSamples_blank_AVE <- WaterSamples_blank %>% 
+  dplyr::select(-c('sample_type', 'water_sample_time')) %>% # %>%  # omit to average across all group_by columns
+  dplyr::group_by(Date,treatment) %>%
+  dplyr::mutate(TPM_mgL = as.numeric(TPM_mgL)) %>% 
+  dplyr::summarise(across(everything(), list(mean)))
+WaterSamples_blank_AVE #view your blanks! 
+
+
+# 'water_Input' - call to correct in biodep2 below...
+WaterSamples_input     <- biodep2 %>%  
+  dplyr::select(c('Date', 'sample_type', 'treatment', 'water_sample_time', 'TPM_mgL',  'PIM_mgL',  'POM_mgL', 'Perc_INORG', 'Perc_ORG')) %>% 
+  dplyr::filter(sample_type %in% 'water_Input') %>% 
+  dplyr::group_by(Date,treatment)
+View(WaterSamples_input)
+# slice(-1) # removes the first timestamp by group 
+# mean for these blanks here...
+WaterSamples_input_AVE <- WaterSamples_input %>% 
+  dplyr::select(-c('sample_type', 'water_sample_time')) %>% # %>%  # omit to average across all group_by columns
+  dplyr::group_by(Date,treatment) %>%
+  dplyr::mutate(TPM_mgL = as.numeric(TPM_mgL)) %>% 
+  dplyr::summarise(across(everything(), list(mean)))
+WaterSamples_input_AVE #view your blanks!
 
   
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -134,6 +161,7 @@ BioSamples <- biodep2 %>% #
 BioSamples
 # look at this data - there are cases when column ONLY exists when a feces or pseudo feces sample.. I have a work around, it isnt clean but it will get everything together
 
+
 BioSamples_feces   <- BioSamples %>%  
                         dplyr::filter(sample_type %in% 'feces') %>%  # create data frame with just feces (Ejection rate constituents!)
                         dplyr::select(c(Date, treatment, animal_number, tank_ID, # select  all OVERLAPPING identifiers to properly merge
@@ -145,95 +173,92 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
 sp_COEF <- 0.62 # standardization coefficient
 
-Biodep_Master <- BioSamples_merged %>% 
-  
-  # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
-    dplyr::mutate(IER_correct = IER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
-  
-  # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
-    dplyr::mutate(IRR_correct = IRR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>%  
-  
-  # OER == Organic Egestion Rate: POM of feces/feces collection time
-    dplyr::mutate(OER_correct = OER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
-  
-  # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
-    dplyr::mutate(ORR_correct = ORR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
-  
-  # CR  == Cleanrance Rate: IFR/PIM of the water
-    dplyr::mutate(CR = case_when(
-       treatment == 7.5 ~ (IRR_mghr + IER_mghr) / WaterSamples_dat_AVE$PIM_mgL_1[1],
-       treatment == 8.0 ~ (IRR_mghr + IER_mghr) / WaterSamples_dat_AVE$PIM_mgL_1[2]
-       )) %>% 
-  
-  # FR  == Filtration Rate: CR * TPM of the water
-    dplyr::mutate(FR = case_when(
-      treatment == 7.5 ~ CR * WaterSamples_dat_AVE$TPM_mgL_1[1],
-      treatment == 8.0 ~ CR * WaterSamples_dat_AVE$TPM_mgL_1[2]
-    )) %>% 
-  
-  # RR  == Rejection Rate: ORR+IRR
-    dplyr::mutate(RR_correct = ORR_correct + IRR_correct) %>% 
-  
-  # p   == Fraction of Organic Rejected: ORR/RR (organic fraction of the pseudofeces)
-    dplyr::mutate(p = ORR_correct / RR_correct ) %>% 
-  
-  # f   == POM available: Average POM of the water
-    dplyr::mutate(f =  case_when(
-      treatment == 7.5 ~ WaterSamples_dat_AVE$Perc_ORG_1[1] / 100,
-      treatment == 8.0 ~ WaterSamples_dat_AVE$Perc_ORG_1[2] / 100
-    )) %>% 
-  
-  # SE  == Selection Efficiency: 1-(p/f) (organic content of pseudofeces/organic content of the water)
-    dplyr::mutate(SE = 1 - (p / f)) %>% 
-  
-  # IFR == Inorganic Filtration Rate: IER + IRR (PIM feces + PIM pseudofeces; i.e. total inorganic matter filtered/collection time)
-    dplyr::mutate(IFR = IER_correct + IRR_correct) %>% 
-  
-  # CR  == Cleanrance Rate: IFR/PIM of the water
-    dplyr::mutate(CR_correct = case_when(
-      treatment == 7.5 ~ IFR /  WaterSamples_dat_AVE$PIM_mgL_1[1],
-      treatment == 8.0 ~ IFR /  WaterSamples_dat_AVE$PIM_mgL_1[2]
-    )) %>% 
-  
-  # FR  == Filtration Rate: CR * TPM of the water
-    dplyr::mutate(FR_correct = case_when(
-      treatment == 7.5 ~ CR_correct * WaterSamples_dat_AVE$TPM_mgL_1[1],
-      treatment == 8.0 ~ CR_correct *  WaterSamples_dat_AVE$TPM_mgL_1[2]
-    )) %>% 
-  
-  # %RR == RR/FR (amount rejected/total amount filtered)
-    dplyr::mutate(RR_Percent = (RR_correct/FR_correct)*100) %>% 
-  
-  # TIR == Total Ingestion Rate: FR - RR
-    dplyr::mutate(TIR = FR_correct -
-                    RR_correct) %>% 
-  
-  # OFR == Organic FIltration Rate: CR * POM of the water
-    dplyr::mutate(OFR = case_when(
-      treatment == 7.5 ~ CR_correct * WaterSamples_dat_AVE$POM_mgL_1[1],
-      treatment == 8.0 ~ CR_correct *  WaterSamples_dat_AVE$POM_mgL_1[2]
-    )) %>% 
-  
-  # ORI == Organic INgestion Rate: OFR-ORR
-    dplyr::mutate(OIR = OFR - ORR_correct) %>% 
-  
-  # i   == Fraction of Organic Matter ingested: OIR/TIR (i.e. fraction of ingested material that was organic)
-    dplyr::mutate(i = OIR / TIR) %>% 
-  
-  # AR  == Assimilation Rate: OIR-OER (rate of POM filtration - rate of POM rejection - rate of POM egestion)
-    dplyr::mutate(AR = OIR - OER_correct) %>% 
-  
-  # AE  == Assimilation Efficiency: AR/OIR
-    dplyr::mutate(AE = AR / OIR) %>% 
-  
-  # add column for uatm pCO2 treatment based on pH groups
-    dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", treatment == 7.5 ~ "800 μatm"))
-                                
-Biodep_Master # look at your master file!
 
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+dates             <- as.data.frame(unique(biodep$Date)) 
+colnames(dates)   <- "Date"
+Biodep_Master     <- data.frame() # start dataframe 
+
+for (i in 1:nrow(dates)) {
+  date_loop       <- dates[i,]
+  blanks_loop     <- WaterSamples_blank_AVE %>% filter(Date %in% date_loop) %>% arrange(treatment)# filter blanks, sort as 7.5 then 8 for treatment pH
+  waterinput_loop <- WaterSamples_input_AVE %>% filter(Date %in% date_loop) %>% arrange(treatment) # filter blanks, sort as 7.5 then 8 for treatment pH
+  data_loop       <- BioSamples_merged %>%
+                        dplyr::filter(Date %in% date_loop) %>% 
+                      # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
+                        dplyr::mutate(IER_correct = IER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                      # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
+                        dplyr::mutate(IRR_correct = IRR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>%  
+                      # OER == Organic Egestion Rate: POM of feces/feces collection time
+                        dplyr::mutate(OER_correct = OER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                      # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
+                        dplyr::mutate(ORR_correct = ORR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                      # CR  == Cleanrance Rate: IFR/PIM of the water
+                        dplyr::mutate(CR = case_when(
+                           treatment == 7.5 ~ (IRR_mghr + IER_mghr) / waterinput_loop$PIM_mgL_1[1],
+                           treatment == 8.0 ~ (IRR_mghr + IER_mghr) / waterinput_loop$PIM_mgL_1[2]
+                           )) %>% 
+                      # FR  == Filtration Rate: CR * TPM of the water
+                        dplyr::mutate(FR = case_when(
+                          treatment == 7.5 ~ CR * waterinput_loop$TPM_mgL_1[1],
+                          treatment == 8.0 ~ CR * waterinput_loop$TPM_mgL_1[2]
+                        )) %>% 
+                      # RR  == Rejection Rate: ORR+IRR
+                        dplyr::mutate(RR_correct = ORR_correct + IRR_correct) %>% 
+                      # p   == Fraction of Organic Rejected: ORR/RR (organic fraction of the pseudofeces)
+                        dplyr::mutate(p = ORR_correct / RR_correct ) %>% 
+                      # f   == POM available: Average POM of the water
+                        dplyr::mutate(f =  case_when(
+                          treatment == 7.5 ~ waterinput_loop$Perc_ORG_1[1] / 100,
+                          treatment == 8.0 ~ waterinput_loop$Perc_ORG_1[2] / 100
+                        )) %>% 
+                      # SE  == Selection Efficiency: 1-(p/f) (organic content of pseudofeces/organic content of the water)
+                        dplyr::mutate(SE = 1 - (p / f)) %>% 
+                      # IFR == Inorganic Filtration Rate: IER + IRR (PIM feces + PIM pseudofeces; i.e. total inorganic matter filtered/collection time)
+                        dplyr::mutate(IFR = IER_correct + IRR_correct) %>% 
+                      # CR  == Cleanrance Rate: IFR/PIM of the water
+                        dplyr::mutate(CR_correct = case_when(
+                          treatment == 7.5 ~ IFR /  waterinput_loop$PIM_mgL_1[1],
+                          treatment == 8.0 ~ IFR /  waterinput_loop$PIM_mgL_1[2]
+                        )) %>% 
+                      # FR  == Filtration Rate: CR * TPM of the water
+                        dplyr::mutate(FR_correct = case_when(
+                          treatment == 7.5 ~ CR_correct * waterinput_loop$TPM_mgL_1[1],
+                          treatment == 8.0 ~ CR_correct *  waterinput_loop$TPM_mgL_1[2]
+                        )) %>% 
+                      # %RR == RR/FR (amount rejected/total amount filtered)
+                        dplyr::mutate(RR_Percent = (RR_correct/FR_correct)*100) %>% 
+                      # TIR == Total Ingestion Rate: FR - RR
+                        dplyr::mutate(TIR = FR_correct -
+                                        RR_correct) %>% 
+                      # OFR == Organic FIltration Rate: CR * POM of the water
+                        dplyr::mutate(OFR = case_when(
+                          treatment == 7.5 ~ CR_correct * waterinput_loop$POM_mgL_1[1],
+                          treatment == 8.0 ~ CR_correct *  waterinput_loop$POM_mgL_1[2]
+                        )) %>% 
+                      # ORI == Organic INgestion Rate: OFR-ORR
+                        dplyr::mutate(OIR = OFR - ORR_correct) %>% 
+                      # i   == Fraction of Organic Matter ingested: OIR/TIR (i.e. fraction of ingested material that was organic)
+                        dplyr::mutate(i = OIR / TIR) %>% 
+                      # AR  == Assimilation Rate: OIR-OER (rate of POM filtration - rate of POM rejection - rate of POM egestion)
+                        dplyr::mutate(AR = OIR - OER_correct) %>% 
+                      # AE  == Assimilation Efficiency: AR/OIR
+                        dplyr::mutate(AE = AR / OIR) %>% 
+                      # add column for uatm pCO2 treatment based on pH groups
+                        dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", treatment == 7.5 ~ "800 μatm"))
+
+  df                <- data.frame(data_loop) # name dataframe for this single row
+  Biodep_Master     <- rbind(Biodep_Master,df) #bind to a cumulative list dataframe
+  print(Biodep_Master) # print to monitor progress
+                        
+}
+
+View(Biodep_Master) # look at your master file!
 
 # WRITE CSV OF THE MASTER FILE
 write.csv(Biodep_Master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
 
 
 
@@ -244,93 +269,157 @@ write.csv(Biodep_Master, "C:/Users/samjg/Documents/Github_repositories/Airradian
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Biodep_Master <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv", header = T)
 
 
+# (1) First, run anova within date for all records (for looped!)
+ANOVA_Dates       <- as.data.frame(unique(Biodep_Master$Date)) # call a list to loop in 
+AOVdf_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
+cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct','RR_Percent','OIR','AR','AE')) %>% `colnames<-`('biodep_meas')
 
-# 20220202 :::::::::::::::::::::::::::::::
 
-
-
-Biodep_master_0302 <- Biodep_Master %>% filter(Date %in% '20220302') %>% filter(!AE < 0) # call data 
-
-# LME mod -  data 
-LMEmod_0302           <-lme(AE ~ pCO2, random=~1|tank_ID, data=Biodep_master_0302) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
-pander(anova(LMEmod_0302), style='rmarkdown') # anova table of lmer
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# :---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  13   |  169.7  | 7.759e-09 |
-# |    **pCO2**     |   1   |  13   | 0.1398  |  0.7146   |
+for (i in 1:nrow(ANOVA_Dates)) {
   
-shapiro.test(resid(LMEmod_0302)) # 0.6533 -  normal
-qqnorm(resid(LMEmod_0302)) # 
-hist(resid(LMEmod_0302)) # 
+  date_loop     <- as.character(ANOVA_Dates[i,])
+  data_loop     <- Biodep_Master %>% 
+                          dplyr::filter(Date %in% date_loop) %>% 
+                          dplyr::select(Date, treatment, cols_m_loop$biodep_meas)
+  
+        for (m in 3:ncol(data_loop)) { # run anova and normality tests for each of these wihtin data i
+        # high cholorphyll model
+      
+        AOVmod              <- aov(lm(data_loop[,m] ~ as.factor(data_loop$treatment)))
+        DF_loop$Date        <- date_loop
+        DF_loop$Metric      <- colnames(data_loop[m])
+        DF_loop$model       <- 'one-way AOV; x ~ treatment'
+        DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+        DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+        DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+        DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+        DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+          'NO'} else {'YES'}
+        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+          'YES'} else {'NO'}
+        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+          'YES'} else {'NO'}
+        
+        # asign loop and cumulative output table
+        df          <- data.frame(DF_loop) # name dataframe for this single row
+        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
+        print(AOVdf_total) # print to monitor progress
+        }
+}
+
+View(AOVdf_total) # view all the anova tests within data 
+  
+# WRITE CSV OF THE MASTER FILE
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_ANOVA_table.csv")
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+
 
 
 
 # plotting ::::::::::::::::::::::::::::::::::;;
 
 
-
-AE_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+AE_boxplot <- Biodep_Master %>% 
+  #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , AE , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
   scale_fill_manual(values=c("white", "grey50")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=10)) +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Assimilation Efficiency, F1 Scallops") +
   facet_wrap(~Date)
-AE_boxplot
+# AE_boxplot
 
 
-AR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+AR_boxplot <- Biodep_Master %>% 
+  # filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , AR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
   scale_fill_manual(values=c("white", "grey50")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=10)) +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Assimilation Rate, F1 Scallops") +
   facet_wrap(~Date)
-AR_boxplot
+# AR_boxplot
 
-OIR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+OIR_boxplot <- Biodep_Master %>% 
+  #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , OIR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
   scale_fill_manual(values=c("white", "grey50")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=10)) +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Organic Ingestion Rate, F1 Scallops") +
   facet_wrap(~Date)
-OIR_boxplot
+# OIR_boxplot
 
 
-FR_boxplot <- Biodep_Master%>% filter(!AE < 0) %>% 
+FR_boxplot <- Biodep_Master %>% 
+  #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , FR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
   scale_fill_manual(values=c("white", "grey50")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=10)) +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Filtration Rate, F1 Scallops") +
   facet_wrap(~Date)
-FR_boxplot
+# FR_boxplot
 
+RR_boxplot <- Biodep_Master %>% 
+  #filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Percent Rejection Rate, F1 Scallops") +
+  facet_wrap(~Date)
+# RR_boxplot
+
+SE_boxplot <- Biodep_Master %>% 
+  #filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , SE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("white", "grey50")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Selection Efficiency, F1 Scallops") +
+  facet_wrap(~Date)
+# SE_boxplot
 
 # output the plot 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Master_Biodep_Boxplots.pdf"), width = 10, height= 8)
-ggarrange(AE_boxplot, AR_boxplot, OIR_boxplot, FR_boxplot)
+library(ggpubr)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots.pdf"), width = 10, height= 8)
+ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
 dev.off()
