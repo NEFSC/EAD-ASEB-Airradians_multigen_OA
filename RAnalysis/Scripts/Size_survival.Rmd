@@ -1,7 +1,7 @@
 ---
-title: "Growth_and_Survival"
+title: "F1_size__surival"
 author: "Samuel Gurr"
-date: "9/30/2021"
+date: "10/25/2022"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -12,7 +12,7 @@ Last updates: September 30, 2022
 
 ## Load libraries
 
-```{r}
+```{r set up}
 
 # LOAD LIBRARIES 
 library(ggplot2)
@@ -44,6 +44,160 @@ F1_dryweights    <- F1_dryweights[!is.na(F1_dryweights$Shell_length_mm),]# drop 
 
 
 ```
+
+
+#  DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#  DENISTY PLOTS - all shell length
+
+```{r, Shell length density plots}
+F1_length$Treatment <- as.factor(F1_length$Treatment)
+
+# LARVAE :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+F1_length_larvae_density <- F1_length %>% filter(Life_stage %in% 'larvae') %>% 
+                                    ggplot(aes(x=Length_mm)) + 
+                                    geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                                    theme_bw() +
+                                    ggtitle("F1 Larvae") +
+                                    facet_wrap( ~ Age_DPF) + 
+                                    scale_fill_brewer(palette = "Set1")
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/density_plots/F1_length_larvae_density.pdf"), width = 8, height = 6)
+print(F1_length_larvae_density) # print the model diagnostics 
+dev.off()
+
+
+# SPAT :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+F1_length_spat_density <-  F1_length %>% filter(Life_stage %in% 'spat') %>% 
+                                    ggplot(aes(x=Length_mm)) + 
+                                    geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                                    theme_bw() +
+                                    ggtitle("F1 Spat (post-metamorph, < 5mm)") +
+                                    facet_wrap( ~ Age_DPF) + 
+                                    scale_fill_brewer(palette = "Set1")
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/density_plots/F1_length_spat_density.pdf"), width = 8, height = 6)
+print(F1_length_spat_density) # print the model diagnostics 
+dev.off()
+
+# JUVENILE :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+F1_length_juvenile_density <-  F1_length %>% filter(Life_stage %in% 'juvenile') %>% 
+                                    ggplot(aes(x=Length_mm)) + 
+                                    geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                                    theme_bw() +
+                                    ggtitle("F1 Juvenile") +
+                                    facet_wrap( ~ Age_DPF) + 
+                                    scale_fill_brewer(palette = "Set1")
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/density_plots/F1_length_juvenile_density.pdf"), width = 8, height = 6)
+print(F1_length_juvenile_density) # print the model diagnostics 
+dev.off()
+
+
+# ADULT :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+F1_length_adult_density <- F1_length %>% filter(Life_stage %in% 'adult') %>% 
+                                    ggplot(aes(x=Length_mm)) +  
+                                    geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
+                                    theme_bw() +
+                                    ggtitle("F1 Adult (>8 mo age)") +
+                                    facet_wrap( ~ Age_DPF) + 
+                                    scale_fill_brewer(palette = "Set1")
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/density_plots/F1_length_adult_density.pdf"), width = 8, height = 6)
+print(F1_length_adult_density) # print the model diagnostics 
+dev.off()
+
+```
+
+
+
+##  Shell length plot (all)
+```{r foodxpCO2 shell size  mean SE plots}
+# Length ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+F1_length_MEANS         <- summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Life_stage"))
+F1_length_MEANS_by_tank <- (summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Replicate")))
+summarySE( (F1_length_MEANS_by_tank   %>% dplyr::group_by(Age_DPF,pH)),  measurevar="Length_um", groupvars=c("Age_DPF","pH")) # 'mean of means' for all tanks, noe, many NAs for st error due to N=1 tank for most of the 'high oa' treatment 
+
+F1_length_MEANS <- F1_length_MEANS %>% 
+  dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm", pH == 7 ~ "1200 uatm"))
+
+## Use geom_line and geom_point to plot over time
+F1_length_lineplot_Highincluded <- F1_length_MEANS %>% 
+                                    mutate(Life_stage = factor(Life_stage, levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
+                                      ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
+                                        geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
+                                        geom_point()+ 
+                                        scale_color_manual(values=c("purple","forestgreen", "darkorange2"))+
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000), ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid", "1200 uatm" = "solid"))  +
+                                        theme(legend.position="none") +
+                                        theme_classic() +
+                                        ggtitle("F1 length") +
+                                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                                        facet_wrap(~Life_stage, scales = 'free')
+F1_length_lineplot_Highincluded
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot_HighOA_included.pdf"), width=9, height=6)
+F1_length_lineplot_Highincluded
+dev.off()
+
+
+## Use geom_line and geom_point to plot over time
+F1_length_lineplot <- F1_length_MEANS %>% 
+                                    mutate(Life_stage = factor(Life_stage, levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
+                                    dplyr::filter(!pH %in% 7) %>% 
+                                      ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
+                                        geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
+                                        geom_point()+ 
+                                        scale_color_manual(values=c("forestgreen", "darkorange2"))+
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000), ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid"))  +
+                                        theme(legend.position="none") +
+                                        theme_classic() +
+                                        ggtitle("F1 length") +
+                                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                                        facet_wrap(~Life_stage, scales = 'free')
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot.pdf"), width=9, height=6)
+F1_length_lineplot
+dev.off()
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #  b factor  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ```{r, b factor}
@@ -103,6 +257,9 @@ dev.off()
 #  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # LENGTH VERSUS TiSSUE DRY WEIGHT ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+
+
+
 Length_TissueDryWeight_facetted <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0) %>% # just to ensure we are getting correct data
                                     ggplot(aes(x=log(Shell_length_mm), y=log(Dry_Tissue_weight_g), color=pCO2)) +
@@ -152,7 +309,7 @@ Length_TissueDryWeight_spat + geom_function(fun = function(x) -0.00324 + 0.00079
 
 Length_TissueWeight_all_LOESS_obj <- stats::loess(Dry_Tissue_weight_g ~ Shell_length_mm, data = (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0)) )
 new_LOESS_data                    <- predict(Length_TissueWeight_all_LOESS_obj)
-new_F1_length_obj               <- (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0))$Shell_length_mm
+new_F1_length_obj                 <- (F1_dryweights%>%dplyr::filter(Shell_length_mm > 0 & Dry_Tissue_weight_g > 0))$Shell_length_mm
 plot(new_F1_length_obj, new_LOESS_data)
 
 as.data.frame(cbind(new_LOESS_data, new_F1_length_obj)) %>% dplyr::rename(Dry_Tissue_weight_g = new_LOESS_data, Shell_length_mm = new_F1_length_obj ) %>% dplyr::arrange(Shell_length_mm) %>%  dplyr::filter(Shell_length_mm > 6.85)
@@ -166,6 +323,8 @@ dev.off()
 
 #  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # LENGTH VERSUS Ash weight::::::: ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
 
 Length_TotalAFDW_facetted <- F1_dryweights %>% 
                                    dplyr::filter(Shell_length_mm > 0 & TotalAFDW_g > 0) %>% # just to ensure we are getting correct data
@@ -210,23 +369,7 @@ Length_WholeDryWeight + geom_function(fun = function(x) 0.01*exp(x*0.21), colour
 ```
 
 
-#  DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-#  DENISTY PLOTS - all shell length
 
-```{r, Shell length density plots}
-F1_length$Treatment <- as.factor(F1_length$Treatment)
-
-Alldensity <- ggplot(data = F1_length, aes(x=Length_mm)) + 
-                geom_density(aes(x = Length_mm, group=Treatment, fill=Treatment, ..scaled..), alpha = 0.4, adjust=1.5) + 
-                theme_bw() +
-                facet_wrap( ~ Age_DPF) + 
-                scale_fill_brewer(palette = "Set1")
-
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Juvenile_F1_length_density.pdf"), width = 8, height = 6)
-print(Alldensity) # print the model diagnostics 
-dev.off()
-```
 
 
 ```{r, gonad dry weight}
@@ -234,7 +377,7 @@ library(dplyr)
 library(tidyr)
 F1_dryweights$Treatment        <- as.factor(F1_dryweights$pH)
 F1_dryweights$Gonad_proportion <- (F1_dryweights$Dry_Gonad_weight_g / (F1_dryweights$Dry_Gonad_weight_g +F1_dryweights$Dry_Tissue_weight_g) ) * 100
-Gonad_data                <- (F1_dryweights %>% dplyr::filter(Dry_Gonad_weight_g > 0)) # not all dates contain data for gonad indices!
+Gonad_data                     <- (F1_dryweights %>% dplyr::filter(Dry_Gonad_weight_g > 0)) # not all dates contain data for gonad indices!
 
 Allboxplot_gonad     <- ggplot(data =  Gonad_data, aes(x=Treatment, y=Dry_Gonad_weight_g, fill = Treatment)) + 
                           geom_boxplot(alpha = 0.2) + 
@@ -277,7 +420,7 @@ data <- Gonad_data %>%
           dplyr::filter(!Gonad_stage %in% NA) %>% 
           dplyr::mutate(Date_Treatment = paste(Date_sampled, Treatment, sep = '_')) %>% 
           dplyr::group_by(Date_Treatment) %>%
-          dplyr::mutate(count = length(Date_Treatment))
+          dplyr::mutate(count = length(Date_Treatment)) 
           dplyr::mutate(prop = Gonad_stage / sum(Gonad_data) *100) %>%
           mutate(ypos = cumsum(prop)- 0.5*prop )
 
@@ -296,7 +439,7 @@ Gonad_stage_pichart <- ggplot((Gonad_data %>%
                         facet_wrap(~Date_Treatment)
 
 
-ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length)
+ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length, Gonad_stage_pichart)
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Survival_Size/Gonad_dry_weight.pdf"), width = 10, height = 8)
 ggarrange(Allboxplot_gonad, Allboxplot_gonad_prop,Allregress_gonadDW_length, Gonad_satge_pichart) # print the model diagnostics 
