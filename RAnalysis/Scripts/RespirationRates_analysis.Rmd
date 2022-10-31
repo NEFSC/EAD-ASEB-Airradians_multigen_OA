@@ -38,17 +38,17 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
 ```
 
 
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+F1 DATA ANALYSIS ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+# ALOMETRIC COEFFICIENT (b factor) :::::::::::::::::::::::::::::
 
 
 
 
-# ALOMETRIC COEFFICIENT (b factor) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 
-
-
-
-
-## by TISSUE DRY WEIGHT  ::::::::::::::::::::::::::::::::::::::::::::
+## by TISSUE DRY WEIGHT  ::::::::::
 ```{r b factor TISSUE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
 
 
@@ -163,7 +163,7 @@ dev.off()
 # TDW b factor pCO2 low = 0.856 # two outliers removed here
 
 
-## by SHELL AND INDIVIDUAL LENGTH :::::::::::::::::::::::::::::::::::
+## by SHELL AND INDIVIDUAL LENGTH :::::::::
 ```{r b factor SHELL AND INDIVIDUAL LENGTH, echo=TRUE, message = FALSE, warning = FALSE}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -232,7 +232,7 @@ dev.off()
 # Length b factor pCO2 low = 2.11
 
 
-## WHOLE DRY WEIGHT :::::::::::::::::::::::::::::::::::::::::::::::::
+## WHOLE DRY WEIGHT :::::::::::
 ```{r b factor WHOLE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
 
 # ABOUT: 
@@ -460,7 +460,7 @@ F1s.BOXPLOT_WDW_bfactor <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("whole Dry weight b factor (1.05)") +
+         ggtitle("whole Dry weight b factor (0.611)") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -613,6 +613,46 @@ F1s.BOXPLOT_WDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r, F2 larvae and spat}
 
