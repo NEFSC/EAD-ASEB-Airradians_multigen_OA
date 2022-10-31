@@ -41,17 +41,17 @@ resp.data           <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.
 start.end_resp.data <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
 
-resp.ref            <- read.csv(file="Data/Respiration/Reference_master.csv", header=T) %>% 
+resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_master.csv", header=T) %>% 
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
 
 
 # data to correct for length, dry weight, etc. 
-lengths_juv_adults  <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+lengths_juv_adults  <- read.csv(file="Data/Physiology/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
 
-lengths_spat        <- read.csv(file="Data/Respiration/Lengths_larvae_spat_resp.csv", header=T) %>% 
+lengths_spat        <- read.csv(file="Data/Physiology/Respiration/Lengths_larvae_spat_resp.csv", header=T) %>% 
                           dplyr::mutate(Length_um = Length * 1000) %>% # current length in mm
                           dplyr::select(!Length)
-
+# View(resp.data)
 
 ```
 
@@ -75,7 +75,7 @@ lenghts_master <- rbind.fill(lengths_juv_adults, lengths_spat_MEAN) # use rbind.
 # check the data - ensure all data was run
 if(nrow(resp.data) == nrow(start.end_resp.data)){ # MUST be TRUE
 resp_all_raw <- merge(resp.data, start.end_resp.data)
-} else{}
+} else{resp_all_raw <- resp.data}
 
 # merge the exp_metadata with the resp.data
 resp.ref_length_merged                 <- merge(resp.ref, 
@@ -140,7 +140,7 @@ blanks_total <- data.frame() # start dataframe
 blanks.table <- data.frame(matrix(nrow = 1,ncol = 5)) # make a table template
 colnames(blanks.table)<-c('Date', 'Channel', 'mean_Lpc', 'mean_Leq' , 'mean_Lz') # names for comuns in the for loop
 
-blanks_all_raw <- data.frame((merge(resp_all_raw, resp.ref)) %>%
+blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge(resp_all_raw, resp.ref)) %>%
                   dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
                   dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>% 
                   dplyr::filter(Chamber_tank  == 'blank') %>% 
@@ -148,8 +148,8 @@ blanks_all_raw <- data.frame((merge(resp_all_raw, resp.ref)) %>%
                   dplyr::filter(!Date == '9/30/2021' | !Lpc < -0.035) %>% #omits C6 RR_9.30.21_AM_Plate_1_Run_1.csv	8.0	blank - View the Lolin plot, looks noisy and a fast outlier from the others
                   dplyr::filter(!Date == '8/30/2022' | !Lpc < -0.02) %>% # omit the few outlier blanks shiting rates higher than those with spat or larvae
                   dplyr::filter(!Date == '10/26/2021'  | !Channel == "CH8" | !Run == "2" ) %>% # omit a bad blank that contained a bad seal, noted on the respiration sampling day during the trial 
-                  dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz', 'Rate_mgO2_hour','filetype')) %>% 
-                  dplyr::arrange(Date,pH, .by_group = TRUE)) 
+                  dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz','filetype')) %>% # add 'Rate_mgO2_hour'hen the start and end is completed
+                  dplyr::arrange(Date,pH, .by_group = TRUE)
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # mean blanks for the LoLinR output ('Lpc') ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -242,44 +242,37 @@ plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 ```{r master resp file, echo=FALSE}
 
 Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
-  dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & 
-                                     Date == '9/14/2021' ~ 2.2, # small vessels for loligo system - 22 ml vessels
+  dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH1' ~ 23.1,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH2' ~ 23.05,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH3' ~ 23.31,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH4' ~ 22.55,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH5' ~ 23.18,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH6' ~ 23.24,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH7' ~ 22.63,
+                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH8' ~ 22.95,
                                    
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH1' ~ 68.55323, # larger custom vessels measured individually...
                                    
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH2' ~ 68.85583, # larger custom vessels measured individually...
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878,
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, 
+      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
+      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473,
                                    
-                                   filetype == "LoLigo_data" & Date %in% c('10/26/2021') & 
-                                     Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... 
                                    
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH4' ~ 68.95481, # larger custom vessels measured individually...
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH1' ~ (236.70+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH2' ~ (239.88+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH3' ~ (228.63+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH4' ~ (234.35+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH5' ~ (224.31+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH6' ~ (229.07+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH7' ~ (223.11+18), 
+      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH8' ~ (225.59+18), 
                                    
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH5' ~ 68.57288, # larger custom vessels measured individually...
-                                   
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH6' ~ 68.01878, # larger custom vessels measured individually...
-                                   
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH7' ~ 68.54551, # larger custom vessels measured individually...
-                                   
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('10/26/2021','2/2/2022','3/1/2022') & 
-                                     Channel == 'CH8' ~ 68.53297, # larger custom vessels measured individually...
-                                   
-                                   filetype == "LoLigo_data" & 
-                                     Date %in% c('2/2/2022','3/1/2022') & 
-                                     Channel == 'CH3' ~ 68.87473, # larger custom vessels measured individually... # note ch3 used vessel #9 on and after 2/2/2022 
-                                   
+                                   filetype == "SDR_data" & Date %in% c('9/30/2021')~ 1.7,
                                    filetype == "SDR_data" ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
                                    
                                    # filetype == "SDR_data" & Date %in% ('8/30/2022') ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
@@ -312,7 +305,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
 print(Resp.outliers) # 32 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
-
+View(Resp.Master_OM)
 ```
 
 
@@ -371,6 +364,14 @@ Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_res
 # NORMALIZED for Tissue Dry weight (TDW)
 Resp.Master_OM$resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Dry_Tissue_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
+
+# (3) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# NORMALIZED for whole Dry weight (WDW)
+Resp.Master_OM$resp_µmol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+              (Resp.Master_OM$whole_Dry_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+
+
 
 Resp.Master_OM$start.end_resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Dry_Tissue_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1

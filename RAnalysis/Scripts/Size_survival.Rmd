@@ -120,7 +120,8 @@ F1_length_MEANS <- F1_length_MEANS %>%
   dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm", pH == 7 ~ "1200 uatm"))
 
 ## Use geom_line and geom_point to plot over time
-F1_length_lineplot_Highincluded <- F1_length_MEANS %>% 
+F1_length_lineplot_LARVAE <- F1_length_MEANS %>% 
+                                    dplyr::filter(Life_stage %in% 'larvae') %>% 
                                     mutate(Life_stage = factor(Life_stage, levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
                                       ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
                                         geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
@@ -137,14 +138,15 @@ F1_length_lineplot_Highincluded <- F1_length_MEANS %>%
                                         ggtitle("F1 length") +
                                         # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
                                         facet_wrap(~Life_stage, scales = 'free')
-F1_length_lineplot_Highincluded
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot_HighOA_included.pdf"), width=9, height=6)
-F1_length_lineplot_Highincluded
+F1_length_lineplot_LARVAE
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot_larvae.pdf"), width=9, height=6)
+F1_length_lineplot_LARVAE
 dev.off()
 
 
 ## Use geom_line and geom_point to plot over time
-F1_length_lineplot <- F1_length_MEANS %>% 
+F1_length_lineplot_SPAT.ADULT <- F1_length_MEANS %>% 
+                                    dplyr::filter(!Life_stage %in% 'larvae') %>% 
                                     mutate(Life_stage = factor(Life_stage, levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
                                     dplyr::filter(!pH %in% 7) %>% 
                                       ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
@@ -162,8 +164,8 @@ F1_length_lineplot <- F1_length_MEANS %>%
                                         ggtitle("F1 length") +
                                         # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
                                         facet_wrap(~Life_stage, scales = 'free')
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot.pdf"), width=9, height=6)
-F1_length_lineplot
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot_spat_juv_adult.pdf"), width=9, height=6)
+F1_length_lineplot_SPAT.ADULT
 dev.off()
 
 

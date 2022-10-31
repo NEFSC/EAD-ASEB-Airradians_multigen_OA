@@ -5,16 +5,16 @@ Date_sampled,pH,Tank_Replicate,pH_Replicate,Shell_length_mm,New_tin_ID,Shell_Tin
 9/14/2021,7.5,D,7.5_D,2.72653,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.001958,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,7.5,A,7.5_A,2.21222,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.001812,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,, (2) 'Total_ash_weight_g_with_tin' ,,
 9/14/2021,7.5,B,7.5_B,2.82212,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000733,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,adult samples before 3/28/22,
-9/14/2021,7.5,C,7.5_C,2.68751,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.001379,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,#NAME?
+9/14/2021,7.5,C,7.5_C,2.68751,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.001379,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,7.5,D,7.5_D,2.6591,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000821,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,adult samples talen 3/28/22 and after,
 9/14/2021,7.5,A,7.5_A,2.25305,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.002638,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,, - animals were ashed on the SEPARATE tins 
 9/14/2021,7.5,B,7.5_B,3.16395,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.002028,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,7.5,C,7.5_C,2.15083,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000646,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,(3) 'Whole_animal_dry_weight_g',,
 9/14/2021,7.5,D,7.5_D,1.91671,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000575,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,adult samples before 3/28/22,
-9/14/2021,8,A,8_A,1.73749,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,#NAME?
-9/14/2021,8,B,8_B,2.70979,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,adult samples talen 3/16/22 and after,
+9/14/2021,8,A,8_A,1.73749,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
+9/14/2021,8,B,8_B,2.70979,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,adult samples taken 3/16/22 and after,
 9/14/2021,8,C,8_C,2.28173,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,, - gonad and tissue samples separated for drying + ashing
-9/14/2021,8,D,8_D,2.69297,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000982,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,#NAME?
+9/14/2021,8,D,8_D,2.69297,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.000982,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,8,A,8_A,2.974,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.001765,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,8,B,8_B,2.10965,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.003326,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
 9/14/2021,8,C,8_C,2.45271,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.004008,NA,NA,NA,NA,NA,NA,NA,"too small to dissect, only whole animal dry weights",,,,,,,
@@ -193,7 +193,7 @@ Date_sampled,pH,Tank_Replicate,pH_Replicate,Shell_length_mm,New_tin_ID,Shell_Tin
 12/2/2021,8,A,8_A,12.3,37,5A1,1.1803,1.3144,0.1341,5A1,0.414,0.4303,0.0163,NA,NA,NA,NA,NA,NA,0.1504,12.15510813,NA,NA,NA,0.5543,0.0101,0.821138211,used for dry weights and condition only,,,,,,,
 12/2/2021,8,A,8_A,5.4,38,5A2,1.2752,1.2856,0.0104,5A2,0.4105,0.4116,0.0011,NA,NA,NA,NA,NA,NA,0.0115,10.57692308,NA,NA,NA,0.4211,0.0009,0.166666667,used for dry weights and condition only,,,,,,,
 12/2/2021,8,A,8_A,5.8,39,5A3,1.2735,1.2849,0.0114,5A3,0.4136,0.4142,0.0006,NA,NA,NA,NA,NA,NA,0.012,5.263157895,NA,NA,NA,0.4248,0.0008,0.137931035,used for dry weights and condition only,,,,,,,
-"44,532.00",8,A,8_A,3.9,40,5A4,1.27,1.28,0,5A4,0.41,0.41,0,NA,NA,NA,NA,NA,NA,0,2.27,NA,NA,NA,0.42,0,0,used for dry weights and condition only,,,,,,,
+12/2/2021,8,A,8_A,3.9,40,5A4,1.27,1.28,0,5A4,0.41,0.41,0,NA,NA,NA,NA,NA,NA,0,2.27,NA,NA,NA,0.42,0,0,used for dry weights and condition only,,,,,,,
 12/2/2021,7.5,A,7.5_A,21.7,41,5A5,1.2718,1.8687,0.5969,5A5,0.4127,0.4931,0.0804,NA,NA,NA,NA,NA,NA,0.6773,13.4695929,NA,NA,NA,1.0248,0.0652,3.004608295,used for dry weights and condition only,,,,,,,
 12/2/2021,7.5,A,7.5_A,21.3,42,5A6,1.2524,1.7901,0.5377,5A6,0.4173,0.4981,0.0808,NA,NA,NA,NA,NA,NA,0.6185,15.02696671,NA,NA,NA,0.9656,0.0702,3.295774648,used for dry weights and condition only,,,,,,,
 12/2/2021,7.5,A,7.5_A,19.1,43,5A7,1.2843,1.6764,0.3921,5A7,0.4174,0.4727,0.0553,NA,NA,NA,NA,NA,NA,0.4474,14.10354501,NA,NA,NA,0.8196,0.0452,2.366492147,used for dry weights and condition only,,,,,,,
