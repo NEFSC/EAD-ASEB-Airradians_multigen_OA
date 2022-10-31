@@ -45,9 +45,6 @@ F1 DATA ANALYSIS :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ALOMETRIC COEFFICIENT (b factor) :::::::::::::::::::::::::::::
 
 
-
-
-
 ## by TISSUE DRY WEIGHT  ::::::::::
 ```{r b factor TISSUE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
 
@@ -320,11 +317,7 @@ dev.off()
 # DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 
 
-
-
-
-
-
+## format the data...
 ```{r, format RRmaster} 
 # unique(as.Date(RR_master$Date, format="%m/%d/%Y")) # view to input labels below
 
@@ -343,13 +336,17 @@ RR_formatted <- RR_master %>%
                                           Date == '2022-08-30' & Num_indivs == 1 ~ "F2s B: spat")) %>% 
   dplyr::filter(!Fed_Unfed %in% 'Low food')
 
+
+
+RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')
+
+
 ```
 
-## by TISSUE DRY WEIGHT (b factor = 0.863)
+## BOXPLOTS by TISSUE DRY WEIGHT (b factor = 0.863)
 ```{r, by mg TISSUE}
 
-View(RR_formatted_F1s)
-RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') 
+ 
 # TISSUE ---------------------------------------------------------------------------- #
 # PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
 
@@ -411,8 +408,7 @@ F1s.BOXPLOT_TDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data
 
 ```
 
-
-## by WHOLE DRY WEIGHT (b factor = 1.02)
+## BOXPLOTS by WHOLE DRY WEIGHT (b factor = 0.611)
 ```{r, by mg TISSUE}
 
 
@@ -479,142 +475,66 @@ dev.off()
 
 ```
 
-## by LENGTH  (b factor = 1.85)
-```{r, by mg TISSUE}
-F1s.BOXPLOT_LENGTH_facetted <- RR_formatted %>% 
-  #dplyr::filter(!Gen %in% 'F2s') %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_mmLength, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-         #ylim(0, 0.2) +
-         ggtitle("Length corrected") +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
-F1s.BOXPLOT_LENGTH_facetted # not that we do not have TDW for 9/14 and 9/30 data 
-
-
-# B factor normalized 
-
-bLENGTH= 1.85 # review the outlier-omitted b factor plot in previous chunk
-
-F1s.BOXPLOT_LENGTH_bfactor <- RR_formatted %>% 
-  #dplyr::filter(!Gen %in% 'F2s') %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNorm = resp_umol_L_hr/((1000/Length_um)^bLENGTH)) %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNorm, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-         ggtitle("b factor") +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-F1s.BOXPLOT_LENGTH_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_Boxplots_bFactor_Length.pdf"), width = 8, height = 8)
-print(ggarrange(F1s.BOXPLOT_LENGTH_facetted, F1s.BOXPLOT_LENGTH_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
-dev.off()
 
 
 
+# STATISTICAL ANALYSIS :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+``` {r stats F1s}
+
+# f1s data
+RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormWDW = resp_umol_L_hr/(whole_Dry_weight^bWDW)) 
+
+
+# (1) First, run anova within date for all records (for looped!)
+ANOVA_Dates       <- as.data.frame(unique(RR_formatted_F1s$Date)) # call a list to loop in 
+AOVdf_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
 
 
 
+for (i in 1:nrow(ANOVA_Dates)) {
 
+  date_loop     <- as.character(ANOVA_Dates[i,])
+  data_loop     <- RR_formatted_F1s %>% 
+                          dplyr::filter(Date == date_loop) %>% 
+                          dplyr::select(Date, pCO2, resp_umol_L_hr_bFactorNormWDW) %>% 
+                          na.omit()
+  
+        AOVmod              <- aov(lm(data_loop$resp_umol_L_hr_bFactorNormWDW ~ data_loop$pCO2))
+        DF_loop$Date        <- date_loop
+        DF_loop$Metric      <- 'Respiration rate; WDW b factor normalized'
+        DF_loop$model       <- 'one-way AOV; x ~ treatment'
+        DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+        DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+        DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+        DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+        DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+          'NO'} else {'YES'}
+        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+          'YES'} else {'NO'}
+        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+          'YES'} else {'NO'}
+        
+        # asign loop and cumulative output table
+        df          <- data.frame(DF_loop) # name dataframe for this single row
+        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
+        print(AOVdf_total) # print to monitor progress
+        }
+}
 
-# whole dry weight  ---------------------------------------------------------------------------- #
-
-
-F1s.BOXPLOT_WDW_facetted <- RR_formatted %>% # WHOLE
-  dplyr::filter(!Gen %in% 'F2s') %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_mg_WDW, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-        # ylim(0, 0.2) +
-          ggtitle("Whole Dry weight") +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
-F1s.BOXPLOT_WDW_facetted # not that we do not have TDW for 9/14 and 9/30 data 
-
-
-
-# B factor normalized 
-
-bWDW = <add here> # review the outlier-omitted b factor plot in previous chunk
-
-F1s.BOXPLOT_WDW_bfactor <- RR_formatted %>% 
-  dplyr::filter(!Gen %in% 'F2s') %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNorm = resp_umol_L_hr/(Dry_Tissue_weight^bWDW)) %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNorm, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("white","grey")) +
-         theme_classic() + 
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-F1s.BOXPLOT_WDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
-
+View(AOVdf_total) # view all the anova tests within data 
+  
+# WRITE CSV OF THE MASTER FILE
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_ANOVA_table.csv")
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
 
 ```
-
-
 
 
 
