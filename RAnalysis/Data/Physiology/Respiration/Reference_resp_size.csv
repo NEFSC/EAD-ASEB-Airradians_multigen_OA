@@ -169,17 +169,79 @@ Date,Run,Plate,pH,Food,Replicate,Chamber_tank,Number,Length_um,Shell_tin_weight,
 3/1/2022,3,NA,7.5,NA,G,7.5_G,1,24300,1.2593,2.3551,0.4176,0.6657,1.0958,0.2481,1.3439,loligo_8channel,
 3/1/2022,3,NA,7.5,NA,H,7.5_H,1,23500,1.2741,2.4981,0.417,0.6412,1.224,0.2242,1.4482,loligo_8channel,
 3/1/2022,3,NA,7.5,NA,B,7.5_B,2,21350,1.2529,2.0331,0.4129,0.5565,0.7802,0.1436,0.9238,loligo_8channel,
-9/22/2022,1,NA,7.5,NA,A,7.5_A,1,43350,1.0890,NA,NA,1.9830,6.754,0.894,7.648,loligo_8channel,
-9/22/2022,1,NA,7.5,NA,A,7.5_A,2,36900,1.0930,NA,NA,1.5730,4.90,0.48,5.382,loligo_8channel,
-9/22/2022,1,NA,7.5,NA,B,7.5_B,1,42400,1.0850,NA,NA,2.0210,5.61,0.936,6.550,loligo_8channel,
+9/22/2022,1,NA,7.5,NA,A,7.5_A,1,43350,1.089,NA,NA,1.983,6.754,0.894,7.648,loligo_8channel,
+9/22/2022,1,NA,7.5,NA,A,7.5_A,2,36900,1.093,NA,NA,1.573,4.9,0.48,5.382,loligo_8channel,
+9/22/2022,1,NA,7.5,NA,B,7.5_B,1,42400,1.085,NA,NA,2.021,5.61,0.936,6.55,loligo_8channel,
 9/22/2022,1,NA,7.5,NA,B,7.5_B,2,39500,1.108,NA,NA,1.565,3.93,0.457,4.386,loligo_8channel,
-9/22/2022,1,NA,7.5,NA,C,7.5_C,1,45350,1.096,NA,NA,2.254,7.37,1.158,8.530,loligo_8channel,
+9/22/2022,1,NA,7.5,NA,C,7.5_C,1,45350,1.096,NA,NA,2.254,7.37,1.158,8.53,loligo_8channel,
 9/22/2022,1,NA,7.5,NA,C,7.5_C,2,44800,1.103,NA,NA,2.041,7.26,0.938,8.196,loligo_8channel,
 9/22/2022,1,NA,7.5,NA,D,7.5_D,1,45700,1.1,NA,NA,2.516,8.32,1.416,9.737,loligo_8channel,
-9/22/2022,2,NA,8,NA,A,8_A,1,43800,1.0960,NA,NA,2.4650,6.557,1.3690,7.926,loligo_8channel,
-9/22/2022,2,NA,8,NA,A,8_A,2,45100,1.0940,NA,NA,2.0710,6.82,0.9770,7.798,loligo_8channel,
-9/22/2022,2,NA,8,NA,A,8_A,3,46700,1.0950,NA,NA,2.1470,6.69,1.0520,7.737,loligo_8channel,
-9/22/2022,2,NA,8,NA,B,8_B,1,44300,1.095,NA,NA,2.238,7.12,1.1430,8.263,loligo_8channel,
-9/22/2022,2,NA,8,NA,B,8_B,2,42900,1.098,NA,NA,1.792,5.51,0.6940,6.207,loligo_8channel,
-9/22/2022,2,NA,8,NA,C,8_C,1,45900,1.102,NA,NA,2.055,8.33,0.9530,9.279,loligo_8channel,
-9/22/2022,2,NA,8,NA,D,8_D,1,41900,1.104,NA,NA,1.845,7.89,0.7410,8.628,loligo_8channel,
+9/22/2022,2,NA,8,NA,A,8_A,1,43800,1.096,NA,NA,2.465,6.557,1.369,7.926,loligo_8channel,
+9/22/2022,2,NA,8,NA,A,8_A,2,45100,1.094,NA,NA,2.071,6.82,0.977,7.798,loligo_8channel,
+9/22/2022,2,NA,8,NA,A,8_A,3,46700,1.095,NA,NA,2.147,6.69,1.052,7.737,loligo_8channel,
+9/22/2022,2,NA,8,NA,B,8_B,1,44300,1.095,NA,NA,2.238,7.12,1.143,8.263,loligo_8channel,
+9/22/2022,2,NA,8,NA,B,8_B,2,42900,1.098,NA,NA,1.792,5.51,0.694,6.207,loligo_8channel,
+9/22/2022,2,NA,8,NA,C,8_C,1,45900,1.102,NA,NA,2.055,8.33,0.953,9.279,loligo_8channel,
+9/22/2022,2,NA,8,NA,D,8_D,1,41900,1.104,NA,NA,1.845,7.89,0.741,8.628,loligo_8channel,
+9/22/2022,1,1,7.5,NA,NA,NA,1,1640,NA,NA,0.033656,0.033972,NA,NA,0.000316,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,2,1660,NA,NA,0.034324,0.034619,NA,NA,0.000295,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,8,NA,NA,NA,1,1830,NA,NA,0.033829,0.034354,NA,NA,0.000525,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,8,NA,NA,NA,2,1720,NA,NA,0.033337,0.033665,NA,NA,0.000328,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,3,1500,NA,NA,0.034,0.034004,NA,NA,4E-06,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,8,NA,NA,NA,3,1760,NA,NA,0.033841,0.034251,NA,NA,0.00041,SDR_24channel,CRUSHED: whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,4,1900,NA,NA,0.033249,0.033758,NA,NA,0.000509,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,8,NA,NA,NA,4,2150,NA,NA,0.034447,0.035447,NA,NA,0.001,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,5,1610,NA,NA,0.033076,0.033507,NA,NA,0.000431,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,6,1370,NA,NA,0.033049,0.033243,NA,NA,0.000194,SDR_24channel,CRUSHED: whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,7,1830,NA,NA,0.033446,0.033844,NA,NA,0.000398,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,8,1460,NA,NA,0.033084,0.033323,NA,NA,0.000239,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,9,1690,NA,NA,0.034058,0.034476,NA,NA,0.000418,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,10,NA,NA,NA,0.034057,0.034266,NA,NA,0.000209,SDR_24channel,CRUSHED: whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,11,1650,NA,NA,0.03429,0.03461,NA,NA,0.00032,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,1,7.5,NA,NA,NA,12,1670,NA,NA,0.033119,0.033479,NA,NA,0.00036,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,5,1330,NA,NA,0.033913,0.034083,NA,NA,0.00017,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,13,2030,NA,NA,0.033394,0.033996,NA,NA,0.000602,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,14,1920,NA,NA,0.032767,0.033337,NA,NA,0.00057,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,6,1830,NA,NA,0.033301,0.033885,NA,NA,0.000584,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,7,1710,NA,NA,0.03305,0.033393,NA,NA,0.000343,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,8,1270,NA,NA,0.032562,0.032645,NA,NA,8.3E-05,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,15,1660,NA,NA,0.034285,0.034578,NA,NA,0.000293,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,16,1490,NA,NA,0.033639,0.033863,NA,NA,0.000224,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,17,1630,NA,NA,0.033736,0.034038,NA,NA,0.000302,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,9,1890,NA,NA,0.034039,0.034495,NA,NA,0.000456,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,18,1360,NA,NA,0.033948,0.034146,NA,NA,0.000198,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,10,2100,NA,NA,0.034016,0.03481,NA,NA,0.000794,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,19,1520,NA,NA,0.033837,0.034054,NA,NA,0.000217,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,7.5,NA,NA,NA,20,1540,NA,NA,0.03284,0.033063,NA,NA,0.000223,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,2,8,NA,NA,NA,11,1930,NA,NA,0.034707,0.035218,NA,NA,0.000511,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,21,1680,NA,NA,0.034664,0.034994,NA,NA,0.00033,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,12,2040,NA,NA,0.03365,0.034409,NA,NA,0.000759,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,13,2080,NA,NA,0.03294,0.033633,NA,NA,0.000693,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,22,1760,NA,NA,0.033247,0.033654,NA,NA,0.000407,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,14,2050,NA,NA,0.034229,0.034824,NA,NA,0.000595,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,15,1860,NA,NA,0.033101,0.033509,NA,NA,0.000408,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,23,1540,NA,NA,0.032767,0.032991,NA,NA,0.000224,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,16,1970,NA,NA,0.033809,0.034366,NA,NA,0.000557,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,17,1940,NA,NA,0.033642,0.034163,NA,NA,0.000521,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,24,1390,NA,NA,0.033698,0.033902,NA,NA,0.000204,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,18,1820,NA,NA,0.033411,0.033832,NA,NA,0.000421,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,25,1670,NA,NA,0.03388,0.034178,NA,NA,0.000298,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,26,1550,NA,NA,0.033698,0.033963,NA,NA,0.000265,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,8,NA,NA,NA,19,1900,NA,NA,0.034007,0.034541,NA,NA,0.000534,SDR_24channel,whole dry weights - tissue NOT separated from shell
+9/22/2022,1,3,7.5,NA,NA,NA,27,1570,NA,NA,0.033249,0.033535,NA,NA,0.000286,SDR_24channel,whole dry weights - tissue NOT separated from shell
+10/26/2022,1,NA,8,NA,A,8_A,1,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,B,8_B,2,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,C,8_C,3,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,D,8_D,4,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,E,8_E,5,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,F,8_F,6,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,1,NA,8,NA,G,8_G,7,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,A,7.5_A,1,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,B,7.5_B,2,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,C,7.5_C,3,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,D,7.5_D,4,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,E,7.5_E,5,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,F,7.5_F,6,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+10/26/2022,2,NA,7.5,NA,G,7.5_G,7,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,<add here>,loligo_8channel,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
