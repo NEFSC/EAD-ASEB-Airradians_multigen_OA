@@ -45,7 +45,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Master_data       <- read.csv(file="Data/Clearance_rates/ClearanceRates_MasterData.csv", header=T) # master data file
-Master_data <- read.csv(file="Data/Clearance_rates/ClearanceRates_MasterData.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
+Master_data <- read.csv(file="Data/Physiology/Clearance_rates/ClearanceRates_MasterData.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
 
 
 clearance.rate_914    <- Master_data  %>% dplyr::filter(Date %in% 20210914)  %>% 
@@ -60,7 +60,7 @@ clearance.rate_1026    <- Master_data  %>% dplyr::filter(Date %in% 20211026)  %>
 clearance.rate_0202    <- Master_data  %>% dplyr::filter(Date %in% 20220202)  %>% 
   dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
 
-length.resp.feed <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T) %>% 
+length.resp.feed <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) %>% 
   dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>%
   dplyr::rename(Fed_Unfed = Food) 
 length.resp.feed <- length.resp.feed[!is.na(length.resp.feed$Length_um),] %>%  dplyr::select(c('Date', 'Run', 'Plate', 
@@ -744,8 +744,9 @@ for (i in 1:nrow(loop_914)) {
   
   t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
   
-  ClearanceRate.Ply   <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Tetraselmis cells mL-1  hr-1 mm shell length-1
-    
+  ClearanceRate.Ply          <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$whole_Dry_weight[1]) # Tetraselmis cells mL-1  hr-1 mm shell length-1
+  ClearanceRate.Ply_length   <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Tetraselmis cells mL-1  hr-1 mm shell length-1
+ 
   # chaet
   A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
  
@@ -759,7 +760,8 @@ for (i in 1:nrow(loop_914)) {
   
   t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
   
-  ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
+  ClearanceRate.Chaet        <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$whole_Dry_weight[1]) # Chaetoceros cells mL-1  hr-1 mm shell length-1
+  ClearanceRate.Chaet_length <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
 
     
   # low chl a (seston)
@@ -775,18 +777,23 @@ for (i in 1:nrow(loop_914)) {
   
   t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
   
-  ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # seston cells mL-1  hr-1 mm shell length-1
-  
+  ClearanceRate.Seston        <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$whole_Dry_weight[1]) # seston cells mL-1  hr-1 mm shell length-1
+  ClearanceRate.Seston_length <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # seston cells mL-1  hr-1 mm shell length-1
   
   dat2 <- dat[1,] %>%
-    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um')) %>% 
-    mutate(Chaet_mL.hr.mmlength = ClearanceRate.Chaet) %>% 
-    mutate(Ply_mL.hr.mmlength = ClearanceRate.Ply) %>% 
-    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston)
+    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'whole_Dry_weight')) %>% 
+    mutate(Chaet_mL.hr.gWDW      = ClearanceRate.Chaet) %>% 
+    mutate(Ply_mL.hr.gWDW        = ClearanceRate.Ply) %>% 
+    mutate(Seston_mL.hr.gWDW     = ClearanceRate.Seston) %>% 
+    mutate(Chaet_mL.hr.mmlength  = ClearanceRate.Chaet_length) %>% 
+    mutate(Ply_mL.hr.mmlength    = ClearanceRate.Ply_length) %>% 
+    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston_length)
     
   if (nrow(dat2) > 0) {
-    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 12)) # create dataframe to save cumunalitively during for loop
-    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
+    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 15)) # create dataframe to save cumunalitively during for loop
+    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 
+                                  'Chaet_mL.hr.gWDW', 'Ply_mL.hr.gWDW', 'Seston_mL.hr.gWDW',  
+                                  'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
     FeedRate.table$Date                       <- dat2$Date
     FeedRate.table$ID                         <- loop_914[i,]
     FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
@@ -796,24 +803,34 @@ for (i in 1:nrow(loop_914)) {
     FeedRate.table$Plate                      <- dat2$Plate
     FeedRate.table$Number                     <- gsub("^(?:[^_]+_){6}([^_]+).*", "\\1", FeedRate.table$ID)
     FeedRate.table$Length_um                  <- dat2$Length_um
+    FeedRate.table$Chaet_mL.hr.gWDW           <- dat2$Chaet_mL.hr.gWDW
+    FeedRate.table$Ply_mL.hr.gWDW             <- dat2$Ply_mL.hr.gWDW
+    FeedRate.table$Seston_mL.hr.gWDW          <- dat2$Seston_mL.hr.gWDW
     FeedRate.table$Chaet_mL.hr.mmlength       <- dat2$Chaet_mL.hr.mmlength
     FeedRate.table$Ply_mL.hr.mmlength         <- dat2$Ply_mL.hr.mmlength
     FeedRate.table$Seston_mL.hr.mmlength      <- dat2$Seston_mL.hr.mmlength
     
-    df       <- data.frame(FeedRate.table) # name dataframe for this single row
+    df           <- data.frame(FeedRate.table) # name dataframe for this single row
     df_total.914 <- rbind(df_total.914,df) #bind to a cumulative list dataframe
     #print(df_total.914) # print to monitor progress
   } else {}
 }
 
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# assign a random factor for LME models   ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# clean & view means...       ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 df_total.914 <- df_total.914  %>% 
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm")) %>% 
   dplyr::mutate(random_fact = as.factor(paste(Replicate, pH, sep = '_')))
+
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# clean & view means...       ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 Ply_CR_914_Means <- df_total.914 %>% 
@@ -864,11 +881,14 @@ write.csv(CR_Means_Master_914, "C:/Users/samjg/Documents/Github_repositories/Air
 
 # Data
 Ply_FR_914_df      <- df_total.914 %>% filter(Ply_mL.hr.mmlength > 0) %>% mutate(type = 'ply') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Ply_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Seston_mL.hr.mmlength'))
+  dplyr::rename(CR_mL.hr.mmlength = Ply_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Seston_mL.hr.mmlength')) %>% 
+  dplyr::rename(CR_mL.hr.WDW      = Ply_mL.hr.gWDW) %>% dplyr::select(!c('Chaet_mL.hr.gWDW','Seston_mL.hr.gWDW'))
 Chaet_FR_914_df    <- df_total.914 %>% filter(Chaet_mL.hr.mmlength > 0) %>% mutate(type = 'chaet') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Chaet_mL.hr.mmlength) %>% dplyr::select(!c('Ply_mL.hr.mmlength','Seston_mL.hr.mmlength'))
+  dplyr::rename(CR_mL.hr.mmlength = Chaet_mL.hr.mmlength) %>% dplyr::select(!c('Ply_mL.hr.mmlength','Seston_mL.hr.mmlength')) %>% 
+  dplyr::rename(CR_mL.hr.WDW      = Chaet_mL.hr.gWDW) %>% dplyr::select(!c('Ply_mL.hr.gWDW','Seston_mL.hr.gWDW'))
 Seston_FR_914_df   <- df_total.914 %>% filter(Seston_mL.hr.mmlength > 0) %>% mutate(type = 'seston') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Seston_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Ply_mL.hr.mmlength'))
+  dplyr::rename(CR_mL.hr.mmlength = Seston_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Ply_mL.hr.mmlength')) %>% 
+  dplyr::rename(CR_mL.hr.WDW      = Seston_mL.hr.gWDW) %>% dplyr::select(!c('Chaet_mL.hr.gWDW','Ply_mL.hr.gWDW'))
 
 # library
 require(nlme)
@@ -887,6 +907,17 @@ kable(as.data.frame(anova(Ply_LMEmod_0914))) %>%  # print a png of this table
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/20210914_figs_tables/20210914_PLY_CR_LME_Diagnostics.pdf"))
 check_model(Ply_LMEmod_0914) # print the model diagnostics 
 dev.off()
+# one way anova witou the random factor of tank
+Ply_AOVmod_0914 <-aov(lm(CR_mL.hr.mmlength ~ pH, data=Ply_FR_914_df))
+shapiro.test(resid(Ply_AOVmod_0914)) #  0.1025 - normal
+leveneTest(Ply_AOVmod_0914) # 0.7556  - pass
+pander(anova(Ply_AOVmod_0914), style='rmarkdown') # anova table of lmer
+# |    &nbsp;     | Df | Sum Sq | Mean Sq | F value | Pr(>F) |
+# |:-------------:|:--:|:------:|:-------:|:-------:|:------:|
+# |    **pH**     | 1  | 0.8132 | 0.8132  | 0.1432  | 0.7108 |
+# | **Residuals** | 14 |  79.5  |  5.678  |   NA    |   NA   |
+
+
 
 
 # Chaet - Linear Mixed Effects Model
@@ -902,6 +933,20 @@ kable(as.data.frame(anova(Chaet_LMEmod_0914))) %>%  # print a png of this table
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/20210914_figs_tables/20210914_CHAET_CR_LME_Diagnostics.pdf"))
 check_model(Chaet_LMEmod_0914) # print the model diagnostics 
 dev.off()
+# one way anova witou the random factor of tank
+Chaet_AOVmod_0914 <-aov(lm(CR_mL.hr.mmlength ~ pH, data=Chaet_FR_914_df))
+shapiro.test(resid(Chaet_AOVmod_0914)) #  0.1672 - normal
+leveneTest(Chaet_AOVmod_0914) # 0.1234  - pass
+pander(anova(Chaet_AOVmod_0914), style='rmarkdown') # anova table of lmer
+# |    &nbsp;     | Df | Sum Sq | Mean Sq | F value | Pr(>F)  |
+# |:-------------:|:--:|:------:|:-------:|:-------:|:-------:|
+# |    **pH**     | 1  | 21.08  |  21.08  |  4.102  | 0.05573 | # marginal effect of pH
+# | **Residuals** | 21 | 107.9  |  5.139  |   NA    |   NA    |
+
+
+
+
+
 
 
 # Seston - Linear Mixed Effects Model
@@ -917,6 +962,15 @@ kable(as.data.frame(anova(Chaet_LMEmod_0914))) %>%  # print a png of this table
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/20210914_figs_tables/20210914_SESTON_CR_LME_Diagnostics.pdf"))
 check_model(Seston_LMEmod_0914) # print the model diagnostics 
 dev.off()
+# one way anova witou the random factor of tank
+Seston_AOVmod_0914 <-aov(lm(CR_mL.hr.mmlength ~ pH, data=Seston_FR_914_df))
+shapiro.test(resid(Seston_AOVmod_0914)) #  0.8013 - normal
+leveneTest(Seston_AOVmod_0914) # 0.1058  - pass
+pander(anova(Seston_AOVmod_0914), style='rmarkdown') # anova table of lmer
+# |    &nbsp;     | Df | Sum Sq | Mean Sq | F value | Pr(>F) |
+# |:-------------:|:--:|:------:|:-------:|:-------:|:------:|
+# |    **pH**     | 1  | 6.324  |  6.324  |  1.862  | 0.1868 |
+# | **Residuals** | 21 | 71.31  |  3.396  |   NA    |   NA   |
 
 
 
@@ -930,11 +984,11 @@ dev.off()
 
 Master_914     <- rbind(Chaet_FR_914_df, Ply_FR_914_df, Seston_FR_914_df)
 
-CR_914_boxplot <- Master_914_plotting %>% 
+CR_914_boxplot_parsed <- Master_914 %>% 
   ggplot(aes(pCO2 , CR_mL.hr.mmlength , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white","grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=12),
@@ -942,13 +996,26 @@ CR_914_boxplot <- Master_914_plotting %>%
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Clearance rate, F1 Scallops 20210914") +
   facet_wrap(~type)
-CR_914_boxplot
+# CR_914_boxplot_parsed # view plot
 
+CR_914_boxplot <- Master_914 %>% 
+  ggplot(aes(pCO2 , CR_mL.hr.mmlength , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(aes(shape = type), size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  scale_shape_manual(values=c(1, 2, 4))+
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=10)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Clearance rate, F1 Scallops 20210914") 
+# CR_914_boxplot
 
 # Save plots :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/20210914_figs_tables/2010914_CR_Boxplots.pdf"), width = 7, height= 6)
-print(CR_914_boxplot)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/20210914_figs_tables/2010914_CR_Boxplots.pdf"), width = 10, height= 6)
+ggarrange(CR_914_boxplot_parsed, CR_914_boxplot)
 dev.off()
 
 
@@ -971,8 +1038,29 @@ pander(anova(LMEmod_914), style='rmarkdown') # anova table of lmer
 shapiro.test(residuals(LMEmod_914)) # non nomral 0.03313
 hist(residuals(LMEmod_914)) # 
 qqnorm(residuals(LMEmod_914)) #
-
-
+# two way anova witou the random factor of tank
+AOVmod_0914 <-aov(lm(CR_mL.hr.mmlength ~ pH*type, data=Master_914))
+hist(resid(AOVmod_0914))
+qqnorm(resid(AOVmod_0914))
+shapiro.test(resid(AOVmod_0914)) #  0.04204 - non - normal
+leveneTest(AOVmod_0914) # 0.4056  - pass
+pander(anova(AOVmod_0914), style='rmarkdown') # anova table of lmer
+# |    &nbsp;     | Df | Sum Sq | Mean Sq | F value | Pr(>F)  |
+# |:-------------:|:--:|:------:|:-------:|:-------:|:-------:|
+# |    **pH**     | 1  | 26.79  |  26.79  |  5.798  | 0.01937 | * significant effect of pH
+# |   **type**    | 2  | 20.19  |  10.09  |  2.185  |  0.122  |
+# |  **pH:type**  | 2  | 5.083  |  2.541  |  0.55   |  0.58   |
+# | **Residuals** | 56 | 258.7  |  4.62   |   NA    |   NA    |
+AOVmod_0914_TRANSFORMED <-aov(lm(sqrt(CR_mL.hr.mmlength) ~ pH*type, data=Master_914))
+shapiro.test(resid(AOVmod_0914_TRANSFORMED)) #  0.7088 - non - normal
+leveneTest(AOVmod_0914_TRANSFORMED) # 0.7599  - pass
+pander(anova(AOVmod_0914_TRANSFORMED), style='rmarkdown') # anova table of lmer
+# |    &nbsp;     | Df | Sum Sq | Mean Sq | F value | Pr(>F)  |
+# |:-------------:|:--:|:------:|:-------:|:-------:|:-------:|
+# |    **pH**     | 1  |  1.8   |   1.8   |  5.764  | 0.01971 | * still a sig effect after normality was resolved
+# |   **type**    | 2  | 1.437  | 0.7183  |   2.3   | 0.1097  |
+# |  **pH:type**  | 2  | 0.3052 | 0.1526  | 0.4885  | 0.6161  |
+# | **Residuals** | 56 | 17.49  | 0.3124  |   NA    |   NA    |
 
 ```
 

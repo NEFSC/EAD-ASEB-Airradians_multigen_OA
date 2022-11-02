@@ -20,7 +20,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::
 
-path.p    <- "Data/Respiration" #the location of all your respirometry files 
+path.p    <- "Data/Physiology/Respiration" #the location of all your respirometry files 
 a         <- 0.4
 ouputNAME <- "Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv" 
 #ouputNAME <- "Output/Respiration/Cumulative_resp_alpha0.4_trunc40mins.csv" # do you want to truncate at 40 mins???
@@ -59,7 +59,7 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 11:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 12:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
@@ -68,7 +68,7 @@ for(i in 11:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
   
   if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
-   } else if (folder.names.table[i,] %in% c('20211026', '20220922')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
+   } else if (folder.names.table[i,] %in% c('20211026', '20220922', '20221026')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
      file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
      file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
      file.names.table     <- rbind(file.names.table1, file.names.table2)
@@ -146,6 +146,8 @@ for(i in 11:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 20 & minutes < 50) # call between miutes 20 and 50 of the trials - took time to start in order to close chambers and channels stopped once below defined threshold (80 % a.s.)
      } else if (folder.names.table[i,] == '20220922' & (gsub(".*\\.","", file.names.table[m,]) == "csv")) { # call all runs with the SDR SensorDish system on 20220922 (.csv files)
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 50) # call data after 10 minutes
+     } else if (folder.names.table[i,] == '20221026' & (gsub(".*\\.","", file.names.table[m,]) == "csv")) { # call all runs with Loligo on 20221026 (.csv files)
+       Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 60) # call data after 10 minutes
         } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
           # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
           Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
