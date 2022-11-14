@@ -37,7 +37,14 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
 # View(RR_master)
 ```
 
+```{r shell lengths at each timepoint}
 
+SumTable <- RR_master[!is.na(RR_master$Length_um),] %>%  
+            mutate(Length_mm = Length_um/1000) %>% 
+            summarySE(measurevar="Length_mm", groupvars=c("Date")) %>% 
+            dplyr::arrange(Date)
+
+```
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 F1 DATA ANALYSIS ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
