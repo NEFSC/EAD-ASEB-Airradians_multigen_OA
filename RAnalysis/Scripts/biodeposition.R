@@ -121,7 +121,7 @@ WaterSamples_blank     <- biodep2 %>%
   dplyr::select(c('Date', 'sample_type', 'treatment', 'water_sample_time', 'TPM_mgL',  'PIM_mgL',  'POM_mgL', 'Perc_INORG', 'Perc_ORG')) %>% 
   dplyr::filter(sample_type %in% 'water_Blank') %>% 
   dplyr::group_by(Date,treatment)
-View(WaterSamples_blank)
+ View(WaterSamples_blank)
 # slice(-1) # removes the first timestamp by group 
 # mean for these blanks here...
 WaterSamples_blank_AVE <- WaterSamples_blank %>% 
@@ -327,95 +327,107 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 AE_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                Date == '20220923' ~ '20C')) %>%  
   #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , AE , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Assimilation Efficiency, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # AE_boxplot
 
 
 AR_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C')) %>%  
   # filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , AR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Assimilation Rate, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # AR_boxplot
 
 OIR_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C')) %>%  
   #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , OIR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Organic Ingestion Rate, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # OIR_boxplot
 
 
 FR_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C')) %>%  
   #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , FR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Filtration Rate, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # FR_boxplot
 
 RR_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C')) %>%  
   #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Percent Rejection Rate, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # RR_boxplot
 
 SE_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C')) %>%  
   #filter(!AE < 0) %>% 
   ggplot(aes(pCO2 , SE , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("white", "grey50")) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
   ggtitle("Selection Efficiency, F1 Scallops") +
-  facet_wrap(~Date)
+  facet_wrap(~Temperature)
 # SE_boxplot
 
 # output the plot 
