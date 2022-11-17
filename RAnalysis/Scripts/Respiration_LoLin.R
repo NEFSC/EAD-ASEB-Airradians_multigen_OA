@@ -49,6 +49,8 @@ folder.names.table     <- data.frame(folder.names)
 # 9      20220829 - contains F2 larvae trial runs with the SDR SensorDish (.csv files)
 # 10     20220830 - contains F2 larvae and post-set  with the SDR SensorDish (.csv files) (note: cases with >1 animal per channel were pre-set and 1 animal per channel were post-set)
 # 11     20220922 - contains F1 adults at ~14 months in age with LoLigo (.txt files) & F2 spat at ~2 months in age with the SDR SenorDish (.csv files)
+# 11     20221026 - contains F1 adults at ~15 months in age with LoLigo (.txt files) - also measured biodeposition for these individuals!
+# 11     20221116 - contains F2 juveniles at ~4 months old meausred with LoLigo (.txt files) 
 
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total             <- data.frame() # start dataframe 
@@ -72,7 +74,7 @@ for(i in 12:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
      file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
      file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
      file.names.table     <- rbind(file.names.table1, file.names.table2)
-    }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
+    }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21,  2/2/22, 11/16/2022)
         file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     }  
 
@@ -146,8 +148,10 @@ for(i in 12:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 20 & minutes < 50) # call between miutes 20 and 50 of the trials - took time to start in order to close chambers and channels stopped once below defined threshold (80 % a.s.)
      } else if (folder.names.table[i,] == '20220922' & (gsub(".*\\.","", file.names.table[m,]) == "csv")) { # call all runs with the SDR SensorDish system on 20220922 (.csv files)
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 50) # call data after 10 minutes
-     } else if (folder.names.table[i,] == '20221026' & (gsub(".*\\.","", file.names.table[m,]) == "csv")) { # call all runs with Loligo on 20221026 (.csv files)
+     } else if (folder.names.table[i,] == '20221026') { # call all runs with Loligo on 20221026 (.csv files)
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 60) # call data after 10 minutes
+     } else if (folder.names.table[i,] == '20221116') { # call all runs with Loligo on 20221026 (.csv files)
+       Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes < 75) # call data before minute 75 (when most reached 80% a.s. and finished), also the starting data was very clean in these runs!
         } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
           # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
           Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...

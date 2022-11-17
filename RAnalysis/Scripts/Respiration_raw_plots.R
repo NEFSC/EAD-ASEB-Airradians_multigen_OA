@@ -2,7 +2,7 @@
 # measure respiration rate from raw Loligo output data 
 # using Lolin.R (Olito etal. 201?) for reproducible and non-bias calculation of respiration rates
 
-# Written by: Sam J Gurr (last edit 9/15/2021)
+# Written by: Sam J Gurr (last edit 11/16/2022)
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -41,7 +41,7 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 12:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 13:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
@@ -52,7 +52,7 @@ for(i in 12:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table     <- rbind(file.names.table1, file.names.table2)
-  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21 and 2/2/22)
+  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21,  2/2/22, 11/16/2022)
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE))))  %>%  dplyr::filter(grepl('raw', txt.files))
   }
   
