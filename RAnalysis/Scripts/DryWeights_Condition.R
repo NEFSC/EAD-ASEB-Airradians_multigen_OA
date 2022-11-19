@@ -31,7 +31,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 F1_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F1/cumulative_raw/F1_dry_weights_raw.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") %>% # master data file
   dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm", 
                                  pH == 7.5 ~ "800 μatm")) %>% 
-  dplyr::mutate(Age = case_when(Date_sampled == "10/26/2021" ~  92,  
+  dplyr::mutate(Age = case_when(Date_sampled == "10/26/2021" ~  92,  # ran unique Date to call these sampling dates, the lengths files, spawn was 7.27.2021
                                 Date_sampled == "12/2/2021" ~ 129,
                                 Date_sampled == "2/2/2022" ~ 191,
                                 Date_sampled == "2/28/2022" ~ 217,
@@ -43,7 +43,7 @@ F2_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F2/cumulative_raw/F2
   dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  
                                  pH == 7.5 ~ "800 μatm", 
                                  pH == 7 ~ "1200 uatm")) %>% 
-  dplyr::mutate(Age = case_when(Date_sampled == "11/16/2022" ~  92)) # add more dates as we collect data 
+  dplyr::mutate(Age = case_when(Date_sampled == "11/16/2022" ~  92)) # add more dates as we collect data, spawn was 8.16.2022
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -151,7 +151,7 @@ ggarrange(DryShellWeight_Plot, DryShellWeight_Plot_Lengthnorm, DryTissueWeight_P
 
 
 # Export to pdf
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/DryWeights/F1/DryShell_DryTissue.pdf"), width = 12, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/DryWeights/F1/DryShell_DryTissue.pdf"), width = 12, height = 10)
 ggarrange(DryShellWeight_Plot, DryShellWeight_Plot_Lengthnorm, DryTissueWeight_Plot, DryTissueWeight_Plot_Lengthnorm,nrow = 2, ncol = 2)
 dev.off()
 
