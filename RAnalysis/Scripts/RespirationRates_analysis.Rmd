@@ -30,19 +30,30 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data 
+              filter(!Date %in% '8/30/2022') %>% # an F2 measurement
               dplyr::mutate(resp_umol_L_hr_mg_WDW = 
                               resp_umol_L_hr/whole_Dry_weight) %>%  # call whole dry weight corrected MO2
               dplyr::mutate(resp_umol_L_hr_mmLength = 
-                              resp_umol_L_hr/ (1000/Length_um)) # call length corrected MO2
+                              resp_umol_L_hr/ (1000/Length_um))  %>% # call length corrected MO2
+  # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
+              dplyr::mutate(Age = case_when(Date == '9/14/2021'  ~ 50,
+                                            Date == '9/30/2021'  ~ 66,
+                                            Date == '10/26/2021'  ~ 92, 
+                                            Date == '2/2/2022' ~ 191,
+                                            Date == '3/1/2022'  ~ 218,
+                                            Date == '9/22/2022'  ~ 423)) %>% 
+              dplyr::mutate(Age = as.factor(Age))
+              
 # View(RR_master)
+
 ```
 
 ```{r shell lengths at each timepoint}
 
 SumTable <- RR_master[!is.na(RR_master$Length_um),] %>%  
             mutate(Length_mm = Length_um/1000) %>% 
-            summarySE(measurevar="Length_mm", groupvars=c("Date")) %>% 
-            dplyr::arrange(Date)
+            summarySE(measurevar="Length_mm", groupvars=c("Date", "Age")) %>% 
+            dplyr::arrange(Age)
 SumTable
 ```
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -162,7 +173,7 @@ dev.off()
 
 ```
 # summary: 
-# TDW b factor total = 0.818
+# TDW b factor total = 0.828
 # TDW b factor pCO2 high = 0.834
 # TDW b factor pCO2 low = 0.804 # two outliers removed here
 
@@ -224,16 +235,16 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 dev.off() 
 
 # summary: 
-# Length b factor total = 1.77
-# Length b factor pCO2 high = 1.84
-# Length b factor pCO2 low = 1.76
+# Length b factor total = 1.76
+# Length b factor pCO2 high = 1.83
+# Length b factor pCO2 low = 1.69
 
 
 ```
 # summary: 
-# Length b factor total = 1.77
-# Length b factor pCO2 high = 1.84
-# Length b factor pCO2 low = 1.76
+# Length b factor total = 1.76
+# Length b factor pCO2 high = 1.83
+# Length b factor pCO2 low = 1.69
 
 
 ## WHOLE DRY WEIGHT :::::::::::
@@ -401,7 +412,7 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("b factor") +
+         ggtitle("tdw b factor (0.828)") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -413,7 +424,84 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
          facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
 F1s.BOXPLOT_TDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
 
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW.pdf"), width = 8, height = 8)
+print(ggarrange(F1s.BOXPLOT_TDW_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+
 ```
+
+
+## BOXPLOTS by SHELL LENGTH (b factor = 1.77)
+```{r, by MM LENGTH}
+
+ 
+# TISSUE ---------------------------------------------------------------------------- #
+# PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
+
+F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_µmol_L_mm_Length_hr, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         #ylim(0, 0.2) +
+         ggtitle("Shell length (mm)") +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free")
+F1s.BOXPLOT_Length_facetted # not that we do not have Length for 9/14 and 9/30 data 
+
+
+# B factor normalized - TISSUE DRY WEIGHT
+
+bLength = 1.77 # review the outlier-omitted b factor plot in previous chunk
+
+F1s.BOXPLOT_Length_bfactor <- RR_formatted_F1s %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*100)^bLength )) %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormLength, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("shell length b factor (1.77)") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+F1s.BOXPLOT_Length_bfactor # not that we do not have Length for 9/14 and 9/30 data 
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH.pdf"), width = 8, height = 8)
+print(ggarrange(F1s.BOXPLOT_Length_facetted, F1s.BOXPLOT_Length_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+
+```
+
 
 ## BOXPLOTS by WHOLE DRY WEIGHT (b factor = 0.611)
 ```{r, by mg TISSUE}
@@ -488,18 +576,19 @@ dev.off()
 # STATISTICAL ANALYSIS :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-``` {r stats F1s}
-
+``` {r stats F1s, WDW b factor norm}
+unique(RR_formatted_F1s$Date) # 2021-09-14 2021-09-30 2021-10-26 2022-02-02 2022-03-01 2022-09-22
 # f1s data
 RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormWDW = resp_umol_L_hr/(whole_Dry_weight^bWDW)) 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormWDW = resp_umol_L_hr/(whole_Dry_weight^bWDW)) %>% 
+  dplyr::mutate(Date = as.factor(Date))
 
 
 # (1) First, run anova within date for all records (for looped!)
 ANOVA_Dates       <- as.data.frame(unique(RR_formatted_F1s$Date)) # call a list to loop in 
 AOVdf_total       <- data.frame() # start dataframe, this will be the master output
-DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
-colnames(DF_loop) <- c('Date', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
 
 
 
@@ -508,11 +597,12 @@ for (i in 1:nrow(ANOVA_Dates)) {
   date_loop     <- as.character(ANOVA_Dates[i,])
   data_loop     <- RR_formatted_F1s %>% 
                           dplyr::filter(Date == date_loop) %>% 
-                          dplyr::select(Date, pCO2, resp_umol_L_hr_bFactorNormWDW) %>% 
+                          dplyr::select(Date, Age, pCO2, resp_umol_L_hr_bFactorNormWDW) %>% 
                           na.omit()
-  
+
         AOVmod              <- aov(lm(data_loop$resp_umol_L_hr_bFactorNormWDW ~ data_loop$pCO2))
         DF_loop$Date        <- date_loop
+        DF_loop$Age         <- data_loop$Age[1]
         DF_loop$Metric      <- 'Respiration rate; WDW b factor normalized'
         DF_loop$model       <- 'one-way AOV; x ~ treatment'
         DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
@@ -534,12 +624,38 @@ for (i in 1:nrow(ANOVA_Dates)) {
         print(AOVdf_total) # print to monitor progress
         }
 }
-
+AOVdf_total <- AOVdf_total %>% dplyr::arrange(Age)
 View(AOVdf_total) # view all the anova tests within data 
-  
+
 # WRITE CSV OF THE MASTER FILE
-write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_ANOVA_table.csv")
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_ANOVA_table_WDW.csv")
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+
+
+# Two way anova for pH * time
+total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormWDW  ~ pCO2 * Date, data = RR_formatted_F1s))
+leveneTest(total_mod) # 1.674e-09 ***
+shapiro.test(resid(total_mod)) # < 2.2e-16
+hist(resid(total_mod)) # positive skew
+qqnorm(resid(total_mod))
+total_mod_transformed  <- aov(lm(log(resp_umol_L_hr_bFactorNormLength)  ~ pCO2 * Date, data = RR_formatted_F1s))
+leveneTest(total_mod_transformed) # 0.2057 - PASS
+shapiro.test(resid(total_mod_transformed)) # 1.32e-05 - still non-normal
+hist(resid(total_mod_transformed))
+qqnorm(resid(total_mod_transformed))
+summary(total_mod_transformed)
+TukeyHSD(total_mod_transformed)
+#find optimal lambda for Box-Cox transformation 
+library(MASS)
+bc     <- boxcox(RR_formatted_F1s$resp_umol_L_hr_bFactorNormWDW ~ RR_formatted_F1s$pCO2 * RR_formatted_F1s$Date) # y ~ x
+lambda <- bc$x[which.max(bc$y)] # 0.1414141
+new_model <- lm(((resp_umol_L_hr_bFactorNormWDW^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s) #fit new linear regression model using the Box-Cox transformation
+leveneTest(new_model) # 0.04959 * - PASS
+shapiro.test(resid(new_model)) # 0.002069 - still non-normal
+qqnorm(resid(new_model)) # boxcox resolves the qqnorm visual from the raw model greatly
+summary(aov(new_model)) # date and pH significant 
+
+
 
 ```
 
@@ -551,7 +667,88 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 
+``` {r stats F1s, Length b factor norm}
+unique(RR_formatted_F1s$Date) # 2021-09-14 2021-09-30 2021-10-26 2022-02-02 2022-03-01 2022-09-22
+# f1s data
+RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*100)^bLength)) %>% 
+  dplyr::mutate(Date = as.factor(Date))
 
+
+# (1) First, run anova within date for all records (for looped!)
+ANOVA_Dates       <- as.data.frame(unique(RR_formatted_F1s$Date)) # call a list to loop in 
+AOVdf_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
+
+
+
+for (i in 1:nrow(ANOVA_Dates)) {
+
+  date_loop     <- as.character(ANOVA_Dates[i,])
+  data_loop     <- RR_formatted_F1s %>% 
+                          dplyr::filter(Date == date_loop) %>% 
+                          dplyr::select(Date, Age, pCO2, resp_umol_L_hr_bFactorNormLength) %>% 
+                          na.omit()
+
+        AOVmod              <- aov(lm(data_loop$resp_umol_L_hr_bFactorNormLength ~ data_loop$pCO2))
+        DF_loop$Date        <- date_loop
+        DF_loop$Age         <- data_loop$Age[1]
+        DF_loop$Metric      <- 'Respiration rate; Length b factor normalized'
+        DF_loop$model       <- 'one-way AOV; x ~ treatment'
+        DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+        DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+        DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+        DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+        DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+          'NO'} else {'YES'}
+        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+          'YES'} else {'NO'}
+        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+          'YES'} else {'NO'}
+        
+        # asign loop and cumulative output table
+        df          <- data.frame(DF_loop) # name dataframe for this single row
+        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
+        print(AOVdf_total) # print to monitor progress
+        
+}
+AOVdf_total <- AOVdf_total %>% dplyr::arrange(Age)
+View(AOVdf_total) # view all the anova tests within data 
+
+# WRITE CSV OF THE MASTER FILE
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_ANOVA_table_Length.csv")
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+
+
+# Two way anova for pH * time
+total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength  ~ pCO2 * Date, data = RR_formatted_F1s))
+leveneTest(total_mod) # 1.674e-09 ***
+shapiro.test(resid(total_mod)) # < 2.2e-16
+hist(resid(total_mod)) # positive skew
+qqnorm(resid(total_mod))
+total_mod_transformed  <- aov(lm(log(resp_umol_L_hr_bFactorNormWDW)  ~ pCO2 * Date, data = RR_formatted_F1s))
+leveneTest(total_mod_transformed) # 0.2057 - PASS
+shapiro.test(resid(total_mod_transformed)) # 1.32e-05 - still non-normal
+hist(resid(total_mod_transformed))
+qqnorm(resid(total_mod_transformed))
+summary(total_mod_transformed)
+TukeyHSD(total_mod_transformed)
+#find optimal lambda for Box-Cox transformation 
+library(MASS)
+bc     <- boxcox(RR_formatted_F1s$resp_umol_L_hr_bFactorNormLength ~ RR_formatted_F1s$pCO2 * RR_formatted_F1s$Date) # y ~ x
+lambda <- bc$x[which.max(bc$y)] # 0.1414141
+new_model <- lm(((resp_umol_L_hr_bFactorNormLength^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s) #fit new linear regression model using the Box-Cox transformation
+leveneTest(new_model) # 0.04959 * - PASS
+shapiro.test(resid(new_model)) # 0.002069 - still non-normal
+qqnorm(resid(new_model)) # boxcox resolves the qqnorm visual from the raw model greatly
+summary(aov(new_model)) # date and pH significant 
+
+
+
+```
 
 
 

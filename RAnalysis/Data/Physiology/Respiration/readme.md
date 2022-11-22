@@ -16,11 +16,11 @@ README
 	- F1 Bay scallops
 		- larvae/spat: NA
 		- juveniles: 20220914, 20220930, 20221026
-		- adults: 20220222, 20220301, 20220922, 20221026
+		- adults: 20220222, 20220301, 20220922, 20221026 (all text files with loligo system)
 
 	- F2 Bay scallops
-		- larvae/spat: 20220420 & 20220422 (failed spawn!), 20220824, 20220829, 20220830, 20220922
-		- juveniles: 20221116
+		- larvae/spat: 20220420 & 20220422 (failed spawn!), 20220824, 20220829, 20220830, 20220922 (SDR csv files)
+		- juveniles: 20221116 (text files with loligo system)
 
 #### 'Reference_resp_ID'
 
