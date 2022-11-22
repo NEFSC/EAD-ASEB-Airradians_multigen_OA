@@ -183,12 +183,12 @@ MO2_b.factorLENGTH_PLOT <- RR_master_OM %>%
                               geom_point() +
                               theme(panel.grid.major = element_blank(), 
                                     panel.grid.minor = element_blank())+ 
-                              scale_x_continuous(name ="log10_Length; TDW in g") +
+                              scale_x_continuous(name ="log10_Length; in mm") +
                               scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                               theme_classic() +
                               theme(legend.position="none") +
                               ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                      (b.factor * log10_BodyMass)") +
+                                      (b.factor * log10_Length)") +
                               geom_smooth(method = lm, color = 'red') +
                               ggpmisc::stat_poly_eq(parse=T, 
                                                     aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
@@ -203,12 +203,12 @@ MO2_b.factorLENGTH_PLOT_facetted <- RR_master_OM %>%
                                         scale_color_manual(values=c("blue","orange")) +
                                         theme(panel.grid.major = element_blank(), 
                                               panel.grid.minor = element_blank())+ 
-                                        scale_x_continuous(name ="log10_Length; TDW in g") +
+                                        scale_x_continuous(name ="log10_Length; in mm") +
                                         scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                                         theme_classic() +
                                         theme(legend.position="none") +
                                         ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                                (b.factor * log10_BodyMass)") +
+                                                (b.factor * log10_Length)") +
                                         geom_smooth(method = lm, color = 'red') +
                                         ggpmisc::stat_poly_eq(parse=T, 
                                                               aes(label = paste(..eq.label..,
@@ -224,16 +224,16 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 dev.off() 
 
 # summary: 
-# Length b factor total = 1.89
-# Length b factor pCO2 high = 1.79
-# Length b factor pCO2 low = 2.11
+# Length b factor total = 1.77
+# Length b factor pCO2 high = 1.84
+# Length b factor pCO2 low = 1.76
 
 
 ```
 # summary: 
-# Length b factor total = 1.89
-# Length b factor pCO2 high = 1.79
-# Length b factor pCO2 low = 2.11
+# Length b factor total = 1.77
+# Length b factor pCO2 high = 1.84
+# Length b factor pCO2 low = 1.76
 
 
 ## WHOLE DRY WEIGHT :::::::::::
