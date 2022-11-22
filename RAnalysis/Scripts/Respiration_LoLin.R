@@ -285,9 +285,10 @@ resp_rerun$seconds   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])    # secs
 resp_rerun$minutes   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])/60 # mins - calc the minute time series 
                         
 #is the data a txt file? (from Lolin 8 channel
-resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run_1_raw.txt", header = TRUE,skip = 37)
-resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run_2_raw.txt", header = TRUE,skip = 37)
-resp_rerun           <- read.delim2(file = "Data/Respiration/20220202/run3_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Physiology/Respiration/20220202/run_1_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Physiology/Respiration/20220202/run_2_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Physiology/Respiration/20220202/run3_raw.txt", header = TRUE,skip = 37)
+resp_rerun           <- read.delim2(file = "Data/Physiology/Respiration/20221026/run_2_raw.txt", header = TRUE,skip = 37, fileEncoding= "windows-1252")
 resp_rerun$date      <- paste((sub("2022.*", "", resp_rerun$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
 resp_rerun$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", resp_rerun$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
 resp_rerun$seconds   <- (resp_rerun$time_Sec - resp_rerun$time_Sec[1])    # secs - calc the sec time series
@@ -302,11 +303,24 @@ resp_rerun_LoLin <- resp_rerun[seq(1, nrow(resp_rerun), 15), ]  %>% # data every
                     dplyr::filter(!colnames(resp_rerun)[2] %in% 'NaN') %>% # Lolin recorede NAs are written as 'Nan' - wonts run unless removed!
                     #dplyr::select(c("minutes", "CH1.O2...air.sat..")) %>% # run 1 ch 1 20220202
                     #dplyr::select(c("minutes", "CH5.O2...air.sat..")) %>% # run 2 ch 5 20220202
-                    dplyr::select(c("minutes", "CH2.O2...air.sat..")) %>% # run 3 ch 2 20220202
+                    # dplyr::select(c("minutes", "CH2.O2...air.sat..")) %>% # run 3 ch 2 20220202
+                    
                     #dplyr::filter(minutes < 70) %>% # less than minute 70 - the data we want to call
                     #dplyr::filter(minutes > 80 & minutes < 120) %>% # after minute 80
-                    dplyr::filter(minutes > 50 & minutes < 80) %>% # after minute 60
-                    dplyr::mutate(mgL = (DO.unit.convert(as.numeric(CH2.O2...air.sat..),  # DO in percent air sat to be converted to mgL - uses an R package from loligo rMR
+                    #dplyr::filter(minutes > 50 & minutes < 80) %>% # after minute 60
+                    
+  
+                    # dplyr::select(c("minutes", "CH7.O2...air.sat..")) %>% # run 2 ch7 20221026
+                    # dplyr::filter(minutes <20) %>% # run 2 ch7 20221026 - before numute 20
+  
+                    # dplyr::select(c("minutes", "CH4.O2...air.sat..")) %>% # run 2 ch4 20221026
+                    # dplyr::filter(minutes <25) %>% # run 2 ch7 20221026 - before numute 20
+                    
+                    dplyr::select(c("minutes", "CH3.O2...air.sat..")) %>% # run 2 ch3 20221026
+                    dplyr::filter(minutes <25) %>% # run 2 ch7 20221026 - before numute 20
+
+  
+                    dplyr::mutate(mgL = (DO.unit.convert(as.numeric(CH3.O2...air.sat..),  # DO in percent air sat to be converted to mgL - uses an R package from loligo rMR
                                                          DO.units.in = "pct", DO.units.out ="mg/L", 
                                                          bar.units.in = "kPa", bar.press = barromP_kPa, bar.units.out = "kpa",
                                                          temp.C = temperature_C, 
@@ -319,3 +333,6 @@ model <- rankLocReg(
   method  = "pc", 
   verbose = TRUE) 
 plot(model) # Lpc == -0.0296
+plot(model) # # run 2 ch7 20221026 Lpc == -0.1012
+plot(model) # # run 2 ch4 20221026 Lpc == -0.0900
+plot(model) # # run 2 ch3 20221026 Lpc == -0.1063

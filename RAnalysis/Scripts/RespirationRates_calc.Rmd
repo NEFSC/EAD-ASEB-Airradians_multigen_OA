@@ -37,12 +37,16 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 resp.data           <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
-                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+                          dplyr::filter(!(Date %in% "10/26/2022" & Filename %in% 'run_1_raw.txt' & Channel %in% 'CH2')) # omit bad data point
+
+
+
 start.end_resp.data <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
 
 resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
-                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
+                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') 
 
 
 # data to correct for length, dry weight, etc. 
@@ -113,6 +117,9 @@ resp.data_merged[90,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	
 resp.data_merged[84,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
 resp.data_merged[135,c(1:6)] # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
 resp.data_merged[148,c(1:6)] # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
+resp.data_merged[211,c(1:6)] # 10/26/2022	CH3	run_2_raw.txt	0.04303898	-0.0047484	-0.0047484; data change Lpc to -0.1063
+resp.data_merged[212,c(1:6)] # 10/26/2022	CH4	run_2_raw.txt	-0.003937913	-0.003744103	-0.003744103; data change Lpc to -0.0900
+resp.data_merged[215,c(1:6)] # 10/26/2022	CH7	run_2_raw.txt	-0.002582753	-0.004017686	-0.004017686; data change Lpc to -0.1012
 
 # change according to diagnostics of plots and in Lolin script 
 resp.data_merged[47,4] <- resp.data_merged[47,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
@@ -120,7 +127,9 @@ resp.data_merged[90,4] <- resp.data_merged[90,5] # 20210930_Plate_2_Run_1_C1_reg
 resp.data_merged[84,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
 resp.data_merged[135,4] <- -0.0209
 resp.data_merged[148,4] <- -0.0124
-
+resp.data_merged[211,4] <- -0.1063
+resp.data_merged[212,4] <- -0.0900
+resp.data_merged[215,4] <- -0.1012
 
 # double check if correct
 resp.data_merged[47,c(1:6)] # -0.0608251
@@ -128,6 +137,9 @@ resp.data_merged[90,c(1:6)] # -0.07603444
 resp.data_merged[84,c(1:6)] # -0.0296
 resp.data_merged[135,c(1:6)]  # -0.0209
 resp.data_merged[148,c(1:6)]  # -0.0124
+resp.data_merged[211,c(1:6)]  # -0.1063
+resp.data_merged[212,c(1:6)]  # -0.09
+resp.data_merged[215,c(1:6)]  # -0.1012
 ```
 
 #### Calculate blank rates, view means by day pH_treatment and instrument
@@ -242,31 +254,36 @@ plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 ```{r master resp file, echo=FALSE}
 
 Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
-  dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & Date == '9/14/2021' ~ 1.7,
-                                   
-                                   
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878,
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, 
-      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
-      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473,
-                                   
-                                   
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH1' ~ (236.70+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH2' ~ (239.88+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH3' ~ (228.63+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH4' ~ (234.35+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH5' ~ (224.31+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH6' ~ (229.07+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH7' ~ (223.11+18), 
-      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH8' ~ (225.59+18), 
-                                   
-                                   filetype == "SDR_data" & Date %in% c('9/30/2021')~ 1.7,
-                                   filetype == "SDR_data" ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
+  dplyr::mutate(volume = 
+                  
+            case_when(filetype == "LoLigo_data" & Date == '9/14/2021' ~ 1.7,
+                                                   
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
+                      
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473,
+                                                   
+                                                   
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH1' ~ (236.70+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH2' ~ (239.88+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH3' ~ (228.63+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH4' ~ (234.35+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH5' ~ (224.31+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH6' ~ (229.07+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH7' ~ (223.11+18), 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH8' ~ (225.59+18), 
+                
+                      
+                                                   
+                     filetype == "SDR_data" & Date %in% c('9/30/2021')~ 1.7,
+                     
+                     filetype == "SDR_data" ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
                                    
                                    # filetype == "SDR_data" & Date %in% ('8/30/2022') ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
   
@@ -297,7 +314,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-print(Resp.outliers) # 32 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+print(Resp.outliers) # 34 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 View(Resp.Master_OM)
 ```
 
@@ -306,7 +323,9 @@ View(Resp.Master_OM)
 
 ```{r DW v shell length plot,  echo=TRUE, message = FALSE, warning = FALSE}
 
-Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
+Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                                dplyr::mutate(Dry_Tissue_weight = as.numeric(Dry_Tissue_weight)) %>% 
+                                ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
                                 geom_smooth(method = "loess") +
                                 theme_classic() +
                                 ylab("Scallop_TissueDW_mg") +
@@ -314,14 +333,19 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = Dry_Tissue_weight)) +
                                 geom_point() 
 
 
-Resp.Master_OM %>% ggplot(aes(x = whole_Dry_weight, y = Dry_Tissue_weight)) +
+Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                                dplyr::mutate(Dry_Tissue_weight = as.numeric(Dry_Tissue_weight)) %>% 
+                                dplyr::mutate(whole_Dry_weight = as.numeric(whole_Dry_weight)) %>% 
+                                ggplot(aes(x = whole_Dry_weight, y = Dry_Tissue_weight)) +
                                 geom_smooth(method = "loess") +
                                 theme_classic() +
                                 ylab("Scallop_TissueDW_mg") +
                                 xlab("whole_Dry_weight") +
                                 geom_point() 
 
-Resp.Master_OM %>% ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr)) +
+Resp.Master_OM[!is.na(Resp.Master_OM$Dry_Tissue_weight),] %>% 
+                                dplyr::mutate(Dry_Tissue_weight = as.numeric(Dry_Tissue_weight)) %>% 
+                                ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr)) +
                                 geom_smooth(method = "loess") +
                                 theme_classic() +
                                 ylab("resp_umol_L_hr") +
@@ -356,13 +380,13 @@ Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_res
 # (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for Tissue Dry weight (TDW)
 Resp.Master_OM$resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
-              (Resp.Master_OM$Dry_Tissue_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+              (as.numeric(Resp.Master_OM$Dry_Tissue_weight)*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 
 # (3) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for whole Dry weight (WDW)
 Resp.Master_OM$resp_µmol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
-              (Resp.Master_OM$whole_Dry_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
+              (as.numeric(Resp.Master_OM$whole_Dry_weight)*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 
 

@@ -174,8 +174,8 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
 sp_COEF <- 0.62 # standardization coefficient
-
-
+sp_COEF <- 0.878 # standardization coefficient
+mean(BioSamples_merged$)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dates             <- as.data.frame(unique(biodep$Date)) 
@@ -279,7 +279,7 @@ ANOVA_Dates       <- as.data.frame(unique(Biodep_Master$Date)) # call a list to 
 AOVdf_total       <- data.frame() # start dataframe, this will be the master output
 DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
 colnames(DF_loop) <- c('Date', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
-cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct','RR_Percent','OIR','AR','AE')) %>% `colnames<-`('biodep_meas')
+cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct', 'CR_correct', 'RR_Percent','OIR','AR','AE')) %>% `colnames<-`('biodep_meas')
 
 
 for (i in 1:nrow(ANOVA_Dates)) {
@@ -449,3 +449,26 @@ library(ggpubr)
 pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots.pdf"), width = 10, height= 8)
 ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
 dev.off()
+
+colnames(Biodep_Master)
+
+
+CR_correct_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C',
+                                        Date == '20221027' ~ '13.3C')) %>%  
+  #filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , CR_correct , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Clearance Rate, F1 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Temperature)
+CR_correct_boxplot
+ 
