@@ -219,7 +219,7 @@ MO2_b.factorLENGTH_PLOT_facetted <- RR_master_OM %>%
 
 
 # OUTPUT PLOTS 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/MetabolicScaling_bFactor_LENGTH.pdf"), width = 8, height = 8)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_LENGTH.pdf"), width = 8, height = 8)
 print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
 dev.off() 
 
