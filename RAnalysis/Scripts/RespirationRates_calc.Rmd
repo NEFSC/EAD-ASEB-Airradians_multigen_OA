@@ -41,14 +41,14 @@ resp.data           <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.
 start.end_resp.data <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
 
-resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_master.csv", header=T) %>% 
+resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt')
 
 
 # data to correct for length, dry weight, etc. 
-lengths_juv_adults  <- read.csv(file="Data/Physiology/Respiration/Lengths_Condition_resp_clearance.csv", header=T)
+lengths_juv_adults  <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T)
 
-lengths_spat        <- read.csv(file="Data/Physiology/Respiration/Lengths_larvae_spat_resp.csv", header=T) %>% 
+lengths_spat        <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size_LARVAE.csv", header=T) %>% 
                           dplyr::mutate(Length_um = Length * 1000) %>% # current length in mm
                           dplyr::select(!Length)
 # View(resp.data)
@@ -242,14 +242,7 @@ plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 ```{r master resp file, echo=FALSE}
 
 Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
-  dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH1' ~ 23.1,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH2' ~ 23.05,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH3' ~ 23.31,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH4' ~ 22.55,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH5' ~ 23.18,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH6' ~ 23.24,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH7' ~ 22.63,
-                                   filetype == "LoLigo_data" & Date == '9/14/2021' & Channel == 'CH8' ~ 22.95,
+  dplyr::mutate(volume = case_when(filetype == "LoLigo_data" & Date == '9/14/2021' ~ 1.7,
                                    
                                    
       filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 

@@ -471,6 +471,7 @@ F1s.BOXPLOT_Length_facetted # not that we do not have Length for 9/14 and 9/30 d
 bLength = 1.77 # review the outlier-omitted b factor plot in previous chunk
 
 F1s.BOXPLOT_Length_bfactor <- RR_formatted_F1s %>% 
+  dplyr::filter(!Date %in% '2021-09-14') %>% 
   dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*100)^bLength )) %>% 
   ggplot(aes(x = factor(Date), 
              y = resp_umol_L_hr_bFactorNormLength, 
@@ -722,14 +723,15 @@ View(AOVdf_total) # view all the anova tests within data
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_ANOVA_table_Length.csv")
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
 
-
+RR_formatted_F1s_OM <-  RR_formatted_F1s %>%    dplyr::filter(!Date %in% '2021-09-14')
 # Two way anova for pH * time
-total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength  ~ pCO2 * Date, data = RR_formatted_F1s))
+total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength  ~ pCO2 * Date, data = RR_formatted_F1s_OM))
 leveneTest(total_mod) # 1.674e-09 ***
 shapiro.test(resid(total_mod)) # < 2.2e-16
 hist(resid(total_mod)) # positive skew
 qqnorm(resid(total_mod))
-total_mod_transformed  <- aov(lm(log(resp_umol_L_hr_bFactorNormWDW)  ~ pCO2 * Date, data = RR_formatted_F1s))
+summary(total_mod)
+total_mod_transformed  <- aov(lm(log(resp_umol_L_hr_bFactorNormLength)  ~ pCO2 * Date, data = RR_formatted_F1s_OM))
 leveneTest(total_mod_transformed) # 0.2057 - PASS
 shapiro.test(resid(total_mod_transformed)) # 1.32e-05 - still non-normal
 hist(resid(total_mod_transformed))
@@ -738,14 +740,14 @@ summary(total_mod_transformed)
 TukeyHSD(total_mod_transformed)
 #find optimal lambda for Box-Cox transformation 
 library(MASS)
-bc     <- boxcox(RR_formatted_F1s$resp_umol_L_hr_bFactorNormLength ~ RR_formatted_F1s$pCO2 * RR_formatted_F1s$Date) # y ~ x
+bc     <- boxcox(RR_formatted_F1s_OM$resp_umol_L_hr_bFactorNormLength ~ RR_formatted_F1s_OM$pCO2 * RR_formatted_F1s_OM$Date) # y ~ x
 lambda <- bc$x[which.max(bc$y)] # 0.1414141
-new_model <- lm(((resp_umol_L_hr_bFactorNormLength^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s) #fit new linear regression model using the Box-Cox transformation
+new_model <- lm(((resp_umol_L_hr_bFactorNormLength^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s_OM) #fit new linear regression model using the Box-Cox transformation
 leveneTest(new_model) # 0.04959 * - PASS
 shapiro.test(resid(new_model)) # 0.002069 - still non-normal
 qqnorm(resid(new_model)) # boxcox resolves the qqnorm visual from the raw model greatly
-summary(aov(new_model)) # date and pH significant 
-
+summary(aov(new_model))  # date and pH significant 
+TukeyHSD(aov(new_model)) 
 
 
 ```
