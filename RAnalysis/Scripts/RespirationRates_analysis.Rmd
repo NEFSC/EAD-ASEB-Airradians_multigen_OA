@@ -150,7 +150,7 @@ MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>%
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
                           facet_wrap(~pCO2)
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/MetabolicScaling_bFactor_OM.pdf"), width = 8, height = 8)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_OM.pdf"), width = 8, height = 8)
 print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
 dev.off()
 
@@ -162,9 +162,9 @@ dev.off()
 
 ```
 # summary: 
-# TDW b factor total = 0.828
-# TDW b factor pCO2 high = 0.804
-# TDW b factor pCO2 low = 0.856 # two outliers removed here
+# TDW b factor total = 0.818
+# TDW b factor pCO2 high = 0.834
+# TDW b factor pCO2 low = 0.804 # two outliers removed here
 
 
 ## by SHELL AND INDIVIDUAL LENGTH :::::::::
@@ -299,7 +299,7 @@ MO2_b.factorWDW_PLOT_facetted
 
 
 # OUTPUT PLOTS 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/MetabolicScaling_bFactor_WholeDryWeight.pdf"), width = 8, height = 8)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_WDW.pdf"), width = 8, height = 8)
 print(ggarrange(MO2_b.factorWDW_PLOT, MO2_b.factorWDW_PLOT_facetted, nrow = 2, ncol = 1)) # print the model diagnostics 
 dev.off()
 
