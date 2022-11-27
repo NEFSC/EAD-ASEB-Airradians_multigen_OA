@@ -5,7 +5,7 @@ date: "2022-09-30"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(dplyr)
@@ -49,6 +49,88 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
 # View(RR_master)
 
 ```
+
+# examine biovolume
+# objective: we do not have biovolume for all samples 
+# measured for RR, however we need this information to 
+# subtract displacement of vol from the RR chambers 
+# we do have length for all samples, can we estimate biovol with this info?
+```{r, biovolume calc & alternatives}
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal
+Reference_resp_size   <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T)
+Gurr2021_biovol       <- read.csv(file="Data/Physiology/Length/Reference_Gurr_etal_2021.csv", header=T)
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# With data from Gurr et al. 2021..
+# explore the relationships between length, biovolume, thickness, width
+Gurr2021_biovol.calc <- Gurr2021_biovol %>% 
+  dplyr::filter(species %in% 'Ai') %>%  # call argopecten data (also has oyster data C. virginica)
+  dplyr::mutate(h = as.numeric(thickness_mm / 2)) %>% # divide by 2 fo the calculation of a single cap
+  dplyr::mutate(length.width.mean = ((length_mm+width_mm)/2)) %>% 
+  dplyr::mutate(a = as.numeric(length.width.mean/2)) %>% # av of the length and width (slightly different) and get radius
+  dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% # volume of a spherical cap (1/6)πh(3a2 + h2)
+  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)
+
+
+Biov_true_vs_calculated <- Gurr2021_biovol.calc %>%
+   dplyr::filter(Timepoint %in% 'pre-deployment') %>%  # no biovolume measurements taken at post deployment
+   ggplot(aes(x=pre_biovolume_mL, y=Biovol_estimate_mL3)) + # , color = as.factor(site))
+   geom_point() +
+   xlab("biovolume_KNOWN") + 
+   ylab("boivolume_CalcVCAP") +
+   geom_smooth(method='lm', formula= y~x) +
+   theme_bw()
+Biov_true_vs_calculated
+
+# looks to be very accurate at least for the size range of these animals from Gurr et al. 2021
+
+# since we only have shell length, what is the average relationship of length to width and thickness to generate volume?
+Gurr2021_size.relationships <- Gurr2021_biovol %>% 
+  dplyr::filter(species %in% 'Ai') %>% 
+  dplyr::select(c('pre_biovolume_mL', 'length_mm', 'width_mm', 'thickness_mm')) %>% 
+  dplyr::mutate(length.biov = (length_mm/pre_biovolume_mL)) %>% 
+  dplyr::mutate(length.width = (length_mm/width_mm)) %>% 
+  dplyr::mutate(length.thick = (length_mm/thickness_mm))
+
+Length.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>% summarySE(measurevar="length.biov")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
+
+Length.Width <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.width),] %>% summarySE(measurevar="length.width")  # mean = 0.9387522	stdev = 0.02717396	- consistent relationship
+
+Length.Thickness <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.thick),] %>% summarySE(measurevar="length.thick")  # mean = 2.487012	stdev = 0.2249636	- highly variable relationship
+  
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Now to test with the current data in this study..
+
+
+# volume of a spherical cap (1/3)πh2(3R - h) or (1/6)πh(3a2 + h2)
+# h = height (for a scallop is 1/2*shell thickness)
+# a = radius from the cap bottom (for scallop shell is 1/2*length from hinge)
+# R = radius from the center of the sphere - not applicable for the known measurments of the scallop
+Reference_resp_sizeOM <- Reference_resp_size[!is.na(Reference_resp_size$Biovolume_g_in_sw),] %>% 
+  dplyr::filter(!Biovolume_g_in_sw %in% '<add here>') %>% 
+  dplyr::mutate(Length_mm = as.numeric(Length_um/1000)) %>% 
+  dplyr::select(c('Date','pH','Length_mm','Biovolume_g_in_sw')) %>% 
+  dplyr::mutate(Thickness_mm_estimate = (1/2.5)*Length_mm) %>% # from data taken in Gurr et al. 2021 (adult A.irradians)
+  dplyr::mutate(h = as.numeric(Thickness_mm_estimate / 2)) %>% # divide by 2 fo the calculation of a single cap
+  dplyr::mutate(a = as.numeric((Length_mm)/2)) %>% # note the length is 0.94 of the width in adult scallops (Gurr et al. 2021 data)
+  dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% 
+  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)
+
+# colnames(Reference_resp_sizeOM)
+Biov_length_regression <- Reference_resp_sizeOM %>%
+   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("biovolume_KNOWN") + 
+   ylab("boivolume_CalcVCAP") +
+   geom_smooth(method='lm', formula= y~x) +
+   theme_bw()
+Biov_length_regression
+
+
+
+```
+
 
 ```{r shell lengths at each timepoint}
 
