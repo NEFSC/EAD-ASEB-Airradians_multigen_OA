@@ -396,7 +396,10 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>%
                       position = position_dodge(preserve = "single")) #+
          #facet_wrap(~Gen_lifestage, scales = "free")
 F1s.BOXPLOT_TDW_facetted # not that we do not have TDW for 9/14 and 9/30 data 
-
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_raw.pdf"), width = 18, height = 8)
+print(ggarrange(F1s.BOXPLOT_TDW_facetted, nrow = 1, ncol = 1)) # print the model diagnostics 
+dev.off()
+ 
 
 # B factor normalized - TISSUE DRY WEIGHT
 
@@ -649,7 +652,9 @@ F1s.BOXPLOT_WDW <- RR_formatted_F1s %>%
                       position = position_dodge(preserve = "single"))# +
         # facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
 F1s.BOXPLOT_WDW # not that we do not have TDW for 9/14 and 9/30 data 
-
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_WDW_raw.pdf"), width = 18, height = 8)
+print(ggarrange(F1s.BOXPLOT_WDW, nrow = 1, ncol = 1)) # print the model diagnostics 
+dev.off()
 
 
 # B factor normalized - WHOLE DRY WEIGHT
