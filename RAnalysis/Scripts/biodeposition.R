@@ -180,14 +180,15 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
                               BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) # merge with the feces dataframe by the unique identifiers
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
-sp_COEF <- 0.62 # standardization coefficient
-sp_COEF <- 0.696 # standardization coefficient - umol )2 consumption and tissue dry weight (review RespRates_analysis)
+sp_COEF <- 0.696 # standardization coefficient - umol O2 consumption and tissue dry weight (review RespRates_analysis)
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dates             <- as.data.frame(unique(biodep$Date)) 
 colnames(dates)   <- "Date"
 Biodep_Master     <- data.frame() # start dataframe 
+meanTDW <- mean(BioSamples_merged$animal_dry_weight_mg) # 0.8582318
+
 
 for (i in 1:nrow(dates)) {
   date_loop       <- dates[i,]
@@ -196,11 +197,11 @@ for (i in 1:nrow(dates)) {
   data_loop       <- BioSamples_merged %>%
                         dplyr::filter(Date %in% date_loop) %>% 
                       # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
-                        dplyr::mutate(IER_correct = IER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                        dplyr::mutate(IER_correct = IER_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
                       # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
-                        dplyr::mutate(IRR_correct = IRR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>%  
+                        dplyr::mutate(IRR_correct = IRR_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_mg
                       # OER == Organic Egestion Rate: POM of feces/feces collection time
-                        dplyr::mutate(OER_correct = OER_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                        dplyr::mutate(OER_correct = OER_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
                       # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
                         dplyr::mutate(ORR_correct = ORR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
                       # CR  == Cleanrance Rate: IFR/PIM of the water
