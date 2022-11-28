@@ -393,8 +393,8 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>%
                       width = 0.6, 
                       size=0.4, 
                       linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
+                      position = position_dodge(preserve = "single")) #+
+         #facet_wrap(~Gen_lifestage, scales = "free")
 F1s.BOXPLOT_TDW_facetted # not that we do not have TDW for 9/14 and 9/30 data 
 
 
@@ -503,11 +503,11 @@ bLength = 2.22 # review the outlier-omitted b factor plot in previous chunk
 meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
 medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
 
-
+#View(RR_formatted_F1s$Length_um)
 RR_formatted_F1s.length <- RR_formatted_F1s %>% 
   dplyr::mutate(Length_mm = Length_um/1000) %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr) * ((Length_mm/meanLength)^bLength) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr) *  ((Length_mm/medianLength)^bLength) ) # RStd = (Lexp/Lstd)1.77 * RRexp
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr)*((meanLength/Length_mm)^bLength) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr)*((medianLength/Length_mm)^bLength) ) # RStd = (Lexp/Lstd)1.77 * RRexp
 
 F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>% 
   ggplot(aes(x = factor(Date), 
@@ -522,7 +522,7 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("Resp / [ (Length_meas / meanLength)^2.22 ]") +
+         ggtitle("Resp * [ ( meanLength / Length_meas)^2.22 ]") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -627,7 +627,7 @@ dev.off()
 
 F1s.BOXPLOT_WDW <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_µmol_L_mg_WDW_hr, 
+             y = resp_umol_L_mg_WDW_hr, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -646,8 +646,8 @@ F1s.BOXPLOT_WDW <- RR_formatted_F1s %>%
                       width = 0.6, 
                       size=0.4, 
                       linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+                      position = position_dodge(preserve = "single"))# +
+        # facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
 F1s.BOXPLOT_WDW # not that we do not have TDW for 9/14 and 9/30 data 
 
 

@@ -252,38 +252,57 @@ plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 * 'pCO2'
 
 ```{r master resp file, echo=FALSE}
-
+View(Resp.Master[!is.na(Resp.Master$Length_um),])
 Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
   dplyr::mutate(volume = 
                   
-            case_when(filetype == "LoLigo_data" & Date == '9/14/2021' ~ 1.7,
-                                                   
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, 
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021','2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
+            case_when(filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 1.7,# check these!
                       
+                      
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 23.1, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH2' ~ 23.05, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH4' ~ 22.55,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH5' ~ 23.18,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH6' ~ 23.24,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH7' ~ 22.63, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 22.95,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 23.31,
+                                                   
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH6' ~ 68.01878,
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH7' ~ 68.54551, 
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473,
+                      
+                        
+                      
+                      
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH1' ~ 196.6, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH2' ~ 200.6, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH3' ~ 201.4, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH4' ~ 200, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH5' ~ 199.2, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH6' ~ 200.4, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH7' ~ 201.3, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH8' ~ 201.7, 
+                      
+                      
                                                    
-                                                   
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH1' ~ (236.70+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH2' ~ (239.88+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH3' ~ (228.63+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH4' ~ (234.35+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH5' ~ (224.31+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH6' ~ (229.07+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH7' ~ (223.11+18), 
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022', '10/26/2022') & Channel == 'CH8' ~ (225.59+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH1' ~ (236.70+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH2' ~ (239.88+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH3' ~ (228.63+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH4' ~ (234.35+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH5' ~ (224.31+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH6' ~ (229.07+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH7' ~ (223.11+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH8' ~ (225.59+18), 
                 
                       
                                                    
-                     filetype == "SDR_data" & Date %in% c('9/30/2021')~ 1.7,
-                     
-                     filetype == "SDR_data" ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
+                     filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7)) %>% # 24-well plate - 80 ul (0.08 mL)
   
   
   # Calculate biovolume using the volume pf spherical cap and length measurements of scallops
@@ -299,10 +318,11 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
   
   
   # true rates calculated using LoLinRscript
-  dplyr::mutate(resp_mg_L_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute
+  dplyr::mutate(resp_mg_L_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute - DOUBLE CHECK
                                       #(volume/1000) * # correct Liters - mg per L per min
                                       (actual_volume/1000) * # correct Liters - mg per L per min
                                        60) )  %>% # convert rate per minutes to rate per hour
+  
   dplyr::mutate(resp_umol_L_hr = (resp_mg_L_hr*1000) / 32) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
   
   # simplified start end rates used to compare O:N ratios 
