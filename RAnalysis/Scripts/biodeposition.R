@@ -23,7 +23,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 ## load data 
 
-biodep <- read.csv(file="Data/Physiology/Biodeposition/Raw_masterdata_biodeposition.csv", header = TRUE) 
+biodep <- read.csv(file="Data/Physiology/Biodeposition/F1/cumulative_raw/Raw_masterdata_biodeposition.csv", header = TRUE) 
 
 ## Key for calculated metrics below:
 # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
@@ -149,7 +149,14 @@ WaterSamples_input_AVE <- WaterSamples_input %>%
   dplyr::summarise(across(everything(), list(mean)))
 WaterSamples_input_AVE #view your blanks!
 
-  
+
+water_samples_master <- rbind( (as.data.frame(WaterSamples_input_AVE %>% dplyr::mutate(Type = 'input'))),
+                               (as.data.frame(WaterSamples_blank_AVE %>% dplyr::mutate(Type = 'blank'))) )
+
+# WRITE CSV OF THE MASTER FILE
+write.csv(water_samples_master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_input_blank.csv")
+
+
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Calculations PART2 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -174,8 +181,8 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
 sp_COEF <- 0.62 # standardization coefficient
-sp_COEF <- 0.878 # standardization coefficient
-mean(BioSamples_merged$)
+sp_COEF <- 0.696 # standardization coefficient - umol )2 consumption and tissue dry weight (review RespRates_analysis)
+
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dates             <- as.data.frame(unique(biodep$Date)) 

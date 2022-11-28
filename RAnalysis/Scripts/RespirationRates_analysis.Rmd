@@ -5,7 +5,7 @@ date: "2022-09-30"
 output: html_document
 ---
 
-```{r setup, include=TRUE}
+```{r setup, include=FALSE}
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(dplyr)
@@ -47,87 +47,6 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
               dplyr::arrange(Age)
               
 # View(RR_master)
-
-```
-
-# examine biovolume
-# objective: we do not have biovolume for all samples 
-# measured for RR, however we need this information to 
-# subtract displacement of vol from the RR chambers 
-# we do have length for all samples, can we estimate biovol with this info?
-```{r, biovolume calc & alternatives}
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal
-Reference_resp_size   <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T)
-Gurr2021_biovol       <- read.csv(file="Data/Physiology/Length/Reference_Gurr_etal_2021.csv", header=T)
-
-
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# With data from Gurr et al. 2021..
-# explore the relationships between length, biovolume, thickness, width
-Gurr2021_biovol.calc <- Gurr2021_biovol %>% 
-  dplyr::filter(species %in% 'Ai') %>%  # call argopecten data (also has oyster data C. virginica)
-  dplyr::mutate(h = as.numeric(thickness_mm / 2)) %>% # divide by 2 fo the calculation of a single cap
-  dplyr::mutate(length.width.mean = ((length_mm+width_mm)/2)) %>% 
-  dplyr::mutate(a = as.numeric(length.width.mean/2)) %>% # av of the length and width (slightly different) and get radius
-  dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% # volume of a spherical cap (1/6)πh(3a2 + h2)
-  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)
-
-
-Biov_true_vs_calculated <- Gurr2021_biovol.calc %>%
-   dplyr::filter(Timepoint %in% 'pre-deployment') %>%  # no biovolume measurements taken at post deployment
-   ggplot(aes(x=pre_biovolume_mL, y=Biovol_estimate_mL3)) + # , color = as.factor(site))
-   geom_point() +
-   xlab("biovolume_KNOWN") + 
-   ylab("boivolume_CalcVCAP") +
-   geom_smooth(method='lm', formula= y~x) +
-   theme_bw()
-Biov_true_vs_calculated
-
-# looks to be very accurate at least for the size range of these animals from Gurr et al. 2021
-
-# since we only have shell length, what is the average relationship of length to width and thickness to generate volume?
-Gurr2021_size.relationships <- Gurr2021_biovol %>% 
-  dplyr::filter(species %in% 'Ai') %>% 
-  dplyr::select(c('pre_biovolume_mL', 'length_mm', 'width_mm', 'thickness_mm')) %>% 
-  dplyr::mutate(length.biov = (length_mm/pre_biovolume_mL)) %>% 
-  dplyr::mutate(length.width = (length_mm/width_mm)) %>% 
-  dplyr::mutate(length.thick = (length_mm/thickness_mm))
-
-Length.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>% summarySE(measurevar="length.biov")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
-
-Length.Width <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.width),] %>% summarySE(measurevar="length.width")  # mean = 0.9387522	stdev = 0.02717396	- consistent relationship
-
-Length.Thickness <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.thick),] %>% summarySE(measurevar="length.thick")  # mean = 2.487012	stdev = 0.2249636	- highly variable relationship
-  
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Now to test with the current data in this study..
-
-
-# volume of a spherical cap (1/3)πh2(3R - h) or (1/6)πh(3a2 + h2)
-# h = height (for a scallop is 1/2*shell thickness)
-# a = radius from the cap bottom (for scallop shell is 1/2*length from hinge)
-# R = radius from the center of the sphere - not applicable for the known measurments of the scallop
-Reference_resp_sizeOM <- Reference_resp_size[!is.na(Reference_resp_size$Biovolume_g_in_sw),] %>% 
-  dplyr::filter(!Biovolume_g_in_sw %in% '<add here>') %>% 
-  dplyr::mutate(Length_mm = as.numeric(Length_um/1000)) %>% 
-  dplyr::select(c('Date','pH','Length_mm','Biovolume_g_in_sw')) %>% 
-  dplyr::mutate(Thickness_mm_estimate = (1/2.5)*Length_mm) %>% # from data taken in Gurr et al. 2021 (adult A.irradians)
-  dplyr::mutate(h = as.numeric(Thickness_mm_estimate / 2)) %>% # divide by 2 fo the calculation of a single cap
-  dplyr::mutate(a = as.numeric((Length_mm)/2)) %>% # note the length is 0.94 of the width in adult scallops (Gurr et al. 2021 data)
-  dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% 
-  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)
-
-# colnames(Reference_resp_sizeOM)
-Biov_length_regression <- Reference_resp_sizeOM %>%
-   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("biovolume_KNOWN") + 
-   ylab("boivolume_CalcVCAP") +
-   geom_smooth(method='lm', formula= y~x) +
-   theme_bw()
-Biov_length_regression
-
-
 
 ```
 
@@ -250,16 +169,16 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 dev.off()
 
 # summary: 
-# TDW b factor total = 0.712
-# TDW b factor pCO2 high = 0.699
-# TDW b factor pCO2 low = 0.725 # two outliers removed here
+# TDW b factor total = 0.696
+# TDW b factor pCO2 high = 0.684
+# TDW b factor pCO2 low = 0.708 # two outliers removed here
 
 
 ```
 # summary: 
-# TDW b factor total = 0.712
-# TDW b factor pCO2 high = 0.699
-# TDW b factor pCO2 low = 0.725 # two outliers removed here
+# TDW b factor total = 0.696
+# TDW b factor pCO2 high = 0.684
+# TDW b factor pCO2 low = 0.708 # two outliers removed here
 
 
 ## by SHELL AND INDIVIDUAL LENGTH :::::::::
@@ -319,16 +238,16 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 dev.off() 
 
 # summary: 
-# Length b factor total = 2.24
-# Length b factor pCO2 high = 2.25
-# Length b factor pCO2 low = 2.24
+# Length b factor total = 2.22
+# Length b factor pCO2 high = 2.22
+# Length b factor pCO2 low = 2.22
 
 
 ```
 # summary: 
-# Length b factor total = 2.24
-# Length b factor pCO2 high = 2.25
-# Length b factor pCO2 low = 2.24
+# Length b factor total = 2.22
+# Length b factor pCO2 high = 2.22
+# Length b factor pCO2 low = 2.22
 
 
 ## WHOLE DRY WEIGHT :::::::::::
@@ -399,16 +318,16 @@ print(ggarrange(MO2_b.factorWDW_PLOT, MO2_b.factorWDW_PLOT_facetted, nrow = 2, n
 dev.off()
 
 
-# WDW b factor total = 0.776
-# WDW b factor pCO2 high = 0.769
-# WDW b factor pCO2 low = 0.787
+# WDW b factor total = 0.771
+# WDW b factor pCO2 high = 0.764
+# WDW b factor pCO2 low = 0.782
 
 
 
 ```
-# WDW b factor total = 0.776
-# WDW b factor pCO2 high = 0.769
-# WDW b factor pCO2 low = 0.787
+# WDW b factor total = 0.771
+# WDW b factor pCO2 high = 0.764
+# WDW b factor pCO2 low = 0.782
 
 
 
@@ -455,7 +374,7 @@ RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')
 
 F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_µmol_L_mg_TDW_hr, 
+             y = resp_umol_L_mg_TDW_hr, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -481,7 +400,7 @@ F1s.BOXPLOT_TDW_facetted # not that we do not have TDW for 9/14 and 9/30 data
 
 # B factor normalized - TISSUE DRY WEIGHT
 
-bTDW = 0.712 # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.696 # review the outlier-omitted b factor plot in previous chunk
 
 F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>% 
   dplyr::mutate(resp_umol_L_hr_bFactorNormTDW = resp_umol_L_hr/(Dry_Tissue_weight^bTDW)) %>% 
@@ -497,7 +416,7 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("tdw b factor (0.828)") +
+         ggtitle("tdw b factor (0.696)") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -510,7 +429,7 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
 F1s.BOXPLOT_TDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
 
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW.pdf"), width = 8, height = 8)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_biovol.pdf"), width = 8, height = 8)
 print(ggarrange(F1s.BOXPLOT_TDW_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
 dev.off()
 
@@ -527,7 +446,7 @@ dev.off()
 
 F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_µmol_L_mm_Length_hr, 
+             y = resp_umol_L_mm_Length_hr, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -539,7 +458,7 @@ F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          #ylim(0, 0.2) +
-         ggtitle("Shell length (mm)") +
+         ggtitle("Resp / Length (raw)") +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
@@ -550,43 +469,9 @@ F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>%
          facet_wrap(~Gen_lifestage, scales = "free")
 F1s.BOXPLOT_Length_facetted # not that we do not have Length for 9/14 and 9/30 data 
 
-
-# B factor normalized - TISSUE DRY WEIGHT
-
-bLength = 2.24 # review the outlier-omitted b factor plot in previous chunk
-
-F1s.BOXPLOT_Length_bfactor <- RR_formatted_F1s %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*1000)^bLength )) %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormLength, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         ggtitle("shell length b factor (2.24)") +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-F1s.BOXPLOT_Length_bfactor # not that we do not have Length for 9/14 and 9/30 data 
-
-
-
- F1s.BOXPLOT_Length_bfactor_nofacet <- RR_formatted_F1s %>% 
-                        dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*1000)^bLength )) %>% 
+ F1s.BOXPLOT_Length_nofacet <- RR_formatted_F1s %>% 
                         ggplot(aes(x = factor(Date), 
-                                   y = resp_umol_L_hr_bFactorNormLength, 
+                                   y = resp_umol_L_mm_Length_hr, 
                                    fill = pCO2)) +
                                geom_boxplot(alpha = 0.5, # color hue
                                    width=0.6, # boxplot width
@@ -597,7 +482,7 @@ F1s.BOXPLOT_Length_bfactor # not that we do not have Length for 9/14 and 9/30 da
                                           size=1) +
                                scale_fill_manual(values=c("forestgreen","orange")) +
                                theme_classic() + 
-                               ggtitle("shell length b factor (2.24)") +
+                               ggtitle("Resp / Length (raw)") +
                                #ylim(0, 0.2) +
                                stat_summary(fun.y=mean, 
                                             geom = "errorbar", 
@@ -606,37 +491,131 @@ F1s.BOXPLOT_Length_bfactor # not that we do not have Length for 9/14 and 9/30 da
                                             size=0.4, 
                                             linetype = "dashed", 
                                             position = position_dodge(preserve = "single")) 
- 
-facetted <- ggarrange(F1s.BOXPLOT_Length_facetted, F1s.BOXPLOT_Length_bfactor, nrow = 2, ncol = 1) # print the model diagnostics 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH.pdf"), width = 18, height = 8)
-print(ggarrange(facetted, F1s.BOXPLOT_Length_bfactor_nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_raw.pdf"), width = 18, height = 8)
+print(ggarrange(F1s.BOXPLOT_Length_facetted,F1s.BOXPLOT_Length_nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
 dev.off()
+ 
+# B factor normalized - SHELL LENGTH
+
+bLength = 2.22 # review the outlier-omitted b factor plot in previous chunk
+
+meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
+medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
+
+
+RR_formatted_F1s.length <- RR_formatted_F1s %>% 
+  dplyr::mutate(Length_mm = Length_um/1000) %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr) / ((Length_mm/meanLength)^bLength) ) %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr) / ((Length_mm/medianLength)^bLength) )
+
+F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormLength.MEAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp / [ (Length_meas / meanLength)^2.22 ]") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+
+F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s.length %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormLength.MEAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp / [ (Length_meas / meanLength)^2.22 ]") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) # no facet
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_bfactorMEAN.pdf"), width = 18, height = 8)
+print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
+dev.off()
+ 
+
+
+F1s.BOXPLOT_Length_bfactor.MEDIAN <- RR_formatted_F1s.length %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormLength.MEDIAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp / [ (Length_meas / medianLength)^2.22 ]") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+
+
+F1s.BOXPLOT_Length_bfactor.MEDIAN.nofacet <- RR_formatted_F1s.length %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormLength.MEDIAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp / [ (Length_meas / medianLength)^2.22 ]") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) # no facet
 
 
 
-RR_formatted_F1s %>% 
-                        dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*1000)^bLength )) %>% 
-                        ggplot(aes(x = factor(pCO2), 
-                                   y = resp_umol_L_hr_bFactorNormLength, fill =pCO2)) +
-                               geom_boxplot(alpha = 0.5, # color hue
-                                   width=0.6, # boxplot width
-                                   outlier.size=0, # make outliers small
-                                   position = position_dodge(preserve = "single")) + 
-                               geom_point(pch = 19, 
-                                          position = position_jitterdodge(0.01), 
-                                          size=1) +
-                               scale_fill_manual(values=c("forestgreen","orange")) +
-                               theme_classic() + 
-                               ggtitle("shell length b factor (2.24)") +
-                               #ylim(0, 0.2) +
-                               stat_summary(fun.y=mean, 
-                                            geom = "errorbar", 
-                                            aes(ymax = ..y.., ymin = ..y..), 
-                                            width = 0.6, 
-                                            size=0.4, 
-                                            linetype = "dashed", 
-                                            position = position_dodge(preserve = "single")) 
-
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_bfactorMEDIAN.pdf"), width = 18, height = 8)
+print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEDIAN,F1s.BOXPLOT_Length_bfactor.MEDIAN.nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
+dev.off()
 
 
 ```
@@ -809,9 +788,7 @@ summary(aov(new_model)) # date and pH significant
 ``` {r stats F1s, Length b factor norm}
 unique(RR_formatted_F1s$Date) # 2021-09-14 2021-09-30 2021-10-26 2022-02-02 2022-03-01 2022-09-22
 # f1s data
-RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength = resp_umol_L_hr/( (Length_um*100)^bLength)) %>% 
-  dplyr::mutate(Date = as.factor(Date))
+RR_formatted_F1s <- RR_formatted_F1s.length %>% dplyr::filter(!Gen %in% 'F2s')
 
 
 # (1) First, run anova within date for all records (for looped!)
@@ -827,7 +804,7 @@ for (i in 1:nrow(ANOVA_Dates)) {
   date_loop     <- as.character(ANOVA_Dates[i,])
   data_loop     <- RR_formatted_F1s %>% 
                           dplyr::filter(Date == date_loop) %>% 
-                          dplyr::select(Date, Age, pCO2, resp_umol_L_hr_bFactorNormLength) %>% 
+                          dplyr::select(Date, Age, pCO2, resp_umol_L_hr_bFactorNormLength.MEAN) %>% 
                           na.omit()
 
         AOVmod              <- aov(lm(data_loop$resp_umol_L_hr_bFactorNormLength ~ data_loop$pCO2))
@@ -863,28 +840,33 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 # Two way anova for pH * time
-total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength  ~ pCO2 * Date, data = RR_formatted_F1s))
-leveneTest(total_mod) # 0.0625 
-shapiro.test(resid(total_mod)) # 0.1162
+total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength.MEAN  ~ pCO2 * Date, data = RR_formatted_F1s))
+leveneTest(total_mod) # 0.0672  
+shapiro.test(resid(total_mod)) # 0.002743
 hist(resid(total_mod)) # positive skew
 qqnorm(resid(total_mod))
 summary(total_mod)
-#              Df    Sum Sq   Mean Sq F value  Pr(>F)   
-# pCO2          1 1.179e-27 1.179e-27   5.375 0.02213 * 
-# Date          6 5.217e-27 8.694e-28   3.963 0.00119 **
-# pCO2:Date     6 1.029e-27 1.715e-28   0.782 0.58586   
-# Residuals   119 2.610e-26 2.194e-28  
+#               Df   Sum Sq   Mean Sq F value Pr(>F)  
+# pCO2          1 1.97e-26 1.973e-26   4.619 0.0335 *
+# Date          1 5.00e-28 4.590e-28   0.107 0.7437  
+# pCO2:Date     1 4.00e-28 3.720e-28   0.087 0.7685  
+# Residuals   129 5.51e-25 4.272e-27  
 
 
 #find optimal lambda for Box-Cox transformation 
 library(MASS)
-bc     <- boxcox(RR_formatted_F1s_OM$resp_umol_L_hr_bFactorNormLength ~ RR_formatted_F1s_OM$pCO2 * RR_formatted_F1s_OM$Date) # y ~ x
+bc     <- boxcox(RR_formatted_F1s$resp_umol_L_hr_bFactorNormLength.MEAN ~ RR_formatted_F1s$pCO2 * RR_formatted_F1s$Date) # y ~ x
 lambda <- bc$x[which.max(bc$y)] # 0.1414141
-new_model <- lm(((resp_umol_L_hr_bFactorNormLength^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s_OM) #fit new linear regression model using the Box-Cox transformation
-leveneTest(new_model) # 0.04959 * - PASS
-shapiro.test(resid(new_model)) # 0.002069 - still non-normal
+new_model <- lm(((resp_umol_L_hr_bFactorNormLength.MEAN^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s) #fit new linear regression model using the Box-Cox transformation
+leveneTest(new_model) # 0.0773  * - PASS
+shapiro.test(resid(new_model)) # 0.5891 - normal
 qqnorm(resid(new_model)) # boxcox resolves the qqnorm visual from the raw model greatly
 summary(aov(new_model))  # date and pH significant 
+#               Df    Sum Sq   Mean Sq F value Pr(>F)  
+# pCO2          1 1.210e-14 1.210e-14   4.522 0.0354 *
+# Date          1 2.000e-16 2.310e-16   0.086 0.7695  
+# pCO2:Date     1 2.000e-16 1.750e-16   0.065 0.7985  
+# Residuals   129 3.451e-13 2.675e-15 
 TukeyHSD(aov(new_model)) 
 
 

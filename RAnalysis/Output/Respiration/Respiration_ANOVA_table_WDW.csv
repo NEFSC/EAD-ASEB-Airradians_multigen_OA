@@ -1,7 +1,0 @@
-"","Date","Age","Metric","model","DF.num","DF.denom","F_val","P_val","SigDif","ShapiroWilk","ResidNorm","Levenes","HomogVar"
-"1","2021-09-14","50","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,16,0.0515460468588871,0.823269987636707,"NO",0.0291145666346979,"NO",0.678785564373553,"YES"
-"2","2021-09-30","66","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,33,5.10225679824007,0.0306259747809341,"YES",0.0947889167959988,"YES",0.080229089639743,"YES"
-"3","2021-10-26","92","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,12,1.51121102098362,0.242514322191981,"NO",0.857911102190149,"YES",0.0212081437732305,"NO"
-"4","2022-02-02","191","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,16,0.0126226824548424,0.911942820902483,"NO",0.334129909810592,"YES",0.898255698649631,"YES"
-"5","2022-03-01","218","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,16,1.3960374923327,0.254652664840914,"NO",0.743067580120677,"YES",0.285439037635443,"YES"
-"6","2022-09-22","423","Respiration rate; WDW b factor normalized","one-way AOV; x ~ treatment",1,12,0.0372946150796273,0.850096473790937,"NO",0.0382448793713416,"NO",0.972800953900417,"YES"

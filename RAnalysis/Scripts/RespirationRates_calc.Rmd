@@ -284,12 +284,24 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                      filetype == "SDR_data" & Date %in% c('9/30/2021')~ 1.7,
                      
                      filetype == "SDR_data" ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
-                                   
-                                   # filetype == "SDR_data" & Date %in% ('8/30/2022') ~ 0.08)) %>% # 24-well plate - 80 ul (0.08 mL)
+  
+  
+  # Calculate biovolume using the volume pf spherical cap and length measurements of scallops
+  dplyr::mutate(Length_mm = Length_um/1000) %>% 
+  dplyr::mutate(Thickness_mm_estimate = Length_mm / 2.5) %>% # 2.5 ratio estimated in Biovolume_estimate.Rmd
+  dplyr::mutate(h = as.numeric(Thickness_mm_estimate / 2)) %>% # divide by 2 fo the calculation of a single cap
+  dplyr::mutate(a = as.numeric((Length_mm/0.97)/2)) %>% # 0.94 ratio estimated in Biovolume_estimate.Rmd
+  dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% # Volume of a spherical cap (1/6)πh(3a2 + h2) == Vcap
+  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)  %>% 
+  
+  #  'actual_volume' as volume of vesst ('volume' in mL) - volume displaced by the animal (Biovol_estimate_mL3)
+  dplyr::mutate(actual_volume = volume - Biovol_estimate_mL3) %>% 
+  
   
   # true rates calculated using LoLinRscript
   dplyr::mutate(resp_mg_L_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute
-                                      (volume/1000) * # correct Liters - mg per L per min
+                                      #(volume/1000) * # correct Liters - mg per L per min
+                                      (actual_volume/1000) * # correct Liters - mg per L per min
                                        60) )  %>% # convert rate per minutes to rate per hour
   dplyr::mutate(resp_umol_L_hr = (resp_mg_L_hr*1000) / 32) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
   
@@ -309,13 +321,14 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                             is.na(Fed_Unfed) ~ "High food", 
                             Fed_Unfed == 'U' ~ "Low food")) %>% 
   dplyr::mutate(pCO2 = 
-                  case_when(pH == 8.0 ~ "500 μatm", 
-                            pH == 7.5 ~ "800 μatm"))
+                  case_when(pH == 8.0 ~ "500 uatm", 
+                            pH == 7.5 ~ "800 uatm"))
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-print(Resp.outliers) # 34 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+print(Resp.outliers) # 27 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 View(Resp.Master_OM)
+
 ```
 
 
@@ -371,7 +384,7 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = resp_umol_L_hr)) +
 
 # (1) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for Shell length
-Resp.Master_OM$resp_µmol_L_mm_Length_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+Resp.Master_OM$resp_umol_L_mm_Length_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr/ # multiple by 1000 to convert mmol/ O2 to umol/L O2
@@ -379,13 +392,13 @@ Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_res
 
 # (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for Tissue Dry weight (TDW)
-Resp.Master_OM$resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+Resp.Master_OM$resp_umol_L_mg_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (as.numeric(Resp.Master_OM$Dry_Tissue_weight)*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 
 # (3) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for whole Dry weight (WDW)
-Resp.Master_OM$resp_µmol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
+Resp.Master_OM$resp_umol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (as.numeric(Resp.Master_OM$whole_Dry_weight)*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
 
@@ -398,4 +411,54 @@ write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradia
 
 
 View(Resp.Master_OM)
+```
+
+
+
+```{r, examine plots}
+Biovolume_length <- Resp.Master_OM %>%
+   dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
+   ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("shell lengt (mm)") + 
+   ylab("biovolume (mL3^3)") +
+   ggtitle("Vcap_biovolume v. shell length") +
+   geom_smooth(method='loess', formula= y~x) +
+   theme_bw()
+Biovolume_length
+
+
+Biovolume_umolResp <- Resp.Master_OM %>%
+   ggplot(aes(x=as.numeric(Biovol_estimate_mL3), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("biovolume (mL3^3)") + 
+   ylab("resp rate (umol L-1 hr-1)") +
+   ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
+   geom_smooth(method='loess', formula= y~x) +
+   theme_bw()
+Biovolume_umolResp
+
+
+Length_umolResp <- Resp.Master_OM %>%
+   ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("shell length (mm)") + 
+   ylab("resp rate (umol L-1 hr-1)") +
+   ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
+   geom_smooth(method='loess', formula= y~x) +
+   theme_bw()
+Length_umolResp
+
+
+WholeDryweight_umolResp <- Resp.Master_OM[!is.na(Resp.Master_OM$whole_Dry_weight),]  %>%
+  dplyr::filter(!whole_Dry_weight %in% '<add here>') %>% 
+   ggplot(aes(x=as.numeric(whole_Dry_weight), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("whole dry weight (g)") + 
+   ylab("resp rate (umol L-1 hr-1)") +
+   ggtitle("whole dry weight v. resp rate (umol L-1 hr-1)") +
+   geom_smooth(method='loess', formula= y~x) +
+   theme_bw()
+WholeDryweight_umolResp
+
 ```
