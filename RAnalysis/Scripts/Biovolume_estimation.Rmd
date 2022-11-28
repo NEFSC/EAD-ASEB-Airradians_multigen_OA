@@ -2,7 +2,7 @@
 title: "RespirationRates_biovolume_estimation"
 author: "Samuel Gurr"
 date: "2022-09-30"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
