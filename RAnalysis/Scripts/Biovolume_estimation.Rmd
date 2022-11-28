@@ -140,9 +140,11 @@ Gurr2021_size.relationships <- Gurr2021_biovol %>%
   dplyr::select(c('pre_biovolume_mL', 'length_mm', 'width_mm', 'thickness_mm')) %>% 
   dplyr::mutate(length.biov = (length_mm/pre_biovolume_mL)) %>% 
   dplyr::mutate(length.width = (length_mm/width_mm)) %>% 
-  dplyr::mutate(length.thick = (length_mm/thickness_mm))
-
-
+  dplyr::mutate(length.thick = (length_mm/thickness_mm)) %>% 
+  dplyr::mutate(length.cubed = (length_mm^3)) %>% 
+  dplyr::mutate(lengthcubed.biov = (length.cubed/pre_biovolume_mL))
+  
+  
 Length.Width <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.width),] %>%
     dplyr::filter(!thickness_mm > 50) %>% 
     summarySE(measurevar="length.width")  # mean = 0.9387522	stdev = 0.02717396	- consistent relationship
@@ -177,6 +179,25 @@ length_thickness <- Gurr2021_size.relationships %>%
 ggarrange(length_width, length_thickness)
 
 
+
+Gurr2021_size.relationships %>%
+  dplyr::filter(!thickness_mm > 50) %>% 
+   ggplot(aes(x=length.cubed, y=pre_biovolume_mL)) + 
+   geom_point() +
+   xlab("length (mm)") + 
+   ggtitle("OTHER DATA: length v. biovolume") +
+   ylab("biovolume_KNOWN") +
+   geom_smooth(method='lm', formula= y~x) +
+   theme_bw()
+
+
+
+Lengthcubed.Biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$lengthcubed.biov),] %>%
+    dplyr::filter(!thickness_mm > 50) %>% 
+    summarySE(measurevar="lengthcubed.biov")  # mean = 5815.944		stdev = 927.8011	
+
+927.8011/5815.944 # 0.1595272 %
+
 ```
 
 
@@ -202,6 +223,19 @@ Volume of a spherical cap (1/6)πh(3a2 + h2) == Vcap
 
 
 Length.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>% summarySE(measurevar="length.biov")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
+
+
+Length3.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>%
+  dplyr::mutate(length_3 = summarySE(measurevar="length.biov")) # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
+
+Reference_resp_sizeOM %>%
+   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("biovolume_KNOWN") + 
+   ylab("boivolume_CalcVCAP") +
+   ggtitle("Biovolume actual vs. Vcap estimated") +
+   geom_smooth(method='lm', formula= y~x) +
+   theme_bw()
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Now to test with the current data in this study..
@@ -245,5 +279,32 @@ Biov_length3_regression <- Reference_resp_sizeOM %>%
 # Biov_length3_regression
 
 ggarrange(Biov_actual_Vcap, Biov_length3_regression)
+
+lm(Biovol_estimate_mL3~Biovolume_g_in_sw, data= Reference_resp_sizeOM)
+
+Reference_resp_sizeOM %>% 
+  ggplot(aes(x = Biovolume_g_in_sw, 
+             y =Biovol_estimate_mL3)) +
+         geom_point(pch = 19, 
+                    size=1) +
+         theme_classic() + 
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) # no facet
+
+
+
+Reference_resp_sizeOM[!is.na(Reference_resp_sizeOM$Biovolume_g_in_sw),] %>%
+  dplyr::mutate(biovol_actual_calc_ratio = (as.numeric(Biovolume_g_in_sw))/(as.numeric(Biovol_estimate_mL3))) %>% 
+  summarySE(measurevar="biovol_actual_calc_ratio")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
+
+#0.9958587 , 0.1392953
+
+0.1392953/0.9958587 # 0.1398746
 
 ```

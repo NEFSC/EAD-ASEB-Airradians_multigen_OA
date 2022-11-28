@@ -506,8 +506,8 @@ medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
 
 RR_formatted_F1s.length <- RR_formatted_F1s %>% 
   dplyr::mutate(Length_mm = Length_um/1000) %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr) / ((Length_mm/meanLength)^bLength) ) %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr) / ((Length_mm/medianLength)^bLength) )
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr) * ((Length_mm/meanLength)^bLength) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr) *  ((Length_mm/medianLength)^bLength) ) # RStd = (Lexp/Lstd)1.77 * RRexp
 
 F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>% 
   ggplot(aes(x = factor(Date), 
