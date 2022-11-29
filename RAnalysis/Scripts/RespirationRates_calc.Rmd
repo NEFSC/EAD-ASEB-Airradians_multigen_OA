@@ -224,21 +224,10 @@ kable(blanks_means) # View the inserted duplicates for the other treatment on sa
 
 Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "filetype")) %>% # NOTE: this repeats for every distinct length value
   dplyr::filter(!Lpc > 0) %>% # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline (found 9/14/2021	pH 8	LoLigo_data	CH1)
-  dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc)  %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
-  dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
-# 
-# Resp.Master_2 <- merge(resp.data_merged, blanks_means_0202, by=c("Date", "Run","filetype")) %>% 
-#   dplyr::filter(Date %in% '2/2/2022') %>% 
-#   dplyr::filter(!Lpc > 0) %>%  # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline
-#   dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc)  %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
-#   dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
-# 
-# Resp.Master <- rbind(Resp.Master_1, Resp.Master_2)
+  dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc) # %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
+ # dplyr::mutate(start.end_resp_blankStand = Rate_mgO2_hour - BLANK.start.end_mean) # just start and end (simplified rate in mg O2 per hour) for O:N comparisons
 
-
-plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
-
-
+#plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 
 ```
 
@@ -310,6 +299,8 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH7' ~ 22.63, 
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH8' ~ 22.95)) %>% # F2 data
   
+  # BIOVOLUME
+  # note that biovolume was not measured for 9/14/2021, 9/30/2021, 10/26/21 (unfed only!), 9/22/22 (F2s only, SDR data)
   
   # Calculate biovolume using the volume of spherical cap and length measurements of scallops
   dplyr::mutate(Length_mm = Length_um/1000) %>% 
@@ -321,11 +312,14 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
   
   # Calculate biovolume for only absent data using the regression  
   # from length^3 to biovolume == (-0.00429)+(0.000198*x); x == length_mm^3
-  dplyr::mutate(Biovol_length3 = (-0.00429)+(0.000198*(Length_mm^3)))  %>% 
+  dplyr::mutate(Biovol_length3 = (0.000198*(Length_mm^3)))  %>% 
   
   
   #  'actual_volume' as volume of vesst ('volume' in mL) - volume displaced by the animal (Biovol_estimate_mL3)
-  dplyr::mutate(actual_volume =  (volume - Biovol_length3)) %>% # else use the biovolume measured
+  dplyr::mutate(actual_volume = ifelse(is.na(Biovolume_g_in_sw), (volume - Biovol_estimate_VCap), # NA, calculate actual volume using the calculated biovolume using the length^3 regression EQ
+                                       #NOTE THE SMALL ANIMALS HAVE NEGATIVE BIOVOLUME USING TH ELENGTH 3 EQUATION, BUT POSITIVE USING VCAP
+                                ifelse(Biovolume_g_in_sw > 0, (volume - Biovolume_g_in_sw), # if a value is present for biovolume, simply use it!
+                                       NA))) %>%  # if the measured volume is below 0, poutput an NA, this should NEVER be the case (unless a typo!)
   
   
   # true rates calculated using LoLinRscript
@@ -341,12 +335,15 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
   # dplyr::mutate(start.end_resp_umol_L_hr = (((start.end_resp_mg_L_hr) * (1000)) / 32) ) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                          
   
   
-  dplyr::mutate(Age = 
+  dplyr::mutate(Age = # currently only set up for F1s
                   case_when(Date == '9/14/2021' ~ 50, 
                             Date == '9/30/2021' ~ 66, 
                             Date == '10/26/2021' ~ 92, 
                             Date == '2/2/2022' ~ 190, 
-                            Date == '3/1/2022' ~ 217)) %>% 
+                            Date == '3/1/2022' ~ 217,
+                            Date == '9/22/2022' & filetype == "LoLigo_data" ~ 423, # F2s also measured this day as SDR data 
+                            Date == '10/26/2022' ~ 460)) %>% 
+    
   dplyr::mutate(Fed_Unfed = 
                   case_when(Fed_Unfed == 'F' ~ "High food", 
                             is.na(Fed_Unfed) ~ "High food", 
@@ -357,10 +354,9 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-print(Resp.outliers) # 27 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+print(Resp.outliers) # 29 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 View(Resp.Master_OM)
 
-plot(Biovol_estimate_VCap~Biovol_length3, data = Resp.Master_OM %>% filter(Biovol_length3 < 0.01))
 ```
 
 
