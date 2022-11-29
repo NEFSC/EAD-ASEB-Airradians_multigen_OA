@@ -1,8 +1,8 @@
 ---
 title: "RespirationRates_biovolume_estimation"
 author: "Samuel Gurr"
-date: "2022-09-30"
-output: pdf_document
+date: "2022-11-29"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -180,17 +180,8 @@ ggarrange(length_width, length_thickness)
 
 
 
-Gurr2021_size.relationships %>%
-  dplyr::filter(!thickness_mm > 50) %>% 
-   ggplot(aes(x=length.cubed, y=pre_biovolume_mL)) + 
-   geom_point() +
-   xlab("length (mm)") + 
-   ggtitle("OTHER DATA: length v. biovolume") +
-   ylab("biovolume_KNOWN") +
-   geom_smooth(method='lm', formula= y~x) +
-   theme_bw()
 
-
+Length.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>% summarySE(measurevar="length.biov")  # mean = 2.55471	stdev = 0.4976332	
 
 Lengthcubed.Biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$lengthcubed.biov),] %>%
     dplyr::filter(!thickness_mm > 50) %>% 
@@ -222,21 +213,6 @@ Volume of a spherical cap (1/6)πh(3a2 + h2) == Vcap
 ```{r, actual vs. Calculated biovolume 2}
 
 
-Length.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>% summarySE(measurevar="length.biov")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
-
-
-Length3.biovol <- Gurr2021_size.relationships[!is.na(Gurr2021_size.relationships$length.biov),] %>%
-  dplyr::mutate(length_3 = summarySE(measurevar="length.biov")) # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
-
-Reference_resp_sizeOM %>%
-   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("biovolume_KNOWN") + 
-   ylab("boivolume_CalcVCAP") +
-   ggtitle("Biovolume actual vs. Vcap estimated") +
-   geom_smooth(method='lm', formula= y~x) +
-   theme_bw()
-
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Now to test with the current data in this study..
 
@@ -257,54 +233,45 @@ Reference_resp_sizeOM <- Reference_resp_size[!is.na(Reference_resp_size$Biovolum
 
 # colnames(Reference_resp_sizeOM)
 Biov_actual_Vcap <- Reference_resp_sizeOM %>%
-   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
+   ggplot(aes(x=as.numeric(Biovol_estimate_mL3), y=as.numeric(Biovolume_g_in_sw))) + # color = as.factor(pH))) + 
    geom_point() + 
-   xlab("biovolume_KNOWN") + 
-   ylab("boivolume_CalcVCAP") +
+   ylab("biovolume_KNOWN") + 
+   xlab("boivolume_CalcVCAP") +
    ggtitle("Biovolume actual vs. Vcap estimated") +
    geom_smooth(method='lm', formula= y~x) +
+   ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
    theme_bw()
 # Biov_actual_Vcap
 
 
 Biov_length3_regression <- Reference_resp_sizeOM %>%
    dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
-   ggplot(aes(x=as.numeric(Biovolume_g_in_sw), y=as.numeric(length_cubed))) + # color = as.factor(pH))) + 
+   ggplot(aes(x=as.numeric(length_cubed), y=as.numeric(Biovolume_g_in_sw))) + # color = as.factor(pH))) + 
    geom_point() + 
-   xlab("biovolume_KNOWN") + 
-   ylab("length^3") +
+   xlab("length^3") + 
+   ylab("biovolume_KNOWN") +
    ggtitle("Biovolume actual vs. length^3") +
    geom_smooth(method='lm', formula= y~x) +
+   ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
    theme_bw()
 # Biov_length3_regression
 
 ggarrange(Biov_actual_Vcap, Biov_length3_regression)
 
-lm(Biovol_estimate_mL3~Biovolume_g_in_sw, data= Reference_resp_sizeOM)
 
-Reference_resp_sizeOM %>% 
-  ggplot(aes(x = Biovolume_g_in_sw, 
-             y =Biovol_estimate_mL3)) +
-         geom_point(pch = 19, 
-                    size=1) +
-         theme_classic() + 
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) # no facet
-
-
-
-Reference_resp_sizeOM[!is.na(Reference_resp_sizeOM$Biovolume_g_in_sw),] %>%
-  dplyr::mutate(biovol_actual_calc_ratio = (as.numeric(Biovolume_g_in_sw))/(as.numeric(Biovol_estimate_mL3))) %>% 
-  summarySE(measurevar="biovol_actual_calc_ratio")  # mean = 2.55471	stdev = 0.4976332	- highly variable relationship
-
-#0.9958587 , 0.1392953
-
-0.1392953/0.9958587 # 0.1398746
+# (-0.00429)+(0.000198*50000)
+Reference_resp_sizeOM %>%
+   dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
+   dplyr::mutate(Biovol_length3 = (-0.00429)+(0.000198*length_cubed)) %>% 
+   ggplot(aes(x=as.numeric(Biovol_length3), y=as.numeric(Biovolume_g_in_sw))) + # color = as.factor(pH))) + 
+   geom_point() + 
+   xlab("biovolume_calc") + 
+   ylab("biovolume_KNOWN") +
+   ggtitle("Biovolume actual vs. EQ_fromlength^3") +
+   geom_smooth(method='lm', formula= y~x) +
+   ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
+   theme_bw()
 
 ```
+
+# EQ for length cubed to biovolume == (-0.00429)+(0.000198*x); x == length_mm^3

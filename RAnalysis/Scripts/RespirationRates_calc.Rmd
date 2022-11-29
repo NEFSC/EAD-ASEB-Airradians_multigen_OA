@@ -1,7 +1,7 @@
 ---
 title: "Respiration Analysis Scallops 2021 2022 2023"
 author: "Samuel Gurr"
-date: "9/23/2022"
+date: "11/29/2022"
 output:
   html_document:
     df_print: paged
@@ -117,9 +117,9 @@ resp.data_merged[90,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	
 resp.data_merged[84,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
 resp.data_merged[135,c(1:6)] # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
 resp.data_merged[148,c(1:6)] # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
-resp.data_merged[211,c(1:6)] # 10/26/2022	CH3	run_2_raw.txt	0.04303898	-0.0047484	-0.0047484; data change Lpc to -0.1063
-resp.data_merged[212,c(1:6)] # 10/26/2022	CH4	run_2_raw.txt	-0.003937913	-0.003744103	-0.003744103; data change Lpc to -0.0900
-resp.data_merged[215,c(1:6)] # 10/26/2022	CH7	run_2_raw.txt	-0.002582753	-0.004017686	-0.004017686; data change Lpc to -0.1012
+resp.data_merged[257,c(1:6)] # 10/26/2022	CH3	run_2_raw.txt	0.04303898	-0.0047484	-0.0047484; data change Lpc to -0.1063
+resp.data_merged[258,c(1:6)] # 10/26/2022	CH4	run_2_raw.txt	-0.003937913	-0.003744103	-0.003744103; data change Lpc to -0.0900
+resp.data_merged[261,c(1:6)] # 10/26/2022	CH7	run_2_raw.txt	-0.002582753	-0.004017686	-0.004017686; data change Lpc to -0.1012
 
 # change according to diagnostics of plots and in Lolin script 
 resp.data_merged[47,4] <- resp.data_merged[47,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc
@@ -127,9 +127,9 @@ resp.data_merged[90,4] <- resp.data_merged[90,5] # 20210930_Plate_2_Run_1_C1_reg
 resp.data_merged[84,4] <- -0.0296 # 20210930_Plate_1_Run_2_C1_regression - plot shows noise after the 20 minutes mark, we reran this at the end of the LoLin script, insert here!
 resp.data_merged[135,4] <- -0.0209
 resp.data_merged[148,4] <- -0.0124
-resp.data_merged[211,4] <- -0.1063
-resp.data_merged[212,4] <- -0.0900
-resp.data_merged[215,4] <- -0.1012
+resp.data_merged[257,4] <- -0.1063
+resp.data_merged[258,4] <- -0.0900
+resp.data_merged[261,4] <- -0.1012
 
 # double check if correct
 resp.data_merged[47,c(1:6)] # -0.0608251
@@ -137,9 +137,9 @@ resp.data_merged[90,c(1:6)] # -0.07603444
 resp.data_merged[84,c(1:6)] # -0.0296
 resp.data_merged[135,c(1:6)]  # -0.0209
 resp.data_merged[148,c(1:6)]  # -0.0124
-resp.data_merged[211,c(1:6)]  # -0.1063
-resp.data_merged[212,c(1:6)]  # -0.09
-resp.data_merged[215,c(1:6)]  # -0.1012
+resp.data_merged[257,c(1:6)]  # -0.1063
+resp.data_merged[258,c(1:6)]  # -0.09
+resp.data_merged[261,c(1:6)]  # -0.1012
 ```
 
 #### Calculate blank rates, view means by day pH_treatment and instrument
@@ -212,6 +212,7 @@ blanks_means <- merge(blanks_meansLoLin, blanks_meansStartEnd) %>% dplyr::arrang
 
 kable(blanks_means) # View the inserted duplicates for the other treatment on same run/date
 
+# NOTe: 10/26/22 has wide differences between blank rates
 ```
 
 
@@ -252,14 +253,16 @@ plot(Resp.Master$start.end_resp_blankStand, Resp.Master$resp_blankStand)
 * 'pCO2'
 
 ```{r master resp file, echo=FALSE}
-View(Resp.Master[!is.na(Resp.Master$Length_um),])
-Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
+# View(Resp.Master[!is.na(Resp.Master$Length_um),])
+Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% 
+  dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
   dplyr::mutate(volume = 
                   
-            case_when(filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 1.7,# check these!
+            case_when(filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 1.7,# fed F1 foodxOA
                       
+                      filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7, # small unfed F1s foodxOA 
                       
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 23.1, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 23.1, # F1 data
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH2' ~ 23.05, 
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH4' ~ 22.55,
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH5' ~ 23.18,
@@ -268,7 +271,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 22.95,
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 23.31,
                                                    
-                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, 
+                      filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, # F1 data
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH5' ~ 68.57288,
@@ -277,10 +280,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH8' ~ 68.53297,
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH3' ~ 68.87473,
                       
-                        
-                      
-                      
-                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH1' ~ 196.6, 
+                      filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH1' ~ 196.6, # F1 data
                       filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH2' ~ 200.6, 
                       filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH3' ~ 201.4, 
                       filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH4' ~ 200, 
@@ -289,9 +289,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                       filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH7' ~ 201.3, 
                       filetype == "LoLigo_data" & Date %in% c('9/22/2022') & Channel == 'CH8' ~ 201.7, 
                       
-                      
-                                                   
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH1' ~ (236.70+18), 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH1' ~ (236.70+18), # F1 data
                       filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH2' ~ (239.88+18), 
                       filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH3' ~ (228.63+18), 
                       filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH4' ~ (234.35+18), 
@@ -300,21 +298,34 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>% dplyr::filter(
                       filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH7' ~ (223.11+18), 
                       filetype == "LoLigo_data" & Date %in% c('10/26/2022') & Channel == 'CH8' ~ (225.59+18), 
                 
+                      filetype == "SDR_data" & Date %in% c('8/30/2022') ~ 0.08, # F2 data 
+                      filetype == "SDR_data" & Date %in% c('9/22/2022') ~ 1.7,  # F2 data
                       
-                                                   
-                     filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7)) %>% # 24-well plate - 80 ul (0.08 mL)
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH1' ~ 23.1, # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH2' ~ 23.05,
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH3' ~ 23.31,
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH4' ~ 22.55,
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH5' ~ 23.18,
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH6' ~ 23.24,
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH7' ~ 22.63, 
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH8' ~ 22.95)) %>% # F2 data
   
   
-  # Calculate biovolume using the volume pf spherical cap and length measurements of scallops
+  # Calculate biovolume using the volume of spherical cap and length measurements of scallops
   dplyr::mutate(Length_mm = Length_um/1000) %>% 
   dplyr::mutate(Thickness_mm_estimate = Length_mm / 2.5) %>% # 2.5 ratio estimated in Biovolume_estimate.Rmd
   dplyr::mutate(h = as.numeric(Thickness_mm_estimate / 2)) %>% # divide by 2 fo the calculation of a single cap
   dplyr::mutate(a = as.numeric((Length_mm/0.97)/2)) %>% # 0.94 ratio estimated in Biovolume_estimate.Rmd
   dplyr::mutate(Cap_vol_L = ((1/6)*3.14*h)*(3*(a^2) + h^2)) %>% # Volume of a spherical cap (1/6)πh(3a2 + h2) == Vcap
-  dplyr::mutate(Biovol_estimate_mL3 = (Cap_vol_L*2)/1000)  %>% 
+  dplyr::mutate(Biovol_estimate_VCap = (Cap_vol_L*2)/1000)  %>% 
+  
+  # Calculate biovolume for only absent data using the regression  
+  # from length^3 to biovolume == (-0.00429)+(0.000198*x); x == length_mm^3
+  dplyr::mutate(Biovol_length3 = (-0.00429)+(0.000198*(Length_mm^3)))  %>% 
+  
   
   #  'actual_volume' as volume of vesst ('volume' in mL) - volume displaced by the animal (Biovol_estimate_mL3)
-  dplyr::mutate(actual_volume = volume - Biovol_estimate_mL3) %>% 
+  dplyr::mutate(actual_volume =  (volume - Biovol_length3)) %>% # else use the biovolume measured
   
   
   # true rates calculated using LoLinRscript
@@ -349,6 +360,7 @@ Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negat
 print(Resp.outliers) # 27 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 View(Resp.Master_OM)
 
+plot(Biovol_estimate_VCap~Biovol_length3, data = Resp.Master_OM %>% filter(Biovol_length3 < 0.01))
 ```
 
 

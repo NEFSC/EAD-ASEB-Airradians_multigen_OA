@@ -29,10 +29,11 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %>% 
-              filter(!Food %in% 'unfed') %>% # omit low food trial data 
-              filter(!Date %in% '8/30/2022') %>% # an F2 measurement
+              filter(!Food %in% 'unfed') %>% # omit low food trial data
+              # filter out the F2 measurements
+              filter(!Date %in% c('8/30/2022', '11/16/2022')) %>% # an F2 measurement
               dplyr::mutate(resp_umol_L_hr_mg_WDW = 
-                              resp_umol_L_hr/as.numeric(whole_Dry_weight)) %>%  # call whole dry weight corrected MO2
+                            resp_umol_L_hr/as.numeric(whole_Dry_weight)) %>%  #  whole dry weight corrected MO2
               dplyr::mutate(resp_umol_L_hr_mmLength = 
                               resp_umol_L_hr/ (1000/Length_um))  %>% # call length corrected MO2
   # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
