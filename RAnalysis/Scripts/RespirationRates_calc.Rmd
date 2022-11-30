@@ -3,10 +3,10 @@ title: "Respiration Analysis Scallops 2021 2022 2023"
 author: "Samuel Gurr"
 date: "11/29/2022"
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     latex_engine: xelatex
+  html_document:
+    df_print: paged
 ---
 
 
@@ -148,6 +148,8 @@ resp.data_merged[261,c(1:6)]  # -0.1012
 
 ```{r call blanks, echo=FALSE}
 
+
+
 blanks_total <- data.frame() # start dataframe 
 blanks.table <- data.frame(matrix(nrow = 1,ncol = 5)) # make a table template
 colnames(blanks.table)<-c('Date', 'Channel', 'mean_Lpc', 'mean_Leq' , 'mean_Lz') # names for comuns in the for loop
@@ -163,8 +165,13 @@ blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge
                   dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz','filetype')) %>% # add 'Rate_mgO2_hour'hen the start and end is completed
                   dplyr::arrange(Date,pH, .by_group = TRUE)
 
+
+
+
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # mean blanks for the LoLinR output ('Lpc') ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
 
 blanks_meansLoLin <- blanks_all_raw %>% 
                        dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
@@ -181,21 +188,30 @@ dups_LoLin        <- blanks_meansLoLin[c(1, 16,19,20,23,26),] %>% # call  rows t
                         dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment in this dataframe..
 blanks_meansLoLin <- rbind(blanks_meansLoLin, dups_LoLin) %>%  dplyr::arrange(Date_formatted, Run, pH) # bind together
 
+
+
+
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # mean blanks for the start - to - end values ('Rate_mgO2_hour') :::::::::::::::::::::::::::::::::::::::::
 
-blanks_meansStartEnd <- blanks_all_raw %>% 
-                         dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
-                         dplyr::filter(!Rate_mgO2_hour < 0) %>% # ommit blank calls that d/n represent oxygen consumption
-                         dplyr::summarise(BLANK.start.end_mean  = mean(Rate_mgO2_hour),
-                                          # BLANK.start.end_sd  = sd(Rate_mgO2_hour),
-                                          n = n()) %>% 
-                          dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
-                          dplyr::arrange(Date_formatted, Run, pH)
-# kable(blanks_meansStartEnd) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
-dups_StartEnd          <- blanks_meansStartEnd[c(1, 16,19,28),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)    
-                          dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment dataframe..
-blanks_meansStartEnd   <- rbind(blanks_meansStartEnd, dups_StartEnd) %>%  dplyr::arrange(Date_formatted, Run, pH)
+
+
+
+# blanks_meansStartEnd <- blanks_all_raw %>% 
+#                          dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
+#                          dplyr::filter(!Rate_mgO2_hour < 0) %>% # ommit blank calls that d/n represent oxygen consumption
+#                          dplyr::summarise(BLANK.start.end_mean  = mean(Rate_mgO2_hour),
+#                                           # BLANK.start.end_sd  = sd(Rate_mgO2_hour),
+#                                           n = n()) %>% 
+#                           dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+#                           dplyr::arrange(Date_formatted, Run, pH)
+# # kable(blanks_meansStartEnd) # View - notice some of the date/runs combos do not have BOTH treatmentents represented!
+# dups_StartEnd          <- blanks_meansStartEnd[c(1, 16,19,28),] %>% # call the rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)    
+#                           dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment dataframe..
+# blanks_meansStartEnd   <- rbind(blanks_meansStartEnd, dups_StartEnd) %>%  dplyr::arrange(Date_formatted, Run, pH)
+# 
+
+
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -203,12 +219,16 @@ blanks_meansStartEnd   <- rbind(blanks_meansStartEnd, dups_StartEnd) %>%  dplyr:
 
 #... first and foremost! do not do this if rate calculations differ in row size 
 # (not all data ran for Lolin and star end resp)
+
+
 if(nrow(resp.data) == nrow(start.end_resp.data)){ # if they are the same length (all data ran for both analysis)
 blanks_means <- merge(blanks_meansLoLin, blanks_meansStartEnd) %>% dplyr::arrange(Date_formatted, Run, pH) # merge blanks
 } else{blanks_means <- blanks_meansLoLin} # else we focus only on the blanks for the LoLin rate (what we will use) 
 
 
+
 # lets take a look at our mean blank values! :::::::::::::::::::::::::::::::::::::::::::::::::::::
+
 
 kable(blanks_means) # View the inserted duplicates for the other treatment on same run/date
 
@@ -354,8 +374,8 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-print(Resp.outliers) # 29 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
-View(Resp.Master_OM)
+# print(Resp.outliers) # 29 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+
 
 ```
 
@@ -415,9 +435,6 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = resp_umol_L_hr)) +
 Resp.Master_OM$resp_umol_L_mm_Length_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
               (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
 
-Resp.Master_OM$start.end_resp_umol_mm_Length_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr/ # multiple by 1000 to convert mmol/ O2 to umol/L O2
-              (Resp.Master_OM$Length_um/1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
-
 # (2) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED for Tissue Dry weight (TDW)
 Resp.Master_OM$resp_umol_L_mg_TDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
@@ -431,9 +448,6 @@ Resp.Master_OM$resp_umol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multi
 
 
 
-Resp.Master_OM$start.end_resp_µmol_L_mg_TDW_hr <- (Resp.Master_OM$start.end_resp_umol_L_hr / # multiple by 1000 to convert mmol/ O2 to umol/L O2
-              (Resp.Master_OM$Dry_Tissue_weight*1000)) # normalize by Dry tissue weight  as to mg O2 L-1 g dry tissue weight-1
-
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 
@@ -444,49 +458,49 @@ View(Resp.Master_OM)
 
 
 ```{r, examine plots}
-Biovolume_length <- Resp.Master_OM %>%
-   dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
-   ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("shell lengt (mm)") + 
-   ylab("biovolume (mL3^3)") +
-   ggtitle("Vcap_biovolume v. shell length") +
-   geom_smooth(method='loess', formula= y~x) +
-   theme_bw()
-Biovolume_length
-
-
-Biovolume_umolResp <- Resp.Master_OM %>%
-   ggplot(aes(x=as.numeric(Biovol_estimate_mL3), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("biovolume (mL3^3)") + 
-   ylab("resp rate (umol L-1 hr-1)") +
-   ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
-   geom_smooth(method='loess', formula= y~x) +
-   theme_bw()
-Biovolume_umolResp
-
-
-Length_umolResp <- Resp.Master_OM %>%
-   ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("shell length (mm)") + 
-   ylab("resp rate (umol L-1 hr-1)") +
-   ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
-   geom_smooth(method='loess', formula= y~x) +
-   theme_bw()
-Length_umolResp
-
-
-WholeDryweight_umolResp <- Resp.Master_OM[!is.na(Resp.Master_OM$whole_Dry_weight),]  %>%
-  dplyr::filter(!whole_Dry_weight %in% '<add here>') %>% 
-   ggplot(aes(x=as.numeric(whole_Dry_weight), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-   geom_point() + 
-   xlab("whole dry weight (g)") + 
-   ylab("resp rate (umol L-1 hr-1)") +
-   ggtitle("whole dry weight v. resp rate (umol L-1 hr-1)") +
-   geom_smooth(method='loess', formula= y~x) +
-   theme_bw()
-WholeDryweight_umolResp
+# Biovolume_length <- Resp.Master_OM %>%
+#    dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
+#    ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
+#    geom_point() + 
+#    xlab("shell lengt (mm)") + 
+#    ylab("biovolume (mL3^3)") +
+#    ggtitle("Vcap_biovolume v. shell length") +
+#    geom_smooth(method='loess', formula= y~x) +
+#    theme_bw()
+# Biovolume_length
+# 
+# 
+# Biovolume_umolResp <- Resp.Master_OM %>%
+#    ggplot(aes(x=as.numeric(Biovol_estimate_mL3), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+#    geom_point() + 
+#    xlab("biovolume (mL3^3)") + 
+#    ylab("resp rate (umol L-1 hr-1)") +
+#    ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
+#    geom_smooth(method='loess', formula= y~x) +
+#    theme_bw()
+# Biovolume_umolResp
+# 
+# 
+# Length_umolResp <- Resp.Master_OM %>%
+#    ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+#    geom_point() + 
+#    xlab("shell length (mm)") + 
+#    ylab("resp rate (umol L-1 hr-1)") +
+#    ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
+#    geom_smooth(method='loess', formula= y~x) +
+#    theme_bw()
+# Length_umolResp
+# 
+# 
+# WholeDryweight_umolResp <- Resp.Master_OM[!is.na(Resp.Master_OM$whole_Dry_weight),]  %>%
+#   dplyr::filter(!whole_Dry_weight %in% '<add here>') %>% 
+#    ggplot(aes(x=as.numeric(whole_Dry_weight), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
+#    geom_point() + 
+#    xlab("whole dry weight (g)") + 
+#    ylab("resp rate (umol L-1 hr-1)") +
+#    ggtitle("whole dry weight v. resp rate (umol L-1 hr-1)") +
+#    geom_smooth(method='loess', formula= y~x) +
+#    theme_bw()
+# WholeDryweight_umolResp
 
 ```

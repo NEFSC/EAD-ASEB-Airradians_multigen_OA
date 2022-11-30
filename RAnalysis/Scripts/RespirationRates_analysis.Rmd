@@ -2,10 +2,13 @@
 title: "RespirationRates_Analysis"
 author: "Samuel Gurr"
 date: "2022-11-30"
-output: html_document
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 
-```{r setup, include=FALSE}
+
+```{r setup, include= FALSE, echo = FALSE}
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(dplyr)
@@ -53,23 +56,31 @@ RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", head
 ```
 
 
-```{r shell lengths at each timepoint}
+# F1 DATA ANALYSIS 
+
+### Summary tables
+
+```{r shell lengths at each timepoint, echo = FALSE}
 
 SumTable <- RR_master[!is.na(RR_master$Length_um),] %>%  
             mutate(Length_mm = Length_um/1000) %>% 
             summarySE(measurevar="Length_mm", groupvars=c("Date", "Age")) %>% 
             dplyr::arrange(Age)
 SumTable
+
+SumTable_treatment <- RR_master[!is.na(RR_master$Length_um),] %>%  
+            mutate(Length_mm = Length_um/1000) %>% 
+            summarySE(measurevar="Length_mm", groupvars=c("Date", "Age", "pCO2")) %>% 
+            dplyr::arrange(Age)
+SumTable_treatment
 ```
-# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-F1 DATA ANALYSIS ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-# ALOMETRIC COEFFICIENT (b factor) :::::::::::::::::::::::::::::
+# ALOMETRIC COEFFICIENT (b factor) 
 
 
 ## by TISSUE DRY WEIGHT  ::::::::::
-```{r b factor TISSUE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
+```{r b factor TISSUE DRY WEIGHT, echo = FALSE, message = FALSE, warning = FALSE, results='hide'}
 
 
 # ABOUT: 
@@ -99,7 +110,7 @@ MO2_b.factor_PLOT <- RR_master_OM %>%
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
-                          theme(legend.position="none") +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
                           ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                           geom_smooth(method = lm, color = 'red') +
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
@@ -115,7 +126,7 @@ MO2_b.factor_PLOT_facetted <- RR_master_OM %>%
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
-                          theme(legend.position="none") +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
                           ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                           geom_smooth(method = lm, color = 'red') +
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
@@ -146,7 +157,7 @@ MO2_b.factor_PLOT_OM <- RR_master_OM %>%
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
-                          theme(legend.position="none") +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
                           ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                           geom_smooth(method = lm, color = 'red') +
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
@@ -160,7 +171,7 @@ MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>%
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
-                          theme(legend.position="none") +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
                           ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                           geom_smooth(method = lm, color = 'red') +
                           ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
@@ -174,14 +185,19 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 
 
 ```
+
 ### summary: 
+
 * TDW b factor total = 0.822
+
 * TDW b factor pCO2 high = 0.803
-* TDW b factor pCO2 low = 0.841 # two outliers removed here
+
+* TDW b factor pCO2 low = 0.841 - two outliers removed here
 
 
-## by SHELL AND INDIVIDUAL LENGTH :::::::::
-```{r b factor SHELL AND INDIVIDUAL LENGTH, echo=TRUE, message = FALSE, warning = FALSE}
+## by SHELL AND INDIVIDUAL LENGTH 
+
+```{r b factor SHELL AND INDIVIDUAL LENGTH, echo=TRUE, echo = FALSE,message = FALSE, warning = FALSE, results='hide'}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH LENGTH AND MO2 ::::::::::::::::::::::::::::::
@@ -199,7 +215,7 @@ MO2_b.factorLENGTH_PLOT <- RR_master_OM %>%
                               scale_x_continuous(name ="log10_Length; in mm") +
                               scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                               theme_classic() +
-                              theme(legend.position="none") +
+                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
                               ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
                                       (b.factor * log10_Length)") +
                               geom_smooth(method = lm, color = 'red') +
@@ -219,7 +235,7 @@ MO2_b.factorLENGTH_PLOT_facetted <- RR_master_OM %>%
                                         scale_x_continuous(name ="log10_Length; in mm") +
                                         scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                                         theme_classic() +
-                                        theme(legend.position="none") +
+                                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
                                         ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
                                                 (b.factor * log10_Length)") +
                                         geom_smooth(method = lm, color = 'red') +
@@ -241,14 +257,19 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 
 
 ```
+
 ### summary: 
+
 * Length b factor total = 2.18
+
 * Length b factor pCO2 high = 2.2
+
 * Length b factor pCO2 low = 2.16
 
 
-## WHOLE DRY WEIGHT :::::::::::
-```{r b factor WHOLE DRY WEIGHT, echo=TRUE, message = FALSE, warning = FALSE}
+## WHOLE DRY WEIGHT 
+
+```{r b factor WHOLE DRY WEIGHT, echo=TRUE, echo = FALSE,message = FALSE, warning = FALSE, results='hide'}
 
 # ABOUT: 
 
@@ -285,7 +306,7 @@ MO2_b.factorWDW_PLOT <- RR_master_OM_WDW %>%
                             scale_x_continuous(name ="log10_BodyMass; WDW in g") +
                             scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                             theme_classic() +
-                            theme(legend.position="none") +
+                            theme(legend.position="none",axis.title.y=element_text(size=7)) +
                             ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                             geom_smooth(method = lm, color = 'red') +
                             ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
@@ -301,7 +322,7 @@ MO2_b.factorWDW_PLOT_facetted <- RR_master_OM_WDW %>%
                                     scale_x_continuous(name ="log10_BodyMass; WDW in g") +
                                     scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                                     theme_classic() +
-                                    theme(legend.position="none") +
+                                    theme(legend.position="none",axis.title.y=element_text(size=7)) +
                                     ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
                                     geom_smooth(method = lm, color = 'red') +
                                     ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
@@ -320,18 +341,35 @@ print(ggarrange(MO2_b.factorWDW_PLOT, MO2_b.factorWDW_PLOT_facetted, nrow = 2, n
 
 
 ```
+
 ### summary: 
-# WDW b factor total = 0.748
-# WDW b factor pCO2 high = 0.745
-# WDW b factor pCO2 low = 0.754
+
+* WDW b factor total = 0.748
+
+* WDW b factor pCO2 high = 0.745
+
+* WDW b factor pCO2 low = 0.754
 
 
 
-# DATA VISUALIZATION ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
+# DATA VISUALIZATION 
+
+* raw data (umol O2 hr-1)
+
+* TDW: 
+  
+    - umol O2 hr-1 gTDW-1 
+    
+    - umol O2 hr-1 gTDW-1 b factor normalized and meanTDW standardized
+    
+* Length: 
+  
+    - umol O2 hr-1 mmLength-1 
+    
+    - umol O2 hr-1 mmLength-1 b factor normalized and meanLength standardized
 
 
-## format the data...
-```{r, format RRmaster} 
+```{r, format RRmaster,echo = FALSE, results='hide',message = FALSE, warning = FALSE} 
 # unique(as.Date(RR_master$Date, format="%m/%d/%Y")) # view to input labels below
 
 RR_formatted <- RR_master %>% 
@@ -359,7 +397,8 @@ RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')
 
 
 ## BOXPLOTS the raw resp rate data
-```{r, raw umol L hr}
+
+```{r, raw umol L hr,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
  
 # TISSUE ---------------------------------------------------------------------------- #
@@ -380,6 +419,10 @@ F1s.BOXPLOT <- RR_formatted_F1s %>%
          theme_classic() + 
          #ylim(0, 0.2) +
          ggtitle("Raw resp") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
@@ -405,6 +448,10 @@ F1s.BOXPLOT_facetted <- RR_formatted_F1s %>%
          theme_classic() + 
          #ylim(0, 0.2) +
          ggtitle("Raw resp") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
@@ -416,18 +463,47 @@ F1s.BOXPLOT_facetted <- RR_formatted_F1s %>%
 
 #F1s.BOXPLOT_facetted
 
-ggarrange(F1s.BOXPLOT_facetted,F1s.BOXPLOT)
+ggarrange(F1s.BOXPLOT_facetted,F1s.BOXPLOT, nrow = 2, ncol = 1)
 
 ```
 
 
 
-## BOXPLOTS by TISSUE DRY WEIGHT (b factor = 0.863)
-```{r, by mg TISSUE}
+## BOXPLOTS by TISSUE DRY WEIGHT (b factor = 0.822)
+
+```{r, by mg TISSUE,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
  
 # TISSUE ---------------------------------------------------------------------------- #
 # PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
+
+F1s.BOXPLOT_TDW <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_mg_TDW_hr, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         #ylim(0, 0.2) +
+         ggtitle("Resp / TDW") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) #+
+         #facet_wrap(~Gen_lifestage, scales = "free")
 
 F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
@@ -443,18 +519,23 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          #ylim(0, 0.2) +
-         ggtitle("Tissue Dry weight") +
+         ggtitle("Resp / TDW") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
                       width = 0.6, 
                       size=0.4, 
                       linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) #+
-         #facet_wrap(~Gen_lifestage, scales = "free")
-F1s.BOXPLOT_TDW_facetted # not that we do not have TDW for 9/14 and 9/30 data 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free")
+
+print(ggarrange(F1s.BOXPLOT_TDW_facetted,F1s.BOXPLOT_TDW, nrow = 2, ncol = 1)) # print the model diagnostics 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_raw.pdf"), width = 18, height = 8)
-print(ggarrange(F1s.BOXPLOT_TDW_facetted, nrow = 1, ncol = 1)) # print the model diagnostics 
+print(ggarrange(F1s.BOXPLOT_TDW_facetted,F1s.BOXPLOT_TDW, nrow = 2, ncol = 1)) # print the model diagnostics 
 dev.off()
  
 
@@ -462,10 +543,18 @@ dev.off()
 
 bTDW = 0.822 # review the outlier-omitted b factor plot in previous chunk
 
-F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormTDW = resp_umol_L_hr/(Dry_Tissue_weight^bTDW)) %>% 
+RR_formatted_F1s$Dry_Tissue_weight <- as.numeric(RR_formatted_F1s$Dry_Tissue_weight)
+meanTDW   <- mean((RR_formatted_F1s %>% dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
+medianTDW <- median((RR_formatted_F1s %>% dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.1436 g
+
+#View(RR_formatted_F1s$TDW_um)
+RR_formatted_F1s.TDW <- RR_formatted_F1s %>% 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormTDW.MEAN = (resp_umol_L_hr)*((meanTDW/Dry_Tissue_weight)^bTDW) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
+  dplyr::mutate(resp_umol_L_hr_bFactorNormTDW.MEDIAN = (resp_umol_L_hr)*((medianTDW/Dry_Tissue_weight)^bTDW) ) # RStd = (Lexp/Lstd)1.77 * RRexp
+
+F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s.TDW %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormTDW, 
+             y = resp_umol_L_hr_bFactorNormTDW.MEAN, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -476,7 +565,39 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("tdw b factor (0.696)") +
+         ggtitle("Resp * [ (meanTDW / TDW_meas)^0.822 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) # +
+         #facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+
+F1s.BOXPLOT_TDW_bfactor_facetted <- RR_formatted_F1s.TDW %>% 
+   ggplot(aes(x = factor(Date), 
+             y = resp_umol_L_hr_bFactorNormTDW.MEAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp * [ (meanTDW / TDW_meas)^0.822 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -486,7 +607,8 @@ F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>%
                       linetype = "dashed", 
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-F1s.BOXPLOT_TDW_bfactor # not that we do not have TDW for 9/14 and 9/30 data 
+
+print(ggarrange(F1s.BOXPLOT_TDW_bfactor_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
 
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_biovol.pdf"), width = 8, height = 8)
@@ -497,8 +619,9 @@ dev.off()
 ```
 
 
-## BOXPLOTS by SHELL LENGTH (b factor = 1.77)
-```{r, by MM LENGTH}
+## BOXPLOTS by SHELL LENGTH (b factor = 2.18)
+
+```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
  
 # TISSUE ---------------------------------------------------------------------------- #
@@ -519,6 +642,10 @@ F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>%
          theme_classic() + 
          #ylim(0, 0.2) +
          ggtitle("Resp / Length (raw)") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
                       aes(ymax = ..y.., ymin = ..y..), 
@@ -543,6 +670,10 @@ F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>%
                                scale_fill_manual(values=c("forestgreen","orange")) +
                                theme_classic() + 
                                ggtitle("Resp / Length (raw)") +
+                               theme(legend.position="none",
+                                   axis.title.y=element_text(size=7),
+                                   axis.title.x=element_text(size=7),
+                                   axis.text.x=element_text(size=7)) +
                                #ylim(0, 0.2) +
                                stat_summary(fun.y=mean, 
                                             geom = "errorbar", 
@@ -558,7 +689,7 @@ dev.off()
  
 
 # print for Rmarkdown
-print(ggarrange(F1s.BOXPLOT_Length_facetted,F1s.BOXPLOT_Length_nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
+print(ggarrange(F1s.BOXPLOT_Length_facetted,F1s.BOXPLOT_Length_nofacet, nrow = 2, ncol = 1)) # print the model diagnostics 
 
 
 # B factor normalized - SHELL LENGTH
@@ -588,6 +719,10 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          ggtitle("Resp * [ ( meanLength / Length_meas)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -612,6 +747,10 @@ F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s.length %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          ggtitle("Resp * [ (meanLength/Length_meas)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -627,7 +766,7 @@ print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.
 dev.off()
 
 # print for Rmarkdown
-print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
+print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 2, ncol = 1)) # print the model diagnostics 
 
 
 
@@ -645,6 +784,10 @@ F1s.BOXPLOT_Length_bfactor.MEDIAN <- RR_formatted_F1s.length %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          ggtitle("Resp / [ (Length_meas / medianLength)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -670,6 +813,10 @@ F1s.BOXPLOT_Length_bfactor.MEDIAN.nofacet <- RR_formatted_F1s.length %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          ggtitle("Resp * [ ( medianLength / Length_meas)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -689,8 +836,9 @@ dev.off()
 ```
 
 
-## BOXPLOTS by WHOLE DRY WEIGHT (b factor = 0.611)
-```{r, by mg WHOLE DRY WEIGHT}
+## BOXPLOTS by WHOLE DRY WEIGHT (b factor = 0.748)
+
+```{r, by mg WHOLE DRY WEIGHT,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
 
 F1s.BOXPLOT_WDW <- RR_formatted_F1s %>% 
@@ -707,6 +855,10 @@ F1s.BOXPLOT_WDW <- RR_formatted_F1s %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          ggtitle("whole Dry weight corrected") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -716,7 +868,8 @@ F1s.BOXPLOT_WDW <- RR_formatted_F1s %>%
                       linetype = "dashed", 
                       position = position_dodge(preserve = "single"))# +
         # facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-F1s.BOXPLOT_WDW # not that we do not have TDW for 9/14 and 9/30 data 
+
+
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_WDW_raw.pdf"), width = 18, height = 8)
 print(ggarrange(F1s.BOXPLOT_WDW, nrow = 1, ncol = 1)) # print the model diagnostics 
 dev.off()
@@ -739,7 +892,11 @@ F1s.BOXPLOT_WDW_bfactor <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("whole Dry weight b factor (0.776)") +
+         ggtitle("whole Dry weight b factor (0.748)") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -761,12 +918,17 @@ dev.off()
 
 
 
-# STATISTICAL ANALYSIS :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# STANDARDIZE AND STATISTICAL ANALYSIS 
 
 
-``` {r stats F1s, Length3.biovol b factor norm}
-#unique(RR_formatted_F1s$Date) # "2021-09-14" "2021-09-30" "2021-10-26" "2022-02-02" "2022-03-01" "2022-09-22" "2022-10-26"
-# f1s data
+``` {r, standardize & ANOVA stats,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
+
+# get mean and median length for 
+RR_F1s       <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>%  dplyr::mutate(Length_mm = as.numeric(Length_um/1000))
+meanLength   <- mean(RR_F1s$Length_mm)    # 16.89333
+medianLength <- median(RR_F1s$Length_mm)  # 12.61
+bLength      <- 2.18 # review the outlier-omitted b factor plot in previous chunk
+
 RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s') %>% 
   dplyr::mutate(Length_mm = Length_um/1000) %>% 
   dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr)*((meanLength/Length_mm)^bLength) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
@@ -812,10 +974,10 @@ for (i in 1:nrow(ANOVA_Dates)) {
         df          <- data.frame(DF_loop) # name dataframe for this single row
         AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
         print(AOVdf_total) # print to monitor progress
-        }
+        
 }
 AOVdf_total <- AOVdf_total %>% dplyr::arrange(Age)
-View(AOVdf_total) # view all the anova tests within data 
+# View(AOVdf_total) # view all the anova tests within data 
 
 
 # WRITE CSV OF THE MASTER FILE
@@ -824,24 +986,28 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 # Two way anova for pH * time
+
+
+
 total_mod  <- aov(lm(resp_umol_L_hr_bFactorNormLength.MEAN  ~ pCO2 * Date, data = RR_formatted_F1s))
 leveneTest(total_mod) # 0.006044 **
 shapiro.test(resid(total_mod)) # 0.1374
 hist(resid(total_mod)) # positive skew
 qqnorm(resid(total_mod))
 summary(total_mod)
-#              Df Sum Sq Mean Sq F value   Pr(>F)    
-# pCO2          1   7.61   7.614   5.271   0.0234 *  
-# Date          6  70.09  11.681   8.087 2.46e-07 ***
-# pCO2:Date     6   7.16   1.193   0.826   0.5522    
-# Residuals   119 171.88   1.444                      
+check_model(total_mod)
+                  
 
 
 #find optimal lambda for Box-Cox transformation 
+
+
+
 library(MASS)
 bc     <- boxcox(RR_formatted_F1s$resp_umol_L_hr_bFactorNormLength.MEAN ~ RR_formatted_F1s$pCO2 * RR_formatted_F1s$Date) # y ~ x
 lambda <- bc$x[which.max(bc$y)] # 0.1414141
 new_model <- lm(((resp_umol_L_hr_bFactorNormLength.MEAN^lambda-1)/lambda) ~ pCO2 * Date, data = RR_formatted_F1s) #fit new linear regression model using the Box-Cox transformation
+check_model(new_model)
 leveneTest(new_model) # 0.0773  * - PASS
 shapiro.test(resid(new_model)) # 0.5891 - normal
 qqnorm(resid(new_model)) # boxcox resolves the qqnorm visual from the raw model greatly
@@ -851,14 +1017,15 @@ summary(aov(new_model))  # date and pH significant
 # Date          1 2.000e-16 2.310e-16   0.086 0.7695  
 # pCO2:Date     1 2.000e-16 1.750e-16   0.065 0.7985  
 # Residuals   129 3.451e-13 2.675e-15 
-TukeyHSD(aov(new_model)) 
 
-library(knitr)
-pander(anova(new_model), style='rmarkdown') # anova table of lmer
-kable(as.data.frame(anova(new_model))) %>%  # print a png of this table
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_TwoWayANOVA_table_Length_mean.png", zoom = 1.5)
 
+# library(knitr)
+# pander(anova(new_model), style='rmarkdown') # anova table of lmer
+# kable(as.data.frame(anova(new_model))) %>%  # print a png of this table
+#   kable_styling() %>%
+#   save_kable(file = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_TwoWayANOVA_table_Length_mean.png", zoom = 1.5)
+# 
+#                           
 
 
 ```
@@ -867,1132 +1034,4 @@ kable(as.data.frame(anova(new_model))) %>%  # print a png of this table
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r, F2 larvae and spat}
-
-#  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 20220830 spat :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-F2_spat   <- RR_master %>% 
-              dplyr::filter(Date %in% '8/30/2022') %>% # call the date we completed respiromatery on F2 spat and larvae
-              dplyr::filter(Num_indivs %in% 1)# call only rows that say we used 1 animal per well (Note: 1 indiv per well for spat)
-
-
-F2_spat[!is.na(F2_spat$resp_umol_L_hr),] %>% 
-   ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-   theme(panel.grid=element_blank()) +
-   geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-   scale_fill_manual(values=c("white","grey50")) +
-   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-   theme_classic()
-
-#  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 20220830 larvae :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-F2_larvae <- RR_master %>% 
-              dplyr::filter(Date %in% '8/30/2022') %>% # call the date we completed respiromatery on F2 spat and larvae
-              dplyr::filter(Num_indivs %in% 5)# call only rows that say we used 1 animal per well (Note: 1 indiv per well for spat)
-
-
-F2_larvae[!is.na(F2_larvae$resp_umol_L_hr),] %>% 
-   ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-   theme(panel.grid=element_blank()) +
-   geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-   scale_fill_manual(values=c("white","grey50")) +
-   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-   theme_classic()
-
-
-
-#  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# 20220830 spat and larvae  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-F2_larvae_spat  <- RR_master %>% 
-                      dplyr::filter(Date %in% '8/30/2022') %>% # call the date we completed respiromatery on F2 spat and larvae
-                      dplyr::mutate(Type = 
-                                      case_when(Num_indivs == 1 ~ 'spat', 
-                                                Num_indivs == 5 ~ 'larvae')) %>% 
-                      dplyr::mutate(resp_µmol_L_mm_Length_hr = resp_µmol_L_mm_Length_hr/Num_indivs)
-
-F2_larvae_spat[!is.na(F2_larvae_spat$resp_umol_L_hr),] %>% 
-   ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-   theme(panel.grid=element_blank()) +
-   geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-   scale_fill_manual(values=c("white","grey50")) +
-   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-   theme_classic() + 
-   facet_wrap(~Type)
-```
-
-
-### Plot the RAW rates by the size metrics 
-
-####  (1) Shell length vs. Raw respiration rate (umol O2 L- hr-1)...
-``` {r Shell length vs. raw respiration rate, echo=TRUE, message = FALSE, warning = FALSE}
-
-# by Length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-P_Length_resp_all <- RR_master[!is.na(RR_master$resp_umol_L_hr),] %>% 
-                        ggplot(aes(x = Length_um, y = resp_umol_L_hr, color = as.factor(pCO2))) +
-                         scale_color_manual(values=c("forestgreen","darkorange2"))+
-                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
-                          theme_classic() +
-                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-                          labs(title = "Raw Resp v. Shell length (μm)", y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
-                          xlab("Shell length") +
-                          theme(legend.position="none") +
-                          geom_point()
-
-P_Length_resp_facet <- RR_master[!is.na(RR_master$resp_umol_L_hr),] %>% 
-                        ggplot(aes(x = Length_um, y = resp_umol_L_hr, color = as.factor(pCO2))) +
-                         scale_color_manual(values=c("forestgreen","darkorange2"))+
-                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
-                          theme_classic() +
-                           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+ 
-                          labs(y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
-                          xlab("Shell length (μm)") +
-                          geom_point() + 
-                          facet_wrap(~Age*Food, scales = "free")
-
-P_Length_resp_boxplot <- RR_master[!is.na(RR_master$resp_umol_L_hr),] %>% 
-                            ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_umol_L_hr , fill = pCO2)) +
-                            theme(panel.grid=element_blank()) +
-                            geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                            scale_fill_manual(values=c("white","grey50")) +
-                            geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                            theme_classic()+ 
-                            facet_wrap(~Age, scales = "free")
-
-# print in markdown file 
-ggarrange(P_Length_resp_all, P_Length_resp_facet, P_Length_resp_boxplot,nrow = 3)
-# Export to pdf
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
-ggarrange(P_Length_resp_all, P_Length_resp_facet, P_Length_resp_boxplot,nrow = 3)
-dev.off()
-
-```
-####  (2) TDW vs. Raw respiration rate (umol O2 L- hr-1)...
-``` {r TDW vs. raw respiration rate, echo=TRUE, message = FALSE, warning = FALSE}
-
-# by Length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-P_TDW_resp_all <- RR_master[!is.na(RR_master$Dry_Tissue_weight),] %>% 
-                        ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr, color = as.factor(pCO2))) +
-                         scale_color_manual(values=c("forestgreen","darkorange2"))+
-                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
-                          theme_classic() +
-                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-                          labs(title = "Raw Resp v. Tissue dry weight (g)", y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
-                          xlab("Tissue dry weight (g)") +
-                          theme(legend.position="none") +
-                          geom_point()
-
-P_TDW_resp_facet <- RR_master[!is.na(RR_master$Dry_Tissue_weight),] %>% 
-                        ggplot(aes(x = Dry_Tissue_weight, y = resp_umol_L_hr, color = as.factor(pCO2))) +
-                         scale_color_manual(values=c("forestgreen","darkorange2"))+
-                          geom_smooth(method = "lm", se=FALSE, color="black", formula = resp_umol_L_hr ~ Length_um) +
-                          theme_classic() +
-                           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+ 
-                          labs(y = expression(μmol~L^{-1}~O[2]%.%hr^{-1})) +
-                          xlab("Tissue dry weight (g)") +
-                          geom_point() + 
-                          facet_wrap(~Age*pH, scales = "free")
-
-P_TDW_resp_normed <- RR_master[!is.na(RR_master$Dry_Tissue_weight),] %>% 
-                    ggplot( aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mg_TDW_hr , fill = pCO2)) +
-                    theme(panel.grid=element_blank()) +
-                    geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                    scale_fill_manual(values=c("white","grey50")) +
-                    geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                    theme_classic()+ 
-                    facet_wrap(~Age, scales = "free")
-
-# print in markdown file 
-ggarrange(P_TDW_resp_all, P_TDW_resp_facet,P_TDW_resp_normed,nrow = 3)
-# Export to pdf
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Shell_length_resp_raw.pdf"), width = 10, height = 6)
-ggarrange(P_Length_resp_all, P_Length_resp_facet,ncol = 2)
-dev.off()
-
-```
-
-### (1,2, and 3) Assemble Standrdized rate (allometric coeff) and corrected rates for shell length and dry tissue weight...
-```{r Line plot , echo=TRUE, message = FALSE, warning = FALSE}
-
-# Length :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Length_um
-SumTab_Len      <- RR_master[!is.na(RR_master$Length_um),] %>%  
-            summarySE(measurevar="Length_um", groupvars=c("Age", "pCO2", "Fed_Unfed"))
-SumTab_Len$pCO2 <- factor(SumTab_Len$pCO2, c("500 μatm","800 μatm"))
-## Use geom_line and geom_point to plot over time
-Length_time    <- ggplot(data=SumTab_Len, aes(x=Age, y=Length_um, color=pCO2)) +
-                    geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
-                    geom_point()+ 
-                    scale_color_manual(values=c("forestgreen","darkorange2"))+
-                    geom_errorbar(aes(ymin=Length_um-se, ymax=Length_um+se), width=.2,
-                                  position=position_dodge(.1))+
-                    theme_bw() +  
-                    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-                    scale_x_continuous(name ="Age (d)") +
-                    labs(title =  "Shell length over time..", 
-                         y = "Shell length (μm)") +
-                    scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
-                    theme(legend.position="none") +
-                    # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
-                    facet_wrap(~pCO2)
-
-
-
-# resp_µmol_L_mm_Length_hr
-RespSumTab_Len      <- RR_master[!is.na(RR_master$resp_µmol_L_mm_Length_hr),] %>%  
-                        summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=c("Age", "pCO2", "Fed_Unfed"))
-RespSumTab_Len$pCO2 <- factor(RespSumTab_Len$pCO2, c("500 μatm","800 μatm"))
-## Use geom_line and geom_point to plot over time
-Resp_LengthStand    <- ggplot(data=RespSumTab_Len, aes(x=Age, y=resp_µmol_L_mm_Length_hr, color=pCO2)) +
-                        geom_line(aes(linetype = factor(Fed_Unfed)), size = 0.5) +  
-                        geom_point()+ 
-                        scale_color_manual(values=c("forestgreen","darkorange2"))+
-                        geom_errorbar(aes(ymin=resp_µmol_L_mm_Length_hr-se, ymax=resp_µmol_L_mm_Length_hr+se), width=.2,
-                                      position=position_dodge(.1))+
-                        theme_bw() +  
-                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.title = element_text(size=10))+ 
-                        scale_x_continuous(name ="Age (d)") +
-                        labs(title = "Resp corrected by shell length", 
-                             y = expression(μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1})) +
-                        scale_linetype_manual(values = c("High food" = "solid", "Low food" = "dashed"))  +
-                        theme(legend.position="none") +
-                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
-                        facet_wrap(~pCO2)
-
-
-# Print assembled plot from previous chunks....  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# both shell length and whole dry weight used for standardizing respiration rate - view the diagnostic pots for this here (good visual!)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/All_Respiration_normalized_summary.pdf"), width = 10, height = 12)
-ggarrange(P_SLStzd_resp_all, Resp_SLStand, NA,
-          P_Length_resp_all ,Length_time, Resp_LengthStand,
-          P_WholeDW_resp_all, WholeDW_time, Resp_DryWgtStand, ncol = 3, nrow = 3, heights=c(1,1))
-dev.off()
-
-
-ggarrange(Resp_SLStand,
-          Resp_LengthStand,
-          Resp_DryWgtStand, ncol = 1,nrow = 3) %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Standardized_resp_rates.pdf")
-
-
-```
-
-
-
-
-### Skip to here to load the resp master file (if already completed above chunks!!)
-
-
-
-```{r load master resp file, echo=FALSE}
-# RR_master    <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # personel computer 
-RR_master    <- read.csv(file="C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv", header=T) # work computer
-```
-
-
-
-# Analysis 
-
-
-
-### 9/14/2021 F1 juvenile scallops
-
-**About**
-- two pCO2 treatments 
-- **before** we culled and started the food limitation trials
-
-
-##### number of replicates for analysis...
-
-```{r 9/14 replicates and mean resp, echo=FALSE}
-
-# model effect of treatment on resp rate 20210507
-Resp_0914 <- RR_master %>% 
-              dplyr::filter(Date %in% '9/14/2021')  %>% # call only 9/14
-              dplyr::filter(!Chamber_tank  %in% 'blank')
-
-Resp_0914 %>% dplyr::group_by(Chamber_tank) %>% dplyr::summarise(n()) # tank replication
-
-
-Resp_0914 %>% summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=c("pH")) %>% 
-      dplyr::mutate(pCO2 = case_when(pH == 8  ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
-
-
-```
-
-### 9/14/2021 linear model, diagnostics, and plots
-
-#### Length standardized
-
-```{r 9/14 Length standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Shell length standardized (SL) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# plot the replicates (visual diagnostics of random factor)
-Resp914_Length_reps<- ggboxplot(Resp_0914, x = "pH", y = "resp_µmol_L_mm_Length_hr", color = "Replicate",
-                              add = c("mean_se", "dotplot"),
-                              palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp914_Length_reps
-
-
-# one way anova 
-LMmod_914_SL <- lm(resp_µmol_L_mm_Length_hr ~ pCO2, data=Resp_0914)
-summary(aov(LMmod_914_SL))
-# Df  Sum Sq   Mean Sq F value Pr(>F)
-# pCO2         1 1.6e-05 1.601e-05   0.135  0.718
-# Residuals   16 1.9e-03 1.187e-04
-shapiro.test(residuals(LMmod_914_SL)) #  0.592
-leveneTest(LMmod_914_SL) # 0.4815
-
-# Linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0914_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2, random=~1|Chamber_tank, data=Resp_0914)
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  10   |  30.69  | 0.0002476 |
-# |    **pCO2**     |   1   |   6   | 0.07053 |  0.7995   |
-pander(anova(LMEmod_0914_SL), style='rmarkdown') # anova table of lmer
-kable(as.data.frame(anova(LMEmod_0914_SL))) %>%  # print a png of this table
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_LME_Diagnostics.pdf"))
-check_model(LMEmod_0914_SL) # print the model diagnostics 
-dev.off()
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_0914_SL)[[1]])[2], (anova(LMEmod_0914_SL)[[2]])[2], sep = '/') # call DF
-Fval <- (anova(LMEmod_0914_SL)[[3]])[2] # call f
-pval <- (anova(LMEmod_0914_SL)[[4]])[2] # call p value
-
-# plot
-Resp914_Length <- ggplot(Resp_0914, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-                    theme(panel.grid=element_blank()) +
-                    geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                    scale_fill_manual(values=c("white","grey50")) +
-                    geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                    theme_classic() +
-                    scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-                   # scale_y_continuous(expand = c(0, 0), limits = c(0, 2)) +
-                    labs(title = "F1 Scallops: respiration rates on 20210914 (shell length stand.)", 
-                         y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1}~")"),
-                         x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")")) + 
-                    theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-                     stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-                     annotate("text", x=2, y=0.000005, size = 4, label = "shapiro wilk = 0.3347") +
-                     annotate("text", x=2, y=0.0000075, size = 4, label = "levene's = ???") +
-                     annotate("text", x=2, y=0.0000115, size = 4, label= paste('DF =',DF,'F =', signif(Fval, digits=3), 'p value =', signif(pval, digits=3), sep=" ")) 
-Resp914_Length # print this figure...
-
-
-# Export the figures to pdf
-ggarrange(Resp914_Length,Resp914_Length_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_length.pdf")
-
-```
-
-
-#### b factor standardized (scaled for shell length)
-
-```{r 9/14 b factor standardized , echo=TRUE, message = FALSE, warning = FALSE}
-
-# b factor standardized  (bfactor) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# plot the replicates (visual diagnostics of random factor)
-Resp914_bfactor_reps<- ggboxplot(Resp_0914, x = "pH", y = "resp_µmol_L_SL.StzedRate", color = "Replicate",
-                              add = c("mean_se", "dotplot"),
-                              palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp914_bfactor_reps
-
-# Linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0914_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2, random=~1|Chamber_tank, data=Resp_0914)
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  16   |  68.08  | 3.707e-07 |
-# |    **pCO2**     |   1   |   6   | 0.4731  |  0.5173   |
-pander(anova(LMEmod_0914_bfactor), style='rmarkdown') # anova table of lmer
-kable(as.data.frame(anova(LMEmod_0914_bfactor))) %>%  # print a png of this table
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_resp_SLStzed_LME_Diagnostics.pdf"))
-check_model(LMEmod_0914_bfactor) # print the model diagnostics 
-dev.off()
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_0914_bfactor)[[1]])[2], (anova(LMEmod_0914_bfactor)[[2]])[2], sep = '/') # call DF
-Fval <- (anova(LMEmod_0914_bfactor)[[3]])[2] # call f
-pval <- (anova(LMEmod_0914_bfactor)[[4]])[2] # call p value
-
-# plot
-Resp914_bfactor <- ggplot(Resp_0914, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_SL.StzedRate , fill = pCO2)) +
-                    theme(panel.grid=element_blank()) +
-                    geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                    scale_fill_manual(values=c("white","grey50")) +
-                    geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                    theme_classic() +
-                    scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-                   # scale_y_continuous(expand = c(0, 0), limits = c(0, 2)) +
-                    labs(title = "F1 Scallops: respiration rates on 20210914 (b factor stand.)", 
-                         y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%hr^{-1}~")"),
-                         x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")")) + 
-                    theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-                     stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-                     annotate("text", x=2, y=0.000005, size = 4, label = "shapiro wilk = 0.3347") +
-                     annotate("text", x=2, y=0.0000075, size = 4, label = "levene's = ???") +
-                     annotate("text", x=2, y=0.0000115, size = 4, label= paste('DF =',DF,'F =', signif(Fval, digits=3), 'p value =', signif(pval, digits=3), sep=" ")) 
-Resp914_bfactor # print this figure...
-
-
-# Export the figures to pdf
-ggarrange(Resp914_bfactor,Resp914_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210914_figs_tables/20210914_respiration_SLStzd.standardized.pdf")
-
-```
-
-
-#### Whole dry weight standardized
-
-```{r 9/14 Whole dry weight standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Whole animal Dry weight standardized (DW) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Resp914_WholeDW_reps<- ggboxplot(Resp_0914, x = "pH", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
-                          add = c("mean_se", "dotplot"),
-                          palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp914_WholeDW_reps
-
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0914_DW<-lme(resp_µmol_L_g_hr ~ pCO2, random=~1|Replicate, data=Resp_0914[!is.na(Resp_0914$resp_µmol_L_g_hr),])
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  16   |  31.58  | 3.836e-05 |
-# |    **pCO2**     |   1   |  16   | 0.1122  |   0.742   |
-pander(anova(LMEmod_0914_DW), style='rmarkdown')
-
-
-
-# linear model without the random effect 
-LMmod_0914_DW <- aov(lm(resp_µmol_L_g_hr~pCO2,data=Resp_0914[!is.na(Resp_0914$resp_µmol_L_g_hr),]))
-# |    &nbsp;     | Df |  Sum Sq  | Mean Sq  | F value | Pr(>F) |
-# |:-------------:|:--:|:--------:|:--------:|:-------:|:------:|
-# |   **pCO2**    | 1  | 0.000286 | 0.000286 | 0.1125  | 0.741  |
-# | **Residuals** | 19 | 0.04829  | 0.002541 |   NA    |   NA   |
-pander(summary(LMmod_0914_DW), style='rmarkdown') # 0.741  
-  
-  
-check_model(LMmod_0914_DW) # observe the diagnostics of the model
-shapiro.test(residuals(LMmod_0914_DW)) #  normal - 0.002138
-leveneTest(LMmod_0914_DW) # good - 0.9079
-
-DF   <- paste( (summary(LMmod_0914_DW)[[1]][["Df"]])[1], (summary(LMmod_0914_DW)[[1]][["Df"]])[2], sep = '/')
-Fval <- (summary(LMmod_0914_DW)[[1]][["F value"]])[1]
-pval <- (summary(LMmod_0914_DW)[[1]][["Pr(>F)"]])[1]
-
-Resp914_WholeDW <- ggplot(Resp_0914[!is.na(Resp_0914$resp_µmol_L_g_hr),], aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_g_hr , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              # scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-              theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-              stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-              labs(title = "F1 Scallops: respiration rates on 20210914 (whole dry weight stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%g^{-1}~DW%.% hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))
-Resp914_WholeDW
-
-
-# Export to pdf
-ggarrange(Resp914_WholeDW,Resp914_WholeDW_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210914_respiration_DW.standardized.pdf")
-
-```
-
-
-# 9/30/2021 F1 juvenile scallops
-
-**About**
-
-- two pCO2 treatments 
-
-- *before* we culled and started the food limitation trials
-
-
-#### number of replicates for analysis...
-
-```{r 9/30 replicates, echo=FALSE}
-
-Resp_0930 <- RR_master %>% 
-  dplyr::filter(Date %in% '9/30/2021')  %>% # call only 9/14
-  dplyr::select(-Center) %>% 
-  dplyr::mutate(pHxFood = paste(pH,Food, sep = "_")) %>% 
-  dplyr::mutate(random_fact = as.factor(paste(Chamber_tank, Food, sep="_")))
-
-Resp_0930 %>% dplyr::group_by(pH, Food, Replicate) %>% dplyr::summarise(n()) # tank replication
-
-Resp_0930 %>% summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=("pH")) %>% 
-      dplyr::mutate(pCO2 = case_when(pH == 8  ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
-```
-
-
-## 9/30/2021 linear model, diagnostics, and plots
-
-#### Length standardized
-
-```{r 9/30 Length standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-
-# Shell length standardized (SL) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Visualize the data with the random effet as treplicate 
-Resp930_Length_reps <- ggboxplot(Resp_0930, x = "pHxFood", y = "resp_µmol_L_mm_Length_hr", color = "Replicate",
-          add = c("mean_se", "dotplot"),
-          palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp930_Length_reps
-
-
-# two way anova 
-LMmod_930_SL <- lm(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, data=Resp_0930)
-summary(aov(LMmod_930_SL))
-#             Df   Sum Sq   Mean Sq F value Pr(>F)  
-# pCO2         1 0.000768 0.0007679   4.395 0.0408 *
-# Food         1 0.000869 0.0008688   4.973 0.0300 *
-# pCO2:Food    1 0.000084 0.0000840   0.481 0.4910  
-# Residuals   53 0.009259 0.0001747  
-shapiro.test(residuals(LMmod_930_SL)) #  0.02539
-leveneTest(LMmod_930_SL) # 0.2124
-
-# Linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0930_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|random_fact, data=Resp_0930) 
-# |     &nbsp;      | numDF | denDF | F-value | p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:--------:|
-# | **(Intercept)** |   1   |  41   |  101.6  | 1.17e-12 |
-# |    **pCO2**     |   1   |  12   |  3.448  | 0.08805  |
-# |    **Food**     |   1   |  12   |  3.994  | 0.06883  |
-# |  **pCO2:Food**  |   1   |  12   | 0.2928  |  0.5983  |
-pander(anova(LMEmod_0930_SL), style='rmarkdown')
-kable(as.data.frame(anova(LMEmod_0930_SL))) %>% 
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
-check_model(LMEmod_0930_SL) 
-dev.off()
-
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_0930_SL)[[1]])[3], (anova(LMEmod_0930_SL)[[2]])[3], sep = '/') # call DF
-Fval <- (anova(LMEmod_0930_SL)[[3]])[3] # call f
-pval <- (anova(LMEmod_0930_SL)[[4]])[3] # call p value
-
-# plot
-Resp930_Length <- ggplot(Resp_0930, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              #scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-              theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-              labs(title = "F1 Scallops: respiration rates on 20210930 (shell length stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-               stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-               facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food')))
-Resp930_Length
-
-# Export to pdf
-ggarrange(Resp930_Length,Resp930_Length_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_Figures.pdf")
-
-```
-
-
-# density plot - Day 64
-
-```{r, Day 92 density respiration plot }
-library(dplyr)
-library(tidyr)
-Resp_0930$pHxFood <- as.factor(Resp_0930$pHxFood)
-
-df_mean <- Resp_0930 %>% 
-  dplyr::group_by(pHxFood) %>% 
-  dplyr::summarize(average = mean(resp_µmol_L_mm_Length_hr)) %>%
-  dplyr::ungroup()
-p.box <- ggplot(Resp_0930, aes(x = pHxFood, y = resp_µmol_L_mm_Length_hr)) + geom_boxplot() + geom_point(data= df_mean, mapping = aes(x = pHxFood, y = average),
-             color="red") 
-p.box.data <- layer_data(p.box) %>%
-  select(x, ymin, lower, middle, upper, ymax, outliers, flipped_aes) %>%
-  dplyr::rename(mean = flipped_aes) %>% 
-  dplyr::mutate(mean  = df_mean$average) %>% 
-  mutate(pHxFood = factor(x, labels = levels(Resp_0930$pHxFood), ordered = TRUE)) %>%
-  select(-x)
-
-
-p.box.data %>% unnest(outliers)
-
-
-denisty_box_resp_64DPF <-ggplot(p.box.data) +
-                            # manually plot flipped boxplot
-                            geom_segment(aes(x = ymin, xend = ymax, y = -0.15, yend = -0.15)) +
-                            geom_rect(aes(xmin = lower, xmax = upper, ymin = -0.3, ymax = 0,  fill = pHxFood),color = "black") +
-                            # geom_point(data = . %>% unnest(outliers), aes(x = outliers, y = -0.15), color = "grey60", size = 1) +
-                            # vertical lines at Q1 / Q2 / Q3
-                            geom_vline(data = . %>% select(pHxFood, lower, mean, upper) %>% gather(key, value, -pHxFood), aes(xintercept = value)) +
-                            # density plot
-                            geom_density(data = Resp_0930, aes(x = resp_µmol_L_mm_Length_hr, group=pHxFood, fill=pHxFood, ..scaled..), alpha=.4, adjust=1.5) +
-                            #  theme
-                            theme_classic() +
-                            xlim(0, 0.22) +
-                            facet_grid(pHxFood ~ .) +
-                            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+
-                            labs(title = "F1 Scallops: respiration rates 64 DPF)", 
-                                 x = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%mm^{-1}~shell~length%.% hr^{-1}~")"),
-                                 y = "Scaled density") +
-                            scale_fill_manual(values=c("grey40", "grey40", "grey85", "grey85"))
-denisty_box_resp_64DPF
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_density_plot.pdf"), width = 5, height = 5)
-denisty_box_resp_64DPF # print the model diagnostics 
-dev.off()
-
-```
-
-#### b factor standardized (scaled for shell length)
-
-```{r 9/30 b factor standardized , echo=TRUE, message = FALSE, warning = FALSE}
-
-# b factor standardized  (bfactor) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# plot the replicates (visual diagnostics of random factor)
-Resp930_bfactor_reps<- ggboxplot(Resp_0930, x = "pHxFood", y = "resp_µmol_L_SL.StzedRate", color = "Replicate",
-                              add = c("mean_se", "dotplot"),
-                              palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp930_bfactor_reps
-
-# Linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0930_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2 * Food, random=~1|random_fact, data=Resp_0930) 
-# |     &nbsp;      | numDF | denDF | F-value | p-value |
-# |:---------------:|:-----:|:-----:|:-------:|:-------:|
-# | **(Intercept)** |   1   |  57   |  518.1  |    0    |
-# |    **pCO2**     |   1   |  12   |  3.433  | 0.08863 | '
-# |    **Food**     |   1   |  12   |  6.419  | 0.02625 | **
-# |  **pCO2:Food**  |   1   |  12   | 0.04438 | 0.8367  |
-pander(anova(LMEmod_0930_bfactor), style='rmarkdown') # anova table of lmer
-kable(as.data.frame(anova(LMEmod_0930_bfactor))) %>%  # print a png of this table
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_SLStzed_LME_Diagnostics.pdf"))
-check_model(LMEmod_0930_bfactor) # print the model diagnostics 
-dev.off()
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_0930_bfactor)[[1]])[2], (anova(LMEmod_0930_bfactor)[[2]])[2], sep = '/') # call DF
-Fval <- (anova(LMEmod_0930_bfactor)[[3]])[2] # call f
-pval <- (anova(LMEmod_0930_bfactor)[[4]])[2] # call p value
-
-# plot
-Resp930_bfactor <- ggplot(Resp_0930, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_SL.StzedRate , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              #scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-              theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-              labs(title = "F1 Scallops: respiration rates on 20210930 (b fact stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.% hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-               stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-               facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food')))
-Resp930_bfactor # print this figure...
-
-
-# Export the figures to pdf
-ggarrange(Resp930_bfactor,Resp930_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_respiration_SLStzd.standardized.pdf")
-
-```
-
-#### Whole dry weight standardized
-
-```{r 9/30 Whole dry weight standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Whole animal Dry weight standardized (DW) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Visualize the data with the random effet as treplicate 
-Resp_0930$pHxFood   <- paste(Resp_0930$pH, Resp_0930$Food, sep = "_")
-Resp930_WholeDW_reps <- ggboxplot(Resp_0930, x = "pHxFood", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
-          add = c("mean_se", "dotplot"),
-          palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp930_WholeDW_reps
-
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_0930_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|Chamber_tank, data=Resp_0930)
-# |     &nbsp;      | numDF | denDF | F-value  | p-value |
-# |:---------------:|:-----:|:-----:|:--------:|:-------:|
-# | **(Intercept)** |   1   |  63   |  515.6   |    0    |
-# |    **pCO2**     |   1   |   6   |  3.792   | 0.09943 |
-# |    **Food**     |   1   |  63   |  4.029   | 0.04901 |
-# |  **pCO2:Food**  |   1   |  63   | 0.009658 |  0.922  |
-pander(anova(LMEmod_0930_SL), style='rmarkdown')
-kable(as.data.frame(anova(LMEmod_0930_SL))) %>% 
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20210930_figs_tables/20210930_resp_LME_Diagnostics.pdf"))
-check_model(LMEmod_0930_SL) 
-dev.off()
-
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_0930_SL)[[1]])[3], (anova(LMEmod_0930_SL)[[2]])[3], sep = '/') # call DF
-Fval <- (anova(LMEmod_0930_SL)[[3]])[3] # call f
-pval <- (anova(LMEmod_0930_SL)[[4]])[3] # call p value
-
-# plot
-Resp930_WholeDW <-  ggplot(Resp_0930, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_g_hr , fill = pCO2)) +
-                      theme(panel.grid=element_blank()) +
-                      geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                      scale_fill_manual(values=c("white","grey50")) +
-                      geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                      theme_classic() +
-                      scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-                      #scale_y_continuous(expand = c(0, 0), limits = c(0, 200)) +
-                      theme(axis.text=element_text(size=8),
-                                  axis.title=element_text(size=8,face="bold")) +
-                      labs(title = "F1 Scallops: respiration rates on 20210930 (whole dry weight stand.)", 
-                           y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%g^{-1}~DW%.% hr^{-1}~")"),
-                           x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-                       stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-                        facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) # +
-Resp930_WholeDW
-
-
-# Export to pdf
-ggarrange(Resp930_WholeDW,Resp930_WholeDW_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20210930_figs_tables/20210930_respiration_DW.standardized.pdf")
-
-```
-
-
-# 10/26/2021 F1 juvenile scallops
-
-**About**
-
-- two pCO2 treatments 
-
-- *before* we culled and started the food limitation trials
-
-
-#### number of replicates for analysis...
-
-```{r 10/26 replicates, echo=FALSE}
-
-Resp_1026 <- RR_master %>% 
-  dplyr::filter(Date %in% '10/26/2021')  %>% # call only 10/14
-  dplyr::filter(Food %in% 'fed') %>% 
-  dplyr::select(-Center) %>% 
-  dplyr::mutate(pHxFood = paste(pH,Food, sep = "_")) %>% 
-  dplyr::mutate(random_fact = as.factor(paste(Chamber_tank, Food, sep="_")))
-
-Resp_1026 %>% dplyr::group_by(pH, Food, Replicate) %>% dplyr::summarise(n()) # tank replication
-
-Resp_1026 %>% summarySE(measurevar="resp_µmol_L_mm_Length_hr", groupvars=(c("Food","pH"))) %>% 
-      dplyr::mutate(pCO2 = case_when(pH == 8  ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
-```
-
-
-### 10/26/2021 Linear mixed-effects models, diagnostics, and plots
-
-
-#### Length standardized
-
-```{r 10/26 Length standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Shell length standardized (SL) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Visualize the data with the random effet as treplicate 
-Res1026_Length_reps <- ggboxplot(Resp_1026, x = "pHxFood", y = "resp_µmol_L_mm_Length_hr", color = "Replicate",
-                          add = c("mean_se", "dotplot"),
-                          palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Res1026_Length_reps
-
-# two way anova 
-LMmod_1026_SL <- lm(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, data=Resp_1026)
-summary(aov(LMmod_1026_SL))
-#             Df   Sum Sq  Mean Sq F value   Pr(>F)    
-# pCO2         1 0.000000 0.000000   0.000    0.993    
-# Food         1 0.010103 0.010103  42.524 7.87e-07 ***
-# pCO2:Food    1 0.000010 0.000010   0.042    0.840    
-# Residuals   25 0.005939 0.000238    
-shapiro.test(residuals(LMmod_1026_SL)) #  0.7057
-leveneTest(LMmod_1026_SL) # 0.009394 **
-
-
-# linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_1026_SL<-lme(resp_µmol_L_mm_Length_hr ~ pCO2 * Food, random=~1|random_fact, data=Resp_1026)
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  13   |  72.67  | 1.108e-06 |
-# |    **pCO2**     |   1   |  12   | 0.2179  |   0.649   |
-# |    **Food**     |   1   |  12   |  30.57  | 0.0001301 |
-# |  **pCO2:Food**  |   1   |  12   | 0.1083  |  0.7478   |
-pander(anova(LMEmod_1026_SL), style='rmarkdown')
-kable(as.data.frame(anova(LMEmod_1026_SL))) %>% 
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_LME_Diagnostics.pdf"))
-check_model(LMEmod_1026_SL) 
-dev.off()
-# tukey posthoc for lmer model
-require('lsmeans')
-lsmeans(LMEmod_1026_SL, pairwise~pCO2 * Food, adjust="tukey") # Compute least-squares means
-# $contrasts
-#  contrast                         estimate       SE df t.ratio p.value
-#  500 µatm fed - 800 µatm fed     -5.74e-05 8.93e-06 12  -6.430  0.0002
-#  500 µatm fed - 500 µatm unfed    9.03e-05 9.41e-06 12   9.589  <.0001
-#  500 µatm fed - 800 µatm unfed    9.08e-05 9.41e-06 12   9.640  <.0001
-#  800 µatm fed - 500 µatm unfed    1.48e-04 8.93e-06 12  16.538  <.0001
-#  800 µatm fed - 800 µatm unfed    1.48e-04 8.93e-06 12  16.592  <.0001
- # 500 µatm unfed - 800 µatm unfed  4.82e-07 9.41e-06 12   0.051  0.9999
-
-
-# plot
-Resp1026_Length <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mm_Length_hr , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              # scale_y_continuous(expand = c(0, 0), limits = c(0, 250)) +
-              theme(axis.text=element_text(size=8),
-                    axis.title=element_text(size=8,face="bold")) +
-              labs(title = "F1 Scallops: respiration rates on 20211026 (shell length stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%m^{-1}~shell~length%.% hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-              facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) # +
-Resp1026_Length
-
-
-# Export to pdf
-ggarrange(Resp1026_Length, Res1026_Length_reps,nrow = 2) %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_Figures.pdf")
-
-```
-
-
-# density plot - Day 92
-
-```{r, Day 92 density respiration plot }
-library(dplyr)
-library(tidyr)
-Resp_1026$pHxFood <- as.factor(Resp_1026$pHxFood)
-Resp_1026$resp_µmol_L_mm_Length_hr.noSCI     <- format(as.numeric(Resp_1026$resp_µmol_L_mm_Length_hr), scientific = FALSE, digits = 3)
-Resp_1026$resp_µmol_L_mm_Length_hr.NUM       <- as.numeric(sprintf("%s", Resp_1026$resp_µmol_L_mm_Length_hr.noSCI))
-
-df_mean <- Resp_1026 %>% 
-  dplyr::group_by(pHxFood) %>% 
-  dplyr::summarize(average = mean(resp_µmol_L_mm_Length_hr.NUM)) %>%
-  dplyr::ungroup()
-p.box <- ggplot(Resp_1026, aes(x = pHxFood, y = resp_µmol_L_mm_Length_hr.NUM)) + geom_boxplot() + geom_point(data= df_mean, mapping = aes(x = pHxFood, y = average),
-             color="red") 
-p.box.data <- layer_data(p.box) %>%
-  select(x, ymin, lower, middle, upper, ymax, outliers, flipped_aes) %>%
-  dplyr::rename(mean = flipped_aes) %>% 
-  dplyr::mutate(mean  = df_mean$average) %>% 
-  mutate(pHxFood = factor(x, labels = levels(Resp_1026$pHxFood), ordered = TRUE)) %>%
-  select(-x)
-
-
-p.box.data %>% unnest(outliers)
-
-
-denisty_box_resp_92DPF <-ggplot(p.box.data) +
-                            # manually plot flipped boxplot
-                            geom_segment(aes(x = ymin, xend = ymax, y = -0.15, yend = -0.15)) +
-                            geom_rect(aes(xmin = lower, xmax = upper, ymin = -0.3, ymax = 0,  fill = pHxFood),color = "black") +
-                            # geom_point(data = . %>% unnest(outliers), aes(x = outliers, y = -0.15), color = "grey60", size = 1) +
-                            # vertical lines at Q1 / Q2 / Q3
-                            geom_vline(data = . %>% select(pHxFood, lower, mean, upper) %>% gather(key, value, -pHxFood), aes(xintercept = value)) +
-                            # density plot
-                            geom_density(data = Resp_1026, aes(x = resp_µmol_L_mm_Length_hr.NUM, group=pHxFood, fill=pHxFood, ..scaled..), alpha=.4, adjust=1.5) +
-                            #  theme
-                            theme_classic() +
-                            facet_grid(pHxFood ~ .) +
-                            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none", plot.title = element_text(size=10))+
-                            labs(title = "F1 Scallops: respiration rates 92 DPF)", 
-                                 x = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%m^{-1}~shell~length%.% hr^{-1}~")"),
-                                 y = "Scaled density") +
-                            scale_fill_manual(values=c("grey40", "grey40", "grey85", "grey85"))
-denisty_box_resp_92DPF
-
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_density_plot.pdf"), width = 5, height = 5)
-denisty_box_resp_92DPF # print the model diagnostics 
-dev.off()
-
-```
-
-#### b factor standardized (scaled for shell length)
-
-```{r 9/30 b factor standardized , echo=TRUE, message = FALSE, warning = FALSE}
-
-# b factor standardized  (bfactor) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# plot the replicates (visual diagnostics of random factor)
-Resp1026_bfactor_reps<- ggboxplot(Resp_1026, x = "pHxFood", y = "resp_µmol_L_SL.StzedRate", color = "Replicate",
-                              add = c("mean_se", "dotplot"),
-                              palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Resp1026_bfactor_reps
-
-# Linear mixed-effects model
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_1026_bfactor<-lme(resp_µmol_L_SL.StzedRate ~ pCO2 * Food, random=~1|random_fact, data=Resp_1026) 
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  18   |  706.4  | 6.661e-16 |
-# |    **pCO2**     |   1   |  12   |  26.71  | 0.0002339 |
-# |    **Food**     |   1   |  12   |   363   | 2.458e-10 |
-# |  **pCO2:Food**  |   1   |  12   |  14.75  |  0.00235  | ###
-pander(anova(LMEmod_1026_bfactor), style='rmarkdown') # anova table of lmer
-kable(as.data.frame(anova(LMEmod_1026_bfactor))) %>%  # print a png of this table
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp.SLStzed_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_resp_SLStzed_LME_Diagnostics.pdf"))
-check_model(LMEmod_1026_bfactor) # print the model diagnostics 
-dev.off()
-# tukey posthoc for lmer model
-require('lsmeans')
-lsmeans(LMEmod_1026_bfactor, pairwise~pCO2 * Food, adjust="tukey") # Compute least-squares means
-# $contrasts
-#  contrast                         estimate       SE df t.ratio p.value
-#  500 µatm fed - 800 µatm fed     -1.91e-04 3.41e-05 12  -5.619  0.0006
-#  500 µatm fed - 500 µatm unfed    3.71e-04 3.59e-05 12  10.326  <.0001
-#  500 µatm fed - 800 µatm unfed    3.70e-04 3.59e-05 12  10.289  <.0001
-#  800 µatm fed - 500 µatm unfed    5.62e-04 3.41e-05 12  16.503  <.0001
-#  800 µatm fed - 800 µatm unfed    5.61e-04 3.41e-05 12  16.465  <.0001
-#  500 µatm unfed - 800 µatm unfed -1.32e-06 3.59e-05 12  -0.037  1.0000
-
-
-# call the results of LMER to add to boxplot below 
-DF   <- paste( (anova(LMEmod_1026_bfactor)[[1]])[2], (anova(LMEmod_1026_bfactor)[[2]])[2], sep = '/') # call DF
-Fval <- (anova(LMEmod_1026_bfactor)[[3]])[2] # call f
-pval <- (anova(LMEmod_1026_bfactor)[[4]])[2] # call p value
-
-# plot
-Resp1026_bfactor <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_SL.StzedRate , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              #scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-              theme(axis.text=element_text(size=8),
-                          axis.title=element_text(size=8,face="bold")) +
-              labs(title = "F1 Scallops: respiration rates on 20211026 (b fact stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))  + 
-               stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-               facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food')))
-Resp1026_bfactor # print this figure...
-
-
-# Export the figures to pdf
-ggarrange(Resp1026_bfactor,Resp1026_bfactor_reps,nrow = 2) %>%
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA /RAnalysis/Output/Respiration/20211026_figs_tables/20211026_respiration_SLStzd.standardized.pdf")
-
-```
-
-
-#### Whole dry weight standardized
-
-
-```{r 10/26 Whole dry weight standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Whole animal Dry weight standardized (DW) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Visualize the data with the random effet as treplicate 
-Res1026_WholeDW_reps <- ggboxplot(Resp_1026, x = "pH", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
-                          add = c("mean_se", "dotplot"),
-                          palette = c("#00AFBB", "#E7B800", "brown", "grey"))
-Res1026_WholeDW_reps
-
-
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMEmod_1026_DW<-lme(resp_µmol_L_mg_TDW_hr ~ pCO2, random=~1|Replicate, data=Resp_1026)
-# |     &nbsp;      | numDF | denDF | F-value | p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:--------:|
-# | **(Intercept)** |   1   |   6   |  18.75  | 0.004928 |
-# |    **pCO2**     |   1   |   6   |  2.914  |  0.1387  |
-pander(anova(LMEmod_1026_DW), style='rmarkdown')
-
-
-
-# linear model without the random effect 
-LMmod_1026_DW <- aov(lm(resp_µmol_L_mg_TDW_hr~pCO2,data=Resp_1026))
-# |    &nbsp;     | Df |  Sum Sq  | Mean Sq  | F value | Pr(>F) |
-# |:-------------:|:--:|:--------:|:--------:|:-------:|:------:|
-# |   **pCO2**    | 1  | 0.001184 | 0.001184 |  1.178  | 0.306  |
-# | **Residuals** | 9  | 0.009049 | 0.001005 |   NA    |   NA   |
-pander(summary(LMmod_1026_DW), style='rmarkdown')
-check_model(LMmod_1026_DW) # observe the diagnostics of the model
-shapiro.test(residuals(LMmod_1026_DW)) #  normal - 0.3929
-leveneTest(LMmod_1026_DW) # 0.139
-
-
-Res1026_WholeDW <- ggplot(Resp_1026, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mg_TDW_hr , fill = pCO2)) +
-                            theme(panel.grid=element_blank()) +
-                            geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-                            scale_fill_manual(values=c("white","grey50")) +
-                            geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                            theme_classic() +
-                            scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-                            # scale_y_continuous(expand = c(0, 0), limits = c(0, 150)) +
-                            theme(axis.text=element_text(size=8),
-                                  axis.title=element_text(size=8,face="bold")) +
-                            labs(title = "F1 Scallops: respiration rates on 20211026 (whole dry weight stand.)", 
-                                 y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%g^{-1}~DW%.% hr^{-1}~")"),
-                                 x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))
-Res1026_WholeDW
-
-# Export to pdf
-ggarrange(Res1026_WholeDW, Res1026_WholeDW_reps,nrow = 2) %>% 
-  ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/20211026_figs_tables/20211026_respiration_DW.standardized.pdf")
-
-```
-
-
-
-
-
-
-
-
-
-# 2/2/2022 F1 juvenile scallops
-
-**About**
-
-- two pCO2 treatments 
-
-- *before* we culled and started the food limitation trials
-
-
-#### number of replicates for analysis...
-
-```{r 2/2 replicates, echo=FALSE}
-
-Resp_0202 <- RR_master %>% 
-  dplyr::filter(Date %in% '2/2/2022')  %>% # call only 10/14
-  dplyr::select(-Center) 
-
-Resp_0202 %>% dplyr::group_by(pH) %>% dplyr::summarise(n()) # tank replication
-
-Resp_0202 %>% summarySE(measurevar="resp_µmol_L_mg_TDW_hr", groupvars=(c("pH"))) %>% 
-      dplyr::mutate(pCO2 = case_when(pH == 8  ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
-```
-
-
-### 2/02/2022 Linear mixed-effects models, diagnostics, and plots
-
-
-#### Length standardized
-
-```{r 10/26 Length standardized, echo=TRUE, message = FALSE, warning = FALSE}
-
-# Shell length standardized (SL) ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# Visualize the data with the random effet as treplicate 
-Res0202_TDW_reps <- ggboxplot(Resp_0202, x = "pH", y = "resp_µmol_L_mg_TDW_hr", color = "Replicate",
-                          add = c("mean_se", "dotplot"),
-                          palette = c("#00AFBB", "#E7B800", "brown", "grey", "purple", "blue", "black", "orange"))
-Res0202_TDW_reps
-
-require(nlme)
-# Linear mixed effects model with random effect of Replicate 
-LMmod_0202_SL<-aov(lm(resp_µmol_L_mg_TDW_hr ~ pCO2, data=Resp_0202))
-summary(LMmod_0202_SL)
-# |    &nbsp;     | Df |  Sum Sq  | Mean Sq  | F value  | Pr(>F) |
-# |:-------------:|:--:|:--------:|:--------:|:--------:|:------:|
-# |   **pCO2**    | 1  | 1.56e-05 | 1.56e-05 | 0.006697 | 0.9358 |
-# | **Residuals** | 16 | 0.03728  | 0.00233  |    NA    |   NA   |
-pander(anova(LMmod_0202_SL), style='rmarkdown')
-kable(as.data.frame(anova(LMEmod_0222_SL))) %>% 
-  kable_styling() %>%
-  save_kable(file = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_LME_Table.png", zoom = 1.5)
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_LME_Diagnostics.pdf"))
-check_model(LMEmod_0222_SL) 
-dev.off()
-
-
-# plot
-Resp0202_TDW <- ggplot(Resp_0202, aes(x = factor(pCO2, level = c('500 μatm', '800 μatm')), resp_µmol_L_mg_TDW_hr , fill = pCO2)) +
-              theme(panel.grid=element_blank()) +
-              geom_boxplot(size=0.2, width=0.5, alpha=0.1, aes(fill=pCO2)) +
-              scale_fill_manual(values=c("white","grey50")) +
-              geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-              theme_classic() +
-              scale_x_discrete(labels= c('~500 μatm', '~800 μatm')) +
-              # scale_y_continuous(expand = c(0, 0), limits = c(0, 250)) +
-              theme(axis.text=element_text(size=8),
-                    axis.title=element_text(size=8,face="bold")) +
-              labs(title = "F1 Scallops: respiration rates on 20210202 (Tissue dry weight stand.)", 
-                   y = expression(Respiration~rate~"("~μmol~L^{-1}~O[2]%.%m^{-1}~shell~length%.% hr^{-1}~")"),
-                   x = expression(italic(p)*CO[2]~Treatment~"("~μ*atm~")"))
-Resp0202_TDW
-
-
-# Export to pdf
-# ggarrange(Resp0222_Length, Resp0202_TDW,nrow = 2) %>% 
-#   ggexport(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/AAirradians_multigen_OA/RAnalysis/Output/Respiration/20210222_figs_tables/20210222_resp_Figures.pdf")
-
-```
 
