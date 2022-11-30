@@ -4,16 +4,6 @@
 
 library(ggplot2)
 library(dplyr)
-library(reshape2)
-library(pander)
-library(dplyr)
-library(kableExtra)
-library(data.table)
-library(stringr)
-library(latex2exp)
-library(Rmisc)
-library(aggregate)
-library(car)
 
 
 ## set working directory
@@ -56,11 +46,29 @@ biodep <- read.csv(file="Data/Physiology/Biodeposition/F1/cumulative_raw/Raw_mas
 
 # 'biodep2' == the first steps, calculating the POM, TPM, PIM, for feces and pseudofeces (not corrected for b factor yet!)
 
+# A few data edits before we proceed (1) remove NAs (2) examine for low pseodofeces samples
 
+
+# (1) NAs: there is a single Na for ash filter weight - remove this
+nrow(biodep) # 168 rows
+biodep$ash_filter_weight_mg # one instance of an NA
+subset(biodep, !is.na(ash_filter_weight_mg))$ash_filter_weight_mg # now the NA is gone,use this call in the start of the pipeline below
+biodep <- subset(biodep, !is.na(ash_filter_weight_mg)) # now the NA is gone,use this call in the start of the pipeline below
+nrow(biodep) # 167 rows (removed just a single row - GOOD!)
+biodep$ash_filter_weight_mg <- as.numeric(biodep$ash_filter_weight_mg)
+
+# (2) pseudofeces below detection limit: we took notes of smaples that had low to no pseudofeces - these will need to be accounted for in our rejection rate calculations 
+biodep %>% # use the subset biodep (with the single NA removed)
+  dplyr::filter(sample_type %in% 'pseudofeces') %>% # call pseudofeces samples
+  dplyr::mutate(TPM_mg =(dry_filter_weight_mg - initial_filter_weight_mg)) %>% 
+  dplyr::mutate(PIM_mg =(ash_filter_weight_mg - initial_filter_weight_mg)) %>%
+  dplyr::mutate(POM_mg =(dry_filter_weight_mg - ash_filter_weight_mg)) %>% 
+  dplyr::arrange(TPM_mg) # new column on the  ash weight of the pseudofeces filters
+# lowest ash weights are  TPM = 0.301; POM = 0.195; PIM = 0.106
 
 
 ## Particulate matter (total and particulate inorganic/organic matter)
-biodep2 <- biodep %>% 
+biodep2 <- biodep  %>% 
 
     
   # Total particulate matter
@@ -168,6 +176,7 @@ BioSamples <- biodep2 %>% #
                 dplyr::select(!c('water_sample_time', 'vol_filtered_L')) %>% # omit unneeded columns
                 dplyr::filter(sample_type %in% c('feces', 'pseudofeces')) # call the groups
 BioSamples
+
 # look at this data - there are cases when column ONLY exists when a feces or pseudo feces sample.. I have a work around, it isnt clean but it will get everything together
 
 
@@ -180,7 +189,7 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
                               BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) # merge with the feces dataframe by the unique identifiers
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
-sp_COEF <- 0.696 # standardization coefficient - umol O2 consumption and tissue dry weight (review RespRates_analysis)
+sp_COEF <- 0.822 # standardization coefficient - umol O2 consumption and tissue dry weight (review RespRates_analysis)
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -480,3 +489,20 @@ CR_correct_boxplot <- Biodep_Master %>%
   facet_wrap(~Temperature)
 CR_correct_boxplot
  
+
+# explore full model
+# Biodep_Master$Date <- as.factor(Biodep_Master$Date)
+# modAR <- aov(lm(AR ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
+# summary(modAR)
+# 
+# modOIR <- aov(lm(OIR ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
+# summary(modOIR)
+# shapiro.test(resid(modOIR)) # 0.1169
+# leveneTest(modOIR) # 0.3851
+# 
+# modAE <- aov(lm(AE ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
+# qqnorm(resid(modAE))
+# shapiro.test(resid(modAE)) # 0.01168
+# leveneTest(modAE) # .1591
+# hist(resid(modAE))
+# summary(modAE)
