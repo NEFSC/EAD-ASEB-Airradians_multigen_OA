@@ -18,15 +18,11 @@
 --------------------------------------------
 
 # Assemble cumulative md5 reference
- 
-	* Genewiz provides a one txt line .md5 file for each of the .gz sequence files 
-	
-	* first objective to assemble a cumulative file with these text lines in one .txt 
 
-```
+* Genewiz provides a one txt line .md5 file for each of the .gz sequence files
 
-```
-	
+* first objective to assemble a cumulative file with these text lines in one .txt
+
 
 
 # run checksum
@@ -74,9 +70,7 @@ sbatch md5checksum.sh
 
 
 # shell script: <span style="color:green">**fastqc_raw.sh**<span>
-```
-**insert bash script here**
-```
+
 
 **Run the sbatch**
 
@@ -87,7 +81,9 @@ sbatch fastqc_raw.sh
 **Export multiqc report**
 
 *exit bluewaves and run from terminal*
+
 - save to gitrepo as multiqc_clean.html
+
 ```
 scp samuel_gurr@bluewaves.uri.edu:/data/putnamlab/sgurr/Geoduck_TagSeq/output/fastp_mutliQC/multiqc_report.html  C:/Users/samjg/Documents/My_Projects/Pgenerosa_TagSeq_Metabolomics/TagSeq/HPC_work/Output
 ```
@@ -95,8 +91,8 @@ scp samuel_gurr@bluewaves.uri.edu:/data/putnamlab/sgurr/Geoduck_TagSeq/output/fa
 ### IMPORTANT! Quality check multiqc.html before you proceed!
 
 - view the multiqc.html report and note observations to guide trimming!
+
   - **Per Sequence GC Content**: double peak of ~0-10% GC and 30-40% GC
-**To do:** *initial peak due to polyA tail?*
 
   - **Mean Quality Scores*&: >22-2; **To do:** *trim base calls < 30*
 
@@ -108,19 +104,10 @@ scp samuel_gurr@bluewaves.uri.edu:/data/putnamlab/sgurr/Geoduck_TagSeq/output/fa
 # Trimming and post-trim quality check of 'clean' reads
 -------------------------------------------
 
-### Trimming-polyA-tail
-- Remember that TagSeq involves priming from the polyA tail of mRNA sequences! Thus, we will need to
-trim mononnucleotide sequence of As using fastp (in addition to threshold quality score and adapter(s)!)
-
-
 ### What this script will do...
 - ``` --adapter_sequence ``` =
 	- trim adapter sequence ```AGATCGGAAGAGCACACGTCTGAACTCCAGTCA```
 	- common single-end adapter in Illumina. You can run a test on a fastq.gz to count
-- ``` --adapter_fasta``` = polyA_tail.fasta
-	- **create 'polyA_tail.fasta' to call here**
-	- important! ``` --adapter_sequence ``` is called by fastp before ``` --adapter_fasta``` and will call each adapter in the .fasta one-by-one
-	- the sequence distribution of trimmed adapters can be found in the HTML/JSON report
 - ```multiqc ./``` = outputs mutliqc report of the 'clean' reads in the current directory
 
 
