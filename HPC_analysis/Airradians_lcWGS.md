@@ -51,18 +51,212 @@ md5sum ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/*.gz > Ai
 
 echo "md5checksum complete!" $(date)
 
-# count the number of sequences per file
-zcat ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/*.gz  | echo $((`wc -l`/4)) > Airradians_lcWGS/F1/output/md5checksum/Oct2022_rawread_count.txt
+# count the number of sequences per file  - for fastq file the accession ID of each read starts with @, grep does this well + fast!
+grep -c '@' ../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/*.fastq.gz > Airradians_lcWGS/F1/output/md5checksum/Oct2022$
 
-echo "zcat raw read counts complete!" $(date)
+echo " grep '@' raw fastq read counts complete!" $(date)
+
 ```
 
+run the script 
 ```
 sbatch md5checksum.sh
 ```
 
-- check the digital fingerprint of the files with md5sum
-- compare md5sum of our output URI.md5 file to the UT Library Information pdf; okay the upload - move forward
+- print the digital fingerprint of the md5sum script output *Oct2022_check.md5*
+
+cat Oct2022_check.md5 | head -2
+```
+9b222e2ad82096e20efdae837af55591  ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R1_001.fastq.gz
+21accf228ec279d62b1417e810402110  ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R2_001.fastq.gz
+```
+use *awk* to cut a mutliple character delimiter and echo to print 
+
+cat Oct2022_check.md5 | awk -F[../] '{print $1 $11}'  > checksummary.txt
+```
+9b222e2ad82096e20efdae837af55591  101_R1_001
+21accf228ec279d62b1417e810402110  101_R2_001
+8165b1cbf30c6e0d473dd92d476f02b1  103_R1_001
+42691c8282ef8cdda6c1d0142ecb3488  103_R2_001
+f2a1da51d2b5040ffac65e18e01c876c  104_R1_001
+a90aaf9a879451b576025a4df64c18fe  104_R2_001
+cbf7085e3e08f82e90f6a2049c312dd9  153_R1_001
+1082f16ab44f20cf136ca478377ced27  153_R2_001
+f4ef92166b83346fed65e6f418df1f7c  154_R1_001
+63758272cbed1b1aaff5115f23666aa4  154_R2_001
+4aaf29326e8ee3827c60a37a325186aa  155_R1_001
+b04f866ca6600a08d116940dc18f9fb3  155_R2_001
+89550daafe9e4c0856b0ff895a13ef7b  201_R1_001
+2d5fb0ddf5a67394bcdb6f1dc48e55d5  201_R2_001
+a7c1d45273b1b059effe85934655fbd3  203_R1_001
+62df2ec4f6806d4758102f3426f8b371  203_R2_001
+9bdc0fa2524c15bdea2978cadac0031e  204_R1_001
+aefebf16610c1889886c7299cdb3b1ad  204_R2_001
+7b3cd7b104f0cb63b1be5e933d471047  251_R1_001
+105a4c1ec9e7d9c98cecb40ea90ed45b  251_R2_001
+e8336d0070269ce885eed7be428961d6  253_R1_001
+864bb789dbc214d1130539bbe68ece40  253_R2_001
+7c2dc7ac72002138f2870e16d35b4f01  254_R1_001
+81dfd6447ea06d6edefa5d264e4f5af5  254_R2_001
+42e1b7cd5e21e508968cdbd2bc59bff0  301_R1_001
+e97f0aae79c05709628757e8b75ca5e2  301_R2_001
+a356e5f0b7dc458adfca95f5587c7d8c  303_R1_001
+e3b7a9509d820ec3e092c4d3830ad022  303_R2_001
+547fce4deb5c811955bf4ff49ea9620f  304_R1_001
+dcb9614ec86df811ab647069c42a984c  304_R2_001
+4f9886022ad393cb0724058a39b58cc5  351_R1_001
+bb2c71fe8def1af27ed1f8deef98dc3f  351_R2_001
+386084822e4b259917306fef1d41d397  352_R1_001
+35ffc9f615522d1327b2adca13391881  352_R2_001
+d732a8ca7f7c4ad55c2c5dc77f6306ef  353dup_R1_001
+bbdaae2dc1e2ef43238877dd3eb03462  353dup_R2_001
+c2a6c77ef79ee4c2d9632c109fb2d179  353_R1_001
+5b9a7df7543f7019f08fcaaf60629b20  353_R2_001
+a886be2b8ecce4a313798513b3c0f9a1  3_R1_001
+d94352887177a3da9149a2506f0bacb7  3_R2_001
+3628bc6e8ee42dc6602f29b3e879810e  4_R1_001
+7a89f26826eebd2bf6b3b0f04162e381  4_R2_001
+6033884aea9abc4eeb28b87197bd18b8  53_R1_001
+da703a8752bca0e5965308e5d53057af  53_R2_001
+c43bfd95cdd7501e2218d12d9cb100d9  54_R1_001
+2fd418c554c3df68155bb0f8401ab7aa  54_R2_001
+729119cc0a8c716d118cf4a21f80de83  55_R1_001
+40cb63a52f6fd382a86280a49d9abbe0  55_R2_001
+9d2bef38a95a59c4b17eb9d504731143  5_R1_001
+d3ab7acfb6c23955471ab47ece590d56  5_R2_001
+
+```
+
+How do these md5 checks compare to the reference? (Genewiz output) *check Oct2022_reference.md5*
+
+cat Oct2022_reference.md5 | awk -F[./] '{print $1 $3}' > refsummary.txt
+
+```
+9b222e2ad82096e20efdae837af55591  101_R1_001
+21accf228ec279d62b1417e810402110  101_R2_001
+8165b1cbf30c6e0d473dd92d476f02b1  103_R1_001
+42691c8282ef8cdda6c1d0142ecb3488  103_R2_001
+f2a1da51d2b5040ffac65e18e01c876c  104_R1_001
+a90aaf9a879451b576025a4df64c18fe  104_R2_001
+cbf7085e3e08f82e90f6a2049c312dd9  153_R1_001
+1082f16ab44f20cf136ca478377ced27  153_R2_001
+f4ef92166b83346fed65e6f418df1f7c  154_R1_001
+63758272cbed1b1aaff5115f23666aa4  154_R2_001
+4aaf29326e8ee3827c60a37a325186aa  155_R1_001
+b04f866ca6600a08d116940dc18f9fb3  155_R2_001
+89550daafe9e4c0856b0ff895a13ef7b  201_R1_001
+2d5fb0ddf5a67394bcdb6f1dc48e55d5  201_R2_001
+a7c1d45273b1b059effe85934655fbd3  203_R1_001
+62df2ec4f6806d4758102f3426f8b371  203_R2_001
+9bdc0fa2524c15bdea2978cadac0031e  204_R1_001
+aefebf16610c1889886c7299cdb3b1ad  204_R2_001
+7b3cd7b104f0cb63b1be5e933d471047  251_R1_001
+105a4c1ec9e7d9c98cecb40ea90ed45b  251_R2_001
+e8336d0070269ce885eed7be428961d6  253_R1_001
+864bb789dbc214d1130539bbe68ece40  253_R2_001
+7c2dc7ac72002138f2870e16d35b4f01  254_R1_001
+81dfd6447ea06d6edefa5d264e4f5af5  254_R2_001
+42e1b7cd5e21e508968cdbd2bc59bff0  301_R1_001
+e97f0aae79c05709628757e8b75ca5e2  301_R2_001
+a356e5f0b7dc458adfca95f5587c7d8c  303_R1_001
+e3b7a9509d820ec3e092c4d3830ad022  303_R2_001
+547fce4deb5c811955bf4ff49ea9620f  304_R1_001
+dcb9614ec86df811ab647069c42a984c  304_R2_001
+4f9886022ad393cb0724058a39b58cc5  351_R1_001
+bb2c71fe8def1af27ed1f8deef98dc3f  351_R2_001
+386084822e4b259917306fef1d41d397  352_R1_001
+35ffc9f615522d1327b2adca13391881  352_R2_001
+d732a8ca7f7c4ad55c2c5dc77f6306ef  353dup_R1_001
+bbdaae2dc1e2ef43238877dd3eb03462  353dup_R2_001
+c2a6c77ef79ee4c2d9632c109fb2d179  353_R1_001
+5b9a7df7543f7019f08fcaaf60629b20  353_R2_001
+a886be2b8ecce4a313798513b3c0f9a1  3_R1_001
+d94352887177a3da9149a2506f0bacb7  3_R2_001
+3628bc6e8ee42dc6602f29b3e879810e  4_R1_001
+7a89f26826eebd2bf6b3b0f04162e381  4_R2_001
+6033884aea9abc4eeb28b87197bd18b8  53_R1_001
+da703a8752bca0e5965308e5d53057af  53_R2_001
+c43bfd95cdd7501e2218d12d9cb100d9  54_R1_001
+2fd418c554c3df68155bb0f8401ab7aa  54_R2_001
+729119cc0a8c716d118cf4a21f80de83  55_R1_001
+40cb63a52f6fd382a86280a49d9abbe0  55_R2_001
+9d2bef38a95a59c4b17eb9d504731143  5_R1_001
+d3ab7acfb6c23955471ab47ece590d56  5_R2_001
+
+
+```
+
+- check the read counts 
+ano  Oct2022_rawread_count.txt | head -2
+
+```
+../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R1_001.fastq.gz:5194197
+../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R2_001.fastq.gz:6077857
+
+```
+
+use *awk* to cut a mutliple character delimiter and echo to print 
+
+cat Oct2022_rawread_count.txt | awk -F'Oct2022/' '{print $2}'
+
+```
+101_R1_001.fastq.gz:5194197
+101_R2_001.fastq.gz:6077857
+103_R1_001.fastq.gz:4774413
+103_R2_001.fastq.gz:5528382
+104_R1_001.fastq.gz:4722932
+104_R2_001.fastq.gz:5315996
+153_R1_001.fastq.gz:4486204
+153_R2_001.fastq.gz:4854951
+154_R1_001.fastq.gz:4348240
+154_R2_001.fastq.gz:4844429
+155_R1_001.fastq.gz:5368641
+155_R2_001.fastq.gz:6056000
+201_R1_001.fastq.gz:6455581
+201_R2_001.fastq.gz:7467221
+203_R1_001.fastq.gz:4561695
+203_R2_001.fastq.gz:4940046
+204_R1_001.fastq.gz:6838830
+204_R2_001.fastq.gz:7578940
+251_R1_001.fastq.gz:4134299
+251_R2_001.fastq.gz:4820032
+253_R1_001.fastq.gz:3520110
+253_R2_001.fastq.gz:3953096
+254_R1_001.fastq.gz:2457466
+254_R2_001.fastq.gz:2680292
+301_R1_001.fastq.gz:2531469
+301_R2_001.fastq.gz:2931756
+303_R1_001.fastq.gz:2159676
+303_R2_001.fastq.gz:2338376
+304_R1_001.fastq.gz:2146083
+304_R2_001.fastq.gz:2373869
+351_R1_001.fastq.gz:4487960
+351_R2_001.fastq.gz:4953422
+352_R1_001.fastq.gz:3644657
+352_R2_001.fastq.gz:4160578
+353dup_R1_001.fastq.gz:3992322
+353dup_R2_001.fastq.gz:4546429
+353_R1_001.fastq.gz:4001316
+353_R2_001.fastq.gz:4572255
+3_R1_001.fastq.gz:3433517
+3_R2_001.fastq.gz:3705182
+4_R1_001.fastq.gz:3740345
+4_R2_001.fastq.gz:4222517
+53_R1_001.fastq.gz:4015646
+53_R2_001.fastq.gz:4385423
+54_R1_001.fastq.gz:4575551
+54_R2_001.fastq.gz:5036292
+55_R1_001.fastq.gz:3781524
+55_R2_001.fastq.gz:4210142
+5_R1_001.fastq.gz:4643576
+5_R2_001.fastq.gz:5090338
+```
+now use 'comm' -23 to check or any discrepancies 
+
+comm -23 <(sort checksummary.txt | uniq) <(sort refsummary.txt | uniq) # returns uniqe lines in the file checksummary.txt that do not exits in refsummary.txt
+
+* no output == GOOD!
+* any output here, the file partially uploaded or is corrupted - reupload the .gez file
 
 
 # Quality check of raw reads
