@@ -17,7 +17,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 #setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
 # CHANGE THE FOLLOWING ..THEN CONTROL A + ENTER ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-path.p    <- "Data/Respiration" #the location of all your respirometry files 
+path.p    <- "Data/Physiology/Respiration" #the location of all your respirometry files 
 
 
 # ANALYSIS  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -29,7 +29,7 @@ path.p    <- "Data/Respiration" #the location of all your respirometry files
 
 # call the subfolder names for the outside loop 'i' (i.e. 20210914)
 folder.names           <- basename(list.files(path = path.p, pattern = "202", recursive = FALSE)) #list all csv file names in the folder and subfolders
-folder.names.table     <- data.frame(folder.names)
+folder.names.table     <- data.frame(folder.names) %>% filter(!folder.names %in% c('20220420', '20220422','20220824','20220829')) #from test data or failed spawns
 
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total               <- data.frame() # start dataframe 
@@ -44,9 +44,9 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
-  if (folder.names.table[i,] %in% c('20210930','20220420', '20220824', '20220422','20220829', '20220830')) { #'20220824',  call 24-channel SDR dish data - current form only calls data from 20211026  
+  if (folder.names.table[i,] %in% c('20210930', '20220830')) { #'20220824',  call 24-channel SDR dish data - '
     file.names.table     <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE))))  
-  } else if (folder.names.table[i,] == '20211026') { # for days when both the loligo system (txt files) or SDR dish (csv files) were used
+  } else if (folder.names.table[i,] %in% c('20211026', '20220922')) { # for days when both the loligo system (txt files) or SDR dish (csv files) were used
     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table     <- rbind(file.names.table1, file.names.table2)
@@ -105,7 +105,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                    # inside 'j' loop - for each 'raw' txt file 'm', call each O2 sensor/resp chamber 'j' for analysis
                     for(j in 4:(ncol(Resp.Data))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
                       
-                      Resp_loop  <- na.omit(Resp.Data[,c(3,j)]) # noticed some random rows have 'NaN' - so I will loop the min and Channels to ommit Nas before proceeding
+                      Resp_loop  <- na.omit(Resp.Data[,c(3,j)]) %>% dplyr::filter(!.[[2]] %in% 'NaN')# noticed some random rows have 'NaN' - so I will loop the min and Channels to ommit Nas before proceeding
                       
                       # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
                       if ( (substr(colnames(Resp.Data)[j],1,2) == 'CH') ) { # loligo measurements need to be converted to mg/L from %air sat - these columns are written as "CH#" 
@@ -116,7 +116,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                                                    bar.units.in = "kPa", bar.press = barromP_kPa, bar.units.out = "kpa",
                                                                    temp.C = temperature_C, 
                                                                    salinity.units = "pp.thou", salinity = salinity.pp.thou)
-                      } else {Resp_loop$mgL <- Resp.Data[j]
+                      } else {Resp_loop$mgL <- na.omit(Resp.Data[j])
                         Resp_loop$mgL       <- as.numeric(unlist(Resp_loop$mgL)) # need to unlist and call as numeric
                         Resp_loop$minutes   <- as.numeric(unlist(Resp_loop$minutes)) # need to unlist and call as numeric 
                         Resp_loop           <- Resp_loop[!is.na(as.numeric(as.character(Resp_loop$mgL))),] # omit 'Nan' in mgL column
@@ -133,13 +133,28 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                 
                               } else { # else run LoLinR for x=mins and y=mg/l O2
                                 
+                                minim_mgL <- min(Resp_loop$mgL)
+                                mean_mgL  <- mean(Resp_loop$mgL)
+                                sd_mgL    <- sd(Resp_loop$mgL)
+                                
                                 resp.table$Date                 <- Resp.Data[1,1]
                                 resp.table$Channel              <- colnames(Resp_loop)[2] 
                                 resp.table$start_min            <- Resp_loop$minutes[1]
-                                resp.table$end_min              <- abs(Resp_loop$minutes[nrow(Resp_loop)])
-                                resp.table$O2_start_mgL         <- Resp_loop$mgL[1]
-                                resp.table$O2_end_mgL           <- Resp_loop$mgL[nrow(Resp_loop)]
-                                resp.table$Rate_mgO2_hour       <- ( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
+                                
+                                if (minim_mgL < (mean_mgL - (3*sd_mgL))) { # if the minmgL is calling a low outlier..
+                                resp.table$end_min              <- Resp_loop$minutes[nrow(Resp_loop)]    # TRUE, call the last time point                     
+                                } else {
+                                  resp.table$end_min            <- min((Resp_loop %>% dplyr::filter(mgL  == minim_mgL))$minutes) } # FALSE call the minute pertaining to the min mgL
+                                
+                                resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
+                                
+                                if (minim_mgL < (mean_mgL - (3*sd_mgL))) { # if the minmgL is calling a low outlier..
+                                  resp.table$end_min            <- Resp_loop$minutes[nrow(Resp_loop)]  # TRUE, call the last time point                       
+                                } else {
+                                  resp.table$end_min            <- minim_mgL } # false, call the min mgL 
+                                
+                                resp.table$O2_end_mgL           <- minim_mgL # Resp_loop$mgL[nrow(Resp_loop)]
+                                resp.table$Rate_mgO2_hour       <- (max(Resp_loop$mgL[1:20]) - minim_mgL)/ (min((Resp_loop %>% dplyr::filter(mgL  == minim_mgL))$minutes) / 60)#( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
                                 resp.table$Filename             <- file.names.table[m,1]
                                 
                                 df       <- data.frame(resp.table) # name dataframe for this single row
@@ -149,10 +164,63 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                   } # end of inside for loop 'j' (for each sensor column 'j' [a] isolate mins and CH_ for analysis [b] convert CH_ data to mg/L using 'DO.unit.convert' [c] calc respi rates with LoLin R)
         } # end of inside  for loop 'm' (for every 'raw' .txt file 'm' in the subfolder 'i')
 } # end of outside for loop 'i' (for every subfolder 'i')
+#View(df_total)
+nrow(df_total) #408
 View(df_total)
+df_total <- as.data.frame(df_total)
 
-# write the table 
-write.table(df_total,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
-write.table(df_total,"C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Cumulative_resp_start_end.csv", row.names=FALSE) 
+# upload ref metadata for RR (treamtent, plate, run, replication, number, etc.)
+RefID <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Respiration/Reference_resp_ID.csv", header = TRUE, sep = ',') %>% 
+  dplyr::filter(!Date %in% c('4/20/2022', '4/22/2022','8/24/2022','8/29/2022'))
+nrow(RefID) # 408
+
+# upload ref sizes
+Refsize <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Respiration/Reference_resp_size.csv", header = TRUE, sep = ',') %>% 
+  dplyr::filter(!Date %in% c('4/20/2022', '4/22/2022','8/24/2022','8/29/2022')) %>% 
+  dplyr::select(c('Date','Run','Plate','pH', 'Replicate', 'Chamber_tank', 'Number', 'Length_um', 'Dry_Tissue_weight', 'whole_Dry_weight','Instrument'))
+nrow(Refsize) # 265 (Does not indlue blanks, size data )
+
+# merge df_total with the ref IDs
+merged_df_ref <- as.data.frame(merge(df_total,RefID))
+nrow(merged_df_ref) # 408
+
+# merge the dataframe above (previous merge) with the sizes (note! no blanks here)
+merged_withSize <- merge(merged_df_ref,Refsize) %>% 
+  dplyr::filter(!Fed_Unfed %in% 'U') %>% 
+  dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
+  dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>%
+  dplyr::select(c('Date','pH','Chamber_tank','Run','Number','Length_um', 'Length_um', 'Dry_Tissue_weight','whole_Dry_weight', 'Rate_mgO2_hour', 'filetype')) %>% 
+  dplyr::rename(Start.End_RR_mgO2hr = Rate_mgO2_hour)  %>% 
+  dplyr::rename(Dry_Tissue_weight_mg = Dry_Tissue_weight) %>% 
+  dplyr::rename(Whole_Dry_weight_mg  = whole_Dry_weight)
+
+# write csv for the start end RAW (as merged_withSize)
+write.csv(merged_withSize, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_start_end_raw.csv")
 
 
+
+# mean blanks for the start - to - end values ('Rate_mgO2_hour') :::::::::::::::::::::::::::::::::::::::::
+blanks.raw   <- merged_df_ref %>% 
+  dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
+  dplyr::mutate(filetype = factor(ifelse(filetype == "csv", "SDR_data", "LoLigo_data"))) %>%
+  dplyr::filter(Chamber_tank %in% 'blank') %>% 
+  dplyr::select(c('Date','pH','Fed_Unfed','Run', 'Rate_mgO2_hour','filetype')) # no plate for SDR
+
+blanks_meansStartEnd <- as.data.frame(blanks.raw %>% 
+                          dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
+                          dplyr::filter(!Rate_mgO2_hour < 0) %>% # ommit blank calls that d/n represent oxygen consumption
+                          dplyr::summarise(BLANK_Start.End_RR_mgO2hr  = mean(Rate_mgO2_hour),
+                                           # BLANK.start.end_sd  = sd(Rate_mgO2_hour),
+                                           n = n()) %>% 
+                          #dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
+                           dplyr::arrange(Date, Run, pH))
+View(blanks_meansStartEnd)
+
+
+Start.end_RR_master <- merge(merged_withSize, blanks_meansStartEnd, by=c("Date", "pH", "Run","filetype")) %>% 
+  dplyr::select(!('n')) %>% 
+  dplyr::mutate(Start.End_RR_mgO2hr_blank = Start.End_RR_mgO2hr - BLANK_Start.End_RR_mgO2hr) %>% 
+  dplyr::filter(Start.End_RR_mgO2hr_blank < 0) # 33 rows were less than the blank
+
+
+merged_withSize

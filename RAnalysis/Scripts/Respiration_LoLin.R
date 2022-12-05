@@ -22,8 +22,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 path.p    <- "Data/Physiology/Respiration" #the location of all your respirometry files 
 a         <- 0.4
-ouputNAME <- "Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv" 
-#ouputNAME <- "Output/Respiration/Cumulative_resp_alpha0.4_trunc40mins.csv" # do you want to truncate at 40 mins???
+ouputNAME <- "Output/Respiration/RR_LoLin_raw.csv" 
 
 # ANALYSIS  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Objective: use LoLinr to run all respiration rates in a non-bias and autonomous fashion

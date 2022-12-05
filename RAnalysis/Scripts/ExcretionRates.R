@@ -14,8 +14,8 @@ library(ggplot2)
 # SET WORKING DIRECTORY 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 # LOAD DATA & cater to this script 
-Excretion_data <- read.csv(file="Data/Excretion_rates/Excretion_master.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
-Size_data   <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.csv", header=T) 
+Excretion_data <- read.csv(file="Data/Physiology/Excretion_rates/F1/cumultative_raw/Excretion_master.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
+Size_data   <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) 
 
 
 
@@ -24,17 +24,25 @@ Size_data   <- read.csv(file="Data/Respiration/Lengths_Condition_resp_clearance.
 # EDIT AND MERG DATA  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-list(unique(Excretion_data$Date)) # 20220202 20220301 - call these dates in te size data (look below)
+list(unique(Excretion_data$Date)) # 20220202 20220301 20211026 20220922 20221026 - call these dates in the size data and only Loligo RR data (large animals measured excretion!)
 
 Size_data_2 <- Size_data %>% 
   dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>% # change format of the date to the format in Excretion_data
-  dplyr::select(-c(Food, Center)) %>%  # get rid of unneeded column(s)
-  dplyr::filter(Date %in% unique(Excretion_data$Date)) # 20220202 20220301 - call these dates in te size dat
+  dplyr::select(-c(Food, Shell_tin_weight, tin_plus_shell, Tissue_tin_.weight, tin_plus_tissue, Plate, Vessel_well_volume, Notes)) %>%  # get rid of unneeded column(s)
+  dplyr::filter(Date %in% unique(Excretion_data$Date)) %>% # 20220202 20220301 20211026 20220922 20221026- call these dates in te size dat
+  dplyr::filter(!Instrument %in% 'SDR_24channel') %>% # dates occasionally have resp for F2s with SDr, call the Loligo system for the correct animals
+  dplyr::select(-Instrument) # now we can omit Instrument column
+nrow(Size_data_2) # 82
+nrow(Excretion_data)
+
+
+
+meanTDW <- mean(as.numeric(Size_data_2$Dry_Tissue_weight)) # 0.4729451
+
 
 Excretion_master <- merge(Excretion_data, Size_data_2) %>% # merge size and excretion datadata
-  dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # omit rates that were less than the blank
-  dplyr::mutate(ExcretionRate_umol_mL_hr_gTDW =  ExcretionRate_umol_mL_hr/Dry_Tissue_weight) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
-  dplyr::mutate(ExcretionRate_ug_mL_hr_gTDW = ExcretionRate_ug_mL_hr/Dry_Tissue_weight) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
+  dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
+  dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
 
 
@@ -102,25 +110,68 @@ hist(resid(LMEmod_0301_log)) #
 
 # plotting ::::::::::::::::::::::::::::::::::;;
 
-
-Excretion_rate_boxplot <- Excretion_master %>% 
-                            ggplot(aes(pCO2 , ExcretionRate_umol_mL_hr_gTDW , fill = pCO2)) +
-                            theme(panel.grid=element_blank()) +
-                            geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-                            scale_fill_manual(values=c("white", "grey50")) +
-                            geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
-                            theme_classic() +
-                            theme(axis.text=element_text(size=12),
-                                  axis.title=element_text(size=10)) +
-                            stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+View(Excretion_master)
+Excretion_rate_facetted <- Excretion_master %>% 
+                            dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
+                            ggplot(aes(x = factor(Date), 
+                                       y = ExcretionRate_umol_mL_hr_TDWbfactor, 
+                                       fill = pCO2)) +
+                            geom_boxplot(alpha = 0.5, # color hue
+                                         width=0.6, # boxplot width
+                                         outlier.size=0, # make outliers small
+                                         position = position_dodge(preserve = "single")) + 
+                            geom_point(pch = 19, 
+                                       position = position_jitterdodge(0.01), 
+                                       size=1) +
+                            scale_fill_manual(values=c("forestgreen","orange")) +
+                            theme_classic() + 
                             ggtitle("Excretion rate, F1 Scallops") +
-                            facet_wrap(~Date)
-Excretion_rate_boxplot
+                            theme(legend.position="none",
+                                  axis.title.y=element_text(size=7),
+                                  axis.title.x=element_text(size=7),
+                                  axis.text.x=element_text(size=7)) +
+                            #ylim(0, 0.2) +
+                            stat_summary(fun.y=mean, 
+                                         geom = "errorbar", 
+                                         aes(ymax = ..y.., ymin = ..y..), 
+                                         width = 0.6, 
+                                         size=0.4, 
+                                         linetype = "dashed", 
+                                         position = position_dodge(preserve = "single"))  +
+                            facet_wrap(~Date, scales = "free")
+Excretion_rate <- Excretion_master %>% 
+                    dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
+                    ggplot(aes(x = factor(Date), 
+                               y = ExcretionRate_umol_mL_hr_TDWbfactor, 
+                               fill = pCO2)) +
+                    geom_boxplot(alpha = 0.5, # color hue
+                                 width=0.6, # boxplot width
+                                 outlier.size=0, # make outliers small
+                                 position = position_dodge(preserve = "single")) + 
+                    geom_point(pch = 19, 
+                               position = position_jitterdodge(0.01), 
+                               size=1) +
+                    scale_fill_manual(values=c("forestgreen","orange")) +
+                    theme_classic() + 
+                    theme(legend.position="none",
+                          axis.title.y=element_text(size=7),
+                          axis.title.x=element_text(size=7),
+                          axis.text.x=element_text(size=7)) +
+                    #ylim(0, 0.2) +
+                    stat_summary(fun.y=mean, 
+                                 geom = "errorbar", 
+                                 aes(ymax = ..y.., ymin = ..y..), 
+                                 width = 0.6, 
+                                 size=0.4, 
+                                 linetype = "dashed", 
+                                 position = position_dodge(preserve = "single")) # no facet
+
 
 
 
 # output the plot 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/Master_ER_Boxplots.pdf"), width = 7, height= 6)
-print(Excretion_rate_boxplot)
+library(ggpubr)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/ER_Boxplots_TDWbfactor.pdf"), width = 7, height= 6)
+ggarrange(Excretion_rate_facetted, Excretion_rate, ncol = 1, nrow = 2)
 dev.off()
 

@@ -16,40 +16,100 @@ library(stringr)
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
 
-# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Resp_Master          <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) 
-Excretion_Master     <- read.csv(file="Data/Excretion/Excretion_master.csv", header=T) 
-#merge
-RespExcretion_Master <- merge(Resp_Master,Excretion_Master) # only 18 values as of 2/2/2022 that have both resp and excretion
+# LOAD DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_start.end  <- read.csv(file="Output/Respiration/RR_start_end_raw.csv", header=T)  %>% dplyr::select(-X)
+# note: this data file has Start.End_RR_mgO2hr - already accounting for the blank start end O2 consumption!
+ER            <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T) %>% dplyr::select(-X)
 
 
-# CALCULATE O:N :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Master_table <- as.data.frame(RespExcretion_Master %>% 
-                  dplyr::select(c('Date',  'pH', 'Replicate', 'volume', 'Dry_Tissue_weight', 'resp_mg_L_hr', 'resp_umol_L_hr', 'start.end_resp_mg_L_hr', 'Nitrogen_ug_mL_hr')) %>% 
-                  dplyr::rename(c('RESP_mg.O2_L_hr' = 'resp_mg_L_hr', 
-                                  'RESP.startend_resp_mg.O2_L_hr' = 'start.end_resp_mg_L_hr', 
-                                  'NITROGEN_ug.N2_mL_hr' = 'Nitrogen_ug_mL_hr')) %>% 
-                  dplyr::mutate('NITROGEN_ug.N2_L_hr'          =  (NITROGEN_ug.N2_mL_hr*(volume/1000))) %>%                   
-                  dplyr::mutate('RESP_mg.O2_L_g.tissue_hr'              =  (RESP_mg.O2_L_hr) / (Dry_Tissue_weight))                      %>% 
-                  dplyr::mutate('RESP.startend_mg.O2_L_g.tissue_hr'     =  (RESP.startend_resp_mg.O2_L_hr) / (Dry_Tissue_weight))        %>% 
 
-                  dplyr::mutate('ON_RESP.LoLinR'                 =  ( (RESP_mg.O2_L_g.tissue_hr/16) / (NITROGEN_ug.N2_L_g.tissue_hr/14)) )    %>% 
-                  dplyr::mutate('ON_RESP.start.end'              =  ( (RESP.startend_mg.O2_L_g.tissue_hr/16) / (NITROGEN_ug.N2_L_g.tissue_hr/14)))  )
-View(Master_table)
 
-# Summary (means SE):::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-as.data.frame(Master_table %>%  
-  dplyr::filter(!ON_RESP.LoLinR < 0) %>% 
-  summarySE(measurevar="ON_RESP.LoLinR", groupvars=c("Date", "pH")))
+#  edit data  ::::::::::::::::::::::::::::::::::::::
+# note: start end Oxygen consumption needs to be filtered for dates/measurments used for excretion
+unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026 - also ONLY Liligo measurements (large indivs) have excretion data (and biodep!)
 
-# Date  pH N ON_RESP.LoLinR       sd       se       ci
-# 1 2/2/2022 7.5 8       11.35245 4.320349 1.527474 3.611902
-# 2 2/2/2022 8.0 8       14.47146 7.396323 2.614995 6.183481
 
-as.data.frame(Master_table %>%  
-                dplyr::filter(!ON_RESP.start.end < 0) %>% 
-                summarySE(measurevar="ON_RESP.start.end", groupvars=c("Date", "pH")))
+RR_start.end_2 <- RR_start.end %>% 
+  dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>% # change format of the date to the format in Excretion_data
+  dplyr::filter(Date %in% c('20211026', '20220202', '20220301', '20220922', '20221026')) %>% 
+  dplyr::filter(filetype %in% 'LoLigo_data') %>% 
+  dplyr::mutate(Replicate = gsub(".*_","",Chamber_tank)) %>% 
+  dplyr::select(-(c(filetype, Length_um, Dry_Tissue_weight_mg, Whole_Dry_weight_mg))) # do not need it anymore!
 
-# Date  pH N ON_RESP.start.end       sd        se       ci
-# 1 2/2/2022 7.5 8          8.601386 2.821077 0.9974014 2.358479
-# 2 2/2/2022 8.0 8         13.940044 5.070313 1.7926263 4.238888
+
+
+#merge O:N master file :::::::::::::::::::::::::::::::::
+nrow(RR_start.end_2) # 70
+nrow(ER) # 86
+O_N_Master <- merge(RR_start.end_2,ER) # merge
+nrow(O_N_Master) # 75
+meanTDW <- mean(O_N_Master$Dry_Tissue_weight) # 0.284344
+
+
+
+
+
+O_N_Master_bfactTDW <- O_N_Master %>% 
+  dplyr::mutate(ExcretionRate_umol_L_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
+  dplyr::mutate(Start.End_RR_umol_L_hr = ((Start.End_RR_mgO2hr*1000)/32)/1000) %>% 
+  dplyr::mutate(RR_umol_L_hr_TDWbfactor =  Start.End_RR_mgO2hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
+  dplyr::mutate(O_N =RR_umol_L_hr_TDWbfactor/ ExcretionRate_umol_L_hr_TDWbfactor)
+  
+
+
+O_N_facetted <- O_N_Master_bfactTDW %>% 
+  #dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
+  ggplot(aes(x = factor(Date), 
+             y = O_N, 
+             fill = pCO2)) +
+  geom_boxplot(alpha = 0.5, # color hue
+               width=0.6, # boxplot width
+               outlier.size=0, # make outliers small
+               position = position_dodge(preserve = "single")) + 
+  geom_point(pch = 19, 
+             position = position_jitterdodge(0.01), 
+             size=1) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  theme_classic() + 
+  ggtitle("O:N, F1 Scallops") +
+  theme(legend.position="none",
+        axis.title.y=element_text(size=7),
+        axis.title.x=element_text(size=7),
+        axis.text.x=element_text(size=7)) +
+  #ylim(0, 0.2) +
+  stat_summary(fun.y=mean, 
+               geom = "errorbar", 
+               aes(ymax = ..y.., ymin = ..y..), 
+               width = 0.6, 
+               size=0.4, 
+               linetype = "dashed", 
+               position = position_dodge(preserve = "single"))  +
+  facet_wrap(~Date, scales = "free")
+
+
+Excretion_rate <- Excretion_master %>% 
+  dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
+  ggplot(aes(x = factor(Date), 
+             y = ExcretionRate_umol_mL_hr_TDWbfactor, 
+             fill = pCO2)) +
+  geom_boxplot(alpha = 0.5, # color hue
+               width=0.6, # boxplot width
+               outlier.size=0, # make outliers small
+               position = position_dodge(preserve = "single")) + 
+  geom_point(pch = 19, 
+             position = position_jitterdodge(0.01), 
+             size=1) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  theme_classic() + 
+  theme(legend.position="none",
+        axis.title.y=element_text(size=7),
+        axis.title.x=element_text(size=7),
+        axis.text.x=element_text(size=7)) +
+  #ylim(0, 0.2) +
+  stat_summary(fun.y=mean, 
+               geom = "errorbar", 
+               aes(ymax = ..y.., ymin = ..y..), 
+               width = 0.6, 
+               size=0.4, 
+               linetype = "dashed", 
+               position = position_dodge(preserve = "single")) # no facet
