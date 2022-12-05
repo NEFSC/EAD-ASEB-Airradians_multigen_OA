@@ -263,26 +263,77 @@ comm -23 <(sort checksummary.txt | uniq) <(sort refsummary.txt | uniq) # returns
 -------------------------------------------
 
 
-# shell script: <span style="color:green">**fastqc_raw.sh**<span>
+# shell script: <span style="color:green">**multiQC_raw.sh**<span>
 
 
 **Run the sbatch**
 
 ```
-sbatch fastqc_raw.sh
+sbatch multiQC_raw.sh
 ```
+
+```
+#!/bin/bash
+#SBATCH --job-name="multiQC_raw_reads"
+#SBATCH -t 002:00:00
+#SBATCH --mem=32GB
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=samuel.gurr@noaa.gov
+#SBATCH --output=./Airradians_lcWGS/F1/output/fastp_multiQC/raw/"%x_out.%j"
+#SBATCH --error=./Airradians_lcWGS/F1/output/fastp_multiQC/raw/"%x_err.%j"
+
+# load modules needed
+module load bio/fastp/0.23.2
+module load bio/fastqc/0.11.9
+
+# NOTE! before running this job...
+#  mkdir a directory/directories output/fastp_multiQC/raw in the lcWGS/F1  dir
+
+cd # can run from anywhere - initially navigaes to home dir
+cd ./Airradians_lcWGS/F1/output/fastp_multiQC/ # then navs to the output dir to simplify output files
+
+# symbolically link clean reads to fastp_multiQC dir
+ln -s ../../../../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/*.gz  ./ # call backward from the directory to the share folder, input symbolic links to all .gz to folder
+# hashed out if the symbolic links are already present
+
+echo "symbolic links in output/fastp_multiQC folder SUCCESS!"
+
+# Make an array of sequences to trim
+array1=($(ls *.fastq.gz))  # call all symbolically linked .fastq.gz files now linkined symbolically in the  output/fastp_multiQC folder
+
+# fastqc loop of raw reads - output fastqc files to raw folder
+for i in ${array1[@]}; do
+        fastqc ${i} --outdir ./raw # output in the raw dir
+done
+
+echo "QC of raw reads complete." $(date)
+
+# Quality Assessment of Raw reads
+
+source ../../../../python_venv/bin/activate # from the current directory, activates the bin of installed python packages, including multiqc
+
+multiqc ./raw #Compile MultiQC report from FastQC files - output .html in raw directory ( multiQC html report)
+
+echo "Raw MultiQC report generated." $(date)
+```
+
+
+
 
 **Export multiqc report**
 
-*exit bluewaves and run from terminal*
+*exit sedna and run from terminal*
 
-- save to gitrepo as multiqc_clean.html
+- save to gitrepo as multiqc_raw.html
+
 
 ```
-scp samuel_gurr@bluewaves.uri.edu:/data/putnamlab/sgurr/Geoduck_TagSeq/output/fastp_mutliQC/multiqc_report.html  C:/Users/samjg/Documents/My_Projects/Pgenerosa_TagSeq_Metabolomics/TagSeq/HPC_work/Output
+scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/multiqc_raw.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/multiqc_raw.html
+
 ```
 
 ### IMPORTANT! Quality check multiqc.html before you proceed!
+
 
 - view the multiqc.html report and note observations to guide trimming!
 
@@ -305,16 +356,64 @@ scp samuel_gurr@bluewaves.uri.edu:/data/putnamlab/sgurr/Geoduck_TagSeq/output/fa
 - ```multiqc ./``` = outputs mutliqc report of the 'clean' reads in the current directory
 
 
-# shell script: <span style="color:green">**fastp_mutliqc.sh**<span>
+# shell script: <span style="color:green">**fastp_multiQC_adapters_only.sh**<span>
+
 ```
-**insert bash script here**
+#!/bin/bash
+#SBATCH --job-name="fastp_multiQC_adapters"
+#SBATCH -t 002:00:00
+#SBATCH --mem=32GB
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=samuel.gurr@noaa.gov
+#SBATCH --output=./Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/"%x_out.%j"
+#SBATCH --error=./Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/"%x_err.%j"
+
+# load modules needed
+module load bio/fastp/0.23.2
+module load bio/fastqc/0.11.9
+
+# NOTE! before running this job...
+#  mkdir a directory/directories output/fastp_multiQC/adapter_trim in the lcWGS/F1  dir
+
+cd # can run from anywhere - initially navigaes to home dir
+cd ./Airradians_lcWGS/F1/output/fastp_multiQC/ # then navs to the output dir to simplify output files
+
+# symbolically link clean reads to fastp_multiQC dir
+# ln -s ../../../../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/*.gz  ./ # call backward from the directory to the share folder, input symbolic links to all .gz to folder
+# hashed out if the symbolic links are already present (i.e. links here if you already ran the multiQC_raw.sh job)
+
+# echo "symbolic links in output/fastp_multiQC folder SUCCESS!"
+
+# Make an array of sequences to trim
+array1=($(ls *.fastq.gz))  # call all symbolically linked .fastq.gz files now linkined symbolically in the  output/fastp_multiQC folder
+
+# fastp loop; trim the Read 1 TruSeq adapter sequence; trim poly x default 10 (to trim polyA)
+for i in ${array1[@]}; do
+        fastp --in1 ${i} --out1 ./adapter_trim/adapter_trim.${i} --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA # check JUST adapters trimmed without other parameters 
+        fastqc  ./adapter_trim/adapter_trim.${i} --outdir ./adapter_trim # call the output files from fastp in previous line and output fastqc in the same folder with adapter_trim filename head
+done
+
+echo "Read trimming of adapters complete." $(date)
+
+# Quality Assessment of Trimmed Reads
+
+source ../../../python_venv/bin/activate # from the current directory, activates the bin of installed python packages, including multiqc
+
+multiqc ./adapter_trim  -o ./adapter_trim #Compile MultiQC report from FastQC files - output .html in adpater_trim directory ( fast_muiltiQC folder)
+
+echo "Cleaned MultiQC report generated." $(date)
+
 ```
 
 ### EXPORT MUTLIQC REPORT
+
 *exit SEDNA and run from terminal*
-- save to gitrepo as multiqc_clean.html
+
+- save to gitrepo as multiqc_adapter_trim.html
+
 ```
-scp **write call here**
+scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/multiqc_adapter_trim.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/multiqc_adapter_trim.html
+
 ```
 
 # Alignment of cleaned reads to reference
