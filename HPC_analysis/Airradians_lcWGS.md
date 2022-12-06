@@ -328,7 +328,7 @@ echo "Raw MultiQC report generated." $(date)
 
 
 ```
-scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/multiqc_raw.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/multiqc_raw.html
+scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/multiqc_report.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/F1_lcWGS_25samples/multiqc_raw.html
 
 ```
 
