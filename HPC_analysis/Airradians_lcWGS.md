@@ -361,7 +361,7 @@ scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/mu
 ```
 #!/bin/bash
 #SBATCH --job-name="fastp_multiQC_adapters"
-#SBATCH -t 002:00:00
+#SBATCH -t 048:00:00
 #SBATCH --mem=32GB
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=samuel.gurr@noaa.gov
@@ -389,19 +389,22 @@ array1=($(ls *.fastq.gz))  # call all symbolically linked .fastq.gz files now li
 
 # fastp loop; trim the Read 1 TruSeq adapter sequence; trim poly x default 10 (to trim polyA)
 for i in ${array1[@]}; do
-        fastp --in1 ${i} --out1 ./adapter_trim/adapter_trim.${i} --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA # check JUST adapters trimmed without other parameters 
+        fastp --in1 ${i} --out1 ./adapter_trim/adapter_trim.${i} --adapter_sequence=CTGTCTCTTATACACATCT --adapter_fasta adapter.fasta # --detect_adapter_for_pe  # CTGTCTCTTATACACATCT # check JUST ad$
         fastqc  ./adapter_trim/adapter_trim.${i} --outdir ./adapter_trim # call the output files from fastp in previous line and output fastqc in the same folder with adapter_trim filename head
 done
+
+# https://support.illumina.com/bulletins/2016/12/what-sequences-do-i-use-for-adapter-trimming.html - check out the adapters to choose for trimming (Nextera XT used above)
 
 echo "Read trimming of adapters complete." $(date)
 
 # Quality Assessment of Trimmed Reads
 
-source ../../../python_venv/bin/activate # from the current directory, activates the bin of installed python packages, including multiqc
+source ../../../../python_venv/bin/activate # from the current directory, activates the bin of installed python packages, including multiqc
 
 multiqc ./adapter_trim  -o ./adapter_trim #Compile MultiQC report from FastQC files - output .html in adpater_trim directory ( fast_muiltiQC folder)
 
 echo "Cleaned MultiQC report generated." $(date)
+
 
 ```
 
@@ -412,7 +415,7 @@ echo "Cleaned MultiQC report generated." $(date)
 - save to gitrepo as multiqc_adapter_trim.html
 
 ```
-scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/multiqc_adapter_trim.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/multiqc_adapter_trim.html
+scp sgurr@sedna.nwfsc2.noaa.gov:Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/multiqc_report.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/F1_lcWGS_25samples/multiqc_adapter_trim.html
 
 ```
 
@@ -526,6 +529,57 @@ more information on samtools commands [here](http://www.htslib.org/doc/1.1/samto
 # shell script: <span style="color:green">**HISAT2.sh**<span>
 
 ```
-**insert bash script here**
+#!/bin/bash
+#SBATCH --job-name="hisat2_align_Airradians"
+#SBATCH -t 072:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=samuel.gurr@noaa.gov
+#SBATCH --output=./Airradians_lcWGS/F1/output/alignment/hisat2/"%x_out.%j"
+#SBATCH --error=./Airradians_lcWGS/F1/output/alignment/hisat2/"%x_err.%j"
+
+# before running..
+# mkdir(s) as Airradians_lcWGS/F1/output/alignment/hisat2/
+
+BASEDIR=~/ # base directory
+REFDIR=~/refs # the reference folder
+PYTHONENV=~/python_venv/bin # python enrnvrionment
+DATDIR=~/Airradians_lcWGS/F1/output/fastp_multiQC/adapter_trim/ # directory of trimmed and filtered fastq.gz files
+OUTDIR=~/Airradians_lcWGS/F1/output/alignment/hisat2/
+
+
+# nav to hd
+cd ~ #nav back to home directory (allows job to be run from anywhere)
+
+# load modules, requires hisat2 and samtools
+module load bio/hisat2/2.2.1
+module load bio/samtools/1.11
+
+
+# symbolically link clean reads to hisat2 dir
+ln -s $DATDIR/*.fastq.gz $OUTDIR/ # call the .fastq.gz output from fastp trim - make symb link to output/hisat2
+echo "Symbolic directories successfully linked"
+
+# activate python for hisat2-build
+source $PYTHONENV/activate  # activate python virtual envriomment to call python and run hisat2-build
+#echo "Python virtual env activated"
+
+# index the reference genome for Panopea generosa output index to working directory
+hisat2-build -f $REFDIR/Argopecten_irradians_irradians_genome.fasta $OUTDIR/Airradians_ref
+echo "Referece genome indexed. Starting alingment" $(date)
+
+# exit python virtual envrionment
+deactivate
+
+# This script exports alignments as bam files
+# sorts the bam file because Stringtie takes a sorted file for input (--dta)
+# removes the sam file because it is no longer needed
+array=($(ls $OUTDIR/*.fastq.gz)) # call the symbolically linked sequences - make an array to align
+for i in ${array[@]}; do
+        hisat2 -p 8 --dta -x $OUTDIR/Airradians_ref -U ${i} -S ${i}.sam
+        samtools sort -@ 8 -o ${i}.bam ${i}.sam
+                echo "${i} bam-ified!"
+        rm ${i}.sam
+done
+
 ```
 - HISAT2 complete with format prepared for StringTie assembler!
