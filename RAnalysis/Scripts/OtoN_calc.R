@@ -11,6 +11,7 @@ library(lubridate)
 library(rMR) 
 library(dplyr)
 library(stringr)
+library(ggplot2)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
@@ -18,6 +19,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::
 RR_start.end  <- read.csv(file="Output/Respiration/RR_start_end_raw.csv", header=T)  %>% dplyr::select(-X)
+RR_size.ref   <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) 
 # note: this data file has Start.End_RR_mgO2hr - already accounting for the blank start end O2 consumption!
 ER            <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T) %>% dplyr::select(-X)
 
@@ -36,7 +38,7 @@ RR_start.end_2 <- RR_start.end %>%
   dplyr::mutate(Replicate = gsub(".*_","",Chamber_tank)) %>% 
   dplyr::select(-(c(filetype, Length_um, Dry_Tissue_weight_mg, Whole_Dry_weight_mg))) # do not need it anymore!
 
-
+RR_start.end_2 %>% dplyr::filter(Date %in% '20221026')
 
 #merge O:N master file :::::::::::::::::::::::::::::::::
 nrow(RR_start.end_2) # 70
@@ -55,6 +57,9 @@ O_N_Master_bfactTDW <- O_N_Master %>%
   dplyr::mutate(RR_umol_L_hr_TDWbfactor =  Start.End_RR_mgO2hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
   dplyr::mutate(O_N =RR_umol_L_hr_TDWbfactor/ ExcretionRate_umol_L_hr_TDWbfactor)
   
+O_N_Master_bfactTDW %>% dplyr::filter(Date %in% '20221026')
+
+
 
 
 O_N_facetted <- O_N_Master_bfactTDW %>% 
@@ -86,6 +91,36 @@ O_N_facetted <- O_N_Master_bfactTDW %>%
                position = position_dodge(preserve = "single"))  +
   facet_wrap(~Date, scales = "free")
 
+
+O_N  <- O_N_Master_bfactTDW %>% 
+  #dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
+  ggplot(aes(x = factor(Date), 
+             y = O_N, 
+             fill = pCO2)) +
+  geom_boxplot(alpha = 0.5, # color hue
+               width=0.6, # boxplot width
+               outlier.size=0, # make outliers small
+               position = position_dodge(preserve = "single")) + 
+  geom_point(pch = 19, 
+             position = position_jitterdodge(0.01), 
+             size=1) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  theme_classic() + 
+  ggtitle("O:N, F1 Scallops") +
+  theme(legend.position="none",
+        axis.title.y=element_text(size=7),
+        axis.title.x=element_text(size=7),
+        axis.text.x=element_text(size=7)) +
+  #ylim(0, 0.2) +
+  stat_summary(fun.y=mean, 
+               geom = "errorbar", 
+               aes(ymax = ..y.., ymin = ..y..), 
+               width = 0.6, 
+               size=0.4, 
+               linetype = "dashed", 
+               position = position_dodge(preserve = "single"))
+library(ggpubr)
+ggarrange(O_N_facetted, O_N, ncol = 1, nrow = 2)
 
 Excretion_rate <- Excretion_master %>% 
   dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor > 30) %>% # two outliers?
