@@ -1,0 +1,316 @@
+---
+title: "Seawater Chemistry"
+author: "Samuel Gurr"
+date: "12/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+# LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(knitr)
+library(kableExtra)
+library(car)
+
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/") # personal computer
+
+
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+chem_larvae <- read.csv(file="Data/Chemistry/F1/cumulative_raw/F1_water_chemistry_raw_larvae.csv", header=TRUE) # load the chem data
+chem_spat.adult <- read.csv(file="Data/Chemistry/F1/cumulative_raw/F1_water_chemistry_raw.csv", header=TRUE) # load the chem data
+
+```
+
+
+# PLOTS AND ANALYSIS - Aragonite saturation levels
+
+```{r edit data master file}
+ncol(chem_larvae) == ncol(chem_spat.adult) # TRUE - same spreadsheet
+colnames(chem_larvae) == colnames(chem_spat.adult) # TRUE - also the same
+
+chem.MASTER <- rbind(chem_larvae, chem_spat.adult)
+
+# NOTe: full carbonate chemistry was taken non-continuosly, call all rows that contain full carb
+
+carbchem                <- chem.MASTER[!(is.na(chem.MASTER$War_out_DIC_pH)),] 
+carbchem.flagged.DIC.TA <- subset(carbchem, (TCO2_mmol_kgSW > TA_mmol_kgSW)) # 13 rows flagged for DIC<TA
+carbchem.flagged.odd    <- subset(carbchem, War_out_DIC_pH > 400) # 8 w/ high aragonite, next highest is 2.05
+
+write.csv((rbind(carbchem.flagged.DIC.TA, carbchem.flagged.odd)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/flagged_data.csv")
+
+carbchem.MASTER         <- subset(carbchem, !(TCO2_mmol_kgSW > TA_mmol_kgSW)) %>% # DIC>TA omit
+  dplyr::filter(War_out_DIC_pH < 3) %>% # omit these odd aragonite points
+  dplyr::mutate(pCO2_treatment = 
+                  case_when(Treatment == 8 ~ 'Low',
+                            Treatment == 7.5 ~ 'Moderate',
+                            Treatment == 7 ~ 'Severe'))
+
+write.csv(carbchem.MASTER, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/master/CarbChem_master.csv")
+
+
+
+```
+
+```{r plotting}
+
+# change to long format to properly facet
+carbchem.MASTER_long <- carbchem.MASTER %>% 
+  dplyr::select(!c(Treatment,Replicate)) %>% 
+  melt(id.vars=c('Date', 'Type', 'pCO2_treatment'))
+
+carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
+
+# aquire means by group for mean SE plotting by Date and treamtent
+carbchem.MASTER_MEANS <- carbchem.MASTER_long %>% # calc means and standard error
+   na.omit() %>% 
+   dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
+   dplyr::summarise(mean = mean(value),
+                    sd   = sd(value),
+                    se   = sd/(sqrt(n())) )
+
+# plot em!
+colnames(carbchem.MASTER) # target select
+
+pd <- position_dodge(0.1) # adjust the jitter for the different treatments   
+
+
+Larvae <- carbchem.MASTER_MEANS %>% 
+  dplyr::filter(Type %in% 'Larvae') %>% 
+  dplyr::filter(variable %in% (c('Temperature_bucket_C',
+                                 'Salinity',
+                                 'DO_mg_l',
+                                 'pH',
+                                 'pH_out',
+                                 'TCO2_mmol_kgSW',
+                                 'TA_mmol_kgSW',
+                                 'War_out_DIC_pH',
+                                 'Wca_out'))) %>% 
+  ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
+  geom_line(position=pd) +
+  scale_colour_manual(values = c("Low" = "green",
+                                 "Moderate"="orange",
+                                 "Severe" = "purple")) +
+  theme_classic() +
+  geom_point(position=pd, size=2) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
+  #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
+  facet_wrap(~variable, scales = "free")
+
+
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_larvae.pdf", width=12, height=8)
+print(Larvae)
+graphics.off()
+
+
+
+Juvenile <- carbchem.MASTER_MEANS %>% 
+  dplyr::filter(Type %in% 'Juveniles') %>% 
+  dplyr::filter(variable %in% (c('Temperature_bucket_C',
+                                 'Salinity',
+                                 'DO_mg_l',
+                                 'pH',
+                                 'pH_out',
+                                 'TCO2_mmol_kgSW',
+                                 'TA_mmol_kgSW',
+                                 'War_out_DIC_pH',
+                                 'Wca_out'))) %>% 
+  ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
+  geom_line(position=pd) +
+  scale_colour_manual(values = c("Low" = "green",
+                                 "Moderate"="orange",
+                                 "Severe" = "purple")) +
+  theme_classic() +
+  geom_point(position=pd, size=2) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
+  #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
+  facet_wrap(~variable, scales = "free")
+print(Juvenile)
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_juveniles.pdf", width=12, height=8)
+print(Juvenile)
+graphics.off()
+
+
+Adult <- carbchem.MASTER_MEANS %>% 
+  dplyr::filter(Type %in% 'Adults') %>% 
+  dplyr::filter(pCO2_treatment %in% c("Low", "Moderate")) %>% 
+  dplyr::filter(variable %in% (c('Temperature_bucket_C',
+                                 'Salinity',
+                                 'DO_mg_l',
+                                 'pH',
+                                 'pH_out',
+                                 'TCO2_mmol_kgSW',
+                                 'TA_mmol_kgSW',
+                                 'War_out_DIC_pH',
+                                 'Wca_out'))) %>% 
+  ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
+  geom_line(position=pd) +
+  scale_colour_manual(values = c("Low" = "green",
+                                 "Moderate"="orange")) +
+  theme_classic() +
+  geom_point(position=pd, size=2) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
+  scale_x_date(date_labels="%b-%d",date_breaks  ="3 month")+
+  #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
+  facet_wrap(~variable, scales = "free")
+print(Adult)
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_adults.pdf", width=12, height=8)
+print(Adult)
+graphics.off()
+
+```
+
+# TABLE 
+
+```{r use dplyr to build chemistry table, include=FALSE}
+names(chem)
+chem %>% filter(Date %in% '5/17/2021')
+chem_sub <- chem %>% 
+   dplyr::select(c('Date', 
+                    'Chamber_.', 
+                    'Temp',
+                    'pCO2', 
+                    'Sal', 
+                    't_oC_out', 
+                    'Salinity',
+                    'pH_out_chamber',
+                    'pCO2_out_matm', 
+                    'TA__mmol_gSW__Corrected_with_the_CRM', 
+                    'WCa_out', 
+                    'WAr_out')) %>% 
+    dplyr::filter(Date %in% c('4/29/2021', 
+                              '5/3/2021', 
+                              '5/7/2021', 
+                              '5/10/2021', 
+                              '5/14/2021', 
+                              '5/17/2021')) %>% 
+    dplyr::mutate(all_treat = paste(Temp, pCO2, Sal, sep = "_")) %>% 
+# dplyr::group_by(Date, Temp_OA_Sal) %>%  
+    dplyr::group_by(Date, all_treat) %>%  
+    #na.omit() %>% 
+    dplyr::summarise(
+              meanTemperature     = mean((as.numeric(t_oC_out))),
+              sdTemperature       = sd((as.numeric(t_oC_out))),
+          
+              meanSalinity        = mean((as.numeric(Salinity))),
+              sdSalinity          = sd((as.numeric(Salinity))),
+          
+              meanpH              = mean((as.numeric(pH_out_chamber))),
+              sdpH                = sd((as.numeric(pH_out_chamber))),
+          
+              meanpCO2            = mean((as.numeric(pCO2_out_matm))),
+              sdpCO2              = sd((as.numeric(pCO2_out_matm))),
+          
+              meanTotalAlkalinity = mean((as.numeric(TA__mmol_gSW__Corrected_with_the_CRM))),
+              sdTotalAlkalinity   = sd((as.numeric(TA__mmol_gSW__Corrected_with_the_CRM))),
+          
+              meanCalcite         = mean((as.numeric(WCa_out))),
+              sdCalcite           = sd((as.numeric(WCa_out))),
+          
+              meanAragonite       = mean((as.numeric(WAr_out))),
+              sdAragonite         = sd((as.numeric(WAr_out))),
+          
+              n = n()) %>% 
+  dplyr::mutate(Temperature = substr(all_treat,1,1)) %>% 
+    dplyr::mutate(Temperature = case_when(Temperature %in% 'H' ~ 'High', Temperature %in% 'L' ~ 'Low')) %>% 
+  dplyr::mutate(pCO2 = substr(all_treat,3,3)) %>% 
+    dplyr::mutate(pCO2 = case_when(pCO2 %in% 'H' ~ 'High', pCO2 %in% 'L' ~ 'Low')) %>% 
+  dplyr::mutate(Salinity = substr(all_treat,5,5)) %>% 
+    dplyr::mutate(Salinity = case_when(Salinity %in% 'H' ~ 'High', Salinity %in% 'L' ~ 'Low'))
+
+# add treatments
+chem_meanDate <- chem_sub %>% 
+    dplyr::select(-c('meanTemperature', 'sdTemperature')) %>% 
+    na.omit() %>% 
+    dplyr::group_by(all_treat, Temperature,pCO2,Salinity) %>%  
+    dplyr::summarise(
+              # Temp         = mean((as.numeric(meanTemperature))),
+              # sdTemp       = sd((as.numeric(meanTemperature))),
+          
+              Sal       = mean((as.numeric(meanSalinity))),
+              sdSal     = sd((as.numeric(meanSalinity))),
+          
+              pH            = mean((as.numeric(meanpH))),
+              sdpH          = sd((as.numeric(meanpH))),
+          
+              mpCO2          = mean((as.numeric(meanpCO2))),
+              sdpCO2        = sd((as.numeric(meanpCO2))),
+          
+              TA            = mean((as.numeric(meanTotalAlkalinity))),
+              sdTA          = sd((as.numeric(meanTotalAlkalinity))),
+          
+              Calcite       = mean((as.numeric(meanCalcite))),
+              sdCalcite     = sd((as.numeric(meanCalcite))),
+          
+              Aragonite     = mean((as.numeric(meanAragonite))),
+              sdAragonite   = sd((as.numeric(meanAragonite))),
+          
+              n = n()) 
+
+chem_meanDate_Temp <- chem_sub %>% 
+    na.omit() %>% 
+    dplyr::group_by(all_treat, Temperature,pCO2,Salinity) %>%  
+          dplyr::summarise(
+              Temp         = mean((as.numeric(meanTemperature))),
+              sdTemp       = sd((as.numeric(meanTemperature))),
+              n = n()) 
+# final table
+FINAL_TABLE                <- data.frame(matrix(nrow = nrow(chem_meanDate), ncol = 1))
+
+FINAL_TABLE$temp           <- chem_meanDate$Temperature
+
+FINAL_TABLE$OA             <- chem_meanDate$pCO2
+
+FINAL_TABLE$sal            <- chem_meanDate$Salinity
+
+FINAL_TABLE$N              <- chem_meanDate$n
+
+FINAL_TABLE$Temperature    <- paste( (signif(chem_meanDate_Temp$Temp, digits=3)),
+                                     (signif(chem_meanDate_Temp$sdTemp, digits=3)), sep=" ± ")
+
+FINAL_TABLE$pCO2           <- paste( (signif(chem_meanDate$mpCO2, digits=3)), 
+                                     (signif(chem_meanDate$sdpCO2, digits=3)), sep=" ± ")
+
+FINAL_TABLE$Salinity       <- paste( (signif(chem_meanDate$Sal, digits=3)), 
+                                     (signif(chem_meanDate$sdSal, digits=3)), sep=" ± ")
+
+FINAL_TABLE$pH             <- paste( (signif(chem_meanDate$pH, digits=3)), 
+                                     (signif(chem_meanDate$sdpH, digits=3)), sep=" ± ")
+
+FINAL_TABLE$TA             <- paste( (signif(chem_meanDate$TA, digits=3)),
+                                     (signif(chem_meanDate$sdTA, digits=3)), sep=" ± ")
+
+FINAL_TABLE$Aragonite.Sat  <- paste( (signif(chem_meanDate$Aragonite, digits=3)), 
+                                     (signif(chem_meanDate$sdAragonite, digits=3)), sep=" ± ")
+
+FINAL_TABLE$Calcite.Sat    <- paste( (signif(chem_meanDate$Calcite, digits=3)), 
+                                     (signif(chem_meanDate$sdCalcite, digits=3)), sep=" ± ")
+
+FINAL_TABLE                <- FINAL_TABLE[,-1] # view table
+```
+
+
+## knitR to print the table 
+```{r lable output, echo=TRUE}
+FINAL_TABLE %>%
+  kbl(caption = "Table 1. Seawater chemistry") %>%
+  kable_classic(full_width = T, html_font = "Cambria")
+```
+
+
+#### save data
+```{r save tables, echo=TRUE}
+# save output table
+write.table(chem_meanDate,"C:/Users/samjg/Documents/Github_repositories/Cvirginica_multistressor/RAnalysis/Output/Water_Chem/Chem.Table_sep.csv",sep=",", row.names=FALSE)  # write table to 
+write.table(FINAL_TABLE,"C:/Users/samjg/Documents/Github_repositories/Cvirginica_multistressor/RAnalysis/Output/Water_Chem/Chem.Table.csv",sep=",", row.names=FALSE)  # write table to 
+
+```
