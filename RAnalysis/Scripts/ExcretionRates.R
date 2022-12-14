@@ -11,6 +11,9 @@
 #install.packages("pander")
 library(dplyr)
 library(ggplot2)
+library(nlme)
+library(lme4)
+library(car)
 # SET WORKING DIRECTORY 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 # LOAD DATA & cater to this script 
@@ -57,54 +60,125 @@ write.csv(Excretion_master, "C:/Users/samjg/Documents/Github_repositories/Airrad
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+library(kable)
+library(pander)
+
+unique(Excretion_master$Date)
+Excretion_master_211026 <- Excretion_master %>% filter(Date %in% '20211026') # call data 
+Excretion_master_0202 <- Excretion_master %>% filter(Date %in% '20220202') # call data 
+Excretion_master_0301 <- Excretion_master %>% filter(Date %in% '20220301') # call data 
+Excretion_master_0922 <- Excretion_master %>% filter(Date %in% '20220922') # call data 
+Excretion_master_221026 <- Excretion_master %>% filter(Date %in% '20221026') # call data 
+
+
+
+
+
+# 20211026 :::::::::::::::::::::::::::::::
+# LME mod -  data 
+LMEmod_211026          <-lme(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_211026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+shapiro.test(resid(LMEmod_211026)) #  0.2434 normal
+pander(anova(LMEmod_211026), style='rmarkdown') # anova table of lmer
+#   |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+#   |:---------------:|:-----:|:-----:|:-------:|:---------:|
+#   | **(Intercept)** |   1   |   9   |  41.89  | 0.0001151 |
+#   |    **pCO2**     |   1   |   6   | 0.5117  |  0.5013   |
+qqnorm(resid(LMEmod_211026)) # 
+hist(resid(LMEmod_211026)) # 
+
+
+
+
+
 
 
 
 # 20220202 :::::::::::::::::::::::::::::::
-
-
-
-Excretion_master_0202 <- Excretion_master %>% filter(Date %in% '20220202') # call data 
-
 # LME mod -  data 
-LMEmod_0202           <-lme(ExcretionRate_umol_mL_hr_gTDW ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0202) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMEmod_0202           <-lme(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0202) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
 pander(anova(LMEmod_0202), style='rmarkdown') # anova table of lmer
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  14   |  102.2  | 8.139e-08 |
-# |    **pCO2**     |   1   |  14   |  1.522  |  0.2377   |
-shapiro.test(resid(LMEmod_0202)) # 0.183 -  normal
+#   |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+#   |:---------------:|:-----:|:-----:|:-------:|:---------:|
+#   | **(Intercept)** |   1   |  14   |  82.37  | 3.062e-07 |
+#   |    **pCO2**     |   1   |  14   | 0.8734  |  0.3659   |
+shapiro.test(resid(LMEmod_0202)) # 0.06603 -  normal
 qqnorm(resid(LMEmod_0202)) # 
 hist(resid(LMEmod_0202)) # 
 
 
 
 # 20220301 :::::::::::::::::::::::::::::::
-
-
-Excretion_master_0301 <- Excretion_master %>% filter(Date %in% '20220301') # call data 
-
 # LME mod -  data 
-LMEmod_0301           <-lme(ExcretionRate_umol_mL_hr_gTDW ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0301) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMEmod_0301           <-lme(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0301) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
 pander(anova(LMEmod_0301), style='rmarkdown') # anova table of lmer
-# |     &nbsp;      | numDF | denDF | F-value |  p-value  |
-# |:---------------:|:-----:|:-----:|:-------:|:---------:|
-# | **(Intercept)** |   1   |  14   |  28.79  | 9.953e-05 |
-# |    **pCO2**     |   1   |  14   |  2.295  |   0.152   |
-shapiro.test(resid(LMEmod_0301)) # 0.0151 - non normal
+#   |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+#   |:---------------:|:-----:|:-----:|:-------:|:---------:|
+#   | **(Intercept)** |   1   |  14   |  43.18  | 1.247e-05 |
+#   |    **pCO2**     |   1   |  14   |  2.231  |  0.1574   |
+shapiro.test(resid(LMEmod_0301)) # 0.002147 - non normal
 qqnorm(resid(LMEmod_0301)) # 
 hist(resid(LMEmod_0301)) # 
 
 # LME mod -  transformed data 
-LMEmod_0301_log           <-lme(log(ExcretionRate_umol_mL_hr_gTDW) ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0301) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMEmod_0301_log           <-lme(log(ExcretionRate_umol_mL_hr_TDWbfactor) ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0301) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
 pander(anova(LMEmod_0301_log), style='rmarkdown') # anova table of lmer
-# |     &nbsp;      | numDF | denDF | F-value | p-value |
-# |:---------------:|:-----:|:-----:|:-------:|:-------:|
-# | **(Intercept)** |   1   |  14   | 0.06904 | 0.7966  |
-# |    **pCO2**     |   1   |  14   |  1.451  | 0.2483  |
-shapiro.test(resid(LMEmod_0301_log)) # 0.3733 - normal
+#   |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+#   |:---------------:|:-----:|:-----:|:-------:|:---------:|
+#   | **(Intercept)** |   1   |  14   |  21.52  | 0.0003827 |
+#   |    **pCO2**     |   1   |  14   |  1.274  |  0.2781   |
+shapiro.test(resid(LMEmod_0301_log)) # 0.05217 - normal
 qqnorm(resid(LMEmod_0301_log)) # 
 hist(resid(LMEmod_0301_log)) # 
+
+
+
+
+
+
+# 20220922 :::::::::::::::::::::::::::::::
+# LME mod -  data 
+LMEmod_0922          <-lme(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0922) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+pander(anova(LMEmod_0922), style='rmarkdown') # anova table of lmer
+shapiro.test(resid(LMEmod_0922)) # 0.002147 - non normal
+
+LMEmod_0922_T          <-lme(log(ExcretionRate_umol_mL_hr_TDWbfactor) ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_0922) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+pander(anova(LMEmod_0922_T), style='rmarkdown') # anova table of lmer
+# |     &nbsp;      | numDF | denDF | F-value | p-value  |
+# |:---------------:|:-----:|:-----:|:-------:|:--------:|
+# | **(Intercept)** |   1   |   6   |  15.67  | 0.007461 |
+# |    **pCO2**     |   1   |   6   |  1.945  |  0.2125  |
+shapiro.test(resid(LMEmod_0922_T)) # 0.01509 - non normal
+norm(resid(LMEmod_0922_T)) # 
+hist(resid(LMEmod_0922_T)) # 
+
+
+
+
+
+# 20221026 :::::::::::::::::::::::::::::::
+# LME mod -  data 
+LMEmod_221026          <-lme(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_221026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMmod_221026_aov       <-lm(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, data=Excretion_master_221026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+
+
+shapiro.test(resid(LMEmod_221026)) #  non normal
+shapiro.test(resid(LMmod_221026_aov)) #  non normal
+
+LMEmod_221026_T          <-lme(log(ExcretionRate_umol_mL_hr_TDWbfactor) ~ pCO2, random=~1|Chamber_tank, data=Excretion_master_221026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMmod_221026_T          <-lm(log(ExcretionRate_umol_mL_hr_TDWbfactor) ~ pCO2, data=Excretion_master_221026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+
+shapiro.test(resid(LMEmod_221026_T)) # 0.5897 -  normal
+shapiro.test(resid(LMmod_221026_T)) # 0.5897 -  normal
+pander(anova(LMmod_221026_T), style='rmarkdown') # anova table of lmer
+#   |     &nbsp;      | numDF | denDF | F-value |  p-value  |
+#   |:---------------:|:-----:|:-----:|:-------:|:---------:|
+#   | **(Intercept)** |   1   |  11   |  19.95  | 0.0009523 |
+#   |    **pCO2**     |   1   |  11   | 0.03597 |   0.853   |
+qqnorm(resid(LMEmod_221026_T)) # 
+hist(resid(LMEmod_221026_T)) # 
+
+
+
 
 
 

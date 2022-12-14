@@ -172,97 +172,13 @@ graphics.off()
 # TABLE 
 
 ```{r use dplyr to build chemistry table, include=FALSE}
-names(chem)
-chem %>% filter(Date %in% '5/17/2021')
-chem_sub <- chem %>% 
-   dplyr::select(c('Date', 
-                    'Chamber_.', 
-                    'Temp',
-                    'pCO2', 
-                    'Sal', 
-                    't_oC_out', 
-                    'Salinity',
-                    'pH_out_chamber',
-                    'pCO2_out_matm', 
-                    'TA__mmol_gSW__Corrected_with_the_CRM', 
-                    'WCa_out', 
-                    'WAr_out')) %>% 
-    dplyr::filter(Date %in% c('4/29/2021', 
-                              '5/3/2021', 
-                              '5/7/2021', 
-                              '5/10/2021', 
-                              '5/14/2021', 
-                              '5/17/2021')) %>% 
-    dplyr::mutate(all_treat = paste(Temp, pCO2, Sal, sep = "_")) %>% 
-# dplyr::group_by(Date, Temp_OA_Sal) %>%  
-    dplyr::group_by(Date, all_treat) %>%  
-    #na.omit() %>% 
-    dplyr::summarise(
-              meanTemperature     = mean((as.numeric(t_oC_out))),
-              sdTemperature       = sd((as.numeric(t_oC_out))),
-          
-              meanSalinity        = mean((as.numeric(Salinity))),
-              sdSalinity          = sd((as.numeric(Salinity))),
-          
-              meanpH              = mean((as.numeric(pH_out_chamber))),
-              sdpH                = sd((as.numeric(pH_out_chamber))),
-          
-              meanpCO2            = mean((as.numeric(pCO2_out_matm))),
-              sdpCO2              = sd((as.numeric(pCO2_out_matm))),
-          
-              meanTotalAlkalinity = mean((as.numeric(TA__mmol_gSW__Corrected_with_the_CRM))),
-              sdTotalAlkalinity   = sd((as.numeric(TA__mmol_gSW__Corrected_with_the_CRM))),
-          
-              meanCalcite         = mean((as.numeric(WCa_out))),
-              sdCalcite           = sd((as.numeric(WCa_out))),
-          
-              meanAragonite       = mean((as.numeric(WAr_out))),
-              sdAragonite         = sd((as.numeric(WAr_out))),
-          
-              n = n()) %>% 
-  dplyr::mutate(Temperature = substr(all_treat,1,1)) %>% 
-    dplyr::mutate(Temperature = case_when(Temperature %in% 'H' ~ 'High', Temperature %in% 'L' ~ 'Low')) %>% 
-  dplyr::mutate(pCO2 = substr(all_treat,3,3)) %>% 
-    dplyr::mutate(pCO2 = case_when(pCO2 %in% 'H' ~ 'High', pCO2 %in% 'L' ~ 'Low')) %>% 
-  dplyr::mutate(Salinity = substr(all_treat,5,5)) %>% 
-    dplyr::mutate(Salinity = case_when(Salinity %in% 'H' ~ 'High', Salinity %in% 'L' ~ 'Low'))
-
-# add treatments
-chem_meanDate <- chem_sub %>% 
-    dplyr::select(-c('meanTemperature', 'sdTemperature')) %>% 
-    na.omit() %>% 
-    dplyr::group_by(all_treat, Temperature,pCO2,Salinity) %>%  
-    dplyr::summarise(
-              # Temp         = mean((as.numeric(meanTemperature))),
-              # sdTemp       = sd((as.numeric(meanTemperature))),
-          
-              Sal       = mean((as.numeric(meanSalinity))),
-              sdSal     = sd((as.numeric(meanSalinity))),
-          
-              pH            = mean((as.numeric(meanpH))),
-              sdpH          = sd((as.numeric(meanpH))),
-          
-              mpCO2          = mean((as.numeric(meanpCO2))),
-              sdpCO2        = sd((as.numeric(meanpCO2))),
-          
-              TA            = mean((as.numeric(meanTotalAlkalinity))),
-              sdTA          = sd((as.numeric(meanTotalAlkalinity))),
-          
-              Calcite       = mean((as.numeric(meanCalcite))),
-              sdCalcite     = sd((as.numeric(meanCalcite))),
-          
-              Aragonite     = mean((as.numeric(meanAragonite))),
-              sdAragonite   = sd((as.numeric(meanAragonite))),
-          
-              n = n()) 
-
-chem_meanDate_Temp <- chem_sub %>% 
-    na.omit() %>% 
-    dplyr::group_by(all_treat, Temperature,pCO2,Salinity) %>%  
-          dplyr::summarise(
-              Temp         = mean((as.numeric(meanTemperature))),
-              sdTemp       = sd((as.numeric(meanTemperature))),
-              n = n()) 
+carbchem.MASTER_MEANS <- carbchem.MASTER_long %>% # calc means and standard error
+   na.omit() %>% 
+   dplyr::group_by(pCO2_treatment, variable) %>% 
+   dplyr::summarise(mean = mean(value),
+                    sd   = sd(value),
+                    se   = sd/(sqrt(n())) ,
+                    n = n())
 # final table
 FINAL_TABLE                <- data.frame(matrix(nrow = nrow(chem_meanDate), ncol = 1))
 
