@@ -467,7 +467,8 @@ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/
 ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
 dev.off()
 
-colnames(Biodep_Master)
+
+
 
 
 CR_correct_boxplot <- Biodep_Master %>% 
@@ -490,19 +491,100 @@ CR_correct_boxplot <- Biodep_Master %>%
 CR_correct_boxplot
  
 
-# explore full model
-# Biodep_Master$Date <- as.factor(Biodep_Master$Date)
-# modAR <- aov(lm(AR ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
-# summary(modAR)
-# 
-# modOIR <- aov(lm(OIR ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
-# summary(modOIR)
-# shapiro.test(resid(modOIR)) # 0.1169
-# leveneTest(modOIR) # 0.3851
-# 
-# modAE <- aov(lm(AE ~ pCO2 * Date, data = Biodep_Master)) # Date is placeholder for temperature
-# qqnorm(resid(modAE))
-# shapiro.test(resid(modAE)) # 0.01168
-# leveneTest(modAE) # .1591
-# hist(resid(modAE))
-# summary(modAE)
+
+
+
+
+#  KAITE'S mas POSTER FIGURE FOR MAS 2022
+
+Biodep_Master_16_20C <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C',
+                                        Date == '20221027' ~ '13.3C')) %>%  
+  dplyr::filter(Temperature %in% c('16C', '20C'))
+
+
+
+AE_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , AE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Efficiency") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank()) +
+  facet_wrap(~Temperature)
+# AE_boxplot
+
+OIR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , OIR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Organic Ingestion Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# OIR_boxplot
+
+
+FR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , FR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Filtration Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# FR_boxplot
+
+RR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Percent Rejection Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# RR_boxplot
+
+SE_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , SE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Selection Efficiency") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots_MAS_poster.pdf"), width = 20, height= 4)
+ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, nrow = 1, ncol = 5)
+dev.off()
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/AE_Boxplot_MAS_poster.pdf"), width = 5, height= 4)
+ggarrange(AE_boxplot, nrow = 1, ncol = 1)
+dev.off()
