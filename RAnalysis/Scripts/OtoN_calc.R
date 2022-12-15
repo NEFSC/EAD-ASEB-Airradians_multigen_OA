@@ -18,7 +18,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 
 # LOAD DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::
-RR_start.end  <- read.csv(file="Output/Respiration/RR_start_end_raw.csv", header=T)  %>% dplyr::select(-X)
+RR_start.end  <- read.csv(file="Output/Respiration/RR_start_end_master.csv", header=T)  %>% dplyr::select(-X)
 RR_size.ref   <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) 
 # note: this data file has Start.End_RR_mgO2hr - already accounting for the blank start end O2 consumption!
 ER            <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T) %>% dplyr::select(-X)
@@ -39,12 +39,13 @@ RR_start.end_2 <- RR_start.end %>%
   dplyr::select(-(c(filetype, Length_um, Dry_Tissue_weight_mg, Whole_Dry_weight_mg))) # do not need it anymore!
 
 RR_start.end_2 %>% dplyr::filter(Date %in% '20221026')
-
+unique(RR_start.end_2$Date)
 #merge O:N master file :::::::::::::::::::::::::::::::::
 nrow(RR_start.end_2) # 70
 nrow(ER) # 86
 O_N_Master <- merge(RR_start.end_2,ER) # merge
 nrow(O_N_Master) # 75
+unique(O_N_Master$Date)
 meanTDW <- mean(O_N_Master$Dry_Tissue_weight) # 0.284344
 
 
@@ -53,8 +54,7 @@ meanTDW <- mean(O_N_Master$Dry_Tissue_weight) # 0.284344
 
 O_N_Master_bfactTDW <- O_N_Master %>% 
   dplyr::mutate(ExcretionRate_umol_L_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
-  dplyr::mutate(Start.End_RR_umol_L_hr = ((Start.End_RR_mgO2hr*1000)/32)/1000) %>% 
-  dplyr::mutate(RR_umol_L_hr_TDWbfactor =  Start.End_RR_mgO2hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
+  dplyr::mutate(RR_umol_L_hr_TDWbfactor =  Start.End_RR_umolhr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
   dplyr::mutate(O_N =RR_umol_L_hr_TDWbfactor/ ExcretionRate_umol_L_hr_TDWbfactor)
   
 O_N_Master_bfactTDW %>% dplyr::filter(Date %in% '20221026')

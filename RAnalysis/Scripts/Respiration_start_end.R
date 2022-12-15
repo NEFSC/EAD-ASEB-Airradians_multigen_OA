@@ -105,6 +105,7 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                    # inside 'j' loop - for each 'raw' txt file 'm', call each O2 sensor/resp chamber 'j' for analysis
                     for(j in 4:(ncol(Resp.Data))){ # for each sensor column 'j' (..starting at column 4) :::::::::::::::::::::::::::::::
                       
+                      
                       Resp_loop  <- na.omit(Resp.Data[,c(3,j)]) %>% dplyr::filter(!.[[2]] %in% 'NaN')# noticed some random rows have 'NaN' - so I will loop the min and Channels to ommit Nas before proceeding
                       
                       # Loligo system needs to cnvert %air sat to mg / L whereas SDR dish does not 
@@ -133,33 +134,49 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                 
                               } else { # else run LoLinR for x=mins and y=mg/l O2
                                 
-                                minim_mgL <- min(Resp_loop$mgL)
-                                mean_mgL  <- mean(Resp_loop$mgL)
-                                sd_mgL    <- sd(Resp_loop$mgL)
                                 
-                                resp.table$Date                 <- Resp.Data[1,1]
-                                resp.table$Channel              <- colnames(Resp_loop)[2] 
-                                resp.table$start_min            <- Resp_loop$minutes[1]
                                 
-                                if (minim_mgL < (mean_mgL - (3*sd_mgL))) { # if the minmgL is calling a low outlier..
-                                resp.table$end_min              <- Resp_loop$minutes[nrow(Resp_loop)]    # TRUE, call the last time point                     
-                                } else {
-                                  resp.table$end_min            <- min((Resp_loop %>% dplyr::filter(mgL  == minim_mgL))$minutes) } # FALSE call the minute pertaining to the min mgL
                                 
-                                resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
+                                  # incase there are jumps of low mgL outlier data mid -trial
+                                  if ( (nrow(Resp_loop %>% dplyr::filter(mgL  < (min(mgL))+(sd(mgL)))) /
+                                    nrow(Resp_loop)) * 100 > 1 ) { # call statement to omit these values min+sdDev 
+                                    Resp_loop <- Resp_loop
+                                      } else {
+                                        Resp_loop <- Resp_loop %>% dplyr::filter(!mgL  < (min(mgL))+(1/3*sd(mgL))) # omit these data ~ 1 %of rows - View --> rowsOmit = round(nrow(Resp_loop) * 0.01)
+                                      }
+                                  
                                 
-                                if (minim_mgL < (mean_mgL - (3*sd_mgL))) { # if the minmgL is calling a low outlier..
-                                  resp.table$end_min            <- Resp_loop$minutes[nrow(Resp_loop)]  # TRUE, call the last time point                       
-                                } else {
-                                  resp.table$end_min            <- minim_mgL } # false, call the min mgL 
                                 
-                                resp.table$O2_end_mgL           <- minim_mgL # Resp_loop$mgL[nrow(Resp_loop)]
-                                resp.table$Rate_mgO2_hour       <- (max(Resp_loop$mgL[1:20]) - minim_mgL)/ (min((Resp_loop %>% dplyr::filter(mgL  == minim_mgL))$minutes) / 60)#( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
-                                resp.table$Filename             <- file.names.table[m,1]
-                                
-                                df       <- data.frame(resp.table) # name dataframe for this single row
-                                df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
-                                print(df_total) # print to monitor progress
+                                  sd_mgL    <- sd(Resp_loop$mgL)
+                                  mean_mgL  <- mean(Resp_loop$mgL)
+                                  
+                                  
+                                  resp.table$Date                 <- Resp.Data[1,1]
+                                  resp.table$Channel              <- colnames(Resp_loop)[2] 
+                                  resp.table$Filename             <- file.names.table[m,1]
+                                  
+                                  
+                                  if ( Resp_loop$mgL[nrow(Resp_loop)] < (sd_mgL+min(Resp_loop$mgL)) ) {
+                                    minim_mgL <- Resp_loop$mgL[nrow(Resp_loop)]
+                                    resp.table$start_min            <- Resp_loop$minutes[1]
+                                    resp.table$end_min              <- Resp_loop$minutes[nrow(Resp_loop)]    # TRUE, call the last time point      
+                                    resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
+                                    resp.table$O2_end_mgL           <- minim_mgL 
+                                    resp.table$Rate_mgO2_hour       <- (   (max(Resp_loop$mgL[1:20]) - minim_mgL)/ ((resp.table$end_min[[1]] - resp.table$start_min[[1]])/60)   )#( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
+                                  } else {
+                                    minim_mgL <-min(Resp_loop$mgL)
+                                    resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
+                                    resp.table$start_min            <- min((Resp_loop %>% filter(mgL == resp.table$O2_start_mgL[[1]]))$minutes)
+                                    resp.table$end_min              <- max((Resp_loop %>% filter(mgL == minim_mgL))$minutes)    # TRUE, call the last time point      
+                                    resp.table$O2_end_mgL           <- minim_mgL 
+                                    resp.table$Rate_mgO2_hour       <-  ( (resp.table$O2_start_mgL[[1]] - resp.table$O2_end_mgL[[1]]) / ((resp.table$end_min[[1]] - resp.table$start_min[[1]])/60)  )#( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
+                                    resp.table$Filename             <- file.names.table[m,1]
+                                      }
+                                  
+
+                                  df       <- data.frame(resp.table) # name dataframe for this single row
+                                  df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
+                                  print(df_total) # print to monitor progress
                               }
                   } # end of inside for loop 'j' (for each sensor column 'j' [a] isolate mins and CH_ for analysis [b] convert CH_ data to mg/L using 'DO.unit.convert' [c] calc respi rates with LoLin R)
         } # end of inside  for loop 'm' (for every 'raw' .txt file 'm' in the subfolder 'i')
@@ -176,13 +193,13 @@ nrow(RefID) # 408
 
 # upload ref sizes
 Refsize <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Respiration/Reference_resp_size.csv", header = TRUE, sep = ',') %>% 
-  dplyr::filter(!Date %in% c('4/20/2022', '4/22/2022','8/24/2022','8/29/2022')) %>% 
+  dplyr::filter(!Date %in% c('4/20/2022', '4/22/2022','8/24/2022','8/29/2022', '8/30/2022')) %>% 
   dplyr::select(c('Date','Run','Plate','pH', 'Replicate', 'Chamber_tank', 'Number', 'Length_um', 'Biovolume_g_in_sw', 'Dry_Tissue_weight', 'whole_Dry_weight','Instrument'))
-nrow(Refsize) # 265 (Does not indlue blanks, size data )
+nrow(Refsize) # 265 does not include the many trials that were run as tests that this resp sheet indlues (df)
 
 # merge df_total with the ref IDs
 merged_df_ref <- as.data.frame(merge(df_total,RefID))
-nrow(merged_df_ref) # 408
+nrow(merged_df_ref) # 408 - all in the ref are here in the start end raw data 
 
 # merge the dataframe above (previous merge) with the sizes (note! no blanks here)
 merged_withSize <- merge(merged_df_ref,Refsize) %>% 
@@ -249,8 +266,8 @@ merged_withSize <- merge(merged_df_ref,Refsize) %>%
 
 # write csv for the start end RAW (as merged_withSize)
 write.csv(merged_withSize, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_start_end_raw.csv")
-
-
+unique(merged_withSize$Date)
+# View(merged_withSize)
 
 # mean blanks for the start - to - end values ('Rate_mgO2_hour') :::::::::::::::::::::::::::::::::::::::::
 blanks.raw   <- merged_df_ref %>% 
@@ -267,16 +284,18 @@ blanks_meansStartEnd <- as.data.frame(blanks.raw %>%
                                            n = n()) %>% 
                           #dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
                            dplyr::arrange(Date, Run, pH))
-View(blanks_meansStartEnd)
+# View(blanks_meansStartEnd)
 
 
 Start.end_RR_master <- merge(merged_withSize, blanks_meansStartEnd, by=c("Date", "pH", "Run","filetype")) %>% 
   dplyr::select(!('n')) %>% 
-  dplyr::mutate(Start.End_RR_mgO2hr_blankcor = Start.End_RR_mgO2hr - BLANK_Start.End_RR_mgO2hr) %>% 
+  dplyr::mutate(Start.End_RR_mgO2hr_blankcor = as.numeric(Start.End_RR_mgO2hr - BLANK_Start.End_RR_mgO2hr)) %>% 
   dplyr::filter(!Start.End_RR_mgO2hr_blankcor < 0)  %>% # 33 rows were less than the blank
   dplyr::mutate(vol_correct  = volume - Biovolume_g_in_sw) %>%  # vessel volume in mL
-  dplyr::mutate(Start.End_RR_umolhr =  (Start.End_RR_mgO2hr_blankcor/(vol_correct/1000))/32  )
+  dplyr::mutate(Start.End_RR_ugO2hr =  (Start.End_RR_mgO2hr_blankcor*1000)*(vol_correct/1000)  ) %>% # per liter
+  dplyr::mutate(Start.End_RR_umolhr =  Start.End_RR_ugO2hr/32  )
 
 
 
-merged_withSize
+# merged_withSize
+write.csv(Start.end_RR_master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_start_end_master.csv")
