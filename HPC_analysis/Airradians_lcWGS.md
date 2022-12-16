@@ -518,13 +518,13 @@ more information on samtools commands [here](http://www.htslib.org/doc/1.1/samto
 - index reference and alignment
 
 **input**
-- Panopea-generosa-genes.fna *= reference genome*
-- clean/*.fastq.gz *= all clean TagSeq reads*
+- Argopecten_irradians_irradians_genome.fasta *= reference genome*
+- adapter_trim/*.fastq.gz *= all trimmed lcWGS reads*
 
 **ouput**
-- Pgenerosa_ref *= indexed reference by hisat2-build; stored in the output/hisat2 folder as 1.hy2, 2.ht2... 8.ht2*
-- <clean.fasta>.sam *=hisat2 output, readable text file; removed at the end of the script*
-- <clean.fasta>.bam *=converted binary file complementary to the hisat sam files*
+- Airradians_ref *= indexed reference by hisat2-build; stored in the output/hisat2 folder as 1.hy2, 2.ht2... 8.ht2*
+- <adapter_trim.fasta>.sam *=hisat2 output, readable text file; removed at the end of the script*
+- <adapter_trim.fasta>.bam *=converted binary file complementary to the hisat sam files*
 
 # shell script: <span style="color:green">**HISAT2.sh**<span>
 
@@ -583,3 +583,59 @@ done
 
 ```
 - HISAT2 complete with format prepared for StringTie assembler!
+
+
+## ANGSD: Genotype Likelihood
+-----------------------------------------------------------------
+
+```-doMajorMinor``` =
+
+	*	1: Infer major and minor from GL
+
+	*	2: Infer major and minor from allele counts
+
+	*	3: use major and minor from a file (requires -sites file.txt)
+
+	*	4: Use reference allele as major (requires -ref)
+
+	*	5: Use ancestral allele as major (requires -anc)
+	
+Before getting started.. 
+
+we first need a file containg the root to all bam files from home dir - below as 'bam_filelist.txt'
+
+```
+ls Airradians_lcWGS/F1/output/alignment/hisat2/*gz.bam > Airradians_lcWGS/F1/output/alignment/hisat2/bam_filelist.txt
+```
+
+Now we can run a test script for the angsd call for bam file input
+
+
+# shell script: <span style="color:green">**HISAT2.sh**<span>
+
+```
+#!/bin/bash
+#SBATCH --job-name="angsd GL"
+#SBATCH -t 072:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=samuel.gurr@noaa.gov
+#SBATCH --output=./Airradians_lcWGS/F1/output/alignm ent/angsd/GL/"%x_out.%j"
+#SBATCH --error=./Airradians_lcWGS/F1/output/alignment/angsd/GL/"%x_err.%j"
+
+# before running..
+# mkdir(s) as Airradians_lcWGS/F1/output/alignment/angsd/GL
+
+BASEDIR=~/ # base directory
+DATDIR=~/Airradians_lcWGS/F1/output/alignment/hisat2 # directory of trimmed and filtered fastq.gz files
+OUTDIR=~/Airradians_lcWGS/F1/output/alignment/angsd/GL/
+
+# nav to hd
+$BASEDIR #nav back to home directory (allows job to be run from anywhere)
+
+# load modules, requires hisat2 and samtools
+module load bio/angsd/0.933
+
+# run angsd GL 
+angsd -out $OUTDIR/angsd_GL_ -doMaf 2 -bam $DATDIR/bam.filelist.txt -doMajorMinor 1 -GL 1 -P 2
+
+```

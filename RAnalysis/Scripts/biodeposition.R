@@ -8,7 +8,7 @@ library(dplyr)
 
 ## set working directory
 
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/") # Work computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 ## load data 
@@ -60,6 +60,7 @@ biodep$ash_filter_weight_mg <- as.numeric(biodep$ash_filter_weight_mg)
 # (2) pseudofeces below detection limit: we took notes of smaples that had low to no pseudofeces - these will need to be accounted for in our rejection rate calculations 
 biodep %>% # use the subset biodep (with the single NA removed)
   dplyr::filter(sample_type %in% 'pseudofeces') %>% # call pseudofeces samples
+  #dplyr::filter(sample_type %in% 'feces') %>% # call pseudofeces samples
   dplyr::mutate(TPM_mg =(dry_filter_weight_mg - initial_filter_weight_mg)) %>% 
   dplyr::mutate(PIM_mg =(ash_filter_weight_mg - initial_filter_weight_mg)) %>%
   dplyr::mutate(POM_mg =(dry_filter_weight_mg - ash_filter_weight_mg)) %>% 
