@@ -31,15 +31,11 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-RR_master <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %>% 
+RR_master <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data
               # filter out the F2 measurements
               filter(!Date %in% c('8/30/2022', '11/16/2022')) %>% # an F2 measurement
               filter(!(Date == '9/22/2022' & filetype =='SDR_data')) %>% 
-              dplyr::mutate(resp_umol_L_hr_mg_WDW = 
-                            resp_umol_L_hr/as.numeric(whole_Dry_weight)) %>%  #  whole dry weight corrected MO2
-              dplyr::mutate(resp_umol_L_hr_mmLength = 
-                              resp_umol_L_hr/ (1000/Length_um))  %>% # call length corrected MO2
   # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
               dplyr::mutate(Age = case_when(Date == '9/14/2021'  ~ 50,
                                             Date == '9/30/2021'  ~ 66,
@@ -98,8 +94,8 @@ SumTable_treatment
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
-RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_L_hr)) %>%  filter(!is.na(Dry_Tissue_weight)) 
-RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_L_hr)) # assign resp value
+RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_hr)) %>%  filter(!is.na(Dry_Tissue_weight)) 
+RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr)) # assign resp value
 RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
 
@@ -389,9 +385,69 @@ RR_formatted <- RR_master %>%
 
 
 
-RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')
+
+# F1s and bfactor normalize them
+RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')  # call only F1s
+
+# call all bfactors (calc above!)
+bTDW = 0.822 # review the outlier-omitted b factor plot in previous chunk
+bLength = 2.18 # review the outlier-omitted b factor plot in previous chunk
 
 
+medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
+
+# calc the mean for TDw and length
+RR_formatted_F1s$Dry_Tissue_weight <- as.numeric(RR_formatted_F1s$Dry_Tissue_weight)
+meanTDW   <- mean((RR_formatted_F1s %>% 
+                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
+meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
+
+#View(RR_formatted_F1s$TDW_um)
+RR_formatted_F1smaster <- RR_formatted_F1s %>% 
+  
+  dplyr::mutate(resp_umol_hr_bFactorNormTDW.MEAN = 
+                  (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor
+  dplyr::mutate(resp_umol_hr_bFactorNormLength.MEAN = 
+                    (resp_umol_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor
+  
+  dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = 
+                  (resp_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor
+  dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
+                    (resp_mg_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor
+  
+  dplyr::select(c(Date,
+                  pH,
+                  pCO2,
+                  Replicate,
+                  Chamber_tank,
+                  Number,
+                  Run,
+                  Channel,
+                  filetype,
+                  Filename,
+                  Food,
+                  Length_um,
+                  Length_mm,
+                  Dry_Shell_weight,
+                  Dry_Tissue_weight,
+                  whole_Dry_weight,
+                  volume,
+                  Biovol_length3,
+                  actual_volume,
+                  Lpc,
+                  BLANK.mean_Lpc,
+                  resp_blankStand,
+                  resp_mg_hr,
+                  resp_mg_hr_bFactorNormTDW.MEAN,
+                  resp_mg_hr_bFactorNormLength.MEAN,
+                  resp_umol_hr,
+                  resp_umol_hr_bFactorNormTDW.MEAN,
+                  resp_umol_hr_bFactorNormLength.MEAN,
+                  Age,
+                  Gen,
+                  Gen_lifestage))
+
+write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
 ```
 
 

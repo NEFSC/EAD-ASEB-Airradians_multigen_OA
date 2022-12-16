@@ -36,14 +36,14 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-resp.data           <- read.csv(file="Output/Respiration/Cumulative_resp_alpha0.4_15sectrunc1hour.csv", header=T) %>% 
+resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", header=T) %>% 
                           dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
                           dplyr::filter(!(Date %in% "10/26/2022" & Filename %in% 'run_1_raw.txt' & Channel %in% 'CH2')) # omit bad data point
 
 
 
-start.end_resp.data <- read.csv(file="Output/Respiration/Cumulative_resp_start_end.csv", header=T, sep = "") %>% 
-                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
+start.end_resp.data <- read.csv(file="Output/Respiration/RR_start_end_raw.csv", header=T, sep = "") #%>% 
+                          #dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
 
 resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') 
@@ -94,6 +94,7 @@ resp.data_merged                       <- merge(resp.data, resp.ref_length_merge
                                             dplyr::arrange(Date_formatted,Run, Channel, .by_group = TRUE)
 kable(head(resp.data_merged))
 # View(resp.data_merged)
+View(resp.data_merged)
 ```
 
 #### Visual diagnostic plots to correct poor data (3 data points to change..)
@@ -343,12 +344,12 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
   
   
   # true rates calculated using LoLinRscript
-  dplyr::mutate(resp_mg_L_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute - DOUBLE CHECK
+  dplyr::mutate(resp_mg_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute - DOUBLE CHECK
                                       #(volume/1000) * # correct Liters - mg per L per min
                                       (actual_volume/1000) * # correct Liters - mg per L per min
                                        60) )  %>% # convert rate per minutes to rate per hour
   
-  dplyr::mutate(resp_umol_L_hr = (resp_mg_L_hr*1000) / 32) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
+  dplyr::mutate(resp_umol_hr = (resp_mg_hr*1000) / 32) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
   
   # simplified start end rates used to compare O:N ratios 
   # dplyr::mutate(start.end_resp_mg_L_hr   = (start.end_resp_blankStand*(volume/1000)))  %>% # convert rate per minutes to rate per hour
@@ -449,7 +450,7 @@ Resp.Master_OM$resp_umol_L_mg_WDW_hr <- (Resp.Master_OM$resp_umol_L_hr / # multi
 
 
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
-write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
+write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_calc_raw.csv")
 
 
 View(Resp.Master_OM)

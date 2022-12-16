@@ -37,13 +37,13 @@ Biodep <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_mult
 
 
 # Respiration rate (lolinR rates)
-RR <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %>% 
+RR <- read.csv(file="Output/Respiration/RR_F1s_calc_master.csv", header=T) %>% 
   filter(!Food %in% 'unfed') %>% # omit low food trial data
   # filter out the F2 measurements
   filter(!Date %in% c('8/30/2022', '11/16/2022')) %>% # an F2 measurement
   filter(!(Date == '9/22/2022' & filetype =='SDR_data')) %>% 
   # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
-  dplyr::select(c(Date, Age,  pH, pCO2, Replicate, Chamber_tank, Run, Plate, Number, filetype, Channel, 
+  dplyr::select(c(Date, Age,  pH, pCO2, Replicate, Chamber_tank, Run, Number, filetype, Channel, 
                   Length_mm, 
                   Dry_Shell_weight,
                   Dry_Tissue_weight,
@@ -54,13 +54,19 @@ RR <- read.csv(file="Output/Respiration/Calculated_Resp_Master.csv", header=T) %
                   volume,
                   Biovol_length3 ,
                   actual_volume,
-                  resp_umol_L_hr)) %>% 
+                  resp_mg_hr,
+                  resp_mg_hr_bFactorNormTDW.MEAN,
+                  resp_mg_hr_bFactorNormLength.MEAN,
+                  resp_umol_hr,
+                  resp_umol_hr_bFactorNormTDW.MEAN,
+                  resp_umol_hr_bFactorNormLength.MEAN)) %>% 
   dplyr::rename(RRvolume_vessel_mL = volume) %>% 
   dplyr::rename(RRvolume_actual_mL = actual_volume) %>% 
   dplyr::rename(RR_mgLmin_rawblankcor = resp_blankStand) %>% 
   dplyr::rename(RR_mgLmin_blankMean = BLANK.mean_Lpc) %>% 
-  dplyr::rename(RR_mgLmin_raw = Lpc) %>% 
-  dplyr::rename(RR_umol_hr = resp_umol_L_hr)
+  dplyr::rename(RR_mgLmin_raw = Lpc)
+
+
 
 
 # start end resp
@@ -74,13 +80,13 @@ ER <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T)
   dplyr::select(c(Date, pH, Replicate, Chamber_tank, Run, Number,
                   Length_um,
                   Dry_Tissue_weight,
-                  ExcretionRate_umol_mL_hr )) %>% 
+                  ExcretionRate_ug_mL_hr,
+                  ExcretionRate_umol_mL_hr )) %>%
+  dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr*1000) %>% 
   dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
   dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
-  dplyr::select(-Length_um) # dont need this anymore do we
+  dplyr::select(-c(Length_um,ExcretionRate_ug_mL_hr)) # dont need this anymore do we
 unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026
-
-
 
 
 
@@ -93,18 +99,26 @@ unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026
 
 # prep the resp data 
 RR_prepped <- RR %>% # just call desired dates tat overlap with biodep for merge
-  filter(Date %in% c('3/1/2022', '9/22/2022', '10/26/2022')) # the only dates we need to merge with biodep
+  dplyr::mutate(Date = format(strptime(Date, format = "%Y-%m-%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+  filter(Date %in% c('03/01/2022', '09/22/2022', '10/26/2022')) # the only dates we need to merge with biodep
 RR_prepped$Dry_Tissue_weight <- as.numeric(RR_prepped$Dry_Tissue_weight)
 nrow(RR_prepped) # 45
 
 
 # prep the ER data  - lets match the RR data 
+meanTDW <- mean(ER$Dry_Tissue_weight) # 0.4378721
+bTDW    <- 0.822
+
 ER_prepped <- ER %>% 
+  
+  dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW.MEAN = 
+                  (ExcretionRate_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
+  
+  dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW.MEAN = 
+                  (ExcretionRate_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
+  
   dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
   dplyr::filter(Date %in% c('03/01/2022', '09/22/2022', '10/26/2022'))  %>% # the only dates we need to merge with biodep
-  dplyr::mutate(Date = case_when(Date == "03/01/2022" ~ '3/1/2022',
-                                 Date == "09/22/2022" ~ '9/22/2022',
-                                 TRUE ~ Date)) %>%  # just need to reformat two of the dates to match RR - 10/26/2022 already matches
   unique() # a few duplicates on 3/1/2022 for some strange reason....
 nrow(ER_prepped) # 45 
 
@@ -117,8 +131,8 @@ Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "
   dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
   dplyr::rename(pH = treatment) %>% # rename to match 
   dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours, pCO2)) %>% 
-  dplyr::mutate(Date = case_when(Date == "03/02/2022" ~ '3/1/2022',
-                                 Date == "09/23/2022" ~ '9/22/2022',
+  dplyr::mutate(Date = case_when(Date == "03/02/2022" ~ '03/01/2022',
+                                 Date == "09/23/2022" ~ '09/22/2022',
                                  Date == "10/27/2022" ~ '10/26/2022'))
 Biodep_prepped$Chamber_tank <- paste(substring(Biodep$tank_ID  , 1, nchar(Biodep$tank_ID  )-1), Biodep_prepped$Replicate, sep = "_")
 nrow(Biodep_prepped) # 44 rows                        
@@ -141,8 +155,8 @@ subset(ER_prepped, !(uniqueID %in% RR_prepped$uniqueID)) # no discrepancies - th
 nrow(RR_prepped) == nrow(Biodep_prepped) # FALSE - there are rows not present in biodep that Resp has - lets call a uni que identifier (that we will omit at the merge of course)
 
 subset(RR_prepped, !(uniqueID %in% Biodep_prepped$uniqueID)) # three discrepancies between the RR and the biodep (RR have 3 more!)
-# 3/1/2022 CH2 run 2 8E - not present in the biodep file... lets review the RR data 
 # 3/1/2022 CH6 run 1 7.5_B - not present in the biodep file... we measured another 7.5_B whereas this was for only resp,  all is good! 
+# 3/1/2022 CH2 run 2 8E - not present in the biodep file... lets review the RR data 
 # 9/22/2022 CH7 8_D - there was no biodep *D on this data, animal was not used for biodep just respiration - all is good! 
 
 
@@ -262,8 +276,8 @@ ggarrange(PCApCO2, PCA_Temp, PCA_pCO2Temp )
 # subset for temp 20C  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-MASTER_301 <- MASTER_ALL %>% dplyr::filter(Date %in% '3/1/2022') # 20C on 9/22/2022
-PCA_301    <- prcomp(MASTER_301[,c(22:23,44,48,51,53)], 
+MASTER_301 <- MASTER_ALL %>% dplyr::filter(Date %in% '03/01/2022') # 20C on 9/22/2022
+PCA_301    <- prcomp(MASTER_301[,c(22,29,58,55,54,60,53,51)], 
                      center = TRUE,
                      scale. = TRUE)
 PCApCO2_301 <- ggbiplot(PCA_301,
@@ -283,8 +297,8 @@ PCApCO2_301 <- ggbiplot(PCA_301,
 
 
 
-MASTER_922 <- MASTER_ALL %>% dplyr::filter(Date %in% '9/22/2022') # 20C on 9/22/2022
-PCA_922    <- prcomp(MASTER_922[,c(22:23,44,48,51,53)], 
+MASTER_922 <- MASTER_ALL %>% dplyr::filter(Date %in% '09/22/2022') # 20C on 9/22/2022
+PCA_922    <- prcomp(MASTER_922[,c(22,29,58,55,54,60,53,51)], 
                          center = TRUE,
                          scale. = TRUE)
 PCApCO2_922 <- ggbiplot(PCA_922,
@@ -304,7 +318,7 @@ PCApCO2_922 <- ggbiplot(PCA_922,
 
 
 MASTER_1026 <- MASTER_ALL %>% dplyr::filter(Date %in% '10/26/2022') # 20C on 9/22/2022
-PCA_1026    <- prcomp(MASTER_1026[,c(22:23,44,48,51,53)], 
+PCA_1026    <- prcomp(MASTER_1026[,c(22,29,58,55,54,60,53,51)], 
                      center = TRUE,
                      scale. = TRUE)
 PCApCO2_1026 <- ggbiplot(PCA_1026,
