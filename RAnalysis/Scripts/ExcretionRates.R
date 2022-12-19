@@ -54,8 +54,41 @@ write.csv(Excretion_master, "C:/Users/samjg/Documents/Github_repositories/Airrad
 
 
 
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# WRITE CSV OF THE MASTER FILE
+
+ER <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/ExcretionRates_master.csv", header=T)
 
 
+nrow(ER)
+Dry_Tissue_weight
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
+ER            <- ER %>% filter(!is.na(ER$ExcretionRate_umol_mL_hr)) 
+ER$log10_VER  <- log10(as.numeric(ER$ExcretionRate_umol_mL_hr)) # assign resp value
+ER$log10_TDW  <- log10(as.numeric(ER$Dry_Tissue_weight)) # assign length value 
+#summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
+
+View(ER)
+
+ER_b.factor_PLOT <- ER %>% 
+  ggplot(aes(x=log10_TDW, y=log10_VER)) +
+  geom_point() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  scale_x_continuous(name ="log10_BodyMass; TDW in g") +
+  scale_y_continuous(name ="log10_ER; ER in umol L-1 hr-1)") +
+  theme_classic() +
+  theme(legend.position="none",axis.title.y=element_text(size=7)) +
+  ggtitle("Excretion rate scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+  geom_smooth(method = lm, color = 'red') +
+  ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
+
+# 1.13
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

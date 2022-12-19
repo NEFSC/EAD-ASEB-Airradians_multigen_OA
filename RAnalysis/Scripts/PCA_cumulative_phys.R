@@ -82,7 +82,7 @@ ER <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T)
                   Dry_Tissue_weight,
                   ExcretionRate_ug_mL_hr,
                   ExcretionRate_umol_mL_hr )) %>%
-  dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr*1000) %>% 
+  dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr/1000) %>% 
   dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
   dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
   dplyr::select(-c(Length_um,ExcretionRate_ug_mL_hr)) # dont need this anymore do we
