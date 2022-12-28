@@ -1,7 +1,10 @@
 # Purpose: Bay Scallop Project - Respiration rate data 
 # to complimen the LoLin R analysis, calc O2 consumption from 'start' to 'end' of each trial
 
-# Written by: Sam J Gurr (last edit 9/15/2021)
+# Written by: Sam J Gurr (last edit 12/19/22)
+# - used the blank TOM and POM for the biodep corrections 
+# - used an excretion data specific b factor (review Excretion script) of 1.13 for ER v. TDE
+# - bfactor for RR and biodep was 0.822 from MO2 v. TDW (review Resp b factor script)
 
 # LOAD PACKAGES ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(devtools) # devtools::install_github # use devtools to instlal github link
@@ -107,7 +110,7 @@ nrow(RR_prepped) # 45
 
 # prep the ER data  - lets match the RR data 
 meanTDW <- mean(ER$Dry_Tissue_weight) # 0.4378721
-bTDW    <- 0.822
+bTDW    <- 1.13 # added 12/19/22 after calculating a TDW ER specific b factor (review ER analysis script!) 
 
 ER_prepped <- ER %>% 
   
@@ -123,7 +126,7 @@ ER_prepped <- ER %>%
 nrow(ER_prepped) # 45 
 
 # prep the biodep data - lets match the RR data 
-
+# note the calc biodep is already corrected for 0.822 bfactor
 Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "10/27/2022" - need to change to reflect RR_prepped (above)
   dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
   dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
@@ -174,8 +177,8 @@ MASTER_ALL <- merge(RR_ER_merge, Biodep_prepped) %>%
   dplyr::mutate(Age = case_when(Date == '3/1/2022'  ~ 218,
                                 Date == '9/22/2022'  ~ 423,
                                 Date == '10/26/2022' ~ 457)) %>%
-  dplyr::mutate(Temperature = case_when(Date == '3/1/2022' ~ '16C', 
-                                        Date == '9/22/2022' ~ '20C',
+  dplyr::mutate(Temperature = case_when(Date == '03/01/2022' ~ '16C', 
+                                        Date == '09/22/2022' ~ '20C',
                                         Date == '10/26/2022' ~ '13.3C')) %>%  
   dplyr::mutate(pH_Temperature = paste(pCO2,'_',Temperature, sep = '')) %>% 
   dplyr::mutate(Age = as.factor(Age)) %>% dplyr::arrange(Age)
@@ -217,7 +220,7 @@ MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(5,6,22:23,44,46:48,53)], # all numeric (p
 summary(MASTER_ALL_1)
 
 
-MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(22:23,44,51,53)], 
+MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(26,31,60,58,53,55,51)], 
                          center = TRUE,
                          scale. = TRUE)
 summary(MASTER_ALL_1)
