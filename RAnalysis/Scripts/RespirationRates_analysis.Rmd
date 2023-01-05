@@ -49,6 +49,10 @@ RR_master <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>%
               
 # View(RR_master)
 
+
+# NOTE: we have TWO resp values 
+# (1) 'resp_umol_hr' calculated using  ONLY measured biovolumes to correct vessel volume - contains NAs for the first few resp dates when biovolume was not measured
+# (2) 'resp_umol_hr_biovolcalc' - contains all data with length^3 to correct for biovolume - no NAs, all data with a length measurement has a datapoint!
 ```
 
 
@@ -95,6 +99,7 @@ SumTable_treatment
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
 RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_hr)) %>%  filter(!is.na(Dry_Tissue_weight)) 
+nrow(RR_master_OM) # 77
 RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr)) # assign resp value
 RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
@@ -139,8 +144,8 @@ dev.off()
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR TWO OUTLIERS OMITTED (VIEW THE PREVIOUS) ::::::::::::::::::::::::::::::
-RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_L_hr)) %>%  filter(!is.na(Dry_Tissue_weight)) 
-RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_L_hr)) # assign resp value
+RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_hr)) %>%  filter(!is.na(Dry_Tissue_weight)) 
+RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr)) # assign resp value
 RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
 # summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
 
@@ -191,14 +196,131 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 * TDW b factor pCO2 low = 0.841 - two outliers removed here
 
 
-## by SHELL AND INDIVIDUAL LENGTH 
+
+
+## by TISSUE DRY WEIGHT (biovol calculated) ::::::::::
+```{r b factor TISSUE DRY WEIGHT, echo = FALSE, message = FALSE, warning = FALSE, results='hide'}
+
+
+# ABOUT: 
+
+# from Bayne text (page 360)
+
+# b is the scaling exponent, 
+# log10_M_O2 = log10_a + (b.factor * log10_Mass) 
+# M_O2 ∝ a*Mass^(b.factor),
+# y   =  m(x)^b.factor
+
+# b = the coefficient estimated empirically by fitting the allometric equation below
+# [ln(VO2])] = ln(a) + b*(ln(TDW))
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
+RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_hr_biovolcalc)) %>%  filter(!is.na(Dry_Tissue_weight)) 
+nrow(RR_master_OM) # 77 - same as before - there are no dry weights for the animals that we do not have biovolume for, thus these are the same datasets
+RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
+RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
+#summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
+
+MO2_b.factor_PLOT <- RR_master_OM %>% 
+                       ggplot(aes(x=log10_TDW, y=log10_VO2)) +
+                          geom_point() +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          scale_x_continuous(name ="log10_BodyMass; TDW in g") +
+                          scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                          theme_classic() +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                          geom_smooth(method = lm, color = 'red') +
+                          ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
+# MO2_b.factor_PLOT
+
+
+
+MO2_b.factor_PLOT_facetted <- RR_master_OM %>% 
+                       ggplot(aes(x=log10_TDW, y=log10_VO2, color = pCO2)) +
+                          geom_point() +
+                          scale_color_manual(values=c("blue","orange")) +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          scale_x_continuous(name ="log10_BodyMass; TDW in g") +
+                          scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                          theme_classic() +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                          geom_smooth(method = lm, color = 'red') +
+                          ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
+                          facet_wrap(~pCO2)
+# MO2_b.factor_PLOT_facetted
+
+
+# OUTPUT PLOTS 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_biovolcalc.pdf"), width = 8, height = 8)
+print(ggarrange(MO2_b.factor_PLOT, MO2_b.factor_PLOT_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET B FACTOR TWO OUTLIERS OMITTED (VIEW THE PREVIOUS) ::::::::::::::::::::::::::::::
+RR_master_OM            <- RR_master %>% filter(!is.na(resp_umol_hr_biovolcalc)) %>%  filter(!is.na(Dry_Tissue_weight)) 
+RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
+RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
+# summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
+
+
+MO2_b.factor_PLOT_OM <- RR_master_OM %>% 
+                       dplyr::filter(!(log10_TDW > -1 & log10_VO2 < 0)) %>%  # outliers ommited (should be 2 data points)
+                       ggplot(aes(x=log10_TDW, y=log10_VO2)) +
+                          geom_point() +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          scale_x_continuous(name ="log10_BodyMass; TDW in g") +
+                          scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                          theme_classic() +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                          geom_smooth(method = lm, color = 'red') +
+                          ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
+
+MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>% 
+                       dplyr::filter(!(log10_TDW > -1 & log10_VO2 < 0)) %>%  # outliers ommited (should be 2 data points)
+                       ggplot(aes(x=log10_TDW, y=log10_VO2, color = pCO2)) +
+                          geom_point() +
+                          scale_color_manual(values=c("blue","orange")) +
+                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          scale_x_continuous(name ="log10_BodyMass; TDW in g") +
+                          scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                          theme_classic() +
+                          theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
+                          geom_smooth(method = lm, color = 'red') +
+                          ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") +
+                          facet_wrap(~pCO2)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_OM_biovolcalc.pdf"), width = 8, height = 8)
+print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
+dev.off()
+print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
+
+
+
+```
+
+## by SHELL AND INDIVIDUAL LENGTH (only for biovolume calculated using length^3)
+
+* why? - we want to compare resp data across time however we did not measure dry tissue nor biovolume in samll animals, thus 
+to calculate resp using the sample methods across time, we used length^3 correction for biovolume and will further use a bfactor for shell length in these data 
+
+* note: this is in contrast to resp values used for SFG, O:N, and any overlaid phys with ecretion and biodeposition becasue animals were large enough to have tissue dry weights and biovolumes 
 
 ```{r b factor SHELL AND INDIVIDUAL LENGTH, echo=TRUE, echo = FALSE,message = FALSE, warning = FALSE, results='hide'}
 
+# FOR SHELL ENGTH WE WILL USE THE 'resp_umol_hr_biovolcalc' data to employ all resp data files across time! 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH LENGTH AND MO2 ::::::::::::::::::::::::::::::
-RR_master_OM               <- RR_master %>% filter(!is.na(resp_umol_L_hr)) %>%  filter(!is.na(Length_um)) 
-RR_master_OM$log10_VO2     <- log10(as.numeric(RR_master_OM$resp_umol_L_hr)) # assign resp value
+RR_master_OM               <- RR_master %>% filter(!is.na(resp_umol_hr_biovolcalc)) %>%  filter(!is.na(Length_um)) 
+nrow(RR_master_OM) # 133 (as opposed to only 77 in the previous cunks ommitting TDW NAs!!!!!!!!!!)
+RR_master_OM$log10_VO2     <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
 RR_master_OM$log10_Length  <- log10(as.numeric(RR_master_OM$Length_um)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_Length)) # 1.8502 == b factor
 
@@ -405,15 +527,17 @@ meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
 #View(RR_formatted_F1s$TDW_um)
 RR_formatted_F1smaster <- RR_formatted_F1s %>% 
   
+  # TDW b factor - using 'resp_umol_hr'
   dplyr::mutate(resp_umol_hr_bFactorNormTDW.MEAN = 
-                  (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor
+                  (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
   dplyr::mutate(resp_umol_hr_bFactorNormLength.MEAN = 
-                    (resp_umol_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor
+                    (resp_umol_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
   
+  # Length b factor
   dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = 
-                  (resp_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor
+                  (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
   dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
-                    (resp_mg_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor
+                    (resp_umol_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
   
   dplyr::select(c(Date,
                   pH,
@@ -433,20 +557,23 @@ RR_formatted_F1smaster <- RR_formatted_F1s %>%
                   whole_Dry_weight,
                   volume,
                   Biovol_length3,
-                  actual_volume,
+                  calculated_volume, # as vessel volume - (biovol calc from length^3)
+                  measured_volume, # as vessel volume - meausred biovolume (NAs where note measured)
                   Lpc,
                   BLANK.mean_Lpc,
                   resp_blankStand,
-                  resp_mg_hr,
-                  resp_mg_hr_bFactorNormTDW.MEAN,
+                  resp_mg_hr, 
+                  resp_mg_hr_biovolcalc,
+                  resp_mg_hr_bFactorNormTDW.MEAN, 
                   resp_mg_hr_bFactorNormLength.MEAN,
                   resp_umol_hr,
+                  resp_umol_hr_biovolcalc,
                   resp_umol_hr_bFactorNormTDW.MEAN,
                   resp_umol_hr_bFactorNormLength.MEAN,
                   Age,
                   Gen,
                   Gen_lifestage))
-
+View(RR_formatted_F1smaster)
 write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
 ```
 
