@@ -677,3 +677,167 @@ angsd -out $OUTDIR/angsd_mafs_SAMtools.gz -bam $DATDIR/bam_filelist.txt -GL 1 -d
 
 ```
 
+### Let's look at the output file while the job runs...
+
+zcat angsd_mafs_SAMtools.gz.mafs.gz | head -20
+
+```
+chromo  position        major   minor   unknownEM       nInd
+Contig0 1       C       A       0.000001        38
+Contig0 2       A       C       0.000000        38
+Contig0 3       T       A       0.000000        38
+Contig0 4       G       A       0.000000        39
+Contig0 5       A       C       0.000000        39
+Contig0 6       G       A       0.000000        41
+Contig0 7       A       C       0.000000        41
+Contig0 8       A       G       0.076930        41
+Contig0 9       T       C       0.000000        42
+Contig0 10      A       C       0.000000        41
+Contig0 11      G       A       0.000000        45
+Contig0 12      C       A       0.000000        45
+Contig0 13      T       A       0.000000        45
+Contig0 14      G       T       0.000001        45
+Contig0 15      T       A       0.000000        45
+Contig0 16      A       G       0.000001        45
+Contig0 17      T       A       0.000000        45
+Contig0 18      G       A       0.261971        45
+Contig0 19      G       A       0.000000        45
+```
+
+### How to read this output?
+
+* we have 6 total columns as..
+
+	*  'chromo' == the chromosome number
+
+	* 'position' == bp number/position within each chromosome
+
+	* 'major' == major allele at the noted position
+
+	* 'minor' == minor allele at the noted position
+
+	* 'unknownEM' == the minor allele frequency 
+
+	* 'nInd' == the number of individuals for which there is coverage at each SNP
+
+* thus, at Contig0 18 we have a high frequency of th eminor allale 'A' exhibited by 45 individuals, but wait.... how is this possible if we only have 25 ini
+
+zcat angsd_mafs_SAMtools.gz.mafs.gz | tail -20
+
+```
+Contig52        675542  T       A       0.000003        21
+Contig52        675543  A       G       0.037912        21
+Contig52        675544  A       C       0.000003        21
+Contig52        675545  C       A       0.000003        22
+Contig52        675546  T       A       0.000005        22
+Contig52        675547  T       A       0.000005        19
+Contig52        675548  T       A       0.000005        20
+Contig52        675549  A       C       0.000003        14
+Contig52        675550  G       A       0.000004        15
+Contig52        675551  A       C       0.000004        13
+Contig52        675552  A       G       0.000006        12
+Contig52        675553  G       A       0.000003        9
+Contig52        675554  G       A       0.000005        7
+Contig52        675555  C       A       0.000006        8
+Contig52        675556  A       C       0.000006        8
+Contig52        675557  C       A       0.000006        8
+Contig52        675558  A       C       0.000006        8
+Contig52        675559  A       C       0.000006        8
+```
+
+* ...and why do later contigs show more relevant sample numbers? 
+
+
+* **NOTE:** are the regions with SNP positions of high or poor mapping quality? 
+are the regions with SNP position of excessive coverage? 
+You may need to supplement a csv(s) with categorical justification of regions with varied quality or putatively high-repeated regions (excessive coverage),
+filtering these cumulative SNP hits downstream in R
+
+
+# Appears we need to merge our paired-end reads!!
+
+*Should we merge BEFORE or AFTER mapping?*
+
+	* (1) merging after mapped
+	
+	* (2) merge before mapped
+	
+## Merge bams after mapping (hisat2 outputs)
+
+### <span style="color:red">IMPORTANT:<span> merge lanes here (.bam stage)
+
+
+* nav to target dir
+
+```
+<navigate the the hisat2 directory with you paired-end .bam outputs>
+```
+
+* example file 'adapter_trim.352_R2_001.fastq.gz.bam'
+
+* mkdir for merged bam files
+
+```
+mkdir merged_bam_files
+
+cd merged_bam_files
+```
+
+* enter interactive mode
+
+```
+interactive
+```
+
+* load samtools
+
+```
+module load bio/samtools/1.15.1
+```
+
+*  ID file lists the sample ID characters (i.e. adapter_trim.101) - sample .bam file adapter_trim.101_R1_001.fastq.gz.bam
+
+```
+ls *R1_001*.bam | awk -F '[_]' '{print $1"_"$2}' | sort | uniq > ID
+```
+
+* output looks like this: 
+
+```
+../adapter_trim.101
+../adapter_trim.103
+../adapter_trim.104
+../adapter_trim.153
+../adapter_trim.154
+../adapter_trim.155
+../adapter_trim.201
+../adapter_trim.203
+../adapter_trim.251
+../adapter_trim.253
+../adapter_trim.254
+../adapter_trim.3
+../adapter_trim.301
+../adapter_trim.303
+../adapter_trim.304
+../adapter_trim.351
+../adapter_trim.352
+../adapter_trim.353
+../adapter_trim.353dup
+../adapter_trim.4
+../adapter_trim.5
+../adapter_trim.53
+../adapter_trim.54
+../adapter_trim.55
+```
+
+- for loop using ```samtools``` to merge bam files together by sample ID ('ID' created above)
+- example of files to merge: adapter_trim.101_R1_001.fastq.gz.bam and adapter_trim.101_R2_001.fastq.gz.bam - where 'R1' and 'R2' are paired-end reads
+and the ID called adapter_trim.101 as $i below... (note: all .gz file names end with '001.fastq.gz.bam' no matter the lane)
+
+```
+for i in `cat ./ID`;
+	do samtools merge $i\.bam $i\_R1_001.fastq.gz.bam $i\_R2_001.fastq.gz.bam;
+	done
+```
+
+- when run in ```interactive``` mode, this loop takes up to ~1-2 hours
