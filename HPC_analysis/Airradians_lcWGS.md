@@ -588,6 +588,32 @@ done
 ## ANGSD: Genotype Likelihood
 -----------------------------------------------------------------
 
+ANGSD wikipedia-like site for all call  definitions and tutorial items here: http://www.popgen.dk/angsd/index.php/Main_Page
+
+## About some core ANGSD calls...
+
+```-GL``` =
+
+	*	1: SAMtools model 
+	
+	*	2: GATK model 
+
+
+```-doMaf``` =
+
+	*	1: Known major, and Known minor.
+		   Here both the major and minor allele is assumed to be known (inferred or given by user). 
+		   The allele frequency is the obtained using based on the genotype likelihoods. 
+		   The allele frequency estimator from genotype likelihoods are from this publication but using the EM algorithm and is briefly described here.
+
+	* 	2: Known major, Unknown minor.Here the major allele is assumed to be known (inferred or given by user) however the minor allele is not determined.
+		   Instead we sum over the 3 possible minor alleles weighted by their probabilities.
+
+	*	4: frequency based on genotype posterior probabilities.If genotype probabilities are used as input to ANGSD the allele frequency is estimated directly on these by summing over the probabitlies.
+
+	*	8: frequency based on base counts.This method does not rely on genotype likelihood or probabilities but instead infers the allele frequency directly on the base counts.
+
+
 ```-doMajorMinor``` =
 
 	*	1: Infer major and minor from GL
@@ -599,7 +625,17 @@ done
 	*	4: Use reference allele as major (requires -ref)
 
 	*	5: Use ancestral allele as major (requires -anc)
-	
+
+
+```-P``` =
+
+	*	number of threads that you are running your GL 
+
+```-ref``` =
+
+	*	if emplying -doMajorMinor 4, if forces the major allele according to the ference, you will need to define this by a fasta (___.fa) file 
+
+
 Before getting started.. 
 
 we first need a file containg the root to all bam files from home dir - below as 'bam_filelist.txt'
@@ -611,31 +647,33 @@ ls Airradians_lcWGS/F1/output/alignment/hisat2/*gz.bam > Airradians_lcWGS/F1/out
 Now we can run a test script for the angsd call for bam file input
 
 
-# shell script: <span style="color:green">**HISAT2.sh**<span>
+# shell script: <span style="color:green">**angsd_GL.sh**<span>
 
 ```
 #!/bin/bash
-#SBATCH --job-name="angsd GL"
-#SBATCH -t 072:00:00
+#SBATCH --job-name="angsd_GL"
+#SBATCH -t 500:00:00
 #SBATCH --mail-type=ALL
+#SBATCH --mem=64GB
 #SBATCH --mail-user=samuel.gurr@noaa.gov
-#SBATCH --output=./Airradians_lcWGS/F1/output/alignm ent/angsd/GL/"%x_out.%j"
-#SBATCH --error=./Airradians_lcWGS/F1/output/alignment/angsd/GL/"%x_err.%j"
+#SBATCH --output=./Airradians_lcWGS/F1/output/angsd/GL/"%x_out.%j"
+#SBATCH --error=./Airradians_lcWGS/F1/output/angsd/GL/"%x_err.%j"
 
 # before running..
 # mkdir(s) as Airradians_lcWGS/F1/output/alignment/angsd/GL
 
 BASEDIR=~/ # base directory
 DATDIR=~/Airradians_lcWGS/F1/output/alignment/hisat2 # directory of trimmed and filtered fastq.gz files
-OUTDIR=~/Airradians_lcWGS/F1/output/alignment/angsd/GL/
+OUTDIR=~/Airradians_lcWGS/F1/output/angsd/GL/
 
 # nav to hd
-$BASEDIR #nav back to home directory (allows job to be run from anywhere)
+BASEDIR #nav back to home directory (allows job to be run from anywhere)
 
 # load modules, requires hisat2 and samtools
 module load bio/angsd/0.933
 
-# run angsd GL 
-angsd -out $OUTDIR/angsd_GL_ -doMaf 2 -bam $DATDIR/bam.filelist.txt -doMajorMinor 1 -GL 1 -P 2
+# run angsd GL
+angsd -out $OUTDIR/angsd_mafs_SAMtools.gz -bam $DATDIR/bam_filelist.txt -GL 1 -doMaf 2 -doMajorMinor 1 -P 5
 
 ```
+
