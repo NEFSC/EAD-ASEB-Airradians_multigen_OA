@@ -556,9 +556,10 @@ RR_formatted_F1smaster <- RR_formatted_F1s %>%
                   Dry_Tissue_weight,
                   whole_Dry_weight,
                   volume,
+                  Biovolume_g_in_sw,
+                  measured_volume, # as vessel volume - meausred biovolume (NAs where note measured)
                   Biovol_length3,
                   calculated_volume, # as vessel volume - (biovol calc from length^3)
-                  measured_volume, # as vessel volume - meausred biovolume (NAs where note measured)
                   Lpc,
                   BLANK.mean_Lpc,
                   resp_blankStand,
