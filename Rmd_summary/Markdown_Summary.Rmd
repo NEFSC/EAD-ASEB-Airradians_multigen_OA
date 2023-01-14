@@ -11,12 +11,14 @@ output: html_document
 
 ----
 
-| Headers | Subsections | code chunks |
+| Headers | Subsections | Chunks & Figures |
 |----|----|----|
-|<a href="#Multigenerational Bay Scallop OA Exposure">Introduction</a><br>| <add here>   | <add here>            |
-|<a href="#Exposure to treatments">Treatments</a><br>                     | <add here>   | [Figure 1](#Fig_test) ; Figure 2|
-| Metabolic Scaling                                                       | <add here>   | <add here>            |
+|<a href="#Multigenerational Bay Scallop OA Exposure">Introduction</a><br>| <a href="#Big Picture Overview">Overview</a><br>  | [Figure 1](#Fig_1) |
+|<a href="#F1: First Generation">First Generation</a><br>                                   | <a href="#F1 Larval development">Larval development</a><br> <a href="#Grow Out (F1s)">Grow out</a><br> <a href="#F1 Physiology">Physiology</a><br>  <a href="#Gene expression (F1s)">Gene expression</a><br>  <a href="#SNPs & Genotype liklihoods">SNPs & Genotype liklihoods (F1s)</a><br> | <add here>       | 
+|<a href="#F2: First Generation">Second Generation</a><br>              | <a href="#Larval development (F2s)">Larval development</a><br> <a href="#Grow Out (F2s)">Grow out</a><br> <a href="#Physiology (F2s)">Physiology</a><br>  <a href="#Gene expression (F2s)">Gene expression</a><br>  <a href="#SNPs & Genotype liklihoods">SNPs & Genotype liklihoods (F2s)</a><br>| <add here>       | 
+|<a href="#Multigenerational Bay Scallop OA Exposure">Introduction</a><br>| <add here>   | <add here>       | 
 
+ 
 
 # Multigenerational Bay Scallop OA Exposure {#test}
 
@@ -24,55 +26,88 @@ output: html_document
 
 We successfully created the F1 bay scallop cohort in late July 2021. These bay scallops were raised to maturity and spawned in August 2022 to create the F2 generation (Figure 1). Here we present a brief update of the data we have collected over the past year and where we are in our overall experimental plans. 
 
-We have had many setbacks this year (Pseudomonas, pump failures, food issues, Vibrio), but after three spawnings, we were able to produce our F2 bay scallop generation. We collected a suite of physiology data during the F1 growout and Sam has made fantastic progress with library preparation for low coverage Whole Genome Sequencing and has sent his first test lane to be sequenced. 
+We have had many setbacks tin 2022 (Pseudomonas, pump failures, food issues, Vibrio), but after three spawnings, we were able to produce our F2 bay scallop generation. We collected a suite of physiology data during the F1 growout and Sam has made fantastic progress with library preparation for low coverage Whole Genome Sequencing and has sent his first test lane to be sequenced. 
 
 
 
 Live links to summaries of each life state / generation within the document:
-Big Picture Overview
-Figure 1: Experimental design.
-F1 Larval Experiments
-Figure 2: Larval pictures at age 2 days
-Figure 3: F1 Larval Survival.
-Figure 4.1: F1 larval growth
-Table 1: Details of the water chemistry for each OA treatment. Means are in bold and standard error in parenthesis.
-F1 Grow Out
-Figure 5: Experimental flow through set up
-Figure 6: Changes in temperature overtime for the F1 grow out.
-Figure 7: pCO2 over time during F1 growout
-Table 2: Average Water Chemistry during the F2 grow out
-Physiology
-Figure 8: F1 shell length spat - adult (high OA not included)
-Table 3: Log of physiology time points for F1 bay scallop grow out.
-Figure 9: Respiration rates (whole dry weight corrected).
-Figure 11: Biodeposition metrics for F1s. Updated 20221024.
-Figure 12: Gonad index over time.
-F2 Larval Exposures
-Table 4: Average Water Chemistry during the F2 larval experiment
-Table 5: Endpoint data summary for the F2 larval exposure to low and moderate OA
-Figure A: Larval survival during static exposures.
-Figure B: F2 Larvae mean shell length over time
-Metamorphosis
-Figure C: Percent successful metamorphosis (F2)
-F2 Grow Out
-Figure D: pH over time during the change in pH from 8 to 7 in the low OA → high OA cohort/treatment.
-Figure E: pCO2 over time during the change in pH from 8 to 7 in the low OA → high OA cohort/treatment.
-Figure D: Mean shell growth rate (mm / month)
-Figure F: F2 juvenile growth: Mean shell length over time.
-Table X: Log of physiology time points for F2 bay scallop growout.
-Chemistry
-Figure C1: Changes in water chemistry over time during F1 growout
-Figure C2: Changes in water chemistry over time during F1 growout
 
-Big Picture Overview
+### Big Picture Overview
+
+* Figure 1: Experimental design.
+
+**F1 Larval development**
+
+* Figure 2: Larval pictures at age 2 days
+* Figure 3: F1 Larval Survival.
+* Figure 4.1: F1 larval growth
+* Table 1: Details of the water chemistry for each OA treatment. Means are in bold and standard error in parenthesis.
+
+**F1 Grow Out**
+
+* Figure 5: Experimental flow through set up
+* Figure 6: Changes in temperature overtime for the F1 grow out.
+* Figure 7: pCO2 over time during F1 growout
+* Table 2: Average Water Chemistry during the F2 grow out
+
+**F1 Physiology**
+
+* Figure 8: F1 shell length spat - adult (high OA not included)
+* Table 3: Log of physiology time points for F1 bay scallop grow out.
+* Figure 9: Respiration rates (whole dry weight corrected).
+* Figure 11: Biodeposition metrics for F1s. Updated 20221024.
+* Figure 12: Gonad index over time.
+
+**F2 Larval development**
+
+* Table 4: Average Water Chemistry during the F2 larval experiment
+* Table 5: Endpoint data summary for the F2 larval exposure to low and moderate OA
+* Figure A: Larval survival during static exposures.
+* Figure B: F2 Larvae mean shell length over time
+* Metamorphosis
+* Figure C: Percent successful metamorphosis (F2)
+
+**F2 Grow Out**
+
+* Figure D: pH over time during the change in pH from 8 to 7 in the low OA → high OA cohort/treatment.
+* Figure E: pCO2 over time during the change in pH from 8 to 7 in the low OA → high OA cohort/treatment.
+* Figure D: Mean shell growth rate (mm / month)
+* Figure F: F2 juvenile growth: Mean shell length over time.
+* Table X: Log of physiology time points for F2 bay scallop growout.
+
+**Chemistry**
+
+* Figure C1: Changes in water chemistry over time during F1 growout
+* Figure C2: Changes in water chemistry over time during F1 growout
 
 
-Figure 1: Experimental design. 
-This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure. 
 
 
 
-F1 Larval Experiments
+
+## Big Picture Overview
+
+----
+
+
+<a id="Fig_1"></a>
+```{r pressure, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/Overivew.jpg")
+```
+
+**Figure 1: Experimental design.** 
+
+*This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure.* 
+
+
+
+## F1: First Generation
+
+<about here>
+
+### F1 Larval development
+
+----
 
 In late July 2021 we spawned bay scallops produced from Massachusetts broodstock (F0). We had initially hoped for two populations, but the Connecticut populations are now scarce and what few broodstock we did find, did not survive transport to the lab and the conditioning period. 
 
@@ -132,7 +167,7 @@ Low OA
 
 
 
-F1 Grow Out
+### Grow Out (F1s)
 
 At age 18 days, bay scallops were moved to the flow through system on downwellers with 200 µm mesh (Fig. 5). OA conditions were maintained in the flow through system by bubbling CO2 into columns prior to entering the exposure tanks and directly into the exposure tanks. We kept initial stocking densities high to assure we had enough for future spawning, but culled regularly to keep biomass from outgrowing the downweller. 
 
@@ -179,7 +214,8 @@ Low OA
 
 
 
-Physiology 
+### F1 Physiology 
+
 Survival counts and shell length measurement were completed monthly and large batches of bay scallops were opportunistically frozen for dry weight measurements as cullings were required to prevent overcrowding. Respiration Rate and Clearance Rate were measured approximately monthly during the early spat stages. When the bay scallops were large enough to move into the big respiration chambers (out of the microrespiration system, 1.7mL), Excretion Rates were also measured. Once bay scallops were large enough (> 20mm) the biodeposition method was used to measure feeding metrics and Clearance Rate.  Physiological parameters were not measured during the overwintering period when metabolic activity is expected to be low, but resumed during the temperature ramp up in the late winter / early spring. 
 
 
@@ -290,11 +326,26 @@ F2 Dry shell (top) and dry tissue weight (bottom) as mean SE measured 72 hours a
 
 Figure 13: Percent muscle over time.  
 
+### Gene expression (F1s)
 
-F2 Larval Exposures
+<add here>
+
+
+### SNPs & Genotype liklihoods (F1s)
+
+<add here>
+
+## F2: First Generation
+
+---
+
+### Larval development (F2s)
+
+
 Several spawning attempts were made. Gonad development was evident in April and the first successful spawn was conducted. While spawning and fertilization was successful in April, after ~5 days of the full factorial experiment, it was evident that the larvae were crashing and after 10 days, 100% mortality was observed. Cause unknown. A second successful spawn was conducted in early July 2022, but at the water change and check at age 2 days old, heavy mortality was observed. After investigation, it was concluded that Vibrio was introduced through the food and the problem was fixed. A third and final spawn was conducted in late August 2022 with success (details below), but the egg output was low and we were unable to initiate the full factorial exposure and instead focused on just the creation of the F2 cohorts for each respective OA treatment (low and moderate - no high OA broodstock). Based on survival rates to date, we believe this was a wise decision. Fertilization rate was high (to first polar body), but progression to the multicellular stage after 4 hours was low (~20%). Food limitation (serious oyster population growing in the pipes from the harbor to the building) and several accidental spawnings due to pump failures while ripe scallops were being held could be part of the cause for a low output during this spawn. 
 
- Spawning and fertilization
+### Spawning and fertilization
+
 Spawning was induced using thermal adjustments up to 25°C. When an individual was observed to be spawning, it was removed from the spawning table and placed in a 1-L beaker with filtered seawater at 25°C to continue releasing gametes. To avoid self fertilization, scallops were switched to new beakers frequently to isolate sperm and egg from each individual. When eggs were observed to be released, the animal was immediately switched to a new cup and eggs were caught on a 25µm sieve to remove any sperm that remained in the beaker. Prior to fertilization, sperm was rinsed through a 20µm sieve to remove any eggs that may have remained in the cup. Fertilizations were completed in batches to assure gametes were fertilized within approximately 1 hour of release and for each batch fertilization, each individual used contributed only sperm or only eggs to avoid self fertilization. Embryos were checked frequently to assure fertilization was occurring and gametes were not pooled until > 85% of the embryos showed clear cell division. Spawnings for the two cohorts (low and moderate OA) were conducted simultaneously and the number of males and females contributing to each cohort were kept constant. Eggs were used from a total of 11 individuals and sperm from a total of 11 individuals, of these 4 individuals supplied both sperm and egg, but never to the same fertilization set. 
 
 Exposure to treatments
@@ -358,7 +409,7 @@ Successful metamorphosis was quantified at age 21 days by counting the number of
 
 Figure C: Percent successful metamorphosis (F2)
 
-F2 Grow Out
+### Grow Out (F2s)
 
 F2 bay scallops were moved to the basement flow through system at age 23 days post fertilization and reared in downwelllers on 200µm mesh on drumfiltered seawater (30µm) at a temperature of ~22°C and salinity of 27-29. Spat were evenly distributed across 12 downwellers (n=4 for pH = 7.5 and n = 8 for pH =8). The first real counts were conducted 2 weeks after moving to the basement (9/21/22; age 36 dpf) and all downwellers were standardized to ~100 individuals per downweller. In addition to food coming in with the seawater from the harbor, diet was also supplemented with cultured phytoplankton (Chaet, T. iso, and PLY). 
 
@@ -453,23 +504,33 @@ big closed recirculating
 
 
 
+### Physiology (F2s)
 
 
 
+<add here>
 
 
 
+### Gene expression (F1s)
 
 
 
+<add here>
 
 
 
+### SNPs & Genotype liklihoods (F1s)
 
 
 
+<add here>
 
-Chemistry 
+
+
+## Chemistry 
+---
+
 Discrete chemistry was measured daily for dissolved oxygen (mg L-1), salinity, and temperature (°C) in each treatment tank (YSI Model 556, Yellowspring, OH USA). Seawater samples were collected weekly in dark polypropylene bottles (500 mL) from each tank to measure pH, dissolved organic carbon (DIC, μmol kg-1), and total alkalinity (TA, μmol kg-1) via open-cell titration (SOP 3b; Dickson et al., 2007). DIC was measured on an Apollo SciTech DIC analyzer (Apollo SciTech, LLC, Newark, DE) which had a precision of 0.5% of assigned values in an interlaboratory comparison (Bockmon & Dickson, 2015).  TA was measured using certified HCl titrant (∼0.1 mol kg−1, ∼0.6 mol kg−1 NaCl; Dickson Lab, Batches 191 and 157) on a Metrohm alkalinity titrator (Mettler Toledo add here) with 0.17% mean error relative to certified reference materials (Dickson Lab CO2 CRM Batch 191 and 157). A UV-VIS spectrophotometer (Cary100, Agilent, Santa Clara, CA, USA) was used to determine pH colorimetrically at 20oC with m-cresol purple indicator dye (Sigma-Aldrich, St. Louise, MS, Dickson & Goyet, 1994), with an error of ±0.0014 (seawater scale). Seawater DIC and pH were used in CO2SYS (Pierrot et al., 2006) for the calculation of partial pressure pCO2 (μatm), carbon ion constituents (bicarbonate HCO3- and carbonate CO3-2, μmol kg-1), and aragonite and calcite saturation state (Ωar and Ωca, respectively) using the following constants: K1, K2 from Lueker et al. (2000); potassium sulfate from Dickson (1990); and boron from Lee et al. (2010).
 
 
