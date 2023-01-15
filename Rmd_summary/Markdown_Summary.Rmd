@@ -6,7 +6,25 @@ output: html_document
 ---
 
   * Last Updated: January, 2023
-  
+
+```{r load libraries, echo=FALSE, include=FALSE}
+# LOAD LIBRARIES 
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(car)
+library(nlme)
+library(Rmisc)
+library(lmerTest)
+library(lme4)
+library(pander)
+library(performance)
+library(Rmisc)
+library(reshape2)
+library(ggpubr)
+```
 # Table of Contents
 
 ----
@@ -14,7 +32,8 @@ output: html_document
 | Headers | Subsections | Chunks & Figures |
 |----|----|----|
 |<a href="#Multigenerational Bay Scallop OA Exposure">Introduction</a><br>| <a href="#Big Picture Overview">Overview</a><br>  | [Figure 1](#Fig_1) |
-|<a href="#F1: First Generation">First Generation</a><br>                                   | <a href="#F1 Larval development">Larval development</a><br> <a href="#Grow Out (F1s)">Grow out</a><br> <a href="#F1 Physiology">Physiology</a><br>  <a href="#Gene expression (F1s)">Gene expression</a><br>  <a href="#SNPs & Genotype liklihoods">SNPs & Genotype liklihoods (F1s)</a><br> | <add here>       | 
+|<a href="#F0 Broodstock">F0 Broodstock</a><br>| <a href="#About Broodstock">About broodstock</a><br> <a href="#Spawning and fertilization">Spawning and fertilization</a><br>   | <add here>       | 
+|<a href="#F1: First Generation">First Generation</a><br>               | <a href="#F1 Larval development">Larval development</a><br> <a href="#Grow Out (F1s)">Grow out</a><br> <a href="#F1 Physiology">Physiology</a><br>  <a href="#Gene expression (F1s)">Gene expression</a><br>  <a href="#SNPs & Genotype liklihoods">SNPs & Genotype liklihoods (F1s)</a><br> | [Image: larvae treatments](#Img_1)    [Figure 2: Larvae survival](#Fig_2) | 
 |<a href="#F2: First Generation">Second Generation</a><br>              | <a href="#Larval development (F2s)">Larval development</a><br> <a href="#Grow Out (F2s)">Grow out</a><br> <a href="#Physiology (F2s)">Physiology</a><br>  <a href="#Gene expression (F2s)">Gene expression</a><br>  <a href="#SNPs & Genotype liklihoods">SNPs & Genotype liklihoods (F2s)</a><br>| <add here>       | 
 |<a href="#Multigenerational Bay Scallop OA Exposure">Introduction</a><br>| <add here>   | <add here>       | 
 
@@ -89,49 +108,76 @@ Live links to summaries of each life state / generation within the document:
 
 ----
 
-
 <a id="Fig_1"></a>
-```{r pressure, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+```{r Figure 1, echo=FALSE, fig.cap="**Figure 1: Experimental design.** This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure.", out.width = '100%'}
 knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/Overivew.jpg")
 ```
 
-**Figure 1: Experimental design.** 
 
-*This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure.* 
+## F0 Broodstock and spawning
+
+---
+
+#### About Broodstock
+
+  In late July 2021 we spawned bay scallops produced from Massachusetts broodstock (F0). We had initially hoped for two populations, but the Connecticut population are now scarce and what few broodstock we did find, did not survive transport to the lab and the conditioning period. 
 
 
+#### Spawning and fertilization
+
+  Spawning was induced using thermal adjustments up to 25°C. When an individual was observed to be spawning, it was removed from the spawning table and placed in a 1-L beaker with filtered seawater at 25°C to continue releasing gametes. To avoid self fertilization, scallops were switched to new beakers frequently to isolate sperm and egg from each individual. When eggs were observed to be released, the animal was immediately switched to a new cup and eggs were caught on a 25µm sieve to remove any sperm that remained in the beaker. Prior to fertilization, sperm was rinsed through a 20µm sieve to remove any eggs that may have remained in the cup. Fertilizations were completed in batches to assure gametes were fertilized within approximately 1 hour of release and for each batch fertilization, each individual used contributed only sperm or only eggs to avoid self fertilization. Embryos were checked frequently to assure fertilization was occurring and gametes were not pooled until > 85% of the embryos showed clear cell division. Eggs were used from a total of 13 individuals and sperm from a total of 16 individuals, of these 6 individuals supplied both sperm and egg, but never to the same fertilization set. 
 
 ## F1: First Generation
 
-<about here>
+---
 
 ### F1 Larval development
 
-----
-
-In late July 2021 we spawned bay scallops produced from Massachusetts broodstock (F0). We had initially hoped for two populations, but the Connecticut populations are now scarce and what few broodstock we did find, did not survive transport to the lab and the conditioning period. 
-
- Spawning and fertilization
-Spawning was induced using thermal adjustments up to 25°C. When an individual was observed to be spawning, it was removed from the spawning table and placed in a 1-L beaker with filtered seawater at 25°C to continue releasing gametes. To avoid self fertilization, scallops were switched to new beakers frequently to isolate sperm and egg from each individual. When eggs were observed to be released, the animal was immediately switched to a new cup and eggs were caught on a 25µm sieve to remove any sperm that remained in the beaker. Prior to fertilization, sperm was rinsed through a 20µm sieve to remove any eggs that may have remained in the cup. Fertilizations were completed in batches to assure gametes were fertilized within approximately 1 hour of release and for each batch fertilization, each individual used contributed only sperm or only eggs to avoid self fertilization. Embryos were checked frequently to assure fertilization was occurring and gametes were not pooled until > 85% of the embryos showed clear cell division. Eggs were used from a total of 13 individuals and sperm from a total of 16 individuals, of these 6 individuals supplied both sperm and egg, but never to the same fertilization set. 
 
 ## Exposure to treatments
 
-<a id="Fig_test"></a>
-```{r}
-plot(cars)
+  After approximately 4 hours post fertilization, embryos from all batches were pooled and divided among 3 OA treatments (~400, 800, and 1600 µatm) with 5 replicates per treatment. Exposures were conducted in 10L filtered seawater at 27 psu and 23°C. Details of the chemistry for each OA treatment are detailed in Table 1. 
+
+
+<a id="Img_1"></a>
+```{r Image 1, echo=FALSE, fig.cap="**Figure 2: Larval pictures at age 2 days.** Larval pictures at age 2 days post fertilization showing distinct differences in shell development to D stage.", out.width = '100%'}
+knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/F1_Larvae.jpg")
 ```
 
-	After approximately 4 hours post fertilization, embryos from all batches were pooled and divided among 3 OA treatments (~400, 800, and 1600 µatm) with 5 replicates per treatment. Exposures were conducted in 10L filtered seawater at 27 psu and 23°C. Details of the chemistry for each OA treatment are detailed in Table 1. 
 
 
+<a id="Fig_2"></a>
+```{r Survival plot Mean SE, echo=FALSE, fig.cap="**Figure 2: F1 Larval Survival.** Survival over time. Error bars represent standard error. Settlement was evident by age 10 days, therefore survival counts are likely to be underestimations as a result of very sticky scallops making it difficult to suspend. (last updated 9/20/22)", out.width = '100%'}
 
-Figure 2: Larval pictures at age 2 days
- Larval pictures at age 2 days post fertilization showing distinct differences in shell development to D stage. 
+# read csv file 
+F1_survival <- read.csv(file= "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Survival/F1/cumulative_raw/F1_survival_raw.csv", header = TRUE)
+#First make calculations for means and standard error
+LarvaeSurvival_Summ <- summarySE(F1_survival, 
+                                 measurevar="Survival", 
+                                 groupvars=c("Day", "Treatment")) %>% 
+    dplyr::mutate(pCO2 = case_when(
+      Treatment == "Low"  ~ "500 μatm", 
+      Treatment == "Moderate" ~ "800 μatm", 
+      Treatment == "High" ~ "1200 μatm")) # cahmber volumes on different dates with different instruments 
+
+LarvaeSurvival_Summ$pCO2 <- factor(LarvaeSurvival_Summ$pCO2, c("500 μatm","800 μatm","1200 μatm"))
+
+## Use geom_line and geom_point to plot over time
+LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, aes(x=Day, y=Survival, color=pCO2)) +
+  geom_line( stat = "identity", size=1.0)+
+  geom_point()+ 
+  scale_color_manual(values=c("darkorange2","forestgreen", "purple"))+
+  geom_errorbar(aes(ymin=Survival-se, ymax=Survival+se), width=.2,
+                position=position_dodge(.1))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  scale_x_continuous(name ="Age (days)") +
+  scale_y_continuous(name ="Survival (%)")+
+  theme(text = element_text(size=15))
+print(LarvaeSurvival_Plot)
+
+```
 
 
-
-Figure 3: F1 Larval Survival.
-Survival over time. Error bars represent standard error. Settlement was evident by age 10 days, therefore survival counts are likely to be underestimations as a result of very sticky scallops making it difficult to suspend. (last updated 9/20/22)
 
 
 

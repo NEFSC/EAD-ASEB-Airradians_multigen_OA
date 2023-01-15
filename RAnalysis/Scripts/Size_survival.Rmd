@@ -37,6 +37,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA
 F1_length        <- read.csv(file="Data/Physiology/Length/F1/cumulative_raw/F1_lengths_raw.csv", header = TRUE) 
+F1_survival      <- read.csv(file= "Data/Physiology/Survival/F1/cumulative_raw/F1_survival_raw.csv", header = TRUE)
 F1_dryweights    <- read.csv(file="Data/Physiology/Dry_weights/F1/cumulative_raw/F1_dry_weights_raw.csv", header = TRUE) %>% 
                               dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm")) %>% # create pCO2 column
                               dplyr::mutate(Shell_length_mm = as.numeric(Shell_length_mm)) # call shell lenght as numeric 
@@ -117,7 +118,11 @@ F1_length_MEANS_by_tank <- (summarySE(F1_length, measurevar="Length_um", groupva
 summarySE( (F1_length_MEANS_by_tank   %>% dplyr::group_by(Age_DPF,pH)),  measurevar="Length_um", groupvars=c("Age_DPF","pH")) # 'mean of means' for all tanks, noe, many NAs for st error due to N=1 tank for most of the 'high oa' treatment 
 
 F1_length_MEANS <- F1_length_MEANS %>% 
-  dplyr::mutate(pCO2 = case_when(pH == 8 ~ "500 μatm",  pH == 7.5 ~ "800 μatm", pH == 7 ~ "1200 uatm"))
+  dplyr::mutate(pCO2 = case_when(
+    pH == 8 ~ "500 μatm",  
+    pH == 7.5 ~ "800 μatm", 
+    pH == 7 ~ "1200 μatm"))
+F1_length_MEANS$pCO2 <- factor(F1_length_MEANS$pCO2, c("500 μatm","800 μatm","1200 μatm"))
 
 ## Use geom_line and geom_point to plot over time
 F1_length_lineplot_LARVAE <- F1_length_MEANS %>% 
@@ -126,7 +131,7 @@ F1_length_lineplot_LARVAE <- F1_length_MEANS %>%
                                       ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
                                         geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
                                         geom_point()+ 
-                                        scale_color_manual(values=c("purple","forestgreen", "darkorange2"))+
+                                        scale_color_manual(values=c("forestgreen", "darkorange2","purple"))+
                                         geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000), ymax=(Length_um/1000)+(se/1000)), width=.2,
                                                       position=position_dodge(.1))+
                                         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
@@ -168,7 +173,19 @@ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/
 F1_length_lineplot_SPAT.ADULT
 dev.off()
 
-
+LarvaeSurvival_Summ$pCO2 <- factor(LarvaeSurvival_Summ$pCO2, c("500 μatm","800 μatm","1200 μatm"))
+## Use geom_line and geom_point to plot over time
+LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, aes(x=Day, y=Survival, color=pCO2)) +
+  geom_line( stat = "identity", size=1.0)+
+  geom_point()+ 
+  scale_color_manual(values=c("darkorange2","forestgreen", "purple"))+
+  geom_errorbar(aes(ymin=Survival-se, ymax=Survival+se), width=.2,
+                position=position_dodge(.1))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  scale_x_continuous(name ="Age (days)") +
+  scale_y_continuous(name ="Survival (%)")+
+  theme(text = element_text(size=15))
+LarvaeSurvival_Plot
 
 ```
 
@@ -640,7 +657,7 @@ dev.off()
 
 ```{r, Survival plot Mean SE}
 #First make calculations for means and standard error
-LarvaeSurvival_Summ <- summarySE(survival_larvae, measurevar="Survival", groupvars=c("Day", "Treatment")) %>% 
+LarvaeSurvival_Summ <- summarySE(F1_survival, measurevar="Survival", groupvars=c("Day", "Treatment")) %>% 
     dplyr::mutate(pCO2 = case_when(Treatment == "Low"  ~ "500 μatm", Treatment == "Moderate" ~ "800 μatm", Treatment == "High" ~ "1200 μatm")) # cahmber volumes on different dates with different instruments 
 
 
