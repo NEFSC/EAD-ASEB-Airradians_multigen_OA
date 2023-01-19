@@ -584,13 +584,17 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 ```{r, raw umol L hr,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
- 
-# TISSUE ---------------------------------------------------------------------------- #
-# PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
+
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_formatted_F1s <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
 
 F1s.BOXPLOT <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr, 
+             y = resp_umol_hr_biovolcalc, #resp_umol_hr, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -619,7 +623,7 @@ F1s.BOXPLOT <- RR_formatted_F1s %>%
 
 F1s.BOXPLOT_facetted <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr, 
+             y = resp_umol_hr_biovolcalc, #resp_umol_hr, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -661,9 +665,9 @@ ggarrange(F1s.BOXPLOT_facetted,F1s.BOXPLOT, nrow = 2, ncol = 1)
 # TISSUE ---------------------------------------------------------------------------- #
 # PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
 
-F1s.BOXPLOT_TDW <- RR_formatted_F1s %>% 
+F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_mg_TDW_hr, 
+             y = resp_umol_hr_bFactorNormTDW.MEAN, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -675,7 +679,7 @@ F1s.BOXPLOT_TDW <- RR_formatted_F1s %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          #ylim(0, 0.2) +
-         ggtitle("Resp / TDW") +
+         ggtitle("Resp * [ (meanTDW/TDW_meas)^0.822 ]") +
          theme(legend.position="none",
                axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),
@@ -689,9 +693,9 @@ F1s.BOXPLOT_TDW <- RR_formatted_F1s %>%
                       position = position_dodge(preserve = "single")) #+
          #facet_wrap(~Gen_lifestage, scales = "free")
 
-F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>% 
+F1s.BOXPLOT_TDW_bfactor_facetted <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_mg_TDW_hr, 
+             y = resp_umol_hr_bFactorNormTDW.MEAN, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -703,7 +707,7 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>%
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
          #ylim(0, 0.2) +
-         ggtitle("Resp / TDW") +
+         ggtitle("Resp * [ (meanTDW/TDW_meas)^0.822 ]") +
          theme(legend.position="none",
                axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),
@@ -717,86 +721,12 @@ F1s.BOXPLOT_TDW_facetted <- RR_formatted_F1s %>%
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Gen_lifestage, scales = "free")
 
-print(ggarrange(F1s.BOXPLOT_TDW_facetted,F1s.BOXPLOT_TDW, nrow = 2, ncol = 1)) # print the model diagnostics 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_raw.pdf"), width = 18, height = 8)
-print(ggarrange(F1s.BOXPLOT_TDW_facetted,F1s.BOXPLOT_TDW, nrow = 2, ncol = 1)) # print the model diagnostics 
-dev.off()
+
  
-
-# B factor normalized - TISSUE DRY WEIGHT
-
-bTDW = 0.822 # review the outlier-omitted b factor plot in previous chunk
-
-RR_formatted_F1s$Dry_Tissue_weight <- as.numeric(RR_formatted_F1s$Dry_Tissue_weight)
-meanTDW   <- mean((RR_formatted_F1s %>% dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
-medianTDW <- median((RR_formatted_F1s %>% dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.1436 g
-
-#View(RR_formatted_F1s$TDW_um)
-RR_formatted_F1s.TDW <- RR_formatted_F1s %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormTDW.MEAN = (resp_umol_L_hr)*((meanTDW/Dry_Tissue_weight)^bTDW) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormTDW.MEDIAN = (resp_umol_L_hr)*((medianTDW/Dry_Tissue_weight)^bTDW) ) # RStd = (Lexp/Lstd)1.77 * RRexp
-
-F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s.TDW %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormTDW.MEAN, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         ggtitle("Resp * [ (meanTDW / TDW_meas)^0.822 ]") +
-         theme(legend.position="none",
-               axis.title.y=element_text(size=7),
-               axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) # +
-         #facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-
-F1s.BOXPLOT_TDW_bfactor_facetted <- RR_formatted_F1s.TDW %>% 
-   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormTDW.MEAN, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         ggtitle("Resp * [ (meanTDW / TDW_meas)^0.822 ]") +
-         theme(legend.position="none",
-               axis.title.y=element_text(size=7),
-               axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-
-print(ggarrange(F1s.BOXPLOT_TDW_bfactor_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
 
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_TDW_biovol.pdf"), width = 8, height = 8)
-print(ggarrange(F1s.BOXPLOT_TDW_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
+print(ggarrange(F1s.BOXPLOT_TDW_bfactor_facetted, F1s.BOXPLOT_TDW_bfactor, nrow = 2, ncol = 1)) # print the model diagnostics 
 dev.off()
 
 
@@ -808,90 +738,11 @@ dev.off()
 ```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
  
-# TISSUE ---------------------------------------------------------------------------- #
-# PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
+# LENGTH  ---------------------------------------------------------------------------- #
 
-F1s.BOXPLOT_Length_facetted <- RR_formatted_F1s %>% 
+F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_mm_Length_hr, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         #ylim(0, 0.2) +
-         ggtitle("Resp / Length (raw)") +
-         theme(legend.position="none",
-               axis.title.y=element_text(size=7),
-               axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free")
-#F1s.BOXPLOT_Length_facetted # not that we do not have Length for 9/14 and 9/30 data 
-
- F1s.BOXPLOT_Length_nofacet <- RR_formatted_F1s %>% 
-                        ggplot(aes(x = factor(Date), 
-                                   y = resp_umol_L_mm_Length_hr, 
-                                   fill = pCO2)) +
-                               geom_boxplot(alpha = 0.5, # color hue
-                                   width=0.6, # boxplot width
-                                   outlier.size=0, # make outliers small
-                                   position = position_dodge(preserve = "single")) + 
-                               geom_point(pch = 19, 
-                                          position = position_jitterdodge(0.01), 
-                                          size=1) +
-                               scale_fill_manual(values=c("forestgreen","orange")) +
-                               theme_classic() + 
-                               ggtitle("Resp / Length (raw)") +
-                               theme(legend.position="none",
-                                   axis.title.y=element_text(size=7),
-                                   axis.title.x=element_text(size=7),
-                                   axis.text.x=element_text(size=7)) +
-                               #ylim(0, 0.2) +
-                               stat_summary(fun.y=mean, 
-                                            geom = "errorbar", 
-                                            aes(ymax = ..y.., ymin = ..y..), 
-                                            width = 0.6, 
-                                            size=0.4, 
-                                            linetype = "dashed", 
-                                            position = position_dodge(preserve = "single")) 
-# save
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_raw.pdf"), width = 18, height = 8)
-print(ggarrange(F1s.BOXPLOT_Length_facetted,F1s.BOXPLOT_Length_nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
-dev.off()
- 
-
-# print for Rmarkdown
-print(ggarrange(F1s.BOXPLOT_Length_facetted,F1s.BOXPLOT_Length_nofacet, nrow = 2, ncol = 1)) # print the model diagnostics 
-
-
-# B factor normalized - SHELL LENGTH
-
-bLength = 2.18 # review the outlier-omitted b factor plot in previous chunk
-
-meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
-medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
-
-#View(RR_formatted_F1s$Length_um)
-RR_formatted_F1s.length <- RR_formatted_F1s %>% 
-  dplyr::mutate(Length_mm = Length_um/1000) %>% 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEAN = (resp_umol_L_hr)*((meanLength/Length_mm)^bLength) ) %>% # RStd = (Lexp/Lstd)1.77 * RRexp 
-  dplyr::mutate(resp_umol_L_hr_bFactorNormLength.MEDIAN = (resp_umol_L_hr)*((medianLength/Length_mm)^bLength) ) # RStd = (Lexp/Lstd)1.77 * RRexp
-
-F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormLength.MEAN, 
+             y = resp_umol_hr_bFactorNormLength.MEAN, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -917,9 +768,9 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s.length %>%
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
 
-F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s.length %>% 
+F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s %>% 
   ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormLength.MEAN, 
+             y = resp_umol_hr_bFactorNormLength.MEAN, 
              fill = pCO2)) +
          geom_boxplot(alpha = 0.5, # color hue
              width=0.6, # boxplot width
@@ -946,75 +797,9 @@ F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s.length %>%
 
 # save
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_bfactorMEAN.pdf"), width = 18, height = 8)
-print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
-dev.off()
-
-# print for Rmarkdown
 print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 2, ncol = 1)) # print the model diagnostics 
-
-
-
-F1s.BOXPLOT_Length_bfactor.MEDIAN <- RR_formatted_F1s.length %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormLength.MEDIAN, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         ggtitle("Resp / [ (Length_meas / medianLength)^2.18 ]") +
-         theme(legend.position="none",
-               axis.title.y=element_text(size=7),
-               axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) +
-         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
-
-
-F1s.BOXPLOT_Length_bfactor.MEDIAN.nofacet <- RR_formatted_F1s.length %>% 
-  ggplot(aes(x = factor(Date), 
-             y = resp_umol_L_hr_bFactorNormLength.MEDIAN, 
-             fill = pCO2)) +
-         geom_boxplot(alpha = 0.5, # color hue
-             width=0.6, # boxplot width
-             outlier.size=0, # make outliers small
-             position = position_dodge(preserve = "single")) + 
-         geom_point(pch = 19, 
-                    position = position_jitterdodge(0.01), 
-                    size=1) +
-         scale_fill_manual(values=c("forestgreen","orange")) +
-         theme_classic() + 
-         ggtitle("Resp * [ ( medianLength / Length_meas)^2.18 ]") +
-         theme(legend.position="none",
-               axis.title.y=element_text(size=7),
-               axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
-         #ylim(0, 0.2) +
-         stat_summary(fun.y=mean, 
-                      geom = "errorbar", 
-                      aes(ymax = ..y.., ymin = ..y..), 
-                      width = 0.6, 
-                      size=0.4, 
-                      linetype = "dashed", 
-                      position = position_dodge(preserve = "single")) # no facet
-
-
- 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Respiration_Boxplots_LENGTH_bfactorMEDIAN.pdf"), width = 18, height = 8)
-print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEDIAN,F1s.BOXPLOT_Length_bfactor.MEDIAN.nofacet, nrow = 1, ncol = 2)) # print the model diagnostics 
 dev.off()
+
 
 
 ```

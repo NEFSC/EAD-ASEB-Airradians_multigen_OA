@@ -45,27 +45,39 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Master_data       <- read.csv(file="Data/Clearance_rates/ClearanceRates_MasterData.csv", header=T) # master data file
-Master_data <- read.csv(file="Data/Physiology/Clearance_rates/ClearanceRates_MasterData.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
+Master_data <- read.csv(file="Data/Physiology/Clearance_rates/F1/cumulative_raw/ClearanceRates_master.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
 
 
-clearance.rate_914    <- Master_data  %>% dplyr::filter(Date %in% 20210914)  %>% 
-  dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
+clearance.rate_914  <- Master_data  %>% dplyr::filter(Date %in% 20210914)  %>% 
+                          dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
 
-clearance.rate_930    <- Master_data  %>% dplyr::filter(Date %in% 20210930)  %>% 
-  dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
+clearance.rate_930  <- Master_data  %>% dplyr::filter(Date %in% 20210930)  %>% 
+                          dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
 
-clearance.rate_1026    <- Master_data  %>% dplyr::filter(Date %in% 20211026)  %>% 
-  dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
+clearance.rate_1026 <- Master_data  %>% dplyr::filter(Date %in% 20211026)  %>% 
+                          dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
 
-clearance.rate_0202    <- Master_data  %>% dplyr::filter(Date %in% 20220202)  %>% 
-  dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
+clearance.rate_0202 <- Master_data  %>% dplyr::filter(Date %in% 20220202)  %>% 
+                          dplyr::mutate(Chamber_tank = paste(pH, Replicate, sep='_'))
 
 length.resp.feed <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) %>% 
-  dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>%
-  dplyr::rename(Fed_Unfed = Food) 
-length.resp.feed <- length.resp.feed[!is.na(length.resp.feed$Length_um),] %>%  dplyr::select(c('Date', 'Run', 'Plate', 
-                                                                                               'pH', 'Fed_Unfed', 'Replicate',
-                                                                                               'Chamber_tank', 'Number', 'Length_um','whole_Dry_weight'))
+                      dplyr::mutate(Date = 
+                                      paste("20",
+                                            (format(as.Date(Date, "%m/%d/%Y"),"%y%m%d")), 
+                                            sep ='')) %>%
+                      dplyr::rename(Fed_Unfed = Food) 
+
+length.resp.feed <- length.resp.feed[!is.na(length.resp.feed$Length_um),] %>%  
+                      dplyr::select(c('Date', 
+                                      'Run', 
+                                      'Plate', 
+                                      'pH', 
+                                      'Fed_Unfed', 
+                                      'Replicate',
+                                      'Chamber_tank', 
+                                      'Number', 
+                                      'Length_um',
+                                      'whole_Dry_weight'))
 
 ```
 
@@ -578,7 +590,8 @@ dev.off()
 # **A** == V * (ln(Blank_0/Blank_t)/t) for the 'blank' values in each treatment, accounts for the sink or stuck algae cells 
 
 Blanks.Master <- Master_data[is.na(Master_data$Replicate),] %>% 
-                                dplyr::mutate(unique_identifier = paste(Date, pH, "Run", Run, raw_ID_sample_number, sep ='_'))
+                                dplyr::mutate(unique_identifier = 
+                                                paste(Date, pH, "Run", Run, raw_ID_sample_number, sep ='_'))
 
 loop_BLANKS       <- as.data.frame(unique(Blanks.Master$unique_identifier)) %>%
                             dplyr::rename(ID = "unique(Blanks.Master$unique_identifier)") # call unique identifier tfor the for loop calc of blanks 
@@ -710,12 +723,14 @@ write.csv(meanBLANKS.Summary, "C:/Users/samjg/Documents/Github_repositories/Airr
 
 ## 20210914 Clearance Rate data 
 
-```{r 20210914 FR, echo = T}
+```{r 20210914 CR, echo = T}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+meanLength   <- mean(ClearanceRate_Master$Length_um/1000)    # 6.155029 mm
+medianLength <- median(ClearanceRate_Master$Length_um/1000)  # 3.82627 mm
+bLength      <- 2.18 # review the outlier-omitted b factor plot in previous chunk
 
 V = 25 # V == Volume of the vessel (in mL as 25 ml)
 
@@ -733,67 +748,69 @@ for (i in 1:nrow(loop_914)) {
   
   # ply
   A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
- 
   C0_Ply              <- if ( (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) < (1.25*  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) )  { 
                              C0_Ply <-  (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) 
                              } else (C0_Ply <-  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) # C0 for the ply 
-  
   Cend_Ply            <- (min(c(dat[t_end_min1,]$PLY_cell.ml, dat[t_end,]$PLY_cell.ml)))
-  
   t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
-  
   t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  ClearanceRate.Ply          <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$whole_Dry_weight[1]) # Tetraselmis cells mL-1  hr-1 mm shell length-1
-  ClearanceRate.Ply_length   <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Tetraselmis cells mL-1  hr-1 mm shell length-1
+
+if (Cend_Ply == 0) { 
+    ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply))
+                      } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) )
+  ClearanceRate.Ply_length         <- ClearanceRate.Ply / (dat$Length_um[1] / 1000)
+  ClearanceRate.Ply_bfactor_length <- ClearanceRate.Ply*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Ply b factor norm
  
   # chaet
   A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
- 
   C0_Chaet            <- if ( (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) < (1.25*  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) )  { 
                              C0_Chaet <-  (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) 
                              } else (C0_Chaet <-  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) # C0 for the ply 
-  
   Cend_Chaet          <- (min(c(dat[t_end_min1,]$Chaet_cell.ml, dat[t_end,]$Chaet_cell.ml)))
-  
   t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
-  
   t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
   
-  ClearanceRate.Chaet        <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$whole_Dry_weight[1]) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-  ClearanceRate.Chaet_length <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
+if (Cend_Chaet == 0) { 
+    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet))
+                      } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) )
+  ClearanceRate.Chaet_length         <- ClearanceRate.Chaet / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Chaet_bfactor_length <- ClearanceRate.Chaet*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Chaetoceros b factor norm
 
     
   # low chl a (seston)
   A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
- 
   C0_Seston            <- if ( (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) < (1.25*  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) )  { 
                              C0_Seston <-  (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) 
                              } else (C0_Seston <-  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) # C0 for the ply 
-  
   Cend_Seston          <- (min(c(dat[t_end_min1,]$Low_chlorophyll_cell.ml, dat[t_end,]$Low_chlorophyll_cell.ml)))
-  
   t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
-  
   t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  ClearanceRate.Seston        <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$whole_Dry_weight[1]) # seston cells mL-1  hr-1 mm shell length-1
-  ClearanceRate.Seston_length <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # seston cells mL-1  hr-1 mm shell length-1
+if (Cend_Seston == 0) { 
+    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston))
+                      } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) )
+  ClearanceRate.Seston_length         <- ClearanceRate.Seston / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Seston_bfactor_length <- ClearanceRate.Seston*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Seston b factor norm
   
   dat2 <- dat[1,] %>%
     dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'whole_Dry_weight')) %>% 
-    mutate(Chaet_mL.hr.gWDW      = ClearanceRate.Chaet) %>% 
-    mutate(Ply_mL.hr.gWDW        = ClearanceRate.Ply) %>% 
-    mutate(Seston_mL.hr.gWDW     = ClearanceRate.Seston) %>% 
-    mutate(Chaet_mL.hr.mmlength  = ClearanceRate.Chaet_length) %>% 
-    mutate(Ply_mL.hr.mmlength    = ClearanceRate.Ply_length) %>% 
-    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston_length)
+    mutate(Chaet_mL.hr                = ClearanceRate.Chaet) %>% 
+    mutate(Ply_mL.hr                  = ClearanceRate.Ply) %>% 
+    mutate(Seston_mL.hr               = ClearanceRate.Seston) %>% 
+
+    mutate(Chaet_mL.hr.length         = ClearanceRate.Chaet_length) %>% 
+    mutate(Ply_mL.hr.length           = ClearanceRate.Ply_length) %>% 
+    mutate(Seston_mL.hr.length        = ClearanceRate.Seston_length) %>% 
+    
+    mutate(Chaet_mL.hr.bfactorlength  = ClearanceRate.Chaet_bfactor_length) %>% 
+    mutate(Ply_mL.hr.bfactorlength    = ClearanceRate.Ply_bfactor_length) %>% 
+    mutate(Seston_mL.hr.bfactorlength = ClearanceRate.Seston_bfactor_length)
     
   if (nrow(dat2) > 0) {
-    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 15)) # create dataframe to save cumunalitively during for loop
+    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 18)) # create dataframe to save cumunalitively during for loop
     colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 
-                                  'Chaet_mL.hr.gWDW', 'Ply_mL.hr.gWDW', 'Seston_mL.hr.gWDW',  
-                                  'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
+                                  'Chaet_mL.hr','Ply_mL.hr', 'Seston_mL.hr',
+                                  'Chaet_mL.hr.length','Ply_mL.hr.length', 'Seston_mL.hr.length',
+                                  'Chaet_mL.hr.bfactorlength', 'Ply_mL.hr.bfactorlength', 'Seston_mL.hr.bfactorlength') 
     FeedRate.table$Date                       <- dat2$Date
     FeedRate.table$ID                         <- loop_914[i,]
     FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
@@ -803,12 +820,18 @@ for (i in 1:nrow(loop_914)) {
     FeedRate.table$Plate                      <- dat2$Plate
     FeedRate.table$Number                     <- gsub("^(?:[^_]+_){6}([^_]+).*", "\\1", FeedRate.table$ID)
     FeedRate.table$Length_um                  <- dat2$Length_um
-    FeedRate.table$Chaet_mL.hr.gWDW           <- dat2$Chaet_mL.hr.gWDW
-    FeedRate.table$Ply_mL.hr.gWDW             <- dat2$Ply_mL.hr.gWDW
-    FeedRate.table$Seston_mL.hr.gWDW          <- dat2$Seston_mL.hr.gWDW
-    FeedRate.table$Chaet_mL.hr.mmlength       <- dat2$Chaet_mL.hr.mmlength
-    FeedRate.table$Ply_mL.hr.mmlength         <- dat2$Ply_mL.hr.mmlength
-    FeedRate.table$Seston_mL.hr.mmlength      <- dat2$Seston_mL.hr.mmlength
+    
+    FeedRate.table$Chaet_mL.hr                <- dat2$Chaet_mL.hr
+    FeedRate.table$Ply_mL.hr                  <- dat2$Ply_mL.hr
+    FeedRate.table$Seston_mL.hr               <- dat2$Seston_mL.hr
+    
+    FeedRate.table$Chaet_mL.hr.length         <- dat2$Chaet_mL.hr.length
+    FeedRate.table$Ply_mL.hr.length           <- dat2$Ply_mL.hr.length
+    FeedRate.table$Seston_mL.hr.length        <- dat2$Seston_mL.hr.length
+    
+    FeedRate.table$Chaet_mL.hr.bfactorlength  <- dat2$Chaet_mL.hr.bfactorlength
+    FeedRate.table$Ply_mL.hr.bfactorlength    <- dat2$Ply_mL.hr.bfactorlength
+    FeedRate.table$Seston_mL.hr.bfactorlength <- dat2$Seston_mL.hr.bfactorlength
     
     df           <- data.frame(FeedRate.table) # name dataframe for this single row
     df_total.914 <- rbind(df_total.914,df) #bind to a cumulative list dataframe
@@ -816,6 +839,529 @@ for (i in 1:nrow(loop_914)) {
   } else {}
 }
 
+
+
+# Data
+Chaet_FR_914_df    <- df_total.914 %>% 
+  filter(Chaet_mL.hr > 0) %>% 
+  mutate(type = 'chaet') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Chaet_mL.hr","Chaet_mL.hr.length","Chaet_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Chaet_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Chaet_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Chaet_mL.hr.bfactorlength)
+
+
+
+Ply_FR_914_df <- df_total.914 %>% 
+  filter(Ply_mL.hr > 0) %>% 
+  mutate(type = 'ply') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Ply_mL.hr","Ply_mL.hr.length","Ply_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Ply_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Ply_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Ply_mL.hr.bfactorlength)
+
+
+
+Seston_FR_914_df   <- df_total.914 %>% 
+  filter(Seston_mL.hr > 0) %>% 
+  mutate(type = 'seston') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Seston_mL.hr","Seston_mL.hr.length","Seston_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Seston_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Seston_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Seston_mL.hr.bfactorlength)
+
+
+Master_914     <- rbind(Chaet_FR_914_df, Ply_FR_914_df, Seston_FR_914_df)
+
+```
+
+## 20210930 Clearance Rate data 
+
+```{r 20210930 CR, echo = T}
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+V = 25 # V == Volume of the vessel (in mL as 25 ml)
+
+df_total.930<- data.frame() # start dataframe 
+for (i in 1:nrow(loop_930)) {
+  dat <- ClearanceRate_Master.930 %>% 
+    dplyr::filter(uniq_Identifier == loop_930[i,]) %>% 
+    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
+    dplyr::arrange(time)
+  
+   t_end      <- nrow(dat)
+  t_end_min1 <- nrow(dat) - 1
+  
+  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
+  
+  # ply
+  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
+  C0_Ply              <- if ( (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) < (1.25*  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) )  { 
+                             C0_Ply <-  (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) 
+                             } else (C0_Ply <-  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) # C0 for the ply 
+  Cend_Ply            <- (min(c(dat[t_end_min1,]$PLY_cell.ml, dat[t_end,]$PLY_cell.ml)))
+  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
+  t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+
+if (Cend_Ply == 0) { 
+    ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply))
+                      } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) )
+  ClearanceRate.Ply_length         <- ClearanceRate.Ply / (dat$Length_um[1] / 1000)
+  ClearanceRate.Ply_bfactor_length <- ClearanceRate.Ply*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Ply b factor norm
+ 
+  # chaet
+  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
+  C0_Chaet            <- if ( (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) < (1.25*  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) )  { 
+                             C0_Chaet <-  (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) 
+                             } else (C0_Chaet <-  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) # C0 for the ply 
+  Cend_Chaet          <- (min(c(dat[t_end_min1,]$Chaet_cell.ml, dat[t_end,]$Chaet_cell.ml)))
+  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
+  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+  
+if (Cend_Chaet == 0) { 
+    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet))
+                      } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) )
+  ClearanceRate.Chaet_length         <- ClearanceRate.Chaet / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Chaet_bfactor_length <- ClearanceRate.Chaet*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Chaetoceros b factor norm
+
+    
+  # low chl a (seston)
+  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
+  C0_Seston            <- if ( (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) < (1.25*  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) )  { 
+                             C0_Seston <-  (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) 
+                             } else (C0_Seston <-  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) # C0 for the ply 
+  Cend_Seston          <- (min(c(dat[t_end_min1,]$Low_chlorophyll_cell.ml, dat[t_end,]$Low_chlorophyll_cell.ml)))
+  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
+  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+if (Cend_Seston == 0) { 
+    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston))
+                      } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) )
+  ClearanceRate.Seston_length         <- ClearanceRate.Seston / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Seston_bfactor_length <- ClearanceRate.Seston*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Seston b factor norm
+  
+  dat2 <- dat[1,] %>%
+    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'whole_Dry_weight')) %>% 
+    mutate(Chaet_mL.hr                = ClearanceRate.Chaet) %>% 
+    mutate(Ply_mL.hr                  = ClearanceRate.Ply) %>% 
+    mutate(Seston_mL.hr               = ClearanceRate.Seston) %>% 
+
+    mutate(Chaet_mL.hr.length         = ClearanceRate.Chaet_length) %>% 
+    mutate(Ply_mL.hr.length           = ClearanceRate.Ply_length) %>% 
+    mutate(Seston_mL.hr.length        = ClearanceRate.Seston_length) %>% 
+    
+    mutate(Chaet_mL.hr.bfactorlength  = ClearanceRate.Chaet_bfactor_length) %>% 
+    mutate(Ply_mL.hr.bfactorlength    = ClearanceRate.Ply_bfactor_length) %>% 
+    mutate(Seston_mL.hr.bfactorlength = ClearanceRate.Seston_bfactor_length)
+    
+  if (nrow(dat2) > 0) {
+    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 18)) # create dataframe to save cumunalitively during for loop
+    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 
+                                  'Chaet_mL.hr','Ply_mL.hr', 'Seston_mL.hr',
+                                  'Chaet_mL.hr.length','Ply_mL.hr.length', 'Seston_mL.hr.length',
+                                  'Chaet_mL.hr.bfactorlength', 'Ply_mL.hr.bfactorlength', 'Seston_mL.hr.bfactorlength') 
+    FeedRate.table$Date                       <- dat2$Date
+    FeedRate.table$ID                         <- loop_914[i,]
+    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){4}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
+    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){2}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Plate                      <- dat2$Plate
+    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){6}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Length_um                  <- dat2$Length_um
+    
+    FeedRate.table$Chaet_mL.hr.length         <- dat2$Chaet_mL.hr.length
+    FeedRate.table$Ply_mL.hr.length           <- dat2$Ply_mL.hr.length
+    FeedRate.table$Seston_mL.hr.length        <- dat2$Seston_mL.hr.length
+    
+    FeedRate.table$Chaet_mL.hr                <- dat2$Chaet_mL.hr
+    FeedRate.table$Ply_mL.hr                  <- dat2$Ply_mL.hr
+    FeedRate.table$Seston_mL.hr               <- dat2$Seston_mL.hr
+    
+    FeedRate.table$Chaet_mL.hr.bfactorlength  <- dat2$Chaet_mL.hr.bfactorlength
+    FeedRate.table$Ply_mL.hr.bfactorlength    <- dat2$Ply_mL.hr.bfactorlength
+    FeedRate.table$Seston_mL.hr.bfactorlength <- dat2$Seston_mL.hr.bfactorlength
+    
+    df           <- data.frame(FeedRate.table) # name dataframe for this single row
+    df_total.930 <- rbind(df_total.930,df) #bind to a cumulative list dataframe
+    #print(df_total.930) # print to monitor progress
+  } else {}
+}
+
+# Data
+Chaet_FR_930_df    <- df_total.930 %>% 
+  filter(Chaet_mL.hr > 0) %>% 
+  mutate(type = 'chaet') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Chaet_mL.hr","Chaet_mL.hr.length","Chaet_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Chaet_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Chaet_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Chaet_mL.hr.bfactorlength)
+
+
+
+Ply_FR_930_df <- df_total.930 %>% 
+  filter(Ply_mL.hr > 0) %>% 
+  mutate(type = 'ply') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Ply_mL.hr","Ply_mL.hr.length","Ply_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Ply_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Ply_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Ply_mL.hr.bfactorlength)
+
+
+
+Seston_FR_930_df   <- df_total.930 %>% 
+  filter(Seston_mL.hr > 0) %>% 
+  mutate(type = 'seston') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Seston_mL.hr","Seston_mL.hr.length","Seston_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Seston_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Seston_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Seston_mL.hr.bfactorlength)
+
+
+Master_930     <- rbind(Chaet_FR_930_df, Ply_FR_930_df, Seston_FR_930_df)
+```
+
+## 20211026 Clearance Rate data 
+
+NOTE: the calculation here changes from the other tiepoints due to **complete clearance of algae in larger/older individuals!** 
+if the 0 value is kept it will become 'Inf' due to negative denominator in the natural log... in ln(C_init / C_end)
+thus I wrote a conditional statement (if else) for these negative values - making them equal to 0.0001 for this ratio
+the alternative can be to call the nearest non-zero value in line
+
+```{r 20211026 CR, echo = T}
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+V = 25 # V == Volume of the vessel (in mL as 25 ml)
+
+df_total.1026<- data.frame() # start dataframe 
+for (i in 1:nrow(loop_1026)) {
+  dat <- ClearanceRate_Master.1026 %>% 
+    dplyr::filter(uniq_Identifier == loop_1026[i,]) %>% 
+    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
+    dplyr::arrange(time)
+  
+   t_end      <- nrow(dat)
+  t_end_min1 <- nrow(dat) - 1
+  
+  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
+  
+  # ply
+  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
+  C0_Ply              <- if ( (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) < (1.25*  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) )  { 
+                             C0_Ply <-  (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) 
+                             } else (C0_Ply <-  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) # C0 for the ply 
+  Cend_Ply            <- (min(c(dat[t_end_min1,]$PLY_cell.ml, dat[t_end,]$PLY_cell.ml)))
+  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
+  t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+
+if (Cend_Ply == 0) { 
+    ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply))
+                      } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) )
+  ClearanceRate.Ply_length         <- ClearanceRate.Ply / (dat$Length_um[1] / 1000)
+  ClearanceRate.Ply_bfactor_length <- ClearanceRate.Ply*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Ply b factor norm
+ 
+  # chaet
+  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
+  C0_Chaet            <- if ( (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) < (1.25*  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) )  { 
+                             C0_Chaet <-  (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) 
+                             } else (C0_Chaet <-  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) # C0 for the ply 
+  Cend_Chaet          <- (min(c(dat[t_end_min1,]$Chaet_cell.ml, dat[t_end,]$Chaet_cell.ml)))
+  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
+  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+  
+if (Cend_Chaet == 0) { 
+    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet))
+                      } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) )
+  ClearanceRate.Chaet_length         <- ClearanceRate.Chaet / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Chaet_bfactor_length <- ClearanceRate.Chaet*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Chaetoceros b factor norm
+
+    
+  # low chl a (seston)
+  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
+  C0_Seston            <- if ( (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) < (1.25*  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) )  { 
+                             C0_Seston <-  (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) 
+                             } else (C0_Seston <-  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) # C0 for the ply 
+  Cend_Seston          <- (min(c(dat[t_end_min1,]$Low_chlorophyll_cell.ml, dat[t_end,]$Low_chlorophyll_cell.ml)))
+  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
+  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+if (Cend_Seston == 0) { 
+    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston))
+                      } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) )
+  ClearanceRate.Seston_length         <- ClearanceRate.Seston / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Seston_bfactor_length <- ClearanceRate.Seston*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Seston b factor norm
+  
+  dat2 <- dat[1,] %>%
+    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'whole_Dry_weight')) %>% 
+    mutate(Chaet_mL.hr                = ClearanceRate.Chaet) %>% 
+    mutate(Ply_mL.hr                  = ClearanceRate.Ply) %>% 
+    mutate(Seston_mL.hr               = ClearanceRate.Seston) %>% 
+
+    mutate(Chaet_mL.hr.length         = ClearanceRate.Chaet_length) %>% 
+    mutate(Ply_mL.hr.length           = ClearanceRate.Ply_length) %>% 
+    mutate(Seston_mL.hr.length        = ClearanceRate.Seston_length) %>% 
+    
+    mutate(Chaet_mL.hr.bfactorlength  = ClearanceRate.Chaet_bfactor_length) %>% 
+    mutate(Ply_mL.hr.bfactorlength    = ClearanceRate.Ply_bfactor_length) %>% 
+    mutate(Seston_mL.hr.bfactorlength = ClearanceRate.Seston_bfactor_length)
+    
+  if (nrow(dat2) > 0) {
+    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 18)) # create dataframe to save cumunalitively during for loop
+    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 
+                                  'Chaet_mL.hr','Ply_mL.hr', 'Seston_mL.hr',
+                                  'Chaet_mL.hr.length','Ply_mL.hr.length', 'Seston_mL.hr.length',
+                                  'Chaet_mL.hr.bfactorlength', 'Ply_mL.hr.bfactorlength', 'Seston_mL.hr.bfactorlength') 
+    FeedRate.table$Date                       <- dat2$Date
+    FeedRate.table$ID                         <- loop_914[i,]
+    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){4}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
+    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){2}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Plate                      <- dat2$Plate
+    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){6}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Length_um                  <- dat2$Length_um
+    
+    FeedRate.table$Chaet_mL.hr.length         <- dat2$Chaet_mL.hr.length
+    FeedRate.table$Ply_mL.hr.length           <- dat2$Ply_mL.hr.length
+    FeedRate.table$Seston_mL.hr.length        <- dat2$Seston_mL.hr.length
+    
+    FeedRate.table$Chaet_mL.hr                <- dat2$Chaet_mL.hr
+    FeedRate.table$Ply_mL.hr                  <- dat2$Ply_mL.hr
+    FeedRate.table$Seston_mL.hr               <- dat2$Seston_mL.hr
+    
+    FeedRate.table$Chaet_mL.hr.bfactorlength  <- dat2$Chaet_mL.hr.bfactorlength
+    FeedRate.table$Ply_mL.hr.bfactorlength    <- dat2$Ply_mL.hr.bfactorlength
+    FeedRate.table$Seston_mL.hr.bfactorlength <- dat2$Seston_mL.hr.bfactorlength
+    
+    df           <- data.frame(FeedRate.table) # name dataframe for this single row
+    df_total.1026 <- rbind(df_total.1026,df) #bind to a cumulative list dataframe
+    #print(df_total.1026) # print to monitor progress
+  } else {}
+}
+
+
+# Data
+Chaet_FR_1026_df    <- df_total.1026 %>% 
+  filter(Chaet_mL.hr > 0) %>% 
+  mutate(type = 'chaet') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Chaet_mL.hr","Chaet_mL.hr.length","Chaet_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Chaet_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Chaet_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Chaet_mL.hr.bfactorlength)
+
+
+
+Ply_FR_1026_df <- df_total.1026 %>% 
+  filter(Ply_mL.hr > 0) %>% 
+  mutate(type = 'ply') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Ply_mL.hr","Ply_mL.hr.length","Ply_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Ply_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Ply_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Ply_mL.hr.bfactorlength)
+
+
+
+Seston_FR_1026_df   <- df_total.1026 %>% 
+  filter(Seston_mL.hr > 0) %>% 
+  mutate(type = 'seston') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Seston_mL.hr","Seston_mL.hr.length","Seston_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Seston_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Seston_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Seston_mL.hr.bfactorlength)
+
+
+Master_1026     <- rbind(Chaet_FR_1026_df, Ply_FR_1026_df, Seston_FR_1026_df)
+```
+
+## 20220202 Clearance Rate data 
+
+NOTE: the calculation here changes from the other tiepoints due to **complete clearance of algae in larger/older individuals!** 
+if the 0 value is kept it will become 'Inf' due to negative denominator in the natural log... in ln(C_init / C_end)
+thus I wrote a conditional statement (if else) for these negative values - making them equal to 0.0001 for this ratio
+the alternative can be to call the nearest non-zero value in line
+
+```{r 20220202 CR, echo = T}
+
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+V = 25 # V == Volume of the vessel (in mL as 25 ml)
+
+df_total.0202<- data.frame() # start dataframe 
+for (i in 1:nrow(loop_0202)) {
+  dat <- ClearanceRate_Master.0202 %>% 
+    dplyr::filter(uniq_Identifier == loop_0202[i,]) %>% 
+    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
+    dplyr::arrange(time)
+  
+  t_end      <- nrow(dat)
+  t_end_min1 <- nrow(dat) - 1
+  
+  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
+  
+  # ply
+  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
+  C0_Ply              <- if ( (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) < (1.25*  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) )  { 
+                             C0_Ply <-  (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) 
+                             } else (C0_Ply <-  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) # C0 for the ply 
+  Cend_Ply            <- (min(c(dat[t_end_min1,]$PLY_cell.ml, dat[t_end,]$PLY_cell.ml)))
+  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
+  t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+
+if (Cend_Ply == 0) { 
+    ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply))
+                      } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) )
+  ClearanceRate.Ply_length         <- ClearanceRate.Ply / (dat$Length_um[1] / 1000)
+  ClearanceRate.Ply_bfactor_length <- ClearanceRate.Ply*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Ply b factor norm
+ 
+  # chaet
+  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
+  C0_Chaet            <- if ( (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) < (1.25*  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) )  { 
+                             C0_Chaet <-  (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) 
+                             } else (C0_Chaet <-  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) # C0 for the ply 
+  Cend_Chaet          <- (min(c(dat[t_end_min1,]$Chaet_cell.ml, dat[t_end,]$Chaet_cell.ml)))
+  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
+  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+  
+if (Cend_Chaet == 0) { 
+    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet))
+                      } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) )
+  ClearanceRate.Chaet_length         <- ClearanceRate.Chaet / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Chaet_bfactor_length <- ClearanceRate.Chaet*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Chaetoceros b factor norm
+
+    
+  # low chl a (seston)
+  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
+  C0_Seston            <- if ( (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) < (1.25*  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) )  { 
+                             C0_Seston <-  (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) 
+                             } else (C0_Seston <-  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) # C0 for the ply 
+  Cend_Seston          <- (min(c(dat[t_end_min1,]$Low_chlorophyll_cell.ml, dat[t_end,]$Low_chlorophyll_cell.ml)))
+  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
+  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
+if (Cend_Seston == 0) { 
+    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston))
+                      } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) )
+  ClearanceRate.Seston_length         <- ClearanceRate.Seston / (dat$Length_um[1] / 1000) # div mm length
+  ClearanceRate.Seston_bfactor_length <- ClearanceRate.Seston*((meanLength/(dat$Length_um[1] / 1000))^bLength)  # Seston b factor norm
+  
+  dat2 <- dat[1,] %>%
+    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'whole_Dry_weight')) %>% 
+    mutate(Chaet_mL.hr                = ClearanceRate.Chaet) %>% 
+    mutate(Ply_mL.hr                  = ClearanceRate.Ply) %>% 
+    mutate(Seston_mL.hr               = ClearanceRate.Seston) %>% 
+
+    mutate(Chaet_mL.hr.length         = ClearanceRate.Chaet_length) %>% 
+    mutate(Ply_mL.hr.length           = ClearanceRate.Ply_length) %>% 
+    mutate(Seston_mL.hr.length        = ClearanceRate.Seston_length) %>% 
+    
+    mutate(Chaet_mL.hr.bfactorlength  = ClearanceRate.Chaet_bfactor_length) %>% 
+    mutate(Ply_mL.hr.bfactorlength    = ClearanceRate.Ply_bfactor_length) %>% 
+    mutate(Seston_mL.hr.bfactorlength = ClearanceRate.Seston_bfactor_length)
+    
+  if (nrow(dat2) > 0) {
+    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 18)) # create dataframe to save cumunalitively during for loop
+    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 
+                                  'Chaet_mL.hr','Ply_mL.hr', 'Seston_mL.hr',
+                                  'Chaet_mL.hr.length','Ply_mL.hr.length', 'Seston_mL.hr.length',
+                                  'Chaet_mL.hr.bfactorlength', 'Ply_mL.hr.bfactorlength', 'Seston_mL.hr.bfactorlength') 
+    FeedRate.table$Date                       <- dat2$Date
+    FeedRate.table$ID                         <- loop_914[i,]
+    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){4}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
+    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){2}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Plate                      <- dat2$Plate
+    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){6}([^_]+).*", "\\1", FeedRate.table$ID)
+    FeedRate.table$Length_um                  <- dat2$Length_um
+    
+    FeedRate.table$Chaet_mL.hr.length         <- dat2$Chaet_mL.hr.length
+    FeedRate.table$Ply_mL.hr.length           <- dat2$Ply_mL.hr.length
+    FeedRate.table$Seston_mL.hr.length        <- dat2$Seston_mL.hr.length
+    
+    FeedRate.table$Chaet_mL.hr                <- dat2$Chaet_mL.hr
+    FeedRate.table$Ply_mL.hr                  <- dat2$Ply_mL.hr
+    FeedRate.table$Seston_mL.hr               <- dat2$Seston_mL.hr
+    
+    FeedRate.table$Chaet_mL.hr.bfactorlength  <- dat2$Chaet_mL.hr.bfactorlength
+    FeedRate.table$Ply_mL.hr.bfactorlength    <- dat2$Ply_mL.hr.bfactorlength
+    FeedRate.table$Seston_mL.hr.bfactorlength <- dat2$Seston_mL.hr.bfactorlength
+    
+    df           <- data.frame(FeedRate.table) # name dataframe for this single row
+    df_total.0202 <- rbind(df_total.0202,df) #bind to a cumulative list dataframe
+    #print(df_total.0202) # print to monitor progress
+  } else {}
+}
+
+
+# Data
+Chaet_FR_0202_df    <- df_total.0202 %>% 
+  filter(Chaet_mL.hr > 0) %>% 
+  mutate(type = 'chaet') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Chaet_mL.hr","Chaet_mL.hr.length","Chaet_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Chaet_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Chaet_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Chaet_mL.hr.bfactorlength)
+
+
+
+Ply_FR_0202_df <- df_total.0202 %>% 
+  filter(Ply_mL.hr > 0) %>% 
+  mutate(type = 'ply') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Ply_mL.hr","Ply_mL.hr.length","Ply_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Ply_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Ply_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Ply_mL.hr.bfactorlength)
+
+
+
+Seston_FR_0202_df   <- df_total.0202 %>% 
+  filter(Seston_mL.hr > 0) %>% 
+  mutate(type = 'seston') %>% 
+  dplyr::select(c("Date","ID","pH","Replicate","Fed_Unfed","Run","Plate","Number","Length_um", "type",
+                  "Seston_mL.hr","Seston_mL.hr.length","Seston_mL.hr.bfactorlength")) %>% 
+  dplyr::rename(CR_mL.hr               = Seston_mL.hr) %>% 
+  dplyr::rename(CR_mL.hr.length        = Seston_mL.hr.length) %>% 
+  dplyr::rename(CR_mL.hr.bfactorlength = Seston_mL.hr.bfactorlength)
+
+
+Master_0202     <- rbind(Chaet_FR_0202_df, Ply_FR_0202_df, Seston_FR_0202_df)
+```
+
+# master file
+```{r, master Clearance rate data }
+
+ClearanceRate_Master <- rbind(Master_914, Master_930, Master_1026, Master_0202) %>% 
+  dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm"))
+write.csv(ClearanceRate_Master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/Calculated_Clearance_Master.csv")
+
+```
+
+
+
+```{r 20210914 CR stats, echo = T}
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # assign a random factor for LME models   ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -879,16 +1425,6 @@ write.csv(CR_Means_Master_914, "C:/Users/samjg/Documents/Github_repositories/Air
 
 
 
-# Data
-Ply_FR_914_df      <- df_total.914 %>% filter(Ply_mL.hr.mmlength > 0) %>% mutate(type = 'ply') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Ply_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Seston_mL.hr.mmlength')) %>% 
-  dplyr::rename(CR_mL.hr.WDW      = Ply_mL.hr.gWDW) %>% dplyr::select(!c('Chaet_mL.hr.gWDW','Seston_mL.hr.gWDW'))
-Chaet_FR_914_df    <- df_total.914 %>% filter(Chaet_mL.hr.mmlength > 0) %>% mutate(type = 'chaet') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Chaet_mL.hr.mmlength) %>% dplyr::select(!c('Ply_mL.hr.mmlength','Seston_mL.hr.mmlength')) %>% 
-  dplyr::rename(CR_mL.hr.WDW      = Chaet_mL.hr.gWDW) %>% dplyr::select(!c('Ply_mL.hr.gWDW','Seston_mL.hr.gWDW'))
-Seston_FR_914_df   <- df_total.914 %>% filter(Seston_mL.hr.mmlength > 0) %>% mutate(type = 'seston') %>% 
-  dplyr::rename(CR_mL.hr.mmlength = Seston_mL.hr.mmlength) %>% dplyr::select(!c('Chaet_mL.hr.mmlength','Ply_mL.hr.mmlength')) %>% 
-  dplyr::rename(CR_mL.hr.WDW      = Seston_mL.hr.gWDW) %>% dplyr::select(!c('Chaet_mL.hr.gWDW','Ply_mL.hr.gWDW'))
 
 # library
 require(nlme)
@@ -982,7 +1518,6 @@ pander(anova(Seston_AOVmod_0914), style='rmarkdown') # anova table of lmer
 
 
 
-Master_914     <- rbind(Chaet_FR_914_df, Ply_FR_914_df, Seston_FR_914_df)
 
 CR_914_boxplot_parsed <- Master_914 %>% 
   ggplot(aes(pCO2 , CR_mL.hr.mmlength , fill = pCO2)) +
@@ -1064,107 +1599,7 @@ pander(anova(AOVmod_0914_TRANSFORMED), style='rmarkdown') # anova table of lmer
 
 ```
 
-
-
-
-## 20210930 Clearance Rate data 
-
-```{r 20210930 FR, echo = T}
-
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-V = 25 # V == Volume of the vessel (in mL as 25 ml)
-
-df_total.930<- data.frame() # start dataframe 
-for (i in 1:nrow(loop_930)) {
-  dat <- ClearanceRate_Master.930 %>% 
-    dplyr::filter(uniq_Identifier == loop_930[i,]) %>% 
-    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
-    dplyr::arrange(time)
-  
-  t_end      <- nrow(dat)
-  t_end_min1 <- nrow(dat) - 1
-  
-  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
-  
-  # ply
-  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
- 
-  C0_Ply              <- if ( (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) < (1.25*  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) )  { 
-                             C0_Ply <-  (max(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml))) 
-                             } else (C0_Ply <-  (min(c(dat[1,]$PLY_cell.ml, dat[2,]$PLY_cell.ml)))) # C0 for the ply 
-  
-  Cend_Ply            <- (min(c(dat[t_end_min1,]$PLY_cell.ml, dat[t_end,]$PLY_cell.ml)))
-  
-  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
-  
-  t_Ply               <- max((dat$time[dat$PLY_cell.ml==Cend_Ply]) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  ClearanceRate.Ply   <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Tetraselmis cells mL-1  hr-1 mm shell length-1
-    
-  # chaet
-  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
- 
-  C0_Chaet            <- if ( (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) < (1.25*  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) )  { 
-                             C0_Chaet <-  (max(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml))) 
-                             } else (C0_Chaet <-  (min(c(dat[1,]$Chaet_cell.ml, dat[2,]$Chaet_cell.ml)))) # C0 for the ply 
-  
-  Cend_Chaet          <- (min(c(dat[t_end_min1,]$Chaet_cell.ml, dat[t_end,]$Chaet_cell.ml)))
-  
-  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
-  
-  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-
-    
-  # low chl a (seston)
-  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
- 
-  C0_Seston            <- if ( (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) < (1.25*  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) )  { 
-                             C0_Seston <-  (max(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml))) 
-                             } else (C0_Seston <-  (min(c(dat[1,]$Low_chlorophyll_cell.ml, dat[2,]$Low_chlorophyll_cell.ml)))) # C0 for the ply 
-  
-  Cend_Seston          <- (min(c(dat[t_end_min1,]$Low_chlorophyll_cell.ml, dat[t_end,]$Low_chlorophyll_cell.ml)))
-  
-  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
-  
-  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # seston cells mL-1  hr-1 mm shell length-1
-  
-  
-  dat2 <- dat[1,] %>%
-    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um')) %>% 
-    mutate(Chaet_mL.hr.mmlength = ClearanceRate.Chaet) %>% 
-    mutate(Ply_mL.hr.mmlength = ClearanceRate.Ply) %>% 
-    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston)
-    
-  if (nrow(dat2) > 0) {
-    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 12)) # create dataframe to save cumunalitively during for loop
-    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
-    FeedRate.table$Date                       <- dat2$Date
-    FeedRate.table$ID                         <- loop_930[i,]
-    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){5}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
-    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){3}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Plate                      <- dat2$Plate
-    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){7}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Length_um                  <- dat2$Length_um
-    FeedRate.table$Chaet_mL.hr.mmlength       <- dat2$Chaet_mL.hr.mmlength
-    FeedRate.table$Ply_mL.hr.mmlength         <- dat2$Ply_mL.hr.mmlength
-    FeedRate.table$Seston_mL.hr.mmlength      <- dat2$Seston_mL.hr.mmlength
-    
-    df       <- data.frame(FeedRate.table) # name dataframe for this single row
-    df_total.930 <- rbind(df_total.930,df) #bind to a cumulative list dataframe
-    #print(df_total.930) # print to monitor progress
-  } else {}
-}
-
+```{r 20210930 CR stats, echo = T}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # clean & view means...       ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1379,114 +1814,7 @@ qqnorm(residuals(LMEmod_930)) #
 
 ```
 
-
-
-
-## 20211026 Clearance Rate data 
-
-NOTE: the calculation here changes from the other tiepoints due to **complete clearance of algae in larger/older individuals!** 
-if the 0 value is kept it will become 'Inf' due to negative denominator in the natural log... in ln(C_init / C_end)
-thus I wrote a conditional statement (if else) for these negative values - making them equal to 0.0001 for this ratio
-the alternative can be to call the nearest non-zero value in line
-
-
-```{r 20211026 FR, echo = T}
-
-
-
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-V = 25 # V == Volume of the vessel (in mL as 25 ml)
-
-df_total.1026<- data.frame() # start dataframe 
-for (i in 1:nrow(loop_1026)) {
-  dat <- ClearanceRate_Master.1026 %>% 
-    dplyr::filter(uniq_Identifier == loop_1026[i,]) %>% 
-    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
-    dplyr::arrange(time)
-  
-  t_end      <- nrow(dat)
-  t_end_min1 <- nrow(dat) - 2
-  
-  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
-  
-  # ply
-  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
- 
-  C0_Ply              <- max(dat$PLY_cell.ml[c(1:2)])
-  
-  Cend_Ply            <- min(dat$PLY_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
-  
-  t_Ply               <- max(  (min(dat$time[dat$PLY_cell.ml==Cend_Ply])) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Ply == 0) { 
-        ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000))
-    
-  # chaet
-  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
- 
-  C0_Chaet            <- max(dat$Chaet_cell.ml[c(1:2)])
-  
-  Cend_Chaet          <- min(dat$Chaet_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
-  
-  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Chaet == 0) {  
-    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000))
-    
-  # low chl a (seston)
-  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
- 
-  C0_Seston            <- max(dat$Low_chlorophyll_cell.ml[c(1:2)])
-  
-  Cend_Seston          <- min(dat$Low_chlorophyll_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
-  
-  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Seston == 0) {  
-    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000))
-  
-  
-  dat2 <- dat[1,] %>%
-    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um')) %>% 
-    mutate(Chaet_mL.hr.mmlength = ClearanceRate.Chaet) %>% 
-    mutate(Ply_mL.hr.mmlength = ClearanceRate.Ply) %>% 
-    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston)
-    
-  if (nrow(dat2) > 0) {
-    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 12)) # create dataframe to save cumunalitively during for loop
-    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
-    FeedRate.table$Date                       <- dat2$Date
-    FeedRate.table$ID                         <- loop_1026[i,]
-    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){5}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
-    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){3}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Plate                      <- dat2$Plate
-    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){7}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Length_um                  <- dat2$Length_um
-    FeedRate.table$Chaet_mL.hr.mmlength       <- dat2$Chaet_mL.hr.mmlength
-    FeedRate.table$Ply_mL.hr.mmlength         <- dat2$Ply_mL.hr.mmlength
-    FeedRate.table$Seston_mL.hr.mmlength      <- dat2$Seston_mL.hr.mmlength
-    
-    df       <- data.frame(FeedRate.table) # name dataframe for this single row
-    df_total.1026 <- rbind(df_total.1026,df) #bind to a cumulative list dataframe
-    #print(df_total.1026) # print to monitor progress
-  } else {}
-}
-
+```{r 20211026 CR stats, echo = T}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # clean & view means...       ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1684,115 +2012,7 @@ qqnorm(residuals(LMEmod_1026)) # non nomral 0.001412
 
 ```
 
-
-
-
-
-## 20220202 Clearance Rate data 
-
-NOTE: the calculation here changes from the other tiepoints due to **complete clearance of algae in larger/older individuals!** 
-if the 0 value is kept it will become 'Inf' due to negative denominator in the natural log... in ln(C_init / C_end)
-thus I wrote a conditional statement (if else) for these negative values - making them equal to 0.0001 for this ratio
-the alternative can be to call the nearest non-zero value in line
-
-
-```{r 20220202 FR, echo = T}
-
-
-
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Clearance Rate for loop     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-V = 25 # V == Volume of the vessel (in mL as 25 ml)
-
-df_total.0202<- data.frame() # start dataframe 
-for (i in 1:nrow(loop_0202)) {
-  dat <- ClearanceRate_Master.0202 %>% 
-    dplyr::filter(uniq_Identifier == loop_0202[i,]) %>% 
-    dplyr::mutate(Date_pH = paste(Date, pH, sep = '_')) %>% 
-    dplyr::arrange(time)
-  
-  t_end      <- nrow(dat)
-  t_end_min1 <- nrow(dat) - 2
-  
-  blanks <- meanBLANKS.Summary %>% dplyr::filter(Date_pH %in% dat$Date_pH[1])
-  
-  # ply
-  A.ply               <- blanks$meanBlank[blanks$Type == 'Ply']
- 
-  C0_Ply              <- max(dat$PLY_cell.ml[c(1:2)])
-  
-  Cend_Ply            <- min(dat$PLY_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Ply              <- dat$time[dat$PLY_cell.ml==C0_Ply]
-  
-  t_Ply               <- max(  (min(dat$time[dat$PLY_cell.ml==Cend_Ply])) - t0_Ply) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Ply == 0) { 
-        ClearanceRate.Ply <- (V * ((ln( C0_Ply / 0.0001 )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Ply <- (V * ((ln( C0_Ply / Cend_Ply )/(t_Ply/60)) - A.ply)) / (dat$Length_um[1] / 1000))
-    
-  # chaet
-  A.chaet             <- blanks$meanBlank[blanks$Type == 'Chaet']
- 
-  C0_Chaet            <- max(dat$Chaet_cell.ml[c(1:2)])
-  
-  Cend_Chaet          <- min(dat$Chaet_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Chaet            <- dat$time[dat$Chaet_cell.ml==C0_Chaet]
-  
-  t_Chaet             <- max((dat$time[dat$Chaet_cell.ml==Cend_Chaet]) - t0_Chaet) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Chaet == 0) {  
-    ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / 0.0001 )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Chaet <- (V * ((ln( C0_Chaet / Cend_Chaet )/(t_Chaet/60)) - A.chaet)) / (dat$Length_um[1] / 1000))
-    
-  # low chl a (seston)
-  A.Seston             <- blanks$meanBlank[blanks$Type == 'Seston']
- 
-  C0_Seston            <- max(dat$Low_chlorophyll_cell.ml[c(1:2)])
-  
-  Cend_Seston          <- min(dat$Low_chlorophyll_cell.ml[c(t_end_min1:t_end)])
-  
-  t0_Seston            <- dat$time[dat$Low_chlorophyll_cell.ml==C0_Seston]
-  
-  t_Seston             <- max((dat$time[dat$Low_chlorophyll_cell.ml==Cend_Seston]) - t0_Seston) # call max becasue (although unlikely) there can be a case of the same count - calling multiple values
-  
-  if (Cend_Seston == 0) {  
-    ClearanceRate.Seston <- (V * ((ln( C0_Seston / 0.0001 )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000) # Chaetoceros cells mL-1  hr-1 mm shell length-1
-         } else ( ClearanceRate.Seston <- (V * ((ln( C0_Seston / Cend_Seston )/(t_Seston/60)) - A.Seston)) / (dat$Length_um[1] / 1000))
-  
-  
-  dat2 <- dat[1,] %>%
-    dplyr::select(c('Date','pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um')) %>% 
-    mutate(Chaet_mL.hr.mmlength = ClearanceRate.Chaet) %>% 
-    mutate(Ply_mL.hr.mmlength = ClearanceRate.Ply) %>% 
-    mutate(Seston_mL.hr.mmlength = ClearanceRate.Seston)
-    
-  if (nrow(dat2) > 0) {
-    FeedRate.table           <- data.frame(matrix(nrow = nrow(dat2), ncol = 12)) # create dataframe to save cumunalitively during for loop
-    colnames(FeedRate.table) <- c('Date', 'ID', 'pH', 'Replicate', 'Fed_Unfed','Run', 'Plate', 'Number', 'Length_um', 'Chaet_mL.hr.mmlength', 'Ply_mL.hr.mmlength', 'Seston_mL.hr.mmlength') 
-    FeedRate.table$Date                       <- dat2$Date
-    FeedRate.table$ID                         <- loop_0202[i,]
-    FeedRate.table$pH                         <- gsub("_.*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Replicate                  <- gsub("^(?:[^_]+_){5}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Fed_Unfed                  <- dat2$Fed_Unfed
-    FeedRate.table$Run                        <- gsub("^(?:[^_]+_){3}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Plate                      <- dat2$Plate
-    FeedRate.table$Number                     <- gsub("^(?:[^_]+_){7}([^_]+).*", "\\1", FeedRate.table$ID)
-    FeedRate.table$Length_um                  <- dat2$Length_um
-    FeedRate.table$Chaet_mL.hr.mmlength       <- dat2$Chaet_mL.hr.mmlength
-    FeedRate.table$Ply_mL.hr.mmlength         <- dat2$Ply_mL.hr.mmlength
-    FeedRate.table$Seston_mL.hr.mmlength      <- dat2$Seston_mL.hr.mmlength
-    
-    df       <- data.frame(FeedRate.table) # name dataframe for this single row
-    df_total.0202 <- rbind(df_total.0202,df) #bind to a cumulative list dataframe
-    #print(df_total.0202) # print to monitor progress
-  } else {}
-}
-
+```{r 20210202 CR stats, echo = T}
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # clean & view means...       ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1997,14 +2217,6 @@ CR_1026_boxplot,
 CR_0202_boxplot)
 
 dev.off()
-```
-
-
-```{r, master Clearance rate data }
-
-ClearanceRate_Master <- rbind(Master_914, Master_930, Master_1026, Master_0202)
-write.csv(ClearanceRate_Master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ClearanceRates/ClearanceRate_Master.csv")
-
 ```
 
 ## Density plots

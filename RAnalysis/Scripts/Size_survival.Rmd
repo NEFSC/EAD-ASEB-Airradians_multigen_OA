@@ -12,7 +12,7 @@ Last updates: September 30, 2022
 
 ## Load libraries
 
-```{r set up}
+```{r, set up}
 
 # LOAD LIBRARIES 
 library(ggplot2)

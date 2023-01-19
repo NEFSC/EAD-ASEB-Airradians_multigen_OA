@@ -1,0 +1,154 @@
+---
+title: "Count_Matrix_Filter"
+author: "Samuel Gurr"
+date: "2023-01-16"
+output: html_document
+---
+
+
+# Setup: 
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
+```
+
+### Load libraries
+```{r  Load libs}
+library(dplyr)
+library(edgeR)
+library(edgeR)
+library(cowplot)
+library(ggplot2)
+```
+
+### Set working directory
+```{r  setup, include=TRUE}
+print(getwd())  # working directory is the scipts folder 
+# path for output ting all .csv filtered count files
+path = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/' # run this for all count matrix outputs!!!
+```
+
+
+# LOAD DATA:
+```{r  load_data}
+print(getwd())  # working directory is the scipts folder 
+# count matrix from prepDE.py script 
+# NOTE: aligned to the Airradians draft and unannotated genome!
+raw.countmatrix  <- read.csv(file="HPC_Analysis/output/F1_TagSeq/Airradians_transcript_count_matrix.csv", header=T) # read the output count matrix - NOTE: TRIMMED at 30 phred threshold!
+raw.countmatrix[is.na(raw.countmatrix)] <- 0 # replace all occurances of NA with 0
+unique(names(raw_counts.merged))
+
+unique(sapply(strsplit(names(raw.countmatrix), "_"), '[', 1))
+
+smpl_ref <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Transcriptomics/exp.metadata.csv", sep=',', header=TRUE)
+
+```
+
+```{r  raw counts}
+ncol(raw.countmatrix) # 79 columns samples (counting transcript_id column) - should be 36 per treatment as 78 total samples
+
+# (1) true matrix - change transcript Ids to rownames
+raw_counts.merged <- data.frame(raw.countmatrix[,-1], row.names=raw.countmatrix[,1]) # call new dataframe with first column now as row names, now all row values are transcript Ids
+ncol(raw_counts.merged) # 78 - now that the transcript IDs are rownames 
+# (2) edit the column names (sampe IDs) to the shortened form (i.e. Ai1, Ai2, etc.)
+# this will match out exp_metadata file to merge later
+names(raw_counts.merged) <- sapply(strsplit(names(raw_counts.merged), "_"), '[', 1) # split the column names by "_" delimiter  and call the first field SG##
+colnames(raw_counts.merged) # you see we have pairs for each - as these are paired-end reads!
+# (3) sum together all rows grouped by common column name
+# basically this adds together the paired-end data within sample
+raw_counts.merged <- t(rowsum(t(raw_counts.merged), 
+                                  group = colnames(raw_counts.merged), 
+                                  na.rm = TRUE)) # merge all unique columns and sum counts 
+ncol(raw_counts.merged) # 39 total samples
+
+# now call as a matrix
+raw_counts.matrix <-as.matrix(raw_counts.merged, 
+                              row.names="transcript_id") # call dataframe as matrix
+ncol(raw_counts.matrix) # 39 samples
+nrow(raw_counts.matrix) # 26595 total genes
+
+raw_counts.as.table <- data.frame(transcript_id = row.names(raw_counts.merged), raw_counts.merged) # add back the rownames 'transcript_ID'
+rownames(raw_counts.as.table) <- NULL # ommit the rownames
+ncol(raw_counts.as.table) # 39 counting the transcript.ID that we want to keep! 
+
+# READ COUNTS 
+dim(raw_counts.matrix) # 26595 total genes 39 samples
+sum(raw_counts.matrix) # 82615647 total read counts 
+
+gene_sums <- data.frame(rowSums(raw_counts.matrix))  # all gene.IDs and the sum of unique reads
+
+transcript_sums <- colSums(raw_counts.matrix) # sum of reads for each sample
+mean(transcript_sums) # 2118350 == average raw read counts for each sample
+sd(transcript_sums) # 440350.8 == standard deviation of raw read counts per sample
+
+gene_sums_gtr0 <- rowSums(raw_counts.matrix) > 0 # all gene.IDs with at least one unique read
+sum(gene_sums_gtr0 == TRUE) # 7005 total genes with unique transcript reads 
+( sum(gene_sums_gtr0 == TRUE) / (dim(raw_counts.matrix)[1]) ) *100 # 26.33954 % of genes have a unique mapped read
+```
+
+
+
+
+
+# Filter read counts 
+About: usiing edgeR function 'cpm' here to filter by counts bper million 
+
+Below I am making two cut-offs (thresholds) as (1) lenient low-end (2) strict/more conservative 
+(1) < 3 counts per million in at least 50% of samples 
+(2) < 10 counts per million in at least 50% of samples 
+
+Resulting umber of genes summarized in knitr table and output to TagSeq\Analysis\Data\filtered_counts'
+
+### For loop in 1 CPM increments to optimize the filtering threshold 
+Output is a grid filture for  days 0, 7, 14, 21 
+```{r CPM LOOP - Rarefaction-like appraoch to read filtering threshold}
+# For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+df_total <- data.frame() # start dataframe 
+loop.table <- data.frame(matrix(nrow = 1, ncol = 3)) # create dataframe to save cumunalitively during for loop
+colnames(loop.table)<-c('CPM_threshold', 
+                        'total_genes', 
+                        'mean_reads_per_gene') # names for comuns in the for loop
+CPM_loop <- c(0:50)
+CPM_loop <- data.frame(CPM_loop)
+
+for (i in 1:nrow(CPM_loop)) {
+  
+  var <- CPM_loop[i,1]
+  cts.merged     <- raw_counts.as.table[,c(1,na.omit(match(smpl_ref$SampleName_readmatrix, colnames(raw_counts.as.table))))]
+  cts.merged     <- data.frame(cts.merged[,-1], row.names=cts.merged[,1])
+  cts.matrix     <- as.matrix(cts.merged, row.names="transcript_id")
+  CPM            <- cpm(cts.matrix) # Obtain CPMs (counts oer million) using egdeR
+  thresh         <- CPM > var # Which values in myCPM are greater than 3?
+  keep           <- rowSums(thresh) >= (ncol(thresh)/2) # we would like to keep genes that have at least 50% TRUES in each row of thresh
+  rowSums(head(thresh)) # Summary of how many TRUEs there are in each row
+  table(rowSums(thresh)) # 6880 genes with TRUE in all 36 samples 
+  cts.matrix.LOOPED <- cts.matrix[keep,]
+  
+  total_genes           <- nrow(cts.matrix.LOOPED)
+  mean_reads_per_gene   <- mean( (rowSums(cts.matrix.LOOPED) / ncol(cts.matrix.LOOPED) ) ) 
+  
+  loop.table$CPM_threshold         <- var
+  loop.table$total_genes           <- total_genes
+  loop.table$mean_reads_per_gene   <- mean_reads_per_gene
+    
+  df <- data.frame(loop.table) # name dataframe for this singl e row
+  df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
+  #print(df_total) # print to monitor progress
+}
+#df_total # view the loop data
+Filterfig <- df_total %>% 
+  tidyr::gather(key = "variable", value = "measurement",
+       total_genes, mean_reads_per_gene) %>% 
+  # Start with a usual ggplot2 call:
+  ggplot(aes(x = CPM_threshold)) +
+  geom_line(aes(y = measurement)) +
+  geom_vline(xintercept = c(3,5,10), color = 'red') +
+  facet_wrap(. ~ variable, scales="free")
+
+
+
+png("../Data/Filtered_Counts/CPM_Read_Filter_Curve.png", 2000, 1000, pointsize=20)
+print(Filterfig)
+dev.off()
+
+```

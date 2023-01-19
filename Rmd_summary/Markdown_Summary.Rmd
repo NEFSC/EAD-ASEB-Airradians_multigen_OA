@@ -7,7 +7,7 @@ output: html_document
 
   * Last Updated: January, 2023
 
-```{r load libraries, echo=FALSE, include=FALSE}
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # LOAD LIBRARIES 
 library(ggplot2)
 library(tidyverse)
@@ -109,7 +109,7 @@ Live links to summaries of each life state / generation within the document:
 ----
 
 <a id="Fig_1"></a>
-```{r Figure 1, echo=FALSE, fig.cap="**Figure 1: Experimental design.** This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure.", out.width = '100%'}
+```{r Figure 1, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure 1: Experimental design.** This figure has been adapted from our original proposal to reflect our current status and plans for FY23 and our final year of this project. Blue shading indicates stages that have been successfully completed and identifies where we are now in the three year plan. In the F2 growout, we used extra spat from the pH = 8 larval exposure to initiate a post settlement pH = 7 cohort. This is an alternative since we were not able to produce a pH=7 cohort that survived the larval exposure.", out.width = '80%'}
 knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/Overivew.jpg")
 ```
 
@@ -131,49 +131,178 @@ knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians
 
 ---
 
-### F1 Larval development
 
 
-## Exposure to treatments
+#### Exposure to treatments
 
   After approximately 4 hours post fertilization, embryos from all batches were pooled and divided among 3 OA treatments (~400, 800, and 1600 µatm) with 5 replicates per treatment. Exposures were conducted in 10L filtered seawater at 27 psu and 23°C. Details of the chemistry for each OA treatment are detailed in Table 1. 
 
+**Table 1: Seawater chemistry** Details for each OA treatment. Means are in bold and standard error in parenthesis.  
+
+|Treatment|pCO2|pH|ΩAr|
+|---|---|---|---|
+|High OA |1788 | 7.41 | 0.6  |
+|Mid OA  |829  | 7.72 | 1.21 |
+|Low OA  |474  | 7.93 | 1.85 |
+
+<a id="Fig_1_SW_chemistry"></a>
+```{r Fig_1_SW_chemistry, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure Figure 1 seawater chemistry.** Average pCO2, temperature, Salinity, and aragonite saturation state", out.width = '100%'}
+
+carbchem.MASTER <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/master/CarbChem_master.csv", header = TRUE)
+
+
+# change to long format to properly facet
+carbchem.MASTER_long <- carbchem.MASTER %>% 
+  dplyr::select(!c(Treatment,Replicate)) %>% 
+  melt(id.vars=c('Date', 'Type', 'pCO2_treatment'))
+
+carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
+
+# aquire means by group for mean SE plotting by Date and treamtent
+carbchem.MASTER_MEANS <- carbchem.MASTER_long %>% # calc means and standard error
+   na.omit() %>% 
+   dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
+   dplyr::summarise(mean = mean(value),
+                    sd   = sd(value),
+                    se   = sd/(sqrt(n())) )
+
+# plot em!
+
+pd <- position_dodge(0.1) # adjust the jitter for the different treatments   
+
+All <- carbchem.MASTER_MEANS %>% 
+  #dplyr::filter(Type %in% 'Adults') %>% 
+  dplyr::filter(variable %in% (c('pCO2_out_matm',
+                                 'Salinity',
+                                 'Temperature_bucket_C',
+                                 'pH_out',
+                                 'War_out_DIC_pH'))) %>% 
+  dplyr::mutate(Date = as.character(as.Date(Date, format = '%m/%d/%Y')))
+
+#dates <- unique(sort(All$Date))
+All$Date <- factor(All$Date, levels = unique(sort(All$Date)))
+
+# day   <- sub('([^/])*.','',(sub('/([^/]*)$','',carbchem.MASTER_MEANS$Date)))
+# month <- sub('/([^/].*)$','',carbchem.MASTER_MEANS$Date)
+# year  <- sub('.*([/^])','',carbchem.MASTER_MEANS$Date)
+
+
+
+
+plot <- ggplot(data= All, aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
+  geom_line(position=pd) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
+  scale_colour_manual(values = c("Low" = "green",
+                                 "Moderate"="orange",
+                                 "Severe" = "purple")) +
+  theme_classic() +
+  geom_point(position=pd, size=2) +
+  #scale_x_discrete(limits=All$Date, breaks=All$Date[seq(1,length(All$Date), by = 50)]) +
+  #theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
+  #theme(axis.text.x = NA) +
+  #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
+  facet_wrap(~variable, scales = "free") 
+
+print(plot)
+```
+
+
+
+### F1 Larval development
+
+
 
 <a id="Img_1"></a>
-```{r Image 1, echo=FALSE, fig.cap="**Figure 2: Larval pictures at age 2 days.** Larval pictures at age 2 days post fertilization showing distinct differences in shell development to D stage.", out.width = '100%'}
+```{r Image 1, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure 2: Larval pictures at age 2 days.** Larval pictures at age 2 days post fertilization showing distinct differences in shell development to D stage.", out.width = '100%'}
 knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/F1_Larvae.jpg")
 ```
 
 
 
 <a id="Fig_2"></a>
-```{r Survival plot Mean SE, echo=FALSE, fig.cap="**Figure 2: F1 Larval Survival.** Survival over time. Error bars represent standard error. Settlement was evident by age 10 days, therefore survival counts are likely to be underestimations as a result of very sticky scallops making it difficult to suspend. (last updated 9/20/22)", out.width = '100%'}
+```{r Survival plot Mean SE, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure 2: F1 Larval Survival.** Survival over time. Error bars represent standard error. Settlement was evident by age 10 days, therefore survival counts are likely to be underestimations as a result of very sticky scallops making it difficult to suspend. (last updated 9/20/22)", out.width = '80%'}
 
 # read csv file 
 F1_survival <- read.csv(file= "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Survival/F1/cumulative_raw/F1_survival_raw.csv", header = TRUE)
 #First make calculations for means and standard error
-LarvaeSurvival_Summ <- summarySE(F1_survival, 
+LarvaeSurvival_Summ <- Rmisc::summarySE(F1_survival, 
                                  measurevar="Survival", 
                                  groupvars=c("Day", "Treatment")) %>% 
     dplyr::mutate(pCO2 = case_when(
       Treatment == "Low"  ~ "500 μatm", 
       Treatment == "Moderate" ~ "800 μatm", 
-      Treatment == "High" ~ "1200 μatm")) # cahmber volumes on different dates with different instruments 
+      Treatment == "High" ~ "1200 μatm")) # chamber volumes on different dates with different instruments 
 
 LarvaeSurvival_Summ$pCO2 <- factor(LarvaeSurvival_Summ$pCO2, c("500 μatm","800 μatm","1200 μatm"))
 
 ## Use geom_line and geom_point to plot over time
-LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, aes(x=Day, y=Survival, color=pCO2)) +
+LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, 
+                             aes(x=Day, y=Survival, 
+                                 color=pCO2)) +
   geom_line( stat = "identity", size=1.0)+
   geom_point()+ 
   scale_color_manual(values=c("darkorange2","forestgreen", "purple"))+
   geom_errorbar(aes(ymin=Survival-se, ymax=Survival+se), width=.2,
                 position=position_dodge(.1))+
-  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  theme_classic() +  
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   scale_x_continuous(name ="Age (days)") +
   scale_y_continuous(name ="Survival (%)")+
   theme(text = element_text(size=15))
 print(LarvaeSurvival_Plot)
+
+
+```
+
+
+
+<a id="Fig_3"></a>
+```{r Larval length plot Mean SE, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure 3: F1 larval growth** Mean shell length overtime. Settlement was evident in the low and moderate OA treatments beginning at age 10 days.", out.width = '80%'}
+
+# Early length  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# read csv file 
+F1_length <- read.csv(file= "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Length/F1/cumulative_raw/F1_lengths_raw.csv", header = TRUE)
+# means for plotting
+F1_length_MEANS         <- summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Life_stage"))
+F1_length_MEANS_by_tank <- (summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Replicate")))
+
+#plot
+F1_length_MEANS <- F1_length_MEANS %>% 
+  dplyr::mutate(pCO2 = case_when(
+    pH == 8 ~ "500 μatm",  
+    pH == 7.5 ~ "800 μatm", 
+    pH == 7 ~ "1200 μatm"))
+F1_length_MEANS$pCO2 <- factor(F1_length_MEANS$pCO2, c("500 μatm","800 μatm","1200 μatm"))
+
+## Use geom_line and geom_point to plot over time
+F1_length_lineplot_LARVAE <- F1_length_MEANS %>% 
+                                    dplyr::filter(Life_stage %in% 'larvae') %>% 
+                                    mutate(Life_stage = factor(Life_stage, 
+                                                               levels = c("larvae", 
+                                                                          "spat", 
+                                                                          "juvenile", 
+                                                                          "adult"))) %>% # relevel for the facets to occur in correct order
+                                      ggplot(aes(x=Age_DPF, 
+                                                 y=(Length_um/1000), 
+                                                 color=pCO2)) +
+                                        geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
+                                        geom_point()+ 
+                                        scale_color_manual(values=c("forestgreen", "darkorange2","purple"))+
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000),
+                                                          ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme(panel.grid.major = element_blank(), 
+                                              panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid", "1200 uatm" = "solid"))  +
+                                        theme(legend.position="none") +
+                                        theme_classic() +
+                                        ggtitle("F1 length") +
+                                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                                        facet_wrap(~Life_stage, scales = 'free')
+F1_length_lineplot_LARVAE
+
 
 ```
 
@@ -181,28 +310,7 @@ print(LarvaeSurvival_Plot)
 
 
 
-Figure 4.1: F1 larval growth 
-Mean shell length overtime. Settlement was evident in the low and moderate OA treatments beginning at age 10 days. 
 
-
-Table 1: Details of the water chemistry for each OA treatment. Means are in bold and standard error in parenthesis.  
-
-Treatment
-pCO2
-pH
-ΩAr
-High OA
-1788
-7.41
-0.6
-Mid OA
-829
-7.72
-1.21
-Low OA
-474
-7.93
-1.85
 
 
 
@@ -215,39 +323,29 @@ Low OA
 
 ### Grow Out (F1s)
 
-At age 18 days, bay scallops were moved to the flow through system on downwellers with 200 µm mesh (Fig. 5). OA conditions were maintained in the flow through system by bubbling CO2 into columns prior to entering the exposure tanks and directly into the exposure tanks. We kept initial stocking densities high to assure we had enough for future spawning, but culled regularly to keep biomass from outgrowing the downweller. 
+* At age 18 days, bay scallops were moved to the flow through system on downwellers with 200 µm mesh (Fig. 5). OA conditions were maintained in the flow through system by bubbling CO2 into columns prior to entering the exposure tanks and directly into the exposure tanks. 
 
-There were only enough spat produced in the moderate and low OA treatments to run the full replicated experiment. There were a total of 16 spat from the high OA treatment that were maintained in the system to test our ability to maintain all three treatments and collected some pilot data to inform experiments with the F2 jveniles. 
+* We kept initial stocking densities high to assure we had enough for future spawning, but culled regularly to keep biomass from outgrowing the downweller. 
+
+* There were only enough spat produced in the **moderate and low OA treatments** to run the full replicated experiment. There were a total of 16 spat from the high OA treatment that were maintained in the system to test our ability to maintain all three treatments and collected some pilot data to inform experiments with the F2 juveniles. 
 
 
-Figure 5: Experimental flow through set up
-Experimental set up with downwellers and columns controlling pCO2 under flow through conditions. Although this does not directly represent the actual pH, we refer to the treatments as pH = 7, 7.5, and 8 for simplicity. 
 
-Temperature varied overtime, but was controlled to keep from getting too warm in the summer or too cold in the winter (Fig. 6).  In spring 2022, F1 bay scallops were held at 16°C to condition for spawning and prevent uncontrolled spawning in the experimental system. While we had target pCO2 concentrations, there was some seasonal variation (Fig. 7) due to extreme variation in the incoming harbor water and therefore is a caveat of long term flow through experimental conditions.  
+<a id="Img_2"></a>
+```{r Image 2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Image 2: Experimental flow through set up** Experimental set up with downwellers and columns controlling pCO2 under flow through conditions. Although this does not directly represent the actual pH, we refer to the treatments as pH = 7, 7.5, and 8 for simplicity.", out.width = '80%'}
+knitr::include_graphics("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/Rmd_summary/images/Flow_through_setup.jpg")
+```
+
+ 
+
+* **Temperature varied overtime**, but was controlled to keep from getting too warm in the summer or too cold in the winter (Fig. 6).  
+
+* **In spring 2022**, F1 bay scallops were held at 16°C to condition for spawning and prevent uncontrolled spawning in the experimental system. While we had target pCO2 concentrations, there was some seasonal variation (Fig. 7) due to extreme variation in the incoming harbor water and therefore is a caveat of long term flow through experimental conditions.  
 
 Figure 6: Changes in temperature overtime for the F1 grow out. 
 
 
 Figure 7: pCO2 over time during F1 growout
-
-Table 2: Average Water Chemistry during the F2 grow out 
-(last updated 10/18/22). Using DIC and pH for the calculations.
-Treatment
-pCO2
-pH
-ΩAr
-High OA
-1177
-7.6
-0.8
-Mid OA
-751
-7.8
-1.1
-Low OA
-543
-7.9
-1.4
 
 
 
@@ -262,86 +360,549 @@ Low OA
 
 ### F1 Physiology 
 
-Survival counts and shell length measurement were completed monthly and large batches of bay scallops were opportunistically frozen for dry weight measurements as cullings were required to prevent overcrowding. Respiration Rate and Clearance Rate were measured approximately monthly during the early spat stages. When the bay scallops were large enough to move into the big respiration chambers (out of the microrespiration system, 1.7mL), Excretion Rates were also measured. Once bay scallops were large enough (> 20mm) the biodeposition method was used to measure feeding metrics and Clearance Rate.  Physiological parameters were not measured during the overwintering period when metabolic activity is expected to be low, but resumed during the temperature ramp up in the late winter / early spring. 
+* Survival counts and shell length measurement were completed monthly and large batches of bay scallops were opportunistically frozen for dry weight measurements as cullings were required to prevent overcrowding. 
+
+* **Respiration Rate and Clearance Rate** were measured approximately monthly during the **early spat stages**. 
+
+* When the bay scallops were **large enough to move into the large respiration chambers** (out of the microrespiration system, 1.7mL), **Excretion Rates were also measured.** 
+
+* Once bay scallops were large enough **(> 20mm) the biodeposition method was used** to measure feeding metrics and clearance Rate.  
+
+* Physiological parameters were **not measured during the overwintering period** when metabolic activity is expected to be low, but resumed during the temperature ramp up in the late winter / early spring. 
+
+
+**Table 3 Log of physiology time points for F1 bay scallop grow out. **  We are currently using length and weight data collected over the lifespan (September 2021-September 2022) to determine the best method for standardizing physiological rates to accomplish the most appropriate approach to metabolic scaling for our data. Once this is complete, we will include figures for these measurements that will be used to guide data collection during the F2 grow out. 
+
+|Date|Age (days)|Temp|Platform for Respiration|Excretion Rate|Feeding|
+|---|---|---|---|---| ---|
+|Sept. 14, 2021|50|21°C|1.7mL Loligo chambers (8 channels)|no|Clearance rate (static 20mL vials)|
+|Sept. 30 2021|66|20°C|Microrespiration 1.7mL SDR chambers 48 wells| no|Clearance rate (static 20mL vials)|
+|Oct. 26, 2021|92|20°C|~23 mL static (8 chambers) |YES|Clearance rate (static 20mL vials)|
+|Feb. 2, 2022|162|14°C|~68 mL static (8 chambers) |YES|Clearance rate|
+|Mar. 1, 2022|218|16°C|~68 mL static(8 chambers)|YES|Biodeposition|
+|Sept. 22, 2022|423|20°C|small closed recirculating (~200 mL)  small recirculating|YES|Biodeposition|
+|Oct. 26, 2022|457|12°C|small closed recirculating (~250 mL) large recirculating|YES|Biodeposition|
 
 
 
 
 
-Figure 8: F1 shell length spat - adult (high OA not included)
-Github links: master data file, script (figures, stats), 
-As mean +/- se for all data (note: not averaged by tank, but by treatment as whole). ‘Spat’ for all post-metamorphosis stage during initial move to downwellers and < 5mm shell length, ‘juvenile’ for all data >5 mm shell length and before ~8 months in age, ‘adult’ all time points thereafter. 
 
 
-Table 3 summarizes the physiology measured for each time point. We are currently using length and weight data collected over the lifespan (September 2021-September 2022) to determine the best method for standardizing physiological rates to accomplish the most appropriate approach to metabolic scaling for our data. Once this is complete, we will include figures for these measurements that will be used to guide data collection during the F2 grow out. 
+<a id="Fig_4"></a>
+```{r Spat and Adult length plot Mean SE, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure 8: F1 shell length spat - adult (high OA not included).** Mean +/- se for all data (note: not averaged by tank, but by treatment as whole). ‘Spat’ for all post-metamorphosis stage during initial move to downwellers and < 5mm shell length, ‘juvenile’ for all data >5 mm shell length and before ~8 months in age, ‘adult’ all time points thereafter.", out.width = '100%'}
 
+# Spat to adult length  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# read csv file 
+F1_length <- read.csv(file= "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Length/F1/cumulative_raw/F1_lengths_raw.csv", header = TRUE)
+# means for plotting
+F1_length_MEANS         <- summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Life_stage"))
+F1_length_MEANS_by_tank <- (summarySE(F1_length, measurevar="Length_um", groupvars=c("Age_DPF", "pH", "Replicate")))
 
+#plot
+F1_length_MEANS <- F1_length_MEANS %>% 
+  dplyr::mutate(pCO2 = case_when(
+    pH == 8 ~ "500 μatm",  
+    pH == 7.5 ~ "800 μatm", 
+    pH == 7 ~ "1200 μatm"))
+F1_length_MEANS$pCO2 <- factor(F1_length_MEANS$pCO2, c("500 μatm","800 μatm","1200 μatm"))
 
-Table 3: Log of physiology time points for F1 bay scallop grow out. 
-Date
-Age (days)
-Temp
-Platform for Respiration
-Excretion Rate
-Feeding
-Sept. 14, 2021
-50
-21°C
-1.7mL Loligo chambers
-(8 channels)
-no
-Clearance rate (static 20mL vials)
-Sept. 30 2021
-66
-20°C
-Microrespiration 
-1.7mL SDR chambers
-48 wells 
-no
-Clearance rate (static 20mL vials)
-Oct. 26, 2021
-92
-20°C
-~23 mL static
-(8 chambers)
-YES
-Clearance rate (static 20mL vials)
-Feb. 2, 2022
-162
-14°C
-~68 mL static
-(8 chambers)
-YES
-Clearance rate
-Mar. 1, 2022
-218
-16°C
-~68 mL static
-(8 chambers)
-YES
-Biodeposition
-Sept. 22, 2022
-423
-20°C
-small closed recirculating (~200 mL)  small recirculating
-YES
-Biodeposition
-Oct. 26, 2022
-457
-12°C
-small closed recirculating (~250 mL) large recirculating
-YES
-Biodeposition
+F1_length_lineplot_SPAT.ADULT <- F1_length_MEANS %>% 
+                                    dplyr::filter(!Life_stage %in% 'larvae') %>% 
+                                    mutate(Life_stage = factor(Life_stage, 
+                                                               levels = c("larvae", 
+                                                                          "spat", 
+                                                                          "juvenile", 
+                                                                          "adult"))) %>% # relevel for the facets to occur in correct order
+                                    dplyr::filter(!pH %in% 7) %>% 
+                                      ggplot(aes(x=Age_DPF, 
+                                                 y=(Length_um/1000), 
+                                                 color=pCO2)) +
+                                        geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
+                                        geom_point()+ 
+                                        scale_color_manual(values=c("forestgreen", "darkorange2"))+
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000),
+                                                          ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme(panel.grid.major = element_blank(), 
+                                              panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid"))  +
+                                        theme(legend.position="none") +
+                                        theme_classic() +
+                                        ggtitle("F1 length") +
+                                        # facet_wrap(~factor(Fed_Unfed, level = c('Low food', 'High food'))) 
+                                        facet_wrap(~Life_stage, scales = 'free')
 
-*Volume of chambers can be found here
+print(F1_length_lineplot_SPAT.ADULT)
+```
 
 
 
- 
-Figure 9: Respiration rates (whole dry weight corrected). 
-b factor plots for whole dry weight and umol O2 L-1 hr-1 respiration rate found here Updated for F1 Bay scallop data collected as of 20220922. Analyzed by timepoint with one-way anova, we have one sig effect of treatment on 9/30/21 - however above it appears there is an error in calculation, come back to this data  (b factor calculations for whole dry weight can be found here). 
-With 9/14/21 removed, there is a main effect of food and a main effect of OA on respiration. 
+### Respiration rates 
 
+* rates of oxygen consumption were calculated using LoLinR package following authors' suggested parameters 
+
+  - in all cases, each diagnostic plot was assessed for all rates to ensure the rate with the highest prevalence was represented in the dataset. Noise or incorrect data can occasionally interfere, in these cases the single datapoint was subset or alternative parameters called that better approximate the most prevalent rate
+
+* all rates were normalized/corrected with the following: 
+
+  - corrected for blank rates (mean of blanks within plate/replicate when applicable)
+  
+  - corrected to volume as (known vessel volume) - (biovolume). Biovolume was measured in most cases, however we used a calculated biovolume  from regression of length^3. This permits an accurate biovolume estimate to back-calculate values for individuals that were only measured for shell length (shell lengths measured in ALL cases)
+  
+  - bfactor normalized to shell length **<ADD MORE HERE REGARDLING THIS METHOD - BYRNE PAPER>**
+  
+  
+##### Respiration chamber volumes 
+
+We use **two** instruments to measure oxygen conumption rates 
+
+(1) **SDR Sensor plate**: a 24-well plate system for measuring oxygen consumption 
+from embryo to spat stage - we have the plates to accomodate up to a well size of 1700ul and tethering up to three plates (72 total reads!). O2 is measured from detection of flourescent dyed-stickers adhered beneath each well. We measure as a static system in water-tight continaers submerged in a water bath - however there exists routes to agitate dishes while controlling temperature (i.e. shaker in an incubator for example)  
+
+(2) **LoLigo 8-channel system**: when larvae/spat outgrow the SDR sensor dish, we move to a dipping probe system. Water is agitated with either magnetic stir bars (in small vessel system) or via an enclosed pump system (for large vessels). We have several sizes to accomodate species development spat - adult with unique vessel volumes listed below:
+
+| Chamber_ID |	Chamber_type |	Chamber_volume |	Instrument |
+|--- |--- | ---|--- |
+|1|	x_small|	23.1|	loligo_8channel|
+|2|	x_small|	23.05	|loligo_8channel|
+|3|	x_small	|23.31|	loligo_8channel|
+|4|	x_small	|22.55	|loligo_8channel|
+|5|	x_small	|23.18	|loligo_8channel|
+|6|	x_small	|23.24	|loligo_8channel|
+|7|	x_small	|22.63|	loligo_8channel|
+|8|	x_small	|22.95|	loligo_8channel|
+|--- |--- | ---|--- |
+|1|	small	|68.55|	loligo_8channel|
+|2|	small	|68.856|	loligo_8channel|
+|3|	small	|68.644|	loligo_8channel|
+|4|	small	|68.955|	loligo_8channel|
+|5|	small	|68.573|	loligo_8channel|
+|6|	small	|68.019|	loligo_8channel|
+|7|	small	|68.546|	loligo_8channel|
+|8|	small	|68.533|	loligo_8channel|
+|--- |--- | ---|--- |
+|1|	medium	|196.6|	loligo_8channel|
+|2|	medium	|200.6|	loligo_8channel|
+|3|	medium	|201.4|	loligo_8channel|
+|4|	medium	|200|	loligo_8channel|
+|5|	medium	|199.2|	loligo_8channel|
+|6|	medium|	200.4|	loligo_8channel|
+|7|	medium|	201.3|	loligo_8channel|
+|8|	medium|	201.7|	loligo_8channel|
+|--- |--- | ---|--- |
+|1|	large	|254.7	|loligo_8channel|
+|2|	large	|257.88|	loligo_8channel|
+|3|	large	|246.63|	loligo_8channel|
+|4|	large	|252.35|	loligo_8channel|
+|5|	large	|242.31|	loligo_8channel|
+|6|	large	|247.07|	loligo_8channel|
+|7|	large	|241.11|	loligo_8channel|
+|8|	large	|243.59|	loligo_8channel|
+
+  
+
+
+
+
+#### Respiration: Biovolume calculated from shell length 
+
+* verify linear relationship between measured biovolume and shell length^3
+
+* obtain a 'calculated' vessel volume 
+
+```{r, biovol vesselvol, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure XX: biovolume calculated**. In cases when only shell lnegth was measured, it was required to calculate a biovolume representative of those individuals and correct for the volume of the chamber(s). The strong linear relationship supported using the calculated biovolume for all data for all time points estimated with the same standard", out.width = '100%'}
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_formatted_F1s <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
+
+BiovolMEAS_vs_BiovolCALC <- RR_formatted_F1s %>% 
+  ggplot(aes(x = Biovolume_g_in_sw, 
+             y = Biovol_length3)) + 
+  geom_point()+ 
+  geom_smooth() + 
+  theme_classic() + 
+  ggtitle("Biovolume: measured VS. calculated")
+
+VesselvolMEAS_vs_VesselvolCALC <- RR_formatted_F1s %>% 
+  ggplot(aes(x = measured_volume, 
+             y = calculated_volume)) + 
+  geom_point()+ 
+  geom_smooth() + 
+  theme_classic() + 
+  ggtitle("Vessel volume: measured VS. calculated")
+
+ggarrange(BiovolMEAS_vs_BiovolCALC,VesselvolMEAS_vs_VesselvolCALC, nrow = 1, ncol = 2)
+
+```
+
+
+#### Respiration: Raw(ish) rates
+
+* corrected for blank rates and the calculated vessel volume
+
+```{r, raw umol hr, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure XX: F1 raw respiration data (umol O2 hr)**. Data is displayed parsed by  developmental stages to facilitate viewing these data.", out.width = '100%'}
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_formatted_F1s <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
+
+F1s.BOXPLOT <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_hr_biovolcalc, #resp_umol_hr, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         #ylim(0, 0.2) +
+         ggtitle("Raw resp") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single"))
+
+#F1s.BOXPLOT
+
+F1s.BOXPLOT_facetted <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_hr_biovolcalc, #resp_umol_hr, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         #ylim(0, 0.2) +
+         ggtitle("Raw resp") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free")
+
+#F1s.BOXPLOT_facetted
+
+ggarrange(F1s.BOXPLOT_facetted,F1s.BOXPLOT, nrow = 2, ncol = 1)
+
+```
+
+#### Metabolic scaling
+
+* determine the b factor the normalize all data.
+
+* **NOTE**: since we have shell lengths for all individuals (as opposed to tissue dry weights) our team decided upon a b factor based on MO2 and shell length to normalize our data across all life stages
+
+* b factor for all F1 data (based on shell length!) is **2.18**
+
+```{r, b factor shell length, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure XX: F1 b factor plots** computed from the regression of log(shell length) and log(MO2).", out.width = '100%'}
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_master <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
+              filter(!Food %in% 'unfed') %>% # omit low food trial data
+              # filter out the F2 measurements
+              filter(!Date %in% c('8/30/2022', '11/16/2022')) %>% # an F2 measurement
+              filter(!(Date == '9/22/2022' & filetype =='SDR_data')) %>% 
+  # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
+              dplyr::mutate(Age = case_when(Date == '9/14/2021'  ~ 50,
+                                            Date == '9/30/2021'  ~ 66,
+                                            Date == '10/26/2021'  ~ 92, 
+                                            Date == '2/2/2022' ~ 191,
+                                            Date == '3/1/2022'  ~ 218,
+                                            Date == '9/22/2022'  ~ 423,
+                                            Date == '10/26/2022' ~ 457)) %>% 
+              dplyr::mutate(Age = as.factor(Age)) %>% 
+              dplyr::arrange(Age)
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH LENGTH AND MO2 ::::::::::::::::::::::::::::::
+RR_master_OM               <- RR_master %>% filter(!is.na(resp_umol_hr_biovolcalc)) %>%  filter(!is.na(Length_um)) 
+#nrow(RR_master_OM) # 133 (as opposed to only 77 in the previous cunks ommitting TDW NAs!!!!!!!!!!)
+RR_master_OM$log10_VO2     <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
+RR_master_OM$log10_Length  <- log10(as.numeric(RR_master_OM$Length_um)) # assign length value 
+#summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_Length)) # 1.8502 == b factor
+
+MO2_b.factorLENGTH_PLOT <- RR_master_OM %>% 
+                           #filter(!resp_umol_L_hr < 0.08) %>% 
+                           ggplot(aes(x=log10_Length, y=log10_VO2)) +
+                              geom_point() +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_Length; in mm") +
+                              scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                              theme_classic() +
+                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                              ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
+                                      (b.factor * log10_Length)") +
+                              geom_smooth(method = lm, color = 'red') +
+                              ggpmisc::stat_poly_eq(parse=T, 
+                                                    aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                                                    label.x.npc = "left")
+#MO2_b.factorLENGTH_PLOT
+
+
+
+MO2_b.factorLENGTH_PLOT_facetted <- RR_master_OM %>% 
+                                     ggplot(aes(x=log10_Length, y=log10_VO2, color = pCO2)) +
+                                        geom_point() +
+                                        scale_color_manual(values=c("blue","orange")) +
+                                        theme(panel.grid.major = element_blank(), 
+                                              panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="log10_Length; in mm") +
+                                        scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                                        theme_classic() +
+                                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                        ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
+                                                (b.factor * log10_Length)") +
+                                        geom_smooth(method = lm, color = 'red') +
+                                        ggpmisc::stat_poly_eq(parse=T, 
+                                                              aes(label = paste(..eq.label..,
+                                                                                ..rr.label.., sep = "~~~")),
+                                                              label.x.npc = "left") +
+                                        facet_wrap(~pCO2)
+# MO2_b.factorLENGTH_PLOT_facetted
+
+
+# OUTPUT PLOTS 
+print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+```
+
+
+#### Shell length normalized 
+
+```{r Length Normalized Respiration Rate, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="**Figure XX: F1 Respiration rate (shell length normalized)** Mean +/- se for all data employing the b factor 2.18 (as shown above).", out.width = '100%'}
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal 
+
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+RR_formatted_F1s <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_F1s_calc_master.csv")
+
+F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_hr_bFactorNormLength.MEAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp * [ ( meanLength / Length_meas)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
+
+F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_hr_bFactorNormLength.MEAN, 
+             fill = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Resp * [ (meanLength/Length_meas)^2.18 ]") +
+         theme(legend.position="none",
+               axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) # no facet
+
+# save
+print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN,F1s.BOXPLOT_Length_bfactor.MEAN.nofacet, nrow = 2, ncol = 1)) # print the model diagnostics 
+
+```
+
+
+### Clearance rates 
+
+* units as cells per mL per hour 
+
+* parsed by cell species and type as Chaetocerous, Tetraselmis (Ply), and seston
+
+* length b factor normalized **2.18** 
+
+
+```{r clearance rates}
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
+# LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+CR_master <- read.csv(file="Output/ClearanceRates/Calculated_Clearance_Master.csv", header=T)
+
+Master_914  <- CR_master  %>% dplyr::filter(Date %in% '20210914')
+Master_930  <- CR_master  %>% dplyr::filter(Date %in% '20210930')
+Master_1026 <- CR_master  %>% dplyr::filter(Date %in% '20211026')
+Master_0202 <- CR_master  %>% dplyr::filter(Date %in% '20220202')
+
+CR_914_boxplot <- Master_914 %>% 
+                              ggplot(aes(pCO2 , 
+                                         #CR_mL.hr.mmlength , 
+                                         #CR_mL.hr.length,
+                                         CR_mL.hr.bfactorlength,
+                                         fill = pCO2)) +
+                              theme(panel.grid=element_blank()) +
+                              geom_boxplot(size=0.2,
+                                           alpha=0.1, 
+                                           aes(fill=pCO2)) +
+                              scale_fill_manual(values=c("white", 
+                                                         "grey50")) +
+                              geom_point(shape = 21, 
+                                         size = 2, 
+                                         position = position_jitterdodge(jitter.width = 0.1)) +
+                              theme_classic() +
+                              theme(axis.text=element_text(size=12),
+                                    axis.title=element_text(size=10)) +
+                              stat_summary(fun.y=mean, 
+                                           geom="point", 
+                                           shape=18, 
+                                           size=4, 
+                                           color="black", 
+                                           fill="white") +
+                              ggtitle("Clearance rate, F1 Scallops 20210914") +
+                              facet_wrap(~type)
+
+CR_930_boxplot <- Master_930 %>% 
+                              ggplot(aes(pCO2 , 
+                                         #CR_mL.hr.mmlength , 
+                                         #CR_mL.hr.length,
+                                         CR_mL.hr.bfactorlength,
+                                         fill = pCO2)) +
+                              theme(panel.grid=element_blank()) +
+                              geom_boxplot(size=0.2,
+                                           alpha=0.1, 
+                                           aes(fill=pCO2)) +
+                              scale_fill_manual(values=c("white", 
+                                                         "grey50")) +
+                              geom_point(shape = 21, 
+                                         size = 2, 
+                                         position = position_jitterdodge(jitter.width = 0.1)) +
+                              theme_classic() +
+                              theme(axis.text=element_text(size=12),
+                                    axis.title=element_text(size=10)) +
+                              stat_summary(fun.y=mean, 
+                                           geom="point", 
+                                           shape=18, 
+                                           size=4, 
+                                           color="black", 
+                                           fill="white") +
+                              ggtitle("Clearance rate, F1 Scallops 20210930") +
+                              facet_wrap(~type)
+
+
+CR_1026_boxplot <- Master_1026 %>% 
+                              ggplot(aes(pCO2 , 
+                                         #CR_mL.hr.mmlength , 
+                                         #CR_mL.hr.length,
+                                         CR_mL.hr.bfactorlength,
+                                         fill = pCO2)) +
+                              theme(panel.grid=element_blank()) +
+                              geom_boxplot(size=0.2,
+                                           alpha=0.1, 
+                                           aes(fill=pCO2)) +
+                              scale_fill_manual(values=c("white", 
+                                                         "grey50")) +
+                              geom_point(shape = 21, 
+                                         size = 2, 
+                                         position = position_jitterdodge(jitter.width = 0.1)) +
+                              theme_classic() +
+                              theme(axis.text=element_text(size=12),
+                                    axis.title=element_text(size=10)) +
+                              stat_summary(fun.y=mean, 
+                                           geom="point", 
+                                           shape=18, 
+                                           size=4, 
+                                           color="black", 
+                                           fill="white") +
+                              ggtitle("Clearance rate, F1 Scallops 20211026") +
+                              facet_wrap(~type)
+
+
+CR_0202_boxplot <- Master_0202 %>% 
+                              ggplot(aes(pCO2 , 
+                                         #CR_mL.hr.mmlength , 
+                                         #CR_mL.hr.length,
+                                         CR_mL.hr.bfactorlength,
+                                         fill = pCO2)) +
+                              theme(panel.grid=element_blank()) +
+                              geom_boxplot(size=0.2,
+                                           alpha=0.1, 
+                                           aes(fill=pCO2)) +
+                              scale_fill_manual(values=c("white", 
+                                                         "grey50")) +
+                              geom_point(shape = 21, 
+                                         size = 2, 
+                                         position = position_jitterdodge(jitter.width = 0.1)) +
+                              theme_classic() +
+                              theme(axis.text=element_text(size=12),
+                                    axis.title=element_text(size=10)) +
+                              stat_summary(fun.y=mean, 
+                                           geom="point", 
+                                           shape=18, 
+                                           size=4, 
+                                           color="black", 
+                                           fill="white") +
+                              ggtitle("Clearance rate, F1 Scallops 20220202") +
+                              facet_wrap(~type)
+
+print(ggarrange(CR_914_boxplot,CR_930_boxplot,CR_1026_boxplot,CR_0202_boxplot))
+```
  Figure 10a:  Clearance rates. Updated as of 20221031. Note, these do not have a b factor correction
 
 Figure 10b:  Clearance rates of juveniles using static methods. 
@@ -384,6 +945,30 @@ Figure 13: Percent muscle over time.
 ## F2: First Generation
 
 ---
+
+
+
+**Table 2: Average Water Chemistry during the F2 grow out**
+(last updated 10/18/22). Using DIC and pH for the calculations.
+
+Treatment
+pCO2
+pH
+ΩAr
+High OA
+1177
+7.6
+0.8
+Mid OA
+751
+7.8
+1.1
+Low OA
+543
+7.9
+1.4
+
+
 
 ### Larval development (F2s)
 
