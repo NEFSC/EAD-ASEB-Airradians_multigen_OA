@@ -37,7 +37,6 @@ resp.table             <- data.frame(matrix(nrow = 1, ncol = 8)) # create datafr
 colnames(resp.table)   <- c('Date', 'Channel', 'start_min', 'end_min' , 'O2_start_mgL', 'O2_end_mgL','Rate_mgO2_hour', 'Filename') # names for comuns in the for loop
 
 # II. A bunch o' fors and if/elses - commented throughout!
-
 # outside 'i' loop - call each subfolder one at a time for analysis
 for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
@@ -155,15 +154,20 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
                                   resp.table$Channel              <- colnames(Resp_loop)[2] 
                                   resp.table$Filename             <- file.names.table[m,1]
                                   
+                                  if(sd_mgL < 0.1) { # for occasional like blanks that may have sudden drops/errors whereas the entire dataset is very stable (i.e. 9 22 2022 Ch8 run 1)
+                                    Resp_loop <- Resp_loop %>% filter(!mgL < (mean_mgL - (sd_mgL*1.5)) )
+                                  } else {
+                                    Resp_loop <- Resp_loop
+                                  }
                                   
-                                  if ( Resp_loop$mgL[nrow(Resp_loop)] < (sd_mgL+min(Resp_loop$mgL)) ) {
+                                  if ( Resp_loop$mgL[nrow(Resp_loop)] < (sd_mgL+min(Resp_loop$mgL)) ) { # if the last row of O2 is less than the standard dev of O2 + the min value - meaning the last point os the true O2 minimum
                                     minim_mgL <- Resp_loop$mgL[nrow(Resp_loop)]
                                     resp.table$start_min            <- Resp_loop$minutes[1]
                                     resp.table$end_min              <- Resp_loop$minutes[nrow(Resp_loop)]    # TRUE, call the last time point      
                                     resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
                                     resp.table$O2_end_mgL           <- minim_mgL 
                                     resp.table$Rate_mgO2_hour       <- (   (max(Resp_loop$mgL[1:20]) - minim_mgL)/ ((resp.table$end_min[[1]] - resp.table$start_min[[1]])/60)   )#( (Resp_loop$mgL[1]) - (Resp_loop$mgL[nrow(Resp_loop)]) ) / (abs(Resp_loop$minutes[nrow(Resp_loop)])/60)
-                                  } else {
+                                  } else { # else the last value is greater than the standard deviation + the minimum O2 value (meaning that the channel was reoxygenated )
                                     minim_mgL <-min(Resp_loop$mgL)
                                     resp.table$O2_start_mgL         <- max(Resp_loop$mgL[1:20])
                                     resp.table$start_min            <- min((Resp_loop %>% filter(mgL == resp.table$O2_start_mgL[[1]]))$minutes)
@@ -185,6 +189,12 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
 nrow(df_total) #408
 View(df_total)
 df_total <- as.data.frame(df_total)
+
+
+# obvious errors:
+
+### Channel 8 Loligo blank on 9/22/22
+
 
 # upload ref metadata for RR (treamtent, plate, run, replication, number, etc.)
 RefID <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Physiology/Respiration/Reference_resp_ID.csv", header = TRUE, sep = ',') %>% 
@@ -212,6 +222,7 @@ merged_withSize <- merge(merged_df_ref,Refsize) %>%
   dplyr::rename(Whole_Dry_weight_mg  = whole_Dry_weight) %>% 
   dplyr::mutate(volume = 
                 case_when(filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 1.7,# fed F1 foodxOA
+                          filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7, # small unfed F1s foodxOA 
                           
                           # filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7, # small unfed F1s foodxOA 
                           
@@ -276,6 +287,7 @@ blanks.raw   <- merged_df_ref %>%
   dplyr::filter(Chamber_tank %in% 'blank') %>% 
   dplyr::select(c('Date','pH','Fed_Unfed','Run', 'Rate_mgO2_hour','filetype')) # no plate for SDR
 
+View(blanks.raw)
 blanks_meansStartEnd <- as.data.frame(blanks.raw %>% 
                           dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
                           dplyr::filter(!Rate_mgO2_hour < 0) %>% # ommit blank calls that d/n represent oxygen consumption
@@ -289,13 +301,29 @@ blanks_meansStartEnd <- as.data.frame(blanks.raw %>%
 
 Start.end_RR_master <- merge(merged_withSize, blanks_meansStartEnd, by=c("Date", "pH", "Run","filetype")) %>% 
   dplyr::select(!('n')) %>% 
+  dplyr::mutate(Length_mm = Length_um / 1000) %>% 
   dplyr::mutate(Start.End_RR_mgO2hr_blankcor = as.numeric(Start.End_RR_mgO2hr - BLANK_Start.End_RR_mgO2hr)) %>% 
   dplyr::filter(!Start.End_RR_mgO2hr_blankcor < 0)  %>% # 33 rows were less than the blank
-  dplyr::mutate(vol_correct  = volume - Biovolume_g_in_sw) %>%  # vessel volume in mL
-  dplyr::mutate(Start.End_RR_ugO2hr =  (Start.End_RR_mgO2hr_blankcor*1000)*(vol_correct/1000)  ) %>% # per liter
-  dplyr::mutate(Start.End_RR_umolhr =  Start.End_RR_ugO2hr/32  )
+  dplyr::mutate(Biovol_length3 = (0.000198*(Length_mm^3)))  %>%  # calc biovolume based on length^3;  in Seember 2022 we decided to go with the length3 method for extrapolating biovolume for animals that do not have biovolume measurments 
+  # CALCULATE THE ACTUAL VOLUME (accounting for measured and calculated biovolumes)
+   # (1) 'calculated_volume' employing length^3 biovolume estimate to correct for volume displaces
+  dplyr::mutate(calculated_volume = (volume - Biovol_length3)) %>%  # calculated biovolume based on length^3
+  dplyr::mutate(Start.End_RR_ugO2hr_biovolcalc =  (Start.End_RR_mgO2hr_blankcor*1000)*(calculated_volume/1000)  ) %>% # per liter
+  dplyr::mutate(Start.End_RR_umolhr_biovolcalc =  Start.End_RR_ugO2hr_biovolcalc/32  ) %>% 
+
+  
+  # (2) 'measured_volume' employing ONLY the measured values - resulting in many NAs for data where we did not measure it
+  dplyr::mutate(measured_volume = (volume - Biovolume_g_in_sw)) %>%  # measured biovolume *not all data has a value for this!
+  dplyr::mutate(Start.End_RR_ugO2hr =  (Start.End_RR_mgO2hr_blankcor*1000)*(measured_volume/1000)  ) %>% # per liter
+  dplyr::mutate(Start.End_RR_umolhr =  Start.End_RR_ugO2hr/32  ) %>% 
+  dplyr::mutate(pCO2 = 
+                  case_when(pH == 8.0 ~ "500 μatm", 
+                            pH == 7.5 ~ "800 μatm"))
 
 
+  
+
+View(Start.end_RR_master)
 
 # merged_withSize
 write.csv(Start.end_RR_master, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_start_end_master.csv")

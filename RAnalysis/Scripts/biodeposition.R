@@ -31,7 +31,7 @@ biodep <- read.csv(file="Data/Physiology/Biodeposition/F1/cumulative_raw/Raw_mas
 # FR  == Filtration Rate: CR * TPM of the water
 # %RR == RR/FR (amount rejected/total amount filtered)
 # TIR == Total Ingestion Rate: FR - RR
-# OFR == Organic FIltration Rate: CR * POM of the water
+# OFR == Organic Filtration Rate: CR * POM of the water
 # ORI == Organic INgestion Rate: OFR-ORR
 # i   == Fraction of Organic Matter ingested: OIR/TIR (i.e. fraction of ingested material that was organic)
 # AR  == Assimilation Rate: OIR-OER (rate of POM filtration - rate of POM rejection - rate of POM egestion)
@@ -192,7 +192,7 @@ BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%
                               BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) # merge with the feces dataframe by the unique identifiers
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
-sp_COEF <- 0.822 # standardization coefficient - umol O2 consumption and tissue dry weight (review RespRates_analysis)
+sp_COEF <- 0.822 # standardization coefficient - calculated from CR data (Shannon Meseck calcualted in Dec 2022)
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -201,7 +201,7 @@ colnames(dates)   <- "Date"
 Biodep_Master     <- data.frame() # start dataframe 
 meanTDW <- mean(BioSamples_merged$animal_dry_weight_mg) # 0.8582318
 
-
+# NOTE: we are normalizing dry weights to 1.0 grams for IER, IRR, OER, and ORR (view below)
 for (i in 1:nrow(dates)) {
   date_loop       <- dates[i,]
   blanks_loop     <- WaterSamples_blank_AVE %>% filter(Date %in% date_loop) %>% arrange(treatment)# filter blanks, sort as 7.5 then 8 for treatment pH
@@ -209,13 +209,13 @@ for (i in 1:nrow(dates)) {
   data_loop       <- BioSamples_merged %>%
                         dplyr::filter(Date %in% date_loop) %>% 
                       # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
-                        dplyr::mutate(IER_correct = IER_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(IER_correct = IER_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
                       # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
-                        dplyr::mutate(IRR_correct = IRR_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(IRR_correct = IRR_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_mg
                       # OER == Organic Egestion Rate: POM of feces/feces collection time
-                        dplyr::mutate(OER_correct = OER_mghr*((meanTDW/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(OER_correct = OER_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
                       # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
-                        dplyr::mutate(ORR_correct = ORR_mghr*(0.1/animal_dry_weight_mg)^sp_COEF) %>% 
+                        dplyr::mutate(ORR_correct = ORR_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% 
                       # CR  == Cleanrance Rate: IFR/PIM of the water
                         dplyr::mutate(CR = case_when(
                            treatment == 7.5 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
