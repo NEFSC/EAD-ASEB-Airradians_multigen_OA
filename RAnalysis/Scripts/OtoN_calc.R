@@ -30,10 +30,7 @@ ER            <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv"
 # note: start end Oxygen consumption needs to be filtered for dates/measurments used for excretion
 unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026 - also ONLY Liligo measurements (large indivs) have excretion data (and biodep!)
 unique(RR_start.end$Date) # "10/26/2021" "10/26/2022" "11/16/2022" "2/2/2022"   "3/1/2022"   "9/14/2021"  "9/22/2022"  "9/30/2021"
-unique(RR_start.end_2$Date) 
 
-RR_start.end_2 %>% dplyr::filter(Date %in% '20221026')
-unique(RR_start.end_2$Date)
 
 RR_start.end_2 <- RR_start.end %>% 
                       dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>% # change format of the date to the format in Excretion_data
@@ -42,12 +39,12 @@ RR_start.end_2 <- RR_start.end %>%
                       dplyr::mutate(Replicate = gsub(".*_","",Chamber_tank)) %>% 
                       dplyr::select(-(c(filetype, Length_um, Dry_Tissue_weight_mg, Whole_Dry_weight_mg))) # do not need it anymore!
 
-nrow(RR_start.end_2)
-nrow(ER)
+nrow(RR_start.end_2) # 76
+nrow(ER) # 86
 
 merge(RR_start.end_2 , ER, by = c('Date','Chamber_tank','Number', 'Run', 'pH'))
-View(RR_start.end_2)
-View(ER)
+# View(RR_start.end_2)
+# View(ER)
 # Respiration plot (start end rates!) 
 
 RR_startend_boxplot <- RR_start.end_2 %>% 
@@ -117,7 +114,7 @@ ER_boxplot
 O_N_Master <- merge(RR_start.end_2,ER)  %>% 
   dplyr::mutate(ExcretionRate_umol_L_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
   dplyr::mutate(RR_umol_L_hr_TDWbfactor =  Start.End_RR_umolhr*( (meanTDW/(as.numeric(Dry_Tissue_weight)))^0.822) ) %>% 
-  dplyr::mutate(O_N =Start.End_RR_umolhr/ ExcretionRate_umol_mL_hr)
+  dplyr::mutate(O_N =(Start.End_RR_umolhr*2)/ ExcretionRate_umol_mL_hr)
   
 nrow(O_N_Master) # 75
 unique(O_N_Master$Date)

@@ -56,7 +56,8 @@ RR <- read.csv(file="Output/Respiration/RR_F1s_calc_master.csv", header=T) %>%
                   resp_blankStand,
                   volume,
                   Biovol_length3 ,
-                  actual_volume,
+                  measured_volume,
+                  calculated_volume,
                   resp_mg_hr,
                   resp_mg_hr_bFactorNormTDW.MEAN,
                   resp_mg_hr_bFactorNormLength.MEAN,
@@ -64,7 +65,8 @@ RR <- read.csv(file="Output/Respiration/RR_F1s_calc_master.csv", header=T) %>%
                   resp_umol_hr_bFactorNormTDW.MEAN,
                   resp_umol_hr_bFactorNormLength.MEAN)) %>% 
   dplyr::rename(RRvolume_vessel_mL = volume) %>% 
-  dplyr::rename(RRvolume_actual_mL = actual_volume) %>% 
+  dplyr::rename(RRvolume_measuredBiovol_mL = measured_volume) %>% 
+  dplyr::rename(RRvolume_calculatedBiovol_mL = calculated_volume) %>% 
   dplyr::rename(RR_mgLmin_rawblankcor = resp_blankStand) %>% 
   dplyr::rename(RR_mgLmin_blankMean = BLANK.mean_Lpc) %>% 
   dplyr::rename(RR_mgLmin_raw = Lpc)
@@ -130,7 +132,7 @@ nrow(ER_prepped) # 45
 Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "10/27/2022" - need to change to reflect RR_prepped (above)
   dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
   dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
-  dplyr::rename(Dry_Tissue_weight = animal_dry_weight_mg) %>% # change name to match RR
+  dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
   dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
   dplyr::rename(pH = treatment) %>% # rename to match 
   dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours, pCO2)) %>% 
@@ -138,7 +140,7 @@ Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "
                                  Date == "09/23/2022" ~ '09/22/2022',
                                  Date == "10/27/2022" ~ '10/26/2022'))
 Biodep_prepped$Chamber_tank <- paste(substring(Biodep$tank_ID  , 1, nchar(Biodep$tank_ID  )-1), Biodep_prepped$Replicate, sep = "_")
-nrow(Biodep_prepped) # 44 rows                        
+nrow(Biodep_prepped) # 43 rows                        
                                  
 
 
@@ -161,7 +163,7 @@ subset(RR_prepped, !(uniqueID %in% Biodep_prepped$uniqueID)) # three discrepanci
 # 3/1/2022 CH6 run 1 7.5_B - not present in the biodep file... we measured another 7.5_B whereas this was for only resp,  all is good! 
 # 3/1/2022 CH2 run 2 8E - not present in the biodep file... lets review the RR data 
 # 9/22/2022 CH7 8_D - there was no biodep *D on this data, animal was not used for biodep just respiration - all is good! 
-
+# 10/26/2022 CH6 7.5_F
 
 
 
@@ -214,7 +216,7 @@ list(colnames(MASTER_ALL)) # view list to call below for PCA
 
 
 
-MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(5,6,22:23,44,46:48,53)], # all numeric (phys + all modules) - PCA 1 = 0.4155  , PCA 2 0.2729   (cumulative 0.6883 )
+MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(5,6,26,31,61:62)], # all numeric (phys + all modules) - PCA 1 = 0.4155  , PCA 2 0.2729   (cumulative 0.6883 )
                       center = TRUE,
                       scale. = TRUE)
 summary(MASTER_ALL_1)

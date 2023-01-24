@@ -38,6 +38,7 @@ colnames(resp.table)   <- c('Date', 'Channel', 'start_min', 'end_min' , 'O2_star
 
 # II. A bunch o' fors and if/elses - commented throughout!
 # outside 'i' loop - call each subfolder one at a time for analysis
+
 for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
@@ -187,10 +188,26 @@ for(i in 1:nrow(folder.names.table)) { # for every subfolder 'i' :::::::::::::::
 } # end of outside for loop 'i' (for every subfolder 'i')
 #View(df_total)
 nrow(df_total) #408
-View(df_total)
+# View(df_total)
 df_total <- as.data.frame(df_total)
 
+216 ==212
 
+228 == 232
+
+# blank data errors
+# 1) 3/1/2022 run 3
+df_total[212,] # 3/1/2022 CH4 1.138935 run3_raw.txt -blank rate too high, change to CH8 (other blank) in same run!
+df_total[216,] # 0.1991301 
+df_total[216,7] = 0.1991301
+# 2) 3/1/2022 run 3
+df_total[228,] # 3/1/2022 CH4 1.138935 run3_raw.txt -blank rate too high, change to CH8 (other blank) in same run!
+df_total[232,] # 0.1991301 
+df_total[228,7] = 0.1991301
+
+0.1991301 == CH4 run 3 3/1/2022 
+
+CH4 run 1 and run3 == CH* run 1 and run 3 
 # obvious errors:
 
 ### Channel 8 Loligo blank on 9/22/22
@@ -287,7 +304,7 @@ blanks.raw   <- merged_df_ref %>%
   dplyr::filter(Chamber_tank %in% 'blank') %>% 
   dplyr::select(c('Date','pH','Fed_Unfed','Run', 'Rate_mgO2_hour','filetype')) # no plate for SDR
 
-View(blanks.raw)
+# View(blanks.raw)
 blanks_meansStartEnd <- as.data.frame(blanks.raw %>% 
                           dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
                           dplyr::filter(!Rate_mgO2_hour < 0) %>% # ommit blank calls that d/n represent oxygen consumption

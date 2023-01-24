@@ -59,7 +59,7 @@ biodep <- subset(biodep, !is.na(ash_filter_weight_mg)) # now the NA is gone,use 
 nrow(biodep) # 167 rows (removed just a single row - GOOD!)
 biodep$ash_filter_weight_mg <- as.numeric(biodep$ash_filter_weight_mg)
 
-# (2) pseudofeces below detection limit: we took notes of smaples that had low to no pseudofeces - these will need to be accounted for in our rejection rate calculations 
+# (2) pseudofeces below detection limit: we took notes of samples that had low to no pseudofeces - these will need to be accounted for in our rejection rate calculations 
 biodep %>% # use the subset biodep (with the single NA removed)
   dplyr::filter(sample_type %in% 'pseudofeces') %>% # call pseudofeces samples
   #dplyr::filter(sample_type %in% 'feces') %>% # call pseudofeces samples
@@ -69,7 +69,7 @@ biodep %>% # use the subset biodep (with the single NA removed)
   dplyr::arrange(TPM_mg) # new column on the  ash weight of the pseudofeces filters
 # lowest ash weights are  TPM = 0.301; POM = 0.195; PIM = 0.106
 
-
+# View(biodep2)
 ## Particulate matter (total and particulate inorganic/organic matter)
 biodep2 <- biodep  %>% 
 
@@ -132,7 +132,7 @@ WaterSamples_blank     <- biodep2 %>%
   dplyr::select(c('Date', 'sample_type', 'treatment', 'water_sample_time', 'TPM_mgL',  'PIM_mgL',  'POM_mgL', 'Perc_INORG', 'Perc_ORG')) %>% 
   dplyr::filter(sample_type %in% 'water_Blank') %>% 
   dplyr::group_by(Date,treatment)
- View(WaterSamples_blank)
+ # View(WaterSamples_blank)
 # slice(-1) # removes the first timestamp by group 
 # mean for these blanks here...
 WaterSamples_blank_AVE <- WaterSamples_blank %>% 
@@ -140,7 +140,7 @@ WaterSamples_blank_AVE <- WaterSamples_blank %>%
   dplyr::group_by(Date,treatment) %>%
   dplyr::mutate(TPM_mgL = as.numeric(TPM_mgL)) %>% 
   dplyr::summarise(across(everything(), list(mean)))
-WaterSamples_blank_AVE #view your blanks! 
+# WaterSamples_blank_AVE #view your blanks! 
 
 
 # 'water_Input' - call to correct in biodep2 below...
@@ -149,7 +149,7 @@ WaterSamples_input     <- biodep2 %>%
   dplyr::filter(sample_type %in% 'water_Input') %>% 
   dplyr::filter(!(Date %in% '20221027' & treatment %in% 7.5 & TPM_mgL > 5)) %>%  # omit the time points 9:30 - 10:10am showing abnormally high particulate  
   dplyr::group_by(Date,treatment)
-View(WaterSamples_input)
+# View(WaterSamples_input)
 # slice(-1) # removes the first timestamp by group 
 # mean for these blanks here...
 
@@ -158,7 +158,7 @@ WaterSamples_input_AVE <- WaterSamples_input %>%
   dplyr::group_by(Date,treatment) %>%
   dplyr::mutate(TPM_mgL = as.numeric(TPM_mgL)) %>% 
   dplyr::summarise(across(everything(), list(mean)))
-WaterSamples_input_AVE #view your blanks!
+# WaterSamples_input_AVE #view your blanks!
 
 
 water_samples_master <- rbind( (as.data.frame(WaterSamples_input_AVE %>% dplyr::mutate(Type = 'input'))),
@@ -189,17 +189,18 @@ BioSamples_feces   <- BioSamples %>%
                                         ER_mghr, OER_mghr, IER_mghr)) # select all unique values (Ejection rate constituents) to add
 
 BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%>% dplyr::select(!c(sample_type, ER_mghr, OER_mghr, IER_mghr))), # omit redundnat columns
-                              BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) # merge with the feces dataframe by the unique identifiers
+                              BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) %>% # merge with the feces dataframe by the unique identifiers
+                      dplyr::rename(animal_dry_weight_g = animal_dry_weight_mg) # its not mg its actually g!!!
 
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
-sp_COEF <- 0.822 # standardization coefficient - calculated from CR data (Shannon Meseck calcualted in Dec 2022)
+sp_COEF <- 0.78 # standardization coefficient - calculated from CR data (review 'bvalue_noncorrectedcr')
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # FOR LOOP PREP ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dates             <- as.data.frame(unique(biodep$Date)) 
 colnames(dates)   <- "Date"
 Biodep_Master     <- data.frame() # start dataframe 
-meanTDW <- mean(BioSamples_merged$animal_dry_weight_mg) # 0.8582318
+meanTDW <- mean(BioSamples_merged$animal_dry_weight_g) # 0.8582318
 
 # NOTE: we are normalizing dry weights to 1.0 grams for IER, IRR, OER, and ORR (view below)
 for (i in 1:nrow(dates)) {
@@ -209,13 +210,13 @@ for (i in 1:nrow(dates)) {
   data_loop       <- BioSamples_merged %>%
                         dplyr::filter(Date %in% date_loop) %>% 
                       # IER == Inorganic Egestion Rate: PIM of feces/feces collection time
-                        dplyr::mutate(IER_correct = IER_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(IER_correct = IER_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_g
                       # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
-                        dplyr::mutate(IRR_correct = IRR_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(IRR_correct = IRR_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_g
                       # OER == Organic Egestion Rate: POM of feces/feces collection time
-                        dplyr::mutate(OER_correct = OER_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_mg
+                        dplyr::mutate(OER_correct = OER_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_g
                       # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
-                        dplyr::mutate(ORR_correct = ORR_mghr*((1/animal_dry_weight_mg)^sp_COEF)) %>% 
+                        dplyr::mutate(ORR_correct = ORR_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% 
                       # CR  == Cleanrance Rate: IFR/PIM of the water
                         dplyr::mutate(CR = case_when(
                            treatment == 7.5 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
