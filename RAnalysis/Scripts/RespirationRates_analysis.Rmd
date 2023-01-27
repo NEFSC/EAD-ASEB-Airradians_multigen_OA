@@ -535,9 +535,9 @@ RR_formatted_F1smaster <- RR_formatted_F1s %>%
   
   # Length b factor
   dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = 
-                  (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
+                  (resp_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
   dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
-                    (resp_umol_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
+                    (resp_mg_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
   
   dplyr::select(c(Date,
                   pH,
