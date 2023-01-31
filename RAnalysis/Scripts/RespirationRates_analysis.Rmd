@@ -189,11 +189,11 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 
 ### summary: 
 
-* TDW b factor total = 0.822
+* TDW b factor total = 0.822 # 0.67 (with 10/26 as 60 mL chambers)
 
-* TDW b factor pCO2 high = 0.803
+* TDW b factor pCO2 high = 0.803 # 0.662 (with 10/26 as 60 mL chambers)
 
-* TDW b factor pCO2 low = 0.841 - two outliers removed here
+* TDW b factor pCO2 low = 0.841 - two outliers removed here # 0.678 (with 10/26 as 60 mL chambers)
 
 
 
@@ -378,11 +378,11 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 
 ### summary: 
 
-* Length b factor total = 2.18
+* Length b factor total = 2.18 # 2.13 (with 10/26 as 60 mL chambers)
 
-* Length b factor pCO2 high = 2.2
+* Length b factor pCO2 high = 2.2 # 2.13 (with 10/26 as 60 mL chambers)
 
-* Length b factor pCO2 low = 2.16
+* Length b factor pCO2 low = 2.16 # 2.14 (with 10/26 as 60 mL chambers)
 
 
 ## WHOLE DRY WEIGHT 
@@ -512,17 +512,17 @@ RR_formatted <- RR_master %>%
 RR_formatted_F1s <- RR_formatted %>% dplyr::filter(!Gen %in% 'F2s')  # call only F1s
 
 # call all bfactors (calc above!)
-bTDW = 0.822 # review the outlier-omitted b factor plot in previous chunk
-bLength = 2.18 # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.671 # review the outlier-omitted b factor plot in previous chunk
+bLength = 2.13 # review the outlier-omitted b factor plot in previous chunk
 
 
-medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.61 mm
+medianLength <- median(RR_formatted_F1s$Length_um/1000) # 12.07 mm
 
 # calc the mean for TDw and length
 RR_formatted_F1s$Dry_Tissue_weight <- as.numeric(RR_formatted_F1s$Dry_Tissue_weight)
 meanTDW   <- mean((RR_formatted_F1s %>% 
                      dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
-meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.89333 mm
+meanLength   <- mean(RR_formatted_F1s$Length_um/1000) # 16.57877 mm
 
 #View(RR_formatted_F1s$TDW_um)
 RR_formatted_F1smaster <- RR_formatted_F1s %>% 
@@ -740,7 +740,7 @@ dev.off()
  
 # LENGTH  ---------------------------------------------------------------------------- #
 
-F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>% 
+F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1smaster %>% 
   ggplot(aes(x = factor(Date), 
              y = resp_umol_hr_bFactorNormLength.MEAN, 
              fill = pCO2)) +
@@ -753,7 +753,7 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("Resp * [ ( meanLength / Length_meas)^2.18 ]") +
+         ggtitle("Resp * [ ( meanLength / Length_meas)^2.13 ]") +
          theme(legend.position="none",
                axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),
@@ -768,7 +768,7 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>%
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Gen_lifestage, scales = "free") #, scales = "free)
 
-F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s %>% 
+F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1smaster %>% 
   ggplot(aes(x = factor(Date), 
              y = resp_umol_hr_bFactorNormLength.MEAN, 
              fill = pCO2)) +
@@ -781,7 +781,7 @@ F1s.BOXPLOT_Length_bfactor.MEAN.nofacet <- RR_formatted_F1s %>%
                     size=1) +
          scale_fill_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("Resp * [ (meanLength/Length_meas)^2.18 ]") +
+         ggtitle("Resp * [ (meanLength/Length_meas)^2.13 ]") +
          theme(legend.position="none",
                axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),

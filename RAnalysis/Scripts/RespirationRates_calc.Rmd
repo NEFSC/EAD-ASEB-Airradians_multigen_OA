@@ -94,7 +94,6 @@ resp.data_merged                       <- merge(resp.data, resp.ref_length_merge
                                             dplyr::arrange(Date_formatted,Run, Channel, .by_group = TRUE)
 kable(head(resp.data_merged))
 # View(resp.data_merged)
-View(resp.data_merged)
 ```
 
 #### Visual diagnostic plots to correct poor data (3 data points to change..)
@@ -161,6 +160,7 @@ blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge
                   dplyr::filter(Chamber_tank  == 'blank') %>% 
                   #dplyr::filter(Lpc <0) %>% 
                   dplyr::filter(!Date == '9/30/2021' | !Lpc < -0.035) %>% #omits C6 RR_9.30.21_AM_Plate_1_Run_1.csv	8.0	blank - View the Lolin plot, looks noisy and a fast outlier from the others
+                  dplyr::filter(!Date ==  '9/30/2021'   | !pH == "7.5" | !Channel == "B2" | !Run == "1" | !Plate == "1" ) %>% # abnormal high rate for a blank - omission approximates the mean blank for the other treatment (bad data)
                   dplyr::filter(!Date == '8/30/2022' | !Lpc < -0.02) %>% # omit the few outlier blanks shiting rates higher than those with spat or larvae
                   dplyr::filter(!Date == '10/26/2021'  | !Channel == "CH8" | !Run == "2" ) %>% # omit a bad blank that contained a bad seal, noted on the respiration sampling day during the trial 
                   dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz','filetype')) %>% # add 'Rate_mgO2_hour'hen the start and end is completed
@@ -272,18 +272,27 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
               
                       # F1 DATA HERE :::::::::::
               
-                      filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 1.7,# fed F1 foodxOA
+                      filetype == "LoLigo_data" & Date %in% c('9/14/2021','9/30/2021') ~ 2.2,# fed F1 foodxOA
                       
                       filetype == "SDR_data" & Date %in% c('9/30/2021','10/26/2021')~ 1.7, # small unfed F1s foodxOA 
                       
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 23.1, # F1 data
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH2' ~ 23.05, 
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH4' ~ 22.55,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH5' ~ 23.18,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH6' ~ 23.24,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH7' ~ 22.63, 
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 22.95,
-                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 23.31,
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 23.1, # F1 data
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH2' ~ 23.05, 
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH4' ~ 22.55,
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH5' ~ 23.18,
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH6' ~ 23.24,
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH7' ~ 22.63, 
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 22.95,
+                      # filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 23.31,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH1' ~ 68.55323, # F1 data
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH2' ~ 68.85583, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH4' ~ 68.95481,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH5' ~ 68.57288,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH6' ~ 68.01878,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH7' ~ 68.54551, 
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 68.53297,
+                      filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
+     
                                                    
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, # F1 data
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
@@ -401,7 +410,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-# print(Resp.outliers) # 29 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+# print(Resp.outliers) # 21 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 
 
 ```
