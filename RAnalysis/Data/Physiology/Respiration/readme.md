@@ -21,6 +21,7 @@ README
 	- F2 Bay scallops
 		- larvae/spat: 20220420 & 20220422 (failed spawn!), 20220824, 20220829, 20220830, 20220922 (SDR csv files)
 		- juveniles: 20221116 (text files with loligo system)
+		- adults: 20230131, 20230223 (text files with loligo system - note the vessels were remeasured and unique on 20230223 due to scrambled tubing)
 
 #### 'Reference_resp_ID'
 
@@ -45,8 +46,6 @@ README
 - Run	        - number of the run, ordered by the time at which it was completed
 
 - Num_indivs	- the number of individuals measured per well/channel - should only be >1 for early larval/spat trials with the SDR 24-well plate
-
--
 
 - Filename      - the exact filename for the data - this will be called downstream in R as a unique identifier to merge information correctly
 

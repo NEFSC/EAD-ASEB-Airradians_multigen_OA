@@ -1,0 +1,17 @@
+Date & time of file creation	1/31/2023 10:16 AM																																																																
+Data file path	C:\Users\user\Documents\bsf201_31_23\bs_f2_01_31_23_8.0.txt																																																																
+Raw data file path	C:\Users\user\Documents\bsf201_31_23\bs_f2_01_31_23_8.0_raw.txt																																																																
+																																																																	
+																																																																	
+Parameter/Chamber	Wet weight [g]	Resp. volume [mL]	Fish length [cm]	Fractional error [%]	Chamber notes																																																												
+Chamber 1	2.8	65.2	10		8A 1																																																												
+Chamber 2	2.90000000001	65.09999999999			8b 2																																																												
+Chamber 3	2.2	65.80000000000001			8c 3																																																												
+Chamber 4	2	66			8d 4																																																												
+Chamber 5	2.5	65.5	10		8a  5																																																												
+Chamber 6	2.1	65.9			8b6																																																												
+Chamber 7	2.9	65.10000000000001			8c 7																																																												
+Chamber 8	1.1	66.9			8_blank																																																												
+																																																																	
+																																																																	
+Date &Time [DD-MM-YYYY/HH:MM:SS]	Time [sec]	Loop	Phase time [s]	CH 1 MO2 [mgO2/kg/hr]	CH 1 slope [%air sat./hr]	CH 1 R^2	CH 1 max O2 [%air sat.]	CH 1 min O2 [%air sat.]	CH 1 avg O2 [%air sat.]	CH 1 avg temp [°C]	CH 2 MO2 [mgO2/kg/hr]	CH 2 slope [%air sat./hr]	CH 2 R^2	CH 2 max O2 [%air sat.]	CH 2 min O2 [%air sat.]	CH 2 avg O2 [%air sat.]	CH 2 avg temp [°C]	CH 3 MO2 [mgO2/kg/hr]	CH 3 slope [%air sat./hr]	CH 3 R^2	CH 3 max O2 [%air sat.]	CH 3 min O2 [%air sat.]	CH 3 avg O2 [%air sat.]	CH 3 avg temp [°C]	CH 4 MO2 [mgO2/kg/hr]	CH 4 slope [%air sat./hr]	CH 4 R^2	CH 4 max O2 [%air sat.]	CH 4 min O2 [%air sat.]	CH 4 avg O2 [%air sat.]	CH 4 avg temp [°C]	CH 5 MO2 [mgO2/kg/hr]	CH 5 slope [%air sat./hr]	CH 5 R^2	CH 5 max O2 [%air sat.]	CH 5 min O2 [%air sat.]	CH 5 avg O2 [%air sat.]	CH 5 avg temp [°C]	CH 6 MO2 [mgO2/kg/hr]	CH 6 slope [%air sat./hr]	CH 6 R^2	CH 6 max O2 [%air sat.]	CH 6 min O2 [%air sat.]	CH 6 avg O2 [%air sat.]	CH 6 avg temp [°C]	CH 7 MO2 [mgO2/kg/hr]	CH 7 slope [%air sat./hr]	CH 7 R^2	CH 7 max O2 [%air sat.]	CH 7 min O2 [%air sat.]	CH 7 avg O2 [%air sat.]	CH 7 avg temp [°C]	CH 8 MO2 [mgO2/kg/hr]	CH 8 slope [%air sat./hr]	CH 8 R^2	CH 8 max O2 [%air sat.]	CH 8 min O2 [%air sat.]	CH 8 avg O2 [%air sat.]	CH 8 avg temp [°C]	AMB temp N°1 avg temp [°C]	AMB temp N°1 setpoint [°C]	AMB temp N°1 hysteresis [°C]	AMB temp N°2 avg temp [°C]	AMB temp N°2 setpoint [°C]	AMB temp N°2 hysteresis [°C]

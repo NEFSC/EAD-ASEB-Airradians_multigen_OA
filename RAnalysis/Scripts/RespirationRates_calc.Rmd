@@ -112,6 +112,9 @@ kable(head(resp.data_merged))
 - solution = we reran this at the end of the LoLin script  for 0-20 minutes and got an Lpc  -0.0296, insert this 
 
 ```{r IMPORTANT correct poor data, echo=TRUE, message = FALSE, warning = FALSE}
+
+# NOTE: the F2s have a late start in resp value in 2/23/2023 run 2 channel 6 - scllop did not open until late in trial and ended same time as others - we discussed omission
+
 resp.data_merged[47,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
 resp.data_merged[90,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
 resp.data_merged[84,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this

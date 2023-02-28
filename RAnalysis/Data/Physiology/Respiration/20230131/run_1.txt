@@ -1,0 +1,20 @@
+Date & time of file creation	1/31/2023 9:11 AM																																																																
+Data file path	C:\Users\user\Documents\bsf201_31_23\bs_f2_01_31_23_7.0_run1.txt																																																																
+Raw data file path	C:\Users\user\Documents\bsf201_31_23\bs_f2_01_31_23_7.0_run1_raw.txt																																																																
+																																																																	
+																																																																	
+Parameter/Chamber	Wet weight [g]	Resp. volume [mL]	Fish length [cm]	Fractional error [%]	Chamber notes																																																												
+Chamber 1	2.1	65.9	10		7A 1																																																												
+Chamber 2	3.100000000001	64.899999999999			7b 2																																																												
+Chamber 3	3.5	64.5			7c 3																																																												
+Chamber 4	3.3	64.7			7d 4																																																												
+Chamber 5	2	66	10		7a  5																																																												
+Chamber 6	2.4	65.60000000000001			7b6																																																												
+Chamber 7	1.2	66.8			7c 7																																																												
+Chamber 8	1.1	66.9			7_blank																																																												
+																																																																	
+																																																																	
+Date &Time [DD-MM-YYYY/HH:MM:SS]	Time [sec]	Loop	Phase time [s]	CH 1 MO2 [mgO2/kg/hr]	CH 1 slope [%air sat./hr]	CH 1 R^2	CH 1 max O2 [%air sat.]	CH 1 min O2 [%air sat.]	CH 1 avg O2 [%air sat.]	CH 1 avg temp [°C]	CH 2 MO2 [mgO2/kg/hr]	CH 2 slope [%air sat./hr]	CH 2 R^2	CH 2 max O2 [%air sat.]	CH 2 min O2 [%air sat.]	CH 2 avg O2 [%air sat.]	CH 2 avg temp [°C]	CH 3 MO2 [mgO2/kg/hr]	CH 3 slope [%air sat./hr]	CH 3 R^2	CH 3 max O2 [%air sat.]	CH 3 min O2 [%air sat.]	CH 3 avg O2 [%air sat.]	CH 3 avg temp [°C]	CH 4 MO2 [mgO2/kg/hr]	CH 4 slope [%air sat./hr]	CH 4 R^2	CH 4 max O2 [%air sat.]	CH 4 min O2 [%air sat.]	CH 4 avg O2 [%air sat.]	CH 4 avg temp [°C]	CH 5 MO2 [mgO2/kg/hr]	CH 5 slope [%air sat./hr]	CH 5 R^2	CH 5 max O2 [%air sat.]	CH 5 min O2 [%air sat.]	CH 5 avg O2 [%air sat.]	CH 5 avg temp [°C]	CH 6 MO2 [mgO2/kg/hr]	CH 6 slope [%air sat./hr]	CH 6 R^2	CH 6 max O2 [%air sat.]	CH 6 min O2 [%air sat.]	CH 6 avg O2 [%air sat.]	CH 6 avg temp [°C]	CH 7 MO2 [mgO2/kg/hr]	CH 7 slope [%air sat./hr]	CH 7 R^2	CH 7 max O2 [%air sat.]	CH 7 min O2 [%air sat.]	CH 7 avg O2 [%air sat.]	CH 7 avg temp [°C]	CH 8 MO2 [mgO2/kg/hr]	CH 8 slope [%air sat./hr]	CH 8 R^2	CH 8 max O2 [%air sat.]	CH 8 min O2 [%air sat.]	CH 8 avg O2 [%air sat.]	CH 8 avg temp [°C]	AMB temp N°1 avg temp [°C]	AMB temp N°1 setpoint [°C]	AMB temp N°1 hysteresis [°C]	AMB temp N°2 avg temp [°C]	AMB temp N°2 setpoint [°C]	AMB temp N°2 hysteresis [°C]
+1/31/2023/9:21:55 AM	604	1	M600	195.6	-76.519	0.982	99.76	86.88	92.71	16.97	148.2	-86.658	0.970	99.69	85.25	91.65	16.97	137.0	-90.904	0.973	100.25	84.41	92.49	16.97	151.1	-94.217	0.983	99.66	82.46	90.33	16.97	140.7	-53.310	0.961	99.86	90.24	95.21	17.04	130.5	-59.350	0.935	95.65	83.75	90.17	17.04	109.0	-25.650	0.787	101.40	96.20	98.61	17.04	-11.5	0.179	0.051	99.30	97.18	98.38	17.04	16.97	20.00	0.10	NaN	20.00	0.10
+1/31/2023/9:31:55 AM	1204	2	M600	NaN	NaN	0.000	87.94	80.69	NaN	17.01	NaN	NaN	0.000	85.86	78.78	NaN	17.01	NaN	NaN	0.000	119.95	79.52	NaN	17.01	NaN	NaN	0.000	82.46	79.06	NaN	17.01	135.5	-48.769	0.986	90.78	82.23	86.70	17.09	NaN	NaN	0.000	98.08	79.37	NaN	17.09	194.8	-41.417	0.950	97.37	89.48	93.35	17.09	-0.2	0.695	0.000	99.82	97.74	98.68	17.09	17.01	20.00	0.10	NaN	20.00	0.10
+1/31/2023/9:41:55 AM	1804	3	M600	-348.3	133.260	0.866	116.53	88.11	108.57	17.07	NaN	NaN	0.000	0.00	0.00	NaN	17.07	NaN	NaN	0.000	130.98	117.85	NaN	17.07	NaN	NaN	0.000	0.00	0.00	NaN	17.07	NaN	NaN	0.000	110.50	80.34	NaN	17.11	NaN	NaN	0.000	100.95	96.92	NaN	17.11	NaN	NaN	0.000	90.48	80.98	NaN	17.11	NaN	NaN	0.000	101.24	97.55	NaN	17.11	17.07	20.00	0.10	NaN	20.00	0.10

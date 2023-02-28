@@ -32,6 +32,23 @@ path.p    <- "Data/Physiology/Respiration" #the location of all your respirometr
 folder.names           <- basename(list.files(path = path.p, pattern = "202", recursive = FALSE)) #list all csv file names in the folder and subfolders
 folder.names.table     <- data.frame(folder.names)
 
+# ABOUT folder.names
+# 1      20210914 - contains 
+# 2      20210930 - contains 
+# 3      20211026 - contains 
+# 4      20220202 - contains 
+# 5      20220301 - contains 
+# 6      20220420 - contains 
+# 7      20220422 - contains 
+# 8      20220824 - contains 
+# 9      20220829 - contains F2 larvae trial runs with the SDR SensorDish (.csv files)
+# 10     20220830 - contains F2 larvae and post-set  with the SDR SensorDish (.csv files) (note: cases with >1 animal per channel were pre-set and 1 animal per channel were post-set)
+# 11     20220922 - contains F1 adults at ~14 months in age with LoLigo (.txt files) & F2 spat at ~2 months in age with the SDR SenorDish (.csv files)
+# 12     20221026 - contains F1 adults at ~15 months in age with LoLigo (.txt files) - also measured biodeposition for these individuals!
+# 13     20221116 - contains F2 juveniles at ~4 months old meausred with LoLigo (.txt files) 
+# 14     20230131 - contains F2 adults meausred with LoLigo (.txt files) 
+# 15     20230223 - contains F2 adults meausred with LoLigo (.txt files) 
+
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total             <- data.frame() # start dataframe 
 resp.table           <- data.frame(matrix(nrow = 1, ncol = 7)) # create dataframe to save cumunalitively during for loop
@@ -41,7 +58,7 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 13:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
@@ -52,7 +69,7 @@ for(i in 13:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table2    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) #%>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
     file.names.table     <- rbind(file.names.table1, file.names.table2)
-  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21,  2/2/22, 11/16/2022)
+  }  else { # all other data that used ONLY the  8-channel loligo system outputting .txt raw files (now 9/14/21,  2/2/22, 11/16/2022, 1/31/2023, 2/23/2023)
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE))))  %>%  dplyr::filter(grepl('raw', txt.files))
   }
   
@@ -63,13 +80,16 @@ for(i in 13:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
               Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37, fileEncoding= "windows-1252") #reads in the data files
               
                 # for data spanning 2021 to 2022
-                if (substr(folder.names.table[i,1], 1,4) == '2021') {
+              if (str_split((Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.[1]), "/", simplify = TRUE)[[3]] == "2021") { # split by / delimiter and call the thirs string - this is the year - if it is 2021 proceed
                 Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
                 Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-                } else { 
-                  Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
-                  Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-                }
+              } else if (str_split((Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.[1]), "/", simplify = TRUE)[[3]] == "2022")  { # split by / delimiter and call the thirs string - this is the year - if it is 2022 proceed
+                Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2022', sep='') #  date - use 'sub' to call everything before 2022, add back 2022 using paste
+                Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+              } else { # for all instances NOT 2021 or 2023 in the string split raw date - thus all 2023 data in this experiment 
+                Resp.Data$date      <- paste((sub("2023.*", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.)), '2023', sep='') #  date - use 'sub' to call everything before 2023, add back 2023 using paste
+                Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2023/", "", Resp.Data$Date..Time..DD.MM.YYYY.HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+              }
               
               # assign the remaining parameters
               Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
@@ -96,10 +116,14 @@ for(i in 13:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
                 if (str_split((Resp.Data$Date..DD.MM.YYYY.[1]), "/", simplify = TRUE)[[3]] == "2021") {
                   Resp.Data$date      <- paste((sub("2021.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2021', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
                   Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2021/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
-                } else {
+                } else if (str_split((Resp.Data$Date..DD.MM.YYYY.[1]), "/", simplify = TRUE)[[3]] == "2022") {
                   Resp.Data$date      <- paste((sub("2022.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2022', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
                   Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2022/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
+                } else { # for 2023 data
+                  Resp.Data$date      <- paste((sub("2023.*", "", Resp.Data$Date..DD.MM.YYYY.)), '2023', sep='') #  date - use 'sub' to call everything before 2021, add back 2021 using paste
+                  Resp.Data$time_Sec  <- period_to_seconds(hms(substr((strptime(sub(".*2023/", "", Resp.Data$Time..HH.MM.SS.), "%I:%M:%S %p")) , 12,19))) # time - use 'sub' to call target time of the raw date time after 'year/' + strptime' convert to 24 hr clock + 'period_to_seconds' converts the hms to seconds  
                 }
+                
                 
                 Resp.Data$seconds   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])    # secs - calc the sec time series
                 Resp.Data$minutes   <- (Resp.Data$time_Sec - Resp.Data$time_Sec[1])/60 # mins - calc the minute time series
