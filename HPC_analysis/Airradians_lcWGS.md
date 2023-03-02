@@ -1,4 +1,4 @@
-# Argopecten irradiains lcWGS Bioinformatics
+# Argopecten irradiains lcWGS Bioinformatics!
 
 ## <span style="color:blue">**Table of Contents**</span>
   - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)

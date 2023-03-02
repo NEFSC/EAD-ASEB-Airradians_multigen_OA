@@ -1,5 +1,5 @@
 ---
-title: "Respiration Analysis Scallops 2021 2022 2023"
+title: "RespirationRates_calc_F1s"
 author: "Samuel Gurr"
 date: "11/29/2022"
 output:
@@ -93,6 +93,7 @@ resp.data_merged                       <- merge(resp.data, resp.ref_length_merge
                                             dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
                                             dplyr::arrange(Date_formatted,Run, Channel, .by_group = TRUE)
 kable(head(resp.data_merged))
+unique(resp.data_merged$Date)
 # View(resp.data_merged)
 ```
 
@@ -116,13 +117,13 @@ kable(head(resp.data_merged))
 # NOTE: the F2s have a late start in resp value in 2/23/2023 run 2 channel 6 - scllop did not open until late in trial and ended same time as others - we discussed omission
 
 resp.data_merged[47,c(1:6)]  # 	C1 RR_9.30.21_AM_Plate_2_Run_1.csv # -0.02890813	-0.0608251	-0.0608251 - Lz and Leq call better regression than Lp5resp.data_merged[124,c(1:6)] 
-resp.data_merged[90,c(1:6)]  #   C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
+resp.data_merged[90,c(1:6)]  #  C5 RR_9.30.21_PM_Plate_2_Run_2.csv	0.029052351	-0.076034441	-0.076034441
 resp.data_merged[84,c(1:6)]  # 	C1 RR_9.30.21_PM_Plate_1_Run_2.csv	0.011656487	0.011656487	0.011656487  - ommit this
 resp.data_merged[135,c(1:6)] # 	2/2/2022	CH1	run_1_raw.txt  -0.03291728	-0.02714124	-0.0271412; data change Lpc to -0.0209
 resp.data_merged[148,c(1:6)] # 	2/2/2022	CH2	run_3_raw.txt	-0.004996976	-0.007234043	-0.007234043; data change Lpc to -0.0124
-resp.data_merged[257,c(1:6)] # 10/26/2022	CH3	run_2_raw.txt	0.04303898	-0.0047484	-0.0047484; data change Lpc to -0.1063
-resp.data_merged[258,c(1:6)] # 10/26/2022	CH4	run_2_raw.txt	-0.003937913	-0.003744103	-0.003744103; data change Lpc to -0.0900
-resp.data_merged[261,c(1:6)] # 10/26/2022	CH7	run_2_raw.txt	-0.002582753	-0.004017686	-0.004017686; data change Lpc to -0.1012
+resp.data_merged[257,c(1:6)] #  10/26/2022	CH3	run_2_raw.txt	0.04303898	-0.0047484	-0.0047484; data change Lpc to -0.1063
+resp.data_merged[258,c(1:6)] #  10/26/2022	CH4	run_2_raw.txt	-0.003937913	-0.003744103	-0.003744103; data change Lpc to -0.0900
+resp.data_merged[261,c(1:6)] #  10/26/2022	CH7	run_2_raw.txt	-0.002582753	-0.004017686	-0.004017686; data change Lpc to -0.1012
 
 # change according to diagnostics of plots and in Lolin script 
 resp.data_merged[47,4] <- resp.data_merged[47,5] # 20210930_Plate_2_Run_2_C5_regression - Lz and Leq call better regression than Lpc

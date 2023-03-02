@@ -70,17 +70,18 @@ getwd()
 raw_counts_matrix_annotation  <- 
   read.csv(file="../../Output/Transcriptomics/Raw_counts_matrix/raw_count_matrix_WITH_ANNOTATION.csv",
                                                sep=',', 
-                                               header=TRUE) %>% dplyr::select(!c(Ai19, Ai3))
+                                               header=TRUE) #%>% dplyr::select(!c(Ai19, Ai3))
 counts_matrix <- 
-  data.frame(raw_counts_matrix_annotation[,-c(1,41:44)], #[,-c(1,39:42)] - if you run dplyr::select(!c(Ai19, Ai3)) above
+  data.frame(raw_counts_matrix_annotation[,-c(1,41:44)], # [,-c(1,39:42)] if you  run dplyr::select(!c(Ai19, Ai3))
              row.names=raw_counts_matrix_annotation[,1])
+
 ### filtered counts tables 3CPM - format matrix after upload [from Count_Matrix_Stats.Filter.R] 
 filtered_counts_matrix_annotation  <-
   read.csv(file="../../Output/Transcriptomics/Filtered_counts_matrix/filter_3cmpm50perc_WITH_ANNOTATION.csv", 
                                                sep=',', 
-                                               header=TRUE)  %>% dplyr::select(!c(Ai19, Ai3))
+                                               header=TRUE)  # %>% dplyr::select(!c(Ai19, Ai3))
 counts_matrix <- 
-  data.frame(filtered_counts_matrix_annotation[,-c(1,41:44)], # [,-c(1,39:42)] - if you run dplyr::select(!c(Ai19, Ai3)) above
+  data.frame(filtered_counts_matrix_annotation[,-c(1,41:44)],#  [,-c(1,39:42)]if you run above dplyr::select(!c(Ai19, Ai3))
              row.names=filtered_counts_matrix_annotation[,1]) 
 
 
@@ -167,7 +168,7 @@ dev.off()
 
 # rlogExp ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-rlogExp <- rlogTransformation(dds) 
+rlogExp <- rlogTransformation(dds.run) 
 # rlog - regularized log transformation of origin count data to log2 scale 
 # fit for each sample and dist. of coefficients in the data
 
@@ -241,7 +242,14 @@ dds.run <- DESeq(dds) # wait for this to complete....
 * pCO2: Low v. High
 
 ```{r Examine DEGs how many? what are they?}
-
+Airr_Cvirg_annotation <- read.csv(file="../../Output/Transcriptomics/Raw_counts_matrix/raw_count_matrix_WITH_ANNOTATION.csv",
+                                  sep = ',', 
+                                  header = T) %>% 
+                        dplyr::select(c('Airradians_TranscriptID',
+                                 "blastxEval_CvirgTranscriptID",
+                                 "blastxEval_CvirgProteinID",
+                                 "blastxEval_CvirgGeneID",
+                                 "blastxEval_CvirgGOterms"))
 # Exxplore the 'dds.run' model
 resprimary         <- results(dds.run, contrast=c("pCO2", "High", "Low"), alpha = 0.05) # FDR is the alpha 0.05
 numDEGs_padj       <- data.frame(table(resprimary$padj<0.05))[2,2] # DEGs - NOT considering LFC - just p adj
@@ -255,26 +263,22 @@ resdata.primary           <- merge(as.data.frame(resprimary.ordered),
                                     as.data.frame(counts(dds.run, normalized=TRUE)), 
                                     by="row.names", 
                                     sort=FALSE) ## Merge with normalized count data
-names(resdata.primary)[1] <- "Gene"
-resdata.primary           <- resdata.primary[order(resdata.primary$padj), ] # Order by adjusted p-value
-write.csv(resdata.primary, "../../Output/Transcriptomics/DESeq2/DESeq2results.csv") # write
+names(resdata.primary)[1] <- "Airradians_TranscriptID"
+resdata.primary.annot     <- merge(Airr_Cvirg_annotation,resdata.primary, by = 'Airradians_TranscriptID')
+resdata.primary.annot     <- resdata.primary.annot[order(resdata.primary.annot$padj), ]  # Order by adjusted p-value
+
+
+write.csv(resdata.primary.annot, "../../Output/Transcriptomics/DESeq2/DESeq2results.csv") # write
 # What are the Protein names of these DEGs?
 # first gather gene IDs for the DEGs (note: this is also used for the pheatmap in the transformed Exp heatmap)
 numDEGs_padj # 54 - number of DEGs (from above) - use as integer in call below
 topgenes.IDs <- head(rownames(resprimary.ordered),numDEGs_padj) # call gene IDs for DEGs: pdj < 0.05 FDR < 0.05 
 length(topgenes.IDs) == numDEGs_padj # must be TRUE
 # now load in the annotated csv
-Airr_Cvirg_annotation <- read.csv(file="../../Output/Transcriptomics/Raw_counts_matrix/raw_count_matrix_WITH_ANNOTATION.csv", 
-                                  sep = ',', 
-                                  header = T) %>% 
-                        dplyr::select(c('Airradians_TranscriptID',
-                                 "blastxEval_CvirgTranscriptID",
-                                 "blastxEval_CvirgProteinID",
-                                 "blastxEval_CvirgGeneID",
-                                 "blastxEval_CvirgGOterms"))
+
 # DEGs Protein IDs - lets take a look shall we! 
 DEGs_annotated <- Airr_Cvirg_annotation %>% filter(Airradians_TranscriptID %in% topgenes.IDs)
-nrow(DEGs_annotated) # 52 - all are present! 
+nrow(DEGs_annotated) # 54 - all are present! 
 View(DEGs_annotated)
 ```
 
