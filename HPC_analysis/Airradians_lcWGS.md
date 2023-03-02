@@ -597,9 +597,36 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 	*	1: SAMtools model 
 	
 	*	2: GATK model 
+	
+* quality filtering 
 
+```-minQ``` = minimum phred quality score 
 
-```-doMaf``` =
+```-minMapQ``` = minimum mapping quality score
+
+* note: studies use a minQ of 30-32 depending on how consersative you want your base calls
+
+```-minInd``` = the minimum representation of the variant in your data. 
+
+* note: contemporary studies use a threshold so >80% of individuals are represented
+
+* thoughts... if you have 100 from population A and 100 from population B, should you:
+	- (a) GLs as -minInd 160 for all 200 samples
+	- (b) two GLs separately for each population with -minQ 80 for 100 samples
+
+**pvalues** 
+
+```-snp_pval``` = SNP p value 
+
+* angsd tutorials set this quite low to 1X10-6 (0.000001), however studies do set this to simply 0.05 also 
+
+```-sb_pvalue``` = strand bias 
+
+```-hetbias_pval``` = hetbias p value, based on reads of genotypes that are called to be heterozygotes - requires the -doGeno option
+
+```-anc``` = ancetral state, if you do not have this you can use the assembly that you have maped against but remember to add -fold 1 n readSFS and real SFS sf2theta step
+
+```-doMaf``` =+9+
 
 	*	1: Known major, and Known minor.
 		   Here both the major and minor allele is assumed to be known (inferred or given by user). 
@@ -613,6 +640,8 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 	*	8: frequency based on base counts.This method does not rely on genotype likelihood or probabilities but instead infers the allele frequency directly on the base counts.
 
+
+* example: doMaf 1 outputs 'knownEM' as an allele frequency value based on geneotype liklihoods of the minor and manjor allele assumed as known
 
 ```-doMajorMinor``` =
 
@@ -633,7 +662,7 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 ```-ref``` =
 
-	*	if emplying -doMajorMinor 4, if forces the major allele according to the ference, you will need to define this by a fasta (___.fa) file 
+	*	if emplying -doMajorMinor 4, if forces the major allele according to the reference, you will need to define this by a fasta (___.fa) file 
 
 
 Before getting started.. 
@@ -841,3 +870,36 @@ for i in `cat ./ID`;
 ```
 
 - when run in ```interactive``` mode, this loop takes up to ~1-2 hours
+
+## Call root directory of the merged bam files 
+
+* when running **angsd**, we will need to call these merged bam files as a txt list file 
+
+* below is an example calling bam file lists for the Low pCO2 and moderately elevated pCO2 F1 cohort - an example with the first 25 samples form October 2022
+
+	- Moderately-elevated pCO2 cohort, 12 animals with the IDs in the 300s and 200s
+	
+ls -d "$PWD"/*.35*.bam "$PWD"/*30*.bam "$PWD"/*.2*.bam > Mod_pCO2_bamlist.txt
+
+	- Low pCO2 cohort, 12 animals with the IDs 3,4,5 and in the 100s
+
+ls -d "$PWD"/*.3.bam "$PWD"/*.4.bam "$PWD"/*.5*.bam "$PWD"/*.1*.bam > Low_pCO2_bamlist.txt
+
+
+## Lets run ANGSD! 
+
+* **Objective**: obtain SNP calls. chromosome/contig positions to infer genotype liklihoods and putativelly adaptive molecular candidates (we also have differential expression work!) 
+
+Terms to know regarding assemblies: 
+
+**contigs** - genome assemblies are hierarchical - contigs are the shortest assembly component of a 
+genome in which a contiguous length of genomic sequence is known on a high confidence level
+
+**scaffolds** - comprised of contigs, a longer component on this assembly hierachy, 
+created from chaining contigs together using additional information on the orientation of the contigs and their relative position. 
+Contigs in scallods can be separated by gaps represented as 'N'
+
+**chromosomes** - assembled seqeunces from compoentns (scallods and thus originally contigs) the largest 
+genome assembly cmoponent comprised of assembled scaffolds, requires sufficient mapping information to build from the scaffold level 
+
+
