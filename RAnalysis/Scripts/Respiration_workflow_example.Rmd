@@ -36,7 +36,7 @@ folder.names.table     <- data.frame(folder.names) # you see we have many data d
 
 ```
 
-* lets focus on ONLY row 15: 20230223 - contains F2 adults meausred with LoLigo (.txt files) 
+* lets focus on ONLY row 15: 20230223 - contains F2 adults measured with LoLigo (.txt files) 
 
 ```{r, echo = TRUE,message = FALSE, warning = FALSE}
 
@@ -45,7 +45,7 @@ folder.names.table    <- folder.names.table[15,] # 20230223 - we will call this 
 ```
 
 
-##  B. call the file names in the directory 2023023
+##  B. call the file names in the directory 20230223
 
 
 ```{r, echo = TRUE,message = FALSE, warning = FALSE}
