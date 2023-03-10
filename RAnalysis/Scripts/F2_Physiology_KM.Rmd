@@ -19,6 +19,7 @@ setwd("C:/Users/katherine.mcfarland/Documents/Acidification/2020 OAP - scallops/
 ```{r, echo=FALSE}
 library(ggplot2)
 library(dplyr)
+library(ggpubr)
 
 ```
 
@@ -29,6 +30,8 @@ library(dplyr)
 This file contains values copied over from data workbooks. 
 - Biodeposition calculations are scaled using the b value in the literature
 (none are standarized to a mean length yet)
+- Excretion rates are just copied from the workbook - no b value scaling yet
+
 ```{r}
 df<-read.csv("F2_phys.csv", header = T, na = "omit")
 # convert date info in format 'mm/dd/yyyy'
@@ -44,63 +47,63 @@ str(df)
 ```
 # Plot
 ```{r, echo=FALSE}
-ggplot(data=df, aes(x=Treatment, y=CR, fill=Treatment)) +
+CR <- ggplot(data=df, aes(x=Treatment, y=CR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Clearance Rate ", x ="Month", y = "CR") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=AR, fill=Treatment)) +
+AR <- ggplot(data=df, aes(x=Treatment, y=AR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Absorption Rate ", x ="Month", y = "AR (mg/h)") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=AE, fill=Treatment)) +
+AE <- ggplot(data=df, aes(x=Treatment, y=AE, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Absorption Efficiency ", x ="Month", y = "AE") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=FR, fill=Treatment)) +
+FR <- ggplot(data=df, aes(x=Treatment, y=FR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Filtration Rate ", x ="Month", y = "FR (mg/h)") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=RR, fill=Treatment)) +
+RR <- ggplot(data=df, aes(x=Treatment, y=RR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Rejection Rate ", x ="Month", y = "RR") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=SE, fill=Treatment)) +
+SE <- ggplot(data=df, aes(x=Treatment, y=SE, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Selection Efficiency ", x ="Month", y = "SE") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=OIR, fill=Treatment)) +
+OIR <- ggplot(data=df, aes(x=Treatment, y=OIR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Organic Ingestion Rate ", x ="Month", y = "OIR (mg/L)") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=OFR, fill=Treatment)) +
+OFR <- ggplot(data=df, aes(x=Treatment, y=OFR, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Organic Filtration Rate ", x ="Month", y = "OFR (mg/L)") +
   facet_wrap(~ Date)
 
-ggplot(data=df, aes(x=Treatment, y=ER, fill=Treatment)) +
+ER <- ggplot(data=df, aes(x=Treatment, y=ER, fill=Treatment)) +
   geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
   theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
