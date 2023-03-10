@@ -21,7 +21,7 @@ README
 	- F2 Bay scallops
 		- larvae/spat: 20220420 & 20220422 (failed spawn!), 20220824, 20220829, 20220830, 20220922 (SDR csv files)
 		- juveniles: 20221116 (text files with loligo system)
-		- adults: 20230131, 20230223 (text files with loligo system - note the vessels were remeasured and unique on 20230223 due to scrambled tubing)
+		- adults: 20230131, 20230223 (text files with loligo system - note the vessels were remeasured and unique on 20230223 due to scrambled tubing!)
 
 #### 'Reference_resp_ID'
 
