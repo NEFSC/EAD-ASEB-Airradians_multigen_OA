@@ -37,8 +37,10 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", header=T) %>% 
-                          dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
-                          dplyr::filter(!(Date %in% "10/26/2022" & Filename %in% 'run_1_raw.txt' & Channel %in% 'CH2')) # omit bad data point
+                          dplyr::filter(!Date %in% "9/14/2021" | 
+                                          !Filename %in% 'Run_1_raw.txt') %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+                          dplyr::filter(!(Date %in% "10/26/2022" & 
+                                            Filename %in% 'run_1_raw.txt' & Channel %in% 'CH2')) # omit bad data point
 
 
 
@@ -337,9 +339,19 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH5' ~ 23.18,
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH6' ~ 23.24,
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH7' ~ 22.63, 
-                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH8' ~ 22.95)) %>% # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH8' ~ 22.95, 
   
-  
+                      # F2 data - what were the chamber volumes for the 2/1/2020 data????????
+                      
+                      
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH1' ~ 198.2, # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH2' ~ 212.5,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH3' ~ 209.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH4' ~ 211.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH5' ~ 212.6,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH6' ~ 212.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH7' ~ 213.5, 
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH8' ~ 212)) %>% # F2 data
   # BIOVOLUME 
   # note that biovolume was not measured for 9/14/2021, 9/30/2021, 10/26/21 (unfed only!), 9/22/22 (F2s only, SDR data)
  

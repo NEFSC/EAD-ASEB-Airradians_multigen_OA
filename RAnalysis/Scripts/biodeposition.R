@@ -376,7 +376,9 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
     # AE  == Assimilation Efficiency: AR/OIR
     dplyr::mutate(AE = AR / OIR) %>% 
     # add column for uatm pCO2 treatment based on pH groups
-    dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", treatment == 7.5 ~ "800 μatm"))
+    dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", 
+                                   treatment == 7.5 ~ "800 μatm",
+                                   treatment == 7   ~ "1200 μatm"))
   
   df                <- data.frame(data_loop) # name dataframe for this single row
   Biodep_Master_F2s <- rbind(Biodep_Master_F2s,df) #bind to a cumulative list dataframe
@@ -456,14 +458,14 @@ for (i in 1:nrow(ANOVA_Dates)) {
 }
 View(AOVdf_total) # view all the anova tests within data 
 # WRITE CSV OF THE MASTER FILE
-write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_ANOVA_table_F1s.csv")
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1_Biodeposition_ANOVA_table.csv")
 
 
 # F2s!! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 Biodep_Master_F2 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv", header = T)
-Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # omit #6 pH7.5 on 20221027
+Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # 
 
 # (1) First, run anova within date for all records (for looped!)
 ANOVA_Dates       <- as.data.frame(unique(Biodep_Master_F2$Date)) # call a list to loop in 
@@ -508,7 +510,7 @@ for (i in 1:nrow(ANOVA_Dates)) {
 }
 View(AOVdf_total) # view all the anova tests within data 
 # WRITE CSV OF THE MASTER FILE
-write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_ANOVA_table_F2s.csv")
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2_Biodeposition_ANOVA_table.csv")
 
 
 
@@ -635,13 +637,17 @@ SE_boxplot <- Biodep_Master_F1 %>%
 
 # output the plot 
 library(ggpubr)
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots.pdf"), width = 10, height= 8)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1_Biodeposition_Boxplots.pdf"), width = 10, height= 8)
 ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
 dev.off()
 
 
 
 # F2S ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Biodep_Master_F2$pCO2 <- factor(Biodep_Master_F2$pCO2, 
+                                levels = c("500 μatm", "800 μatm", "1200 μatm"))
+
 
 AE_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , AE , fill = pCO2)) +
@@ -653,112 +659,97 @@ AE_boxplot_F2 <- Biodep_Master_F2 %>%
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Assimilation Efficiency, F1 Scallops") +
+  ggtitle("Assimilation Efficiency, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
   facet_wrap(~Date)
 # AE_boxplot
 
 
-AR_boxplot <- Biodep_Master_F1 %>% 
-  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
-                                        Date == '20220923' ~ '20C',
-                                        Date == '20221027' ~ '13.3C')) %>%  
-  # filter(!AE < 0) %>% 
+AR_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , AR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("forestgreen","orange")) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Assimilation Rate, F1 Scallops") +
+  ggtitle("Assimilation Rate, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
-  facet_wrap(~Temperature)
+  facet_wrap(~Date)
 # AR_boxplot
 
-OIR_boxplot <- Biodep_Master_F1 %>% 
-  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
-                                        Date == '20220923' ~ '20C',
-                                        Date == '20221027' ~ '13.3C')) %>%  
-  #filter(!AE < 0) %>% 
+OIR_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , OIR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("forestgreen","orange")) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Organic Ingestion Rate, F1 Scallops") +
+  ggtitle("Organic Ingestion Rate, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
-  facet_wrap(~Temperature)
+  facet_wrap(~Date)
 # OIR_boxplot
 
 
-FR_boxplot <- Biodep_Master_F1 %>% 
-  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
-                                        Date == '20220923' ~ '20C',
-                                        Date == '20221027' ~ '13.3C')) %>%  
-  #filter(!AE < 0) %>% 
+FR_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , FR , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("forestgreen","orange")) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Filtration Rate, F1 Scallops") +
+  ggtitle("Filtration Rate, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
-  facet_wrap(~Temperature)
+  facet_wrap(~Date)
 # FR_boxplot
 
-RR_boxplot <- Biodep_Master_F1 %>% 
-  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
-                                        Date == '20220923' ~ '20C',
-                                        Date == '20221027' ~ '13.3C')) %>%  
-  #filter(!AE < 0) %>% 
+RR_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("forestgreen","orange")) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Percent Rejection Rate, F1 Scallops") +
+  ggtitle("Percent Rejection Rate, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
-  facet_wrap(~Temperature)
+  facet_wrap(~Date)
 # RR_boxplot
 
-SE_boxplot <- Biodep_Master_F1 %>% 
-  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
-                                        Date == '20220923' ~ '20C',
-                                        Date == '20221027' ~ '13.3C')) %>%  
-  #filter(!AE < 0) %>% 
+SE_boxplot_F2 <- Biodep_Master_F2 %>% 
   ggplot(aes(pCO2 , SE , fill = pCO2)) +
   theme(panel.grid=element_blank()) +
   geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
-  scale_fill_manual(values=c("forestgreen","orange")) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
   geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
   theme(axis.text=element_text(size=6),
         axis.title=element_text(size=6)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
-  ggtitle("Selection Efficiency, F1 Scallops") +
+  ggtitle("Selection Efficiency, F2 Scallops") +
   theme(axis.text.x=element_blank()) +
-  facet_wrap(~Temperature)
+  facet_wrap(~Date)
 # SE_boxplot
 
 # output the plot 
 library(ggpubr)
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots.pdf"), width = 10, height= 8)
-ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, AE_boxplot, AR_boxplot)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2_Biodeposition_Boxplots.pdf"), width = 10, height= 8)
+ggarrange(SE_boxplot_F2,
+          RR_boxplot_F2, 
+          OIR_boxplot_F2, 
+          FR_boxplot_F2, 
+          AE_boxplot_F2, 
+          AR_boxplot_F2)
 dev.off()
 
 
