@@ -178,11 +178,14 @@ blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # mean blanks for the LoLinR output ('Lpc') ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-
+blanks_all_raw %>% 
+  select(Lpc) %>% 
+  dplyr::mutate(Lpc_filt = case_when(Lpc > 0 & Lpc < 0.005 ~ 0,TRUE ~ Lpc))# fed F1 foodxOA
 
 blanks_meansLoLin <- blanks_all_raw %>% 
-                       dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Runs
-                       dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
+                       dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Run
+                       #dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
+                       dplyr::mutate(Lpc_filt = case_when(Lpc > 0 & Lpc < 0.005 ~ 0,TRUE ~ Lpc)) %>% #  when LPC is positive but veery close to zero - assign as zero
                        dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
                                         #   = sd(abs(Lpc)),
                                         # BLANK.mean_Leq = mean(abs(Leq)), 
@@ -191,7 +194,7 @@ blanks_meansLoLin <- blanks_all_raw %>%
                         dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
                         dplyr::arrange(Date_formatted, Run, pH)
 # kable(blanks_meansLoLin) # View - notice some of the date/runs do not have BOTH treatments represented!
-dups_LoLin        <- blanks_meansLoLin[c(1, 16,19,20,23,26),] %>% # call  rows that do not have BOTH pH 7.5 and 8.0 represented (due to positive rates, bad data, etc)         
+dups_LoLin        <- blanks_meansLoLin[(17),] %>% #one rows that does have each treatment  represented (due to positive rates, bad data, etc)         
                         dplyr::mutate(pH = ifelse(pH == 8.0, 7.5,  ifelse(pH == 7.5, 8.0, NA))) # do a little conditional call to call the opposite treatment in this dataframe..
 blanks_meansLoLin <- rbind(blanks_meansLoLin, dups_LoLin) %>%  dplyr::arrange(Date_formatted, Run, pH) # bind together
 
@@ -298,8 +301,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH7' ~ 68.54551, 
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH8' ~ 68.53297,
                       filetype == "LoLigo_data" & Date %in% c('10/26/2021') & Channel == 'CH3' ~ 68.87473,
-     
-                                                   
+
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH1' ~ 68.55323, # F1 data
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH2' ~ 68.85583, 
                       filetype == "LoLigo_data" & Date %in% c('2/2/2022','3/1/2022') & Channel == 'CH4' ~ 68.95481,
@@ -341,17 +343,23 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH7' ~ 22.63, 
                       filetype == "LoLigo_data" & Date %in% c('11/16/2022') & Channel == 'CH8' ~ 22.95, 
   
-                      # F2 data - what were the chamber volumes for the 2/1/2020 data????????
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH1' ~ 68.55323, # F1 data
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH2' ~ 68.85583, 
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH4' ~ 68.95481,
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH5' ~ 68.57288,
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH6' ~ 68.01878,
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH7' ~ 68.54551, 
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH8' ~ 68.53297,
+                      filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH3' ~ 68.87473,                      
                       
-                      
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH1' ~ 198.2, # F2 data
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH2' ~ 212.5,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH3' ~ 209.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH4' ~ 211.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH5' ~ 212.6,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH6' ~ 212.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH7' ~ 213.5, 
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2022') & Channel == 'CH8' ~ 212)) %>% # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH1' ~ 198.2, # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH2' ~ 212.5,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH3' ~ 209.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH4' ~ 211.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH5' ~ 212.6,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH6' ~ 212.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH7' ~ 213.5, 
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH8' ~ 212)) %>% # F2 data
   # BIOVOLUME 
   # note that biovolume was not measured for 9/14/2021, 9/30/2021, 10/26/21 (unfed only!), 9/22/22 (F2s only, SDR data)
  
@@ -422,7 +430,8 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                             Fed_Unfed == 'U' ~ "Low food")) %>% 
   dplyr::mutate(pCO2 = 
                   case_when(pH == 8.0 ~ "500 uatm", 
-                            pH == 7.5 ~ "800 uatm"))
+                            pH == 7.5 ~ "800 uatm",
+                            pH == 7.0 ~ "1200 uatm"))
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
@@ -488,52 +497,3 @@ write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradia
 View(Resp.Master_OM)
 ```
 
-
-
-```{r, examine plots}
-# Biovolume_length <- Resp.Master_OM %>%
-#    dplyr::mutate(length_cubed = (Length_mm^3)) %>% 
-#    ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(Biovol_estimate_mL3))) + # color = as.factor(pH))) + 
-#    geom_point() + 
-#    xlab("shell lengt (mm)") + 
-#    ylab("biovolume (mL3^3)") +
-#    ggtitle("Vcap_biovolume v. shell length") +
-#    geom_smooth(method='loess', formula= y~x) +
-#    theme_bw()
-# Biovolume_length
-# 
-# 
-# Biovolume_umolResp <- Resp.Master_OM %>%
-#    ggplot(aes(x=as.numeric(Biovol_estimate_mL3), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-#    geom_point() + 
-#    xlab("biovolume (mL3^3)") + 
-#    ylab("resp rate (umol L-1 hr-1)") +
-#    ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
-#    geom_smooth(method='loess', formula= y~x) +
-#    theme_bw()
-# Biovolume_umolResp
-# 
-# 
-# Length_umolResp <- Resp.Master_OM %>%
-#    ggplot(aes(x=as.numeric(Length_mm), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-#    geom_point() + 
-#    xlab("shell length (mm)") + 
-#    ylab("resp rate (umol L-1 hr-1)") +
-#    ggtitle("Vcap_biovolume v. resp rate (umol L-1 hr-1)") +
-#    geom_smooth(method='loess', formula= y~x) +
-#    theme_bw()
-# Length_umolResp
-# 
-# 
-# WholeDryweight_umolResp <- Resp.Master_OM[!is.na(Resp.Master_OM$whole_Dry_weight),]  %>%
-#   dplyr::filter(!whole_Dry_weight %in% '<add here>') %>% 
-#    ggplot(aes(x=as.numeric(whole_Dry_weight), y=as.numeric(resp_umol_L_hr))) + # color = as.factor(pH))) + 
-#    geom_point() + 
-#    xlab("whole dry weight (g)") + 
-#    ylab("resp rate (umol L-1 hr-1)") +
-#    ggtitle("whole dry weight v. resp rate (umol L-1 hr-1)") +
-#    geom_smooth(method='loess', formula= y~x) +
-#    theme_bw()
-# WholeDryweight_umolResp
-
-```
