@@ -28,9 +28,9 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 #setwd("C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
 
-
+# F1s :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 # biodeposition
-Biodep <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv", header = T) %>% dplyr::select(-X)
+Biodep <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F1.csv", header = T) %>% dplyr::select(-X)
 
 #NOTe: biodep does nothave the columns to merge by including the Run, Chemaner_Tank, Replicate, etc. 
 # However... we can merge by the equal length and tissue dry weight in the RR dataset below! 
@@ -347,3 +347,210 @@ pdf("Output/F1_PCAplot_RR_ER_Biodep.pdf",
     width = 8, height = 8)
 ggarrange(PCApCO2_301, PCApCO2_922, PCApCO2_1026 )
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# F2s :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
+# biodeposition
+Biodep <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv", header = T) %>% 
+  dplyr::select(-c(X, tank_ID.y)) %>% 
+  dplyr::rename(tank_ID = tank_ID.x)
+  
+
+#NOTe: biodep does nothave the columns to merge by including the Run, Chemaner_Tank, Replicate, etc. 
+# However... we can merge by the equal length and tissue dry weight in the RR dataset below! 
+# first we need to reformat a few things here
+
+
+
+
+# Respiration rate (lolinR rates)
+RR <- read.csv(file="Output/Respiration/F2_RR_calc_master.csv", header=T) %>% 
+  dplyr::select(c(Date, Age,  pH, pCO2, Replicate, Chamber_tank, Run, Number, filetype, Channel, 
+                  Length_mm, 
+                  Dry_Shell_weight,
+                  Dry_Tissue_weight,
+                  whole_Dry_weight,
+                  Lpc,
+                  BLANK.mean_Lpc,
+                  resp_blankStand,
+                  volume,
+                  Biovol_length3 ,
+                  measured_volume,
+                  calculated_volume,
+                  resp_mg_hr,
+                  resp_mg_hr_bFactorNormTDW.MEAN,
+                  resp_mg_hr_bFactorNormLength.MEAN,
+                  resp_umol_hr,
+                  resp_umol_hr_bFactorNormTDW.MEAN,
+                  resp_umol_hr_bFactorNormLength.MEAN)) %>% 
+  dplyr::rename(RRvolume_vessel_mL = volume) %>% 
+  dplyr::rename(RRvolume_measuredBiovol_mL = measured_volume) %>% 
+  dplyr::rename(RRvolume_calculatedBiovol_mL = calculated_volume) %>% 
+  dplyr::rename(RR_mgLmin_rawblankcor = resp_blankStand) %>% 
+  dplyr::rename(RR_mgLmin_blankMean = BLANK.mean_Lpc) %>% 
+  dplyr::rename(RR_mgLmin_raw = Lpc)
+
+
+unique(RR$Date)
+
+# ammonia excretion
+ER <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_master.csv", header=T)  %>% 
+  dplyr::select(c(Date, pH, Replicate, Chamber_tank, Run, Number,
+                  Length_um,
+                  Dry_Tissue_weight,
+                  ExcretionRate_ug_mL_hr,
+                  ExcretionRate_umol_mL_hr )) %>%
+  dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr/1000) %>% 
+  dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
+  dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
+  dplyr::select(-c(Length_um,ExcretionRate_ug_mL_hr)) # dont need this anymore do we
+unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026
+
+
+
+
+
+# Prep the date for Biodep merge :::::::::::::::::::::::::::::::::::::::::
+
+# NOTE: only 3/1/2022', '9/22/2022', '10/26/2022' - notice that the biodep dates are one day after respiratio, need to change this to merge properly
+
+
+# prep the resp data 
+RR_prepped <- RR %>% # just call desired dates tat overlap with biodep for merge
+  filter(Date %in% c('1/31/2023', '2/23/2023')) # the only dates we need to merge with biodep
+RR_prepped$Dry_Tissue_weight <- as.numeric(RR_prepped$Dry_Tissue_weight)
+nrow(RR_prepped) # 42
+
+
+# prep the ER data  - lets match the RR data 
+meanTDW <- mean(ER$Dry_Tissue_weight) # 0.3062667
+bTDW    <- 1.13 # added 12/19/22 after calculating a TDW ER specific b factor (review ER analysis script!) 
+
+ER_prepped <- ER %>% 
+  
+  dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW.MEAN = 
+                  (ExcretionRate_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
+  
+  dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW.MEAN = 
+                  (ExcretionRate_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
+  
+  dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+  dplyr::mutate(Date = case_when(Date == "01/31/2023" ~ '1/31/2023',
+                                 Date == "02/23/2023" ~ '2/23/2023')) %>% 
+
+  unique() # a few duplicates on 3/1/2022 for some strange reason....
+nrow(ER_prepped) # 42
+
+# prep the biodep data - lets match the RR data 
+# note the calc biodep is already corrected for 0.822 bfactor
+Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "10/27/2022" - need to change to reflect RR_prepped (above)
+  dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+  dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
+  dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
+  dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
+  dplyr::rename(pH = treatment) %>% # rename to match 
+  dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours, pCO2)) %>% 
+  dplyr::mutate(Date = case_when(Date == "02/01/2023" ~ '1/31/2023',
+                                 Date == "02/24/2023" ~ '2/23/2023')) %>% 
+  dplyr::select(-Length_mm) # lenngth is the exact same as the resp and Excretion data except diff sig figs and some missing
+nrow(Biodep_prepped) # 45 rows                        
+
+
+
+# check for any missing data between these two datsets :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# call unique identifier to find discrepancies 
+RR_prepped$uniqueID <- paste(RR_prepped$Date,RR_prepped$pH,RR_prepped$Dry_Tissue_weight, sep = '_')
+ER_prepped$uniqueID <- paste(ER_prepped$Date,ER_prepped$pH,ER_prepped$Dry_Tissue_weight, sep = '_')
+Biodep_prepped$uniqueID <- paste(Biodep_prepped$Date,Biodep_prepped$pH,Biodep_prepped$Dry_Tissue_weight, sep = '_')
+
+
+# between RR and excretion!!  - excretion has 532 rows and RR has 45 
+# obvious that RR has omited values due to resp < blank that were omitted prior
+subset(ER_prepped, !(uniqueID %in% RR_prepped$uniqueID)) # no discrepancies - these exactly reflect one another!
+
+
+# btween RR and biodep!! 
+nrow(RR_prepped) == nrow(Biodep_prepped) # FALSE - there are rows not present in biodep that Resp has - lets call a uni que identifier (that we will omit at the merge of course)
+
+subset(RR_prepped, !(uniqueID %in% Biodep_prepped$uniqueID)) # three discrepancies between the RR and the biodep (RR have 3 more!)
+# 3/1/2022 CH6 run 1 7.5_B - not present in the biodep file... we measured another 7.5_B whereas this was for only resp,  all is good! 
+# 3/1/2022 CH2 run 2 8E - not present in the biodep file... lets review the RR data 
+# 9/22/2022 CH7 8_D - there was no biodep *D on this data, animal was not used for biodep just respiration - all is good! 
+# 10/26/2022 CH6 7.5_F
+
+
+
+# READY TO MERGE :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
+# note: this should yield 44 rows! 
+# merge by a series of unique identifiers - we will use Date, Chamber_tank (contains pH and replicate information), Dry weight , and Length! 
+
+RR_ER_merge <- merge(RR_prepped,ER_prepped)
+nrow(RR_ER_merge) # 42 - no rows lost! - remember we have 1 additional biodep for each treatmnet since we were limited by the loligo system 
+
+MASTER_ALL <- merge(RR_ER_merge, Biodep_prepped, 
+                    by = c('Date','uniqueID','Dry_Tissue_weight', 'Replicate', 'pH')) %>% 
+  dplyr::select(c(Date, 
+                  Age,
+                  pCO2,
+                  pH,
+                  Replicate,
+                  Chamber_tank,
+                  Length_mm,
+                  Dry_Tissue_weight,
+                  resp_mg_hr_bFactorNormTDW.MEAN,
+                  resp_umol_hr_bFactorNormTDW.MEAN,
+                  ExcretionRate_mg_hr_bFactorNormTDW.MEAN,
+                  ExcretionRate_umol_hr_bFactorNormTDW.MEAN,
+                  IER_correct,
+                  IRR_correct,
+                  OER_correct,
+                  ORR_correct,
+                  CR_correct,
+                  FR_correct,
+                  RR_correct,
+                  p,
+                  f,
+                  i,
+                  SE,
+                  AR,
+                  AE))
+nrow(MASTER_ALL) # 42 rows - as expected!!!!!
+colnames(MASTER_ALL)
+View(MASTER_ALL)
+# READY TO WRITE CSV ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+write.csv(MASTER_ALL, "Output/F2_RR_ER_Biodep_master.csv")
+RR_ER_merge
+#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+

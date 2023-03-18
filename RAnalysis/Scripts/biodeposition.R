@@ -196,9 +196,9 @@ BioSamples_feces   <- BioSamples %>%
                                         ER_mghr, OER_mghr, IER_mghr)) # select all unique values (Ejection rate constituents) to add
 
 BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%>% dplyr::select(!c(sample_type, ER_mghr, OER_mghr, IER_mghr))), # omit redundnat columns
-                              BioSamples_feces, by = c('Date', 'treatment', 'animal_number', 'tank_ID')) %>% # merge with the feces dataframe by the unique identifiers
+                              BioSamples_feces, by = c('Date', 'treatment', 'animal_number')) %>% # merge with the feces dataframe by the unique identifiers
                       dplyr::rename(animal_dry_weight_g = animal_dry_weight_mg) # its not mg its actually g!!!
-
+View(BioSamples_merged)
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
 sp_COEF <- 0.78 # standardization coefficient - calculated from CR data (review 'bvalue_noncorrectedcr')
 
@@ -320,15 +320,15 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
     dplyr::mutate(ORR_correct = ORR_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% 
     # CR  == Cleanrance Rate: IFR/PIM of the water
     dplyr::mutate(CR = case_when(
-      treatment == 7   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # FR  == Filtration Rate: CR * TPM of the water
     dplyr::mutate(FR = case_when(
-      treatment == 7   ~ CR * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ CR * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR * blanks_loop$TPM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ CR * blanks_loop$TPM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ CR * blanks_loop$TPM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # RR  == Rejection Rate: ORR+IRR
     dplyr::mutate(RR_correct = ORR_correct + IRR_correct) %>% 
@@ -336,9 +336,9 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
     dplyr::mutate(p = ORR_correct / RR_correct ) %>% 
     # f   == POM available: Average POM of the water
     dplyr::mutate(f =  case_when(
-      treatment == 7   ~ blanks_loop$Perc_ORG_1[1] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ blanks_loop$Perc_ORG_1[1] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ blanks_loop$Perc_ORG_1[2] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ blanks_loop$Perc_ORG_1[3] / 100 # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ blanks_loop$Perc_ORG_1[3] / 100 # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # SE  == Selection Efficiency: 1-(p/f) (organic content of pseudofeces/organic content of the water)
     dplyr::mutate(SE = 1 - (p / f)) %>% 
@@ -346,15 +346,15 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
     dplyr::mutate(IFR = IER_correct + IRR_correct) %>% 
     # CR  == Cleanrance Rate: IFR/PIM of the water
     dplyr::mutate(CR_correct = case_when(
-      treatment == 7   ~ IFR /  blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ IFR /  blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ IFR /  blanks_loop$PIM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ IFR /  blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ IFR /  blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # FR  == Filtration Rate: CR * TPM of the water
     dplyr::mutate(FR_correct = case_when(
-      treatment == 7   ~ CR_correct * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ CR_correct * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR_correct * blanks_loop$TPM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ CR_correct * blanks_loop$TPM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ CR_correct * blanks_loop$TPM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # %RR == RR/FR (amount rejected/total amount filtered)
     dplyr::mutate(RR_Percent = (RR_correct/FR_correct)*100) %>% 
@@ -363,9 +363,9 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
                     RR_correct) %>% 
     # OFR == Organic FIltration Rate: CR * POM of the water
     dplyr::mutate(OFR = case_when(
-      treatment == 7   ~ CR_correct * blanks_loop$POM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0   ~ CR_correct * blanks_loop$POM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR_correct * blanks_loop$POM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8   ~ CR_correct * blanks_loop$POM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0   ~ CR_correct * blanks_loop$POM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # ORI == Organic INgestion Rate: OFR-ORR
     dplyr::mutate(OIR = OFR - ORR_correct) %>% 
@@ -378,7 +378,7 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
     # add column for uatm pCO2 treatment based on pH groups
     dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", 
                                    treatment == 7.5 ~ "800 μatm",
-                                   treatment == 7   ~ "1200 μatm"))
+                                   treatment == 7.0   ~ "1200 μatm"))
   
   df                <- data.frame(data_loop) # name dataframe for this single row
   Biodep_Master_F2s <- rbind(Biodep_Master_F2s,df) #bind to a cumulative list dataframe
@@ -389,7 +389,7 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
 
 View(Biodep_Master_F2s)
 
-
+Biodep_Master_F2s
 # WRITE CSV OF THE MASTER FILE
 write.csv(Biodep_Master_F1s, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F1.csv")
 write.csv(Biodep_Master_F2s, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv")
