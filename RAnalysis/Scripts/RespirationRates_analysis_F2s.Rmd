@@ -655,7 +655,9 @@ F2s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F2smaster %>%
                       linetype = "dashed", 
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Date, scales = "free") #, scales = "free)
-
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2_RR_Length.pdf")
+print(F2s.BOXPLOT_Length_bfactor.MEAN)
+dev.off()
 
 # TDW  ---------------------------------------------------------------------------- #
 
@@ -686,4 +688,8 @@ F2s.BOXPLOT_TDW_bfactor <- RR_formatted_F2smaster %>%
                       linetype = "dashed", 
                       position = position_dodge(preserve = "single")) +
          facet_wrap(~Date, scales = "free") #, scales = "free)
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2_RR_TDW.pdf")
+print(F2s.BOXPLOT_TDW_bfactor)
+dev.off()
 ```
