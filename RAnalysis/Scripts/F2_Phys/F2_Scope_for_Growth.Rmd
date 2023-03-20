@@ -69,16 +69,9 @@ ExcretionRates   <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_ma
 ## Add minor adjustments to these files to assist merging
 
 -   importantly, we adjust the excretion data for b factor normalization below, other datasets are already prepped with this correction
-
-```{=html}
-<!-- -->
-```
 -   Note: : biodep does not have the columns to merge by including the Run, Vhamber_Tank, Replicate, etc. However... we can merge by the equal length and tissue dry weight in the RR dataset below! first we need to reformat a few things here
-
 -   b factor TDW from use of all data in both F1 and F2
-
 -   TDW correction to 1 g TDW (as opposed to a mean or median within the dataset)
-
     -   biodeposition.R and RR_calc scripts contain this correction, excretion corrects in the chunk below
 
 ```{r}
@@ -118,7 +111,7 @@ nrow(RespirationRates_adj) # 42
 
 # ER
 # note - we will bfctor and mean corret for TDW)
-bTDW    <- 1.13 # added 12/19/22 after calculating a TDW ER specific b factor (review ER analysis script!) 
+bTDW    <- 1.11 # FR_bfactor script using ALL F1 and F2 data!
 
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
@@ -147,7 +140,7 @@ unique(ExcretionRates_adj$Date)   == unique(RespirationRates_adj$Date) # should 
 unique(RespirationRates_adj$Date) ==  unique(Biodeposition_adj$Date)  # should be TRUE
 ```
 
-### Unique identifier 
+### Unique identifier
 
 -   Date \* pH \* dry tissue weight
 
@@ -169,7 +162,7 @@ ExcretionRates_adj$uniqueID <- paste(ExcretionRates_adj$Date,
                              sep = '_')
 ```
 
-### Test the unique identifier before merging 
+### Test the unique identifier before merging
 
 ```{r}
 # subset the ER data removing all instances that contain the same unique identifier 
@@ -234,6 +227,23 @@ write.csv(F2_Masterfile, "Output/F2_RR_ER_Biodep_master.csv")
 
 # Scope for growth calc
 
+## P = A - (R + U)
+
+-   Widdows and Johnson 1988 " Physiological energetics of *Mytilus edulis*: Scope for Growth
+
+```{=html}
+<!-- -->
+```
+-   **P** = production - estimated from the difference between the energy absorbed from the food and energy expenditure via respiration and excretion - referred to as Scope for Growth (SGF)
+
+-   **A** = C x absorption efficiency
+
+    -   C = Clearnace rate (l g-1 h-1) x POM (mg L-1) x 23 J mg-1 ash free dry weight
+
+-   **R** = VO2 (ml O2 g-1 hr-1) x 20.33 J ml-1 O2
+
+-   **U** = mg NH4 g-1 hr-1 x 19.4 J mg-1 NH4
+
 ```{r}
 
 F2_Masterfile$RR_Energy    <- (14.14*(F2_Masterfile$RR_resp_umol_hr_bfactorTDW))
@@ -243,23 +253,48 @@ F2_Masterfile$SfG <- (F2_Masterfile$AR -
                         (F2_Masterfile$RR_Energy+F2_Masterfile$RR_Excretion)
                       )
 
+# following the Widdows and Johnson 1988 aper described above..
+# Note- RR is in L O2 so we will multiply 20.33*1000 to account for 20.33 Joules per ml-1 O2 
+F2_Masterfile$RR_Energy_Widdows.1988     <- (20.33*F2_Masterfile$RR_resp_umol_hr_bfactorTDW)
+F2_Masterfile$RR_Excretion_Widdows.1988  <- (19.4*F2_Masterfile$ExcretionRate_umol_hr_bFactorNormTDW)
+
+F2_Masterfile$SfG_Widdows.1988           <- (  
+                        (F2_Masterfile$AR * (F2_Masterfile$CR_correct*23)) - 
+                        (F2_Masterfile$RR_Energy_Widdows.1988 + F2_Masterfile$RR_Excretion_Widdows.1988)
+                        )
+
 ```
 
 ```{r}
 
 F2_Masterfile$pCO2 <- factor(F2_Masterfile$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
-SFG_F2 <- ggplot(data=F2_Masterfile, aes(x=pCO2, y=SfG, colour=pCO2)) +
-  scale_colour_manual(values=c("forestgreen","orange", "purple"))+
-  theme_classic() +  
-  geom_boxplot(fill="white", outlier.colour=NA, position=position_dodge(width=0.9)) +
-  geom_point(position=position_jitterdodge()) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-  theme(axis.text.x=element_blank(),axis.title.x=element_blank()) +
-  labs(title="Scope for Growth ", x ="Month", y = "Scope for Growth") + 
-  facet_wrap(~Date)
+SFG_F2             <- ggplot(data=F2_Masterfile, aes(x=pCO2, y=SfG, colour=pCO2)) +
+                        scale_colour_manual(values=c("forestgreen","orange", "purple"))+
+                        theme_classic() +  
+                        geom_boxplot(fill="white", 
+                                     outlier.colour=NA, 
+                                     position=position_dodge(width=0.9)) +
+                        geom_point(position=position_jitterdodge()) +
+                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                        theme(axis.text.x=element_blank(),axis.title.x=element_blank()) +
+                        labs(title="Scope for Growth ", x ="Month", y = "Scope for Growth") + 
+                        facet_wrap(~Date)
 
+SFG_F2_Widdows1988 <- ggplot(data=F2_Masterfile, aes(x=pCO2, y=SfG_Widdows.1988, colour=pCO2)) +
+                        scale_colour_manual(values=c("forestgreen","orange", "purple"))+
+                        theme_classic() +  
+                        geom_boxplot(fill="white", 
+                                     outlier.colour=NA, 
+                                     position=position_dodge(width=0.9)) +
+                        geom_point(position=position_jitterdodge()) +
+                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                        theme(axis.text.x=element_blank(),axis.title.x=element_blank()) +
+                        labs(title="Scope for Growth (Widdows and Johnson 1988)",
+                             x ="Month", 
+                             y = "Scope for Growth") + 
+                        facet_wrap(~Date)
 pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F2_SFG.pdf")
-print(SFG_F2)
+ggarrange(SFG_F2, SFG_F2_Widdows1988, nrow = 2)
 dev.off()
 
 # stats
