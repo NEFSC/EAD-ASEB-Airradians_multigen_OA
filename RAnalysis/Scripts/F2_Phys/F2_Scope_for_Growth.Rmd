@@ -231,9 +231,8 @@ write.csv(F2_Masterfile, "Output/F2_RR_ER_Biodep_master.csv")
 
 -   Widdows and Johnson 1988 " Physiological energetics of *Mytilus edulis*: Scope for Growth
 
-```{=html}
 <!-- -->
-```
+
 -   **P** = production - estimated from the difference between the energy absorbed from the food and energy expenditure via respiration and excretion - referred to as Scope for Growth (SGF)
 
 -   **A** = C x absorption efficiency
