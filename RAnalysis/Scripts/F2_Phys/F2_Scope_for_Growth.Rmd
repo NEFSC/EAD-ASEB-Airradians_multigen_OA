@@ -230,17 +230,10 @@ write.csv(F2_Masterfile, "Output/F2_RR_ER_Biodep_master.csv")
 ## P = A - (R + U)
 
 -   Widdows and Johnson 1988 " Physiological energetics of *Mytilus edulis*: Scope for Growth
-
-<!-- -->
-
 -   **P** = production - estimated from the difference between the energy absorbed from the food and energy expenditure via respiration and excretion - referred to as Scope for Growth (SGF)
-
 -   **A** = C x absorption efficiency
-
     -   C = Clearnace rate (l g-1 h-1) x POM (mg L-1) x 23 J mg-1 ash free dry weight
-
 -   **R** = VO2 (ml O2 g-1 hr-1) x 20.33 J ml-1 O2
-
 -   **U** = mg NH4 g-1 hr-1 x 19.4 J mg-1 NH4
 
 ```{r}
@@ -299,6 +292,7 @@ dev.off()
 # stats
 F2_Masterfile_1_31_23 <- F2_Masterfile %>% dplyr::filter(Date %in% '1/31/2023')
 SGFmod_131 <- aov(lm(SfG ~ pCO2 , data =F2_Masterfile_1_31_23 ))
+SGFmod_131 <- aov(lm(SfG_Widdows.1988 ~ pCO2 , data =F2_Masterfile_1_31_23 ))
 shapiro.test(resid(SGFmod_131))
 leveneTest(SGFmod_131)
 summary(SGFmod_131)
