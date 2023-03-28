@@ -48,6 +48,7 @@ folder.names.table     <- data.frame(folder.names)
 # 13     20221116 - contains F2 juveniles at ~4 months old meausred with LoLigo (.txt files) 
 # 14     20230131 - contains F2 adults meausred with LoLigo (.txt files) 
 # 15     20230223 - contains F2 adults meausred with LoLigo (.txt files) 
+# 16     20230327 - contains F2 adults meausred with LoLigo (.txt files) 
 
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total             <- data.frame() # start dataframe 
@@ -58,7 +59,7 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 16:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
