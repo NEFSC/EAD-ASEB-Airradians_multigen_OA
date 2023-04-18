@@ -198,7 +198,7 @@ BioSamples_feces   <- BioSamples %>%
 BioSamples_merged  <- merge( (BioSamples %>%  filter(!sample_type %in% 'feces')%>% dplyr::select(!c(sample_type, ER_mghr, OER_mghr, IER_mghr))), # omit redundnat columns
                               BioSamples_feces, by = c('Date', 'treatment', 'animal_number')) %>% # merge with the feces dataframe by the unique identifiers
                       dplyr::rename(animal_dry_weight_g = animal_dry_weight_mg) # its not mg its actually g!!!
-View(BioSamples_merged)
+# View(BioSamples_merged)
 # SPECIES STANDARDIZATION COEFFICIENT - change here when we calculate our own for the Bay scallop and potentially under the different OA treatments
 sp_COEF <- 0.78 # standardization coefficient - calculated from CR data (review 'bvalue_noncorrectedcr')
 
@@ -297,7 +297,7 @@ for (i in 1:3) { # only the F1 data for 20220302, 20220923, and 20221027
 
 View(Biodep_Master_F1s) # look at your master file!
 
-
+Biodep_Master_F1s_bad_data <- Biodep_Master_F1s %>% dplyr::filter(AE > 1 | AE < -1)
 
 # F2 data!! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -387,12 +387,19 @@ for (i in 4:5) { # only the F2 data 20230201, 20230224
 }
 
 
+
 View(Biodep_Master_F2s)
 
-Biodep_Master_F2s
+# Shannon meeting 3/31/2023 - omit values that are NOT between -1 and 1 for AR 
+# note, two values for the F2s and no values for the F1s with this criteria - output the 'bad values' for the F2s and ommit in the master
+Biodep_Master_F2s_bad_data <- Biodep_Master_F2s %>% dplyr::filter(AE > 1 | AE < -1)
+Biodep_Master_F2s_OM       <- Biodep_Master_F2s %>% dplyr::filter(!(AE > 1 | AE < -1))
+
 # WRITE CSV OF THE MASTER FILE
 write.csv(Biodep_Master_F1s, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F1.csv")
-write.csv(Biodep_Master_F2s, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv")
+write.csv(Biodep_Master_F2s_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv")
+write.csv(Biodep_Master_F2s_bad_data, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_outliers_F2.csv")
+
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
 
 
