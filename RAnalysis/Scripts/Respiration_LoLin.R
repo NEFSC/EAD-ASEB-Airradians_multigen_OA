@@ -2,7 +2,7 @@
 # measure respiration rate from raw Loligo output data 
 # using Lolin.R (Olito etal. 201?) for reproducible and non-bias calculation of respiration rates
 
-# Written by: Sam J Gurr (last edit 8/31/2022)
+# Written by: Sam J Gurr (last edit 4/21/2023)
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -56,7 +56,7 @@ folder.names.table     <- data.frame(folder.names)
 # 17     20230327 - contains F2 adults meausred with LoLigo (.txt files) 
 # 18     20230407 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
 # 19     20230412 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
-
+# 20     20230421 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
 
 
 # Call the cumulative dataframe that we will write to in the for loop below
@@ -68,14 +68,14 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 17:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 20:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
   
-  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830', '20230316', '20230407', '20230412')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
+  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830', '20230316', '20230407', '20230412', '20230421')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
    } else if (folder.names.table[i,] %in% c('20211026', '20220922', '20221026')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
      file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
@@ -177,6 +177,8 @@ for(i in 17:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
        Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 20 & minutes < 120) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
      } else if (folder.names.table[i,] == '20230412') { 
        Resp.Data_15sec = Resp.Data_15sec %>% dplyr::filter(minutes < 30)  # note the log for this data started late after the plates wer loaded (1 hour later) - call 30 minutes of the very linear record to get data at highest DO
+     } else if (folder.names.table[i,] == '20230421') { 
+       Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 20 & minutes < 150) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
      } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
           # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
           Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...

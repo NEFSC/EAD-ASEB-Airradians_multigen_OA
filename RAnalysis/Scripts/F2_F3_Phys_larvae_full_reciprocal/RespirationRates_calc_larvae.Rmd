@@ -39,12 +39,14 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", header=T) %>% 
                             dplyr::filter((Date %in% c("3/16/2023", # larvae from full reciprocal trial with F2s
                                                      "4/7/2023",  # larvae from full reciprocal trial with F3s
-                                                     "4/12/2023")))# larvae from full reciprocal trial with F3s 
+                                                     "4/12/2023", # larvae from full reciprocal trial with F3s 
+                                                     "4/21/2023")))# larvae from full reciprocal trial with F3s 
                           
 resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
                               dplyr::filter((Date %in% c("3/16/2023", # larvae from full reciprocal trial with F2s
                                                      "4/7/2023",  # larvae from full reciprocal trial with F3s
-                                                     "4/12/2023")))# larvae from full reciprocal trial with F3s 
+                                                     "4/12/2023", # larvae from full reciprocal trial with F3s 
+                                                     "4/21/2023")))# larvae from full reciprocal trial with F3s 
                           
 
 ```
@@ -53,7 +55,6 @@ resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp
 ### Merge master resp data frame with lengths
 
 ```{r merge resp with length data and treatment IDs, echo=FALSE}
-
 
 # merge the exp_metadata with the resp.data
 resp.data_merged                       <- merge(resp.data, resp.ref) %>% 
@@ -175,8 +176,8 @@ Resp.Master_OM <- Resp.Master %>%
                   Filename
                   ))
 # diagnostics..
-Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives - 66
-nrow(Resp.outliers) # 66
+Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives - 92
+nrow(Resp.outliers) # 92
 write.csv(Resp.outliers, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_bad_data_larvae.csv")
 
 ```

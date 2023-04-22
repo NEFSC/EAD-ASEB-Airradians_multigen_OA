@@ -238,11 +238,11 @@ F3_Dinge_BOXPLOT_Parent <- RR_master_F3_Dhinge %>%
          scale_fill_manual(values=c("white", "grey60", "grey15")) +
          #scale_colour_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("F3 Respiration rates - Dhinge larvae 20230407") +
-         xlab("Respiration rates - Dhinge larvae") +
+         ggtitle("Parent grouped") +
          theme(axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -253,17 +253,45 @@ F3_Dinge_BOXPLOT_Parent <- RR_master_F3_Dhinge %>%
                       position = position_dodge(preserve = "single")) 
 
 
+F3_Dhinge_BOXPLOT_Offspring <- RR_master_F3_Dhinge %>% 
+  dplyr::filter(!resp_umol_hr_indiv > 0.0004) %>% # omits a single dramatic outlier
+  ggplot(aes(x = factor(pCO2_offspring), 
+             y = resp_umol_hr_indiv, 
+             colour = pCO2_offspring)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_colour_manual(values=c("forestgreen","orange", "purple")) +
+         ggtitle("Offspring grouped") +
+         theme_classic() + 
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) 
 
 
+F3_Dhinge_Parent_Offspring <- ggarrange(F3_Dinge_BOXPLOT_Parent,F3_Dhinge_BOXPLOT_Offspring, nrow = 1 )
 
 
-
+# Prep data for the  7 day larvae from 20230412
 RR_master_F3_7day$pCO2_parents   <- factor(RR_master_F3_7day$pCO2_parents, levels = c("500 uatm", "800 uatm", "1200 uatm"))
 RR_master_F3_7day$pCO2_offspring <- factor(RR_master_F3_7day$pCO2_offspring, levels = c("500 uatm", "800 uatm", "1200 uatm"))
  
 # PLOT 7 day larvae from 20230412
 F3_7day_BOXPLOT <- RR_master_F3_7day %>% 
-  dplyr::filter(!resp_umol_hr_indiv > 0.0004) %>%  # omits a single dramatic outlier
+  dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>%  # omits two dramatic outliers CHECK THESE!
   ggplot(aes(x = factor(pCO2_parents), 
              y = resp_umol_hr_indiv, 
              colour = pCO2_offspring,
@@ -295,7 +323,7 @@ F3_7day_BOXPLOT <- RR_master_F3_7day %>%
 
 
 F3_7day_BOXPLOT_Parent <- RR_master_F3_7day %>% 
-  dplyr::filter(!resp_umol_hr_indiv > 0.0004) %>% # omits a single dramatic outlier
+  dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>%  # omits two dramatic outliers CHECK THESE!
   ggplot(aes(x = factor(pCO2_parents), 
              y = resp_umol_hr_indiv, 
              fill = pCO2_parents)) +
@@ -309,11 +337,40 @@ F3_7day_BOXPLOT_Parent <- RR_master_F3_7day %>%
          scale_fill_manual(values=c("white", "grey60", "grey15")) +
          #scale_colour_manual(values=c("forestgreen","orange")) +
          theme_classic() + 
-         ggtitle("F3 Respiration rates - 7 day larvae 20230412") +
+         ggtitle("Parent grouped") +
          xlab("Respiration rates - 7 day larvae") +
          theme(axis.title.y=element_text(size=7),
                axis.title.x=element_text(size=7),
-               axis.text.x=element_text(size=7)) +
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) 
+
+F3_7day_BOXPLOT_Offspring <- RR_master_F3_7day %>% 
+  dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>%  # omits two dramatic outliers CHECK THESE!
+  ggplot(aes(x = factor(pCO2_offspring), 
+             y = resp_umol_hr_indiv, 
+             colour = pCO2_offspring)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_colour_manual(values=c("forestgreen","orange", "purple")) +
+         ggtitle("Offspring grouped") +
+         theme_classic() + 
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
          #ylim(0, 0.2) +
          stat_summary(fun.y=mean, 
                       geom = "errorbar", 
@@ -324,13 +381,12 @@ F3_7day_BOXPLOT_Parent <- RR_master_F3_7day %>%
                       position = position_dodge(preserve = "single")) 
 
 
-
-
+F3_7day_Parent_Offspring <- ggarrange(F3_7day_BOXPLOT_Parent,F3_7day_BOXPLOT_Offspring, nrow = 1 )
 
 
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_larvae_indiv.pdf"), width = 8, height = 16)
-ggarrange(F3_Dinge_BOXPLOT_Parent, F3_Dinge_BOXPLOT, 
-          F3_7day_BOXPLOT_Parent, F3_7day_BOXPLOT, nrow = 4)
+ggarrange(F3_Dinge_BOXPLOT, F3_Dhinge_Parent_Offspring,
+           F3_7day_BOXPLOT, F3_7day_Parent_Offspring, nrow = 4)
 dev.off()
 ```

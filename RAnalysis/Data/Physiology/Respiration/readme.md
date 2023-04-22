@@ -31,7 +31,7 @@ README
 	NOTE: this full reciprocal experiment is overlapped with the F3 grow out of the low, mid and high pCO2 cohorts (unlike the F2 full reciprocal larvae experiment). Therefore, the larvae are representative of the same cohorts for genomics of F3s
     - D-hinge larvae day 2: 20230407 - no size data, based on individual counts
     - Larvae day 7: 20230412 - no size data, based on individual counts
-		- Larvae day 16: 20230421 - no size data, based on individual counts
+		- Larvae day 16: 20230421 - no size data, based on individual counts - targeted a single individual per tank picked by hand (other timepoints measured volumetrically)
 
 #### 'Reference_resp_ID'
 
