@@ -37,7 +37,7 @@ RR_master <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradi
 RR_master_F2_Dhinge <- RR_master %>% dplyr::filter(Date %in% '3/16/2023')
 RR_master_F3_Dhinge <- RR_master %>% dplyr::filter(Date %in% '4/7/2023')
 RR_master_F3_7day   <- RR_master %>% dplyr::filter(Date %in% '4/12/2023')
-
+RR_master_F3_16day   <- RR_master %>% dplyr::filter(Date %in% '4/21/2023')
 ```
 
 # DATA ANALYSIS
@@ -61,6 +61,12 @@ F3_7day_SumTable <- RR_master_F3_7day %>%
             summarySE(measurevar="resp_umol_hr_indiv", groupvars=c("Date","pCO2_parents", "pCO2_offspring")) %>% 
             dplyr::arrange(resp_umol_hr_indiv)
 F3_7day_SumTable
+
+
+F3_16day_SumTable <- RR_master_F3_16day %>%  
+            summarySE(measurevar="resp_umol_hr_indiv", groupvars=c("Date","pCO2_parents", "pCO2_offspring")) %>% 
+            dplyr::arrange(resp_umol_hr_indiv)
+F3_16day_SumTable
 
 ```
 
@@ -385,8 +391,117 @@ F3_7day_Parent_Offspring <- ggarrange(F3_7day_BOXPLOT_Parent,F3_7day_BOXPLOT_Off
 
 
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_larvae_indiv.pdf"), width = 8, height = 16)
+
+
+# Prep data for the  16 day larvae from 20230421
+RR_master_F3_16day$pCO2_parents   <- factor(RR_master_F3_16day$pCO2_parents, levels = c("500 uatm", "800 uatm", "1200 uatm"))
+RR_master_F3_16day$pCO2_offspring <- factor(RR_master_F3_16day$pCO2_offspring, levels = c("500 uatm", "800 uatm", "1200 uatm"))
+ 
+# PLOT 16 day larvae from 20230412
+F3_16day_BOXPLOT <- RR_master_F3_16day %>% 
+  ggplot(aes(x = factor(pCO2_parents), 
+             y = resp_umol_hr_indiv, 
+             colour = pCO2_offspring,
+             fill = pCO2_parents)) +
+         geom_boxplot(alpha = 0.5,  # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("white", "grey60", "grey15")) +
+         scale_colour_manual(values=c("forestgreen","orange", "purple")) +
+         theme_classic() + 
+         ggtitle("F3 Respiration rates - 16 day larvae 20230412") +
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~pCO2_offspring) #, scales = "free)
+
+
+
+F3_16day_BOXPLOT_Parent <- RR_master_F3_16day %>% 
+  ggplot(aes(x = factor(pCO2_parents), 
+             y = resp_umol_hr_indiv, 
+             fill = pCO2_parents)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_fill_manual(values=c("white", "grey60", "grey15")) +
+         #scale_colour_manual(values=c("forestgreen","orange")) +
+         theme_classic() + 
+         ggtitle("Parent grouped") +
+         xlab("Respiration rates - 16 day larvae") +
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) 
+
+F3_16day_BOXPLOT_Offspring <- RR_master_F3_16day %>% 
+  ggplot(aes(x = factor(pCO2_offspring), 
+             y = resp_umol_hr_indiv, 
+             colour = pCO2_offspring)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             position = position_dodge(preserve = "single")) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_colour_manual(values=c("forestgreen","orange", "purple")) +
+         ggtitle("Offspring grouped") +
+         theme_classic() + 
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7),
+               legend.position = "none") +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) 
+
+
+F3_16day_Parent_Offspring <- ggarrange(F3_16day_BOXPLOT_Parent,F3_16day_BOXPLOT_Offspring, nrow = 1 )
+
+
+
+
+
+
+
+
+
+
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_larvae_indiv.pdf"), width = 8, height = 24)
 ggarrange(F3_Dinge_BOXPLOT, F3_Dhinge_Parent_Offspring,
-           F3_7day_BOXPLOT, F3_7day_Parent_Offspring, nrow = 4)
+           F3_7day_BOXPLOT, F3_7day_Parent_Offspring, 
+          F3_16day_BOXPLOT, F3_16day_Parent_Offspring, nrow = 6)
 dev.off()
 ```
