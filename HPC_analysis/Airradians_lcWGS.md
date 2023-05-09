@@ -1,5 +1,5 @@
 # Argopecten irradiains lcWGS Bioinformatics!
-
+.
 ## <span style="color:blue">**Table of Contents**</span>
   - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)
 	  - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)
@@ -58,7 +58,7 @@ echo " grep '@' raw fastq read counts complete!" $(date)
 
 ```
 
-run the script 
+run the script
 ```
 sbatch md5checksum.sh
 ```
@@ -70,7 +70,7 @@ cat Oct2022_check.md5 | head -2
 9b222e2ad82096e20efdae837af55591  ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R1_001.fastq.gz
 21accf228ec279d62b1417e810402110  ../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R2_001.fastq.gz
 ```
-use *awk* to cut a mutliple character delimiter and echo to print 
+use *awk* to cut a mutliple character delimiter and echo to print
 
 cat Oct2022_check.md5 | awk -F[../] '{print $1 $11}'  > checksummary.txt
 ```
@@ -186,7 +186,7 @@ d3ab7acfb6c23955471ab47ece590d56  5_R2_001
 
 ```
 
-- check the read counts 
+- check the read counts
 ano  Oct2022_rawread_count.txt | head -2
 
 ```
@@ -195,7 +195,7 @@ ano  Oct2022_rawread_count.txt | head -2
 
 ```
 
-use *awk* to cut a mutliple character delimiter and echo to print 
+use *awk* to cut a mutliple character delimiter and echo to print
 
 cat Oct2022_rawread_count.txt | awk -F'Oct2022/' '{print $2}'
 
@@ -251,7 +251,7 @@ cat Oct2022_rawread_count.txt | awk -F'Oct2022/' '{print $2}'
 5_R1_001.fastq.gz:4643576
 5_R2_001.fastq.gz:5090338
 ```
-now use 'comm' -23 to check or any discrepancies 
+now use 'comm' -23 to check or any discrepancies
 
 comm -23 <(sort checksummary.txt | uniq) <(sort refsummary.txt | uniq) # returns uniqe lines in the file checksummary.txt that do not exits in refsummary.txt
 
@@ -594,19 +594,19 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 ```-GL``` =
 
-	*	1: SAMtools model 
-	
-	*	2: GATK model 
-	
-* quality filtering 
+	*	1: SAMtools model
 
-```-minQ``` = minimum phred quality score 
+	*	2: GATK model
+
+* quality filtering
+
+```-minQ``` = minimum phred quality score
 
 ```-minMapQ``` = minimum mapping quality score
 
 * note: studies use a minQ of 30-32 depending on how consersative you want your base calls
 
-```-minInd``` = the minimum representation of the variant in your data. 
+```-minInd``` = the minimum representation of the variant in your data.
 
 * note: contemporary studies use a threshold so >80% of individuals are represented
 
@@ -614,13 +614,13 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 	- (a) GLs as -minInd 160 for all 200 samples
 	- (b) two GLs separately for each population with -minQ 80 for 100 samples
 
-**pvalues** 
+**pvalues**
 
-```-snp_pval``` = SNP p value 
+```-snp_pval``` = SNP p value
 
-* angsd tutorials set this quite low to 1X10-6 (0.000001), however studies do set this to simply 0.05 also 
+* angsd tutorials set this quite low to 1X10-6 (0.000001), however studies do set this to simply 0.05 also
 
-```-sb_pvalue``` = strand bias 
+```-sb_pvalue``` = strand bias
 
 ```-hetbias_pval``` = hetbias p value, based on reads of genotypes that are called to be heterozygotes - requires the -doGeno option
 
@@ -629,8 +629,8 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 ```-doMaf``` =+9+
 
 	*	1: Known major, and Known minor.
-		   Here both the major and minor allele is assumed to be known (inferred or given by user). 
-		   The allele frequency is the obtained using based on the genotype likelihoods. 
+		   Here both the major and minor allele is assumed to be known (inferred or given by user).
+		   The allele frequency is the obtained using based on the genotype likelihoods.
 		   The allele frequency estimator from genotype likelihoods are from this publication but using the EM algorithm and is briefly described here.
 
 	* 	2: Known major, Unknown minor.Here the major allele is assumed to be known (inferred or given by user) however the minor allele is not determined.
@@ -658,14 +658,14 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 ```-P``` =
 
-	*	number of threads that you are running your GL 
+	*	number of threads that you are running your GL
 
 ```-ref``` =
 
-	*	if emplying -doMajorMinor 4, if forces the major allele according to the reference, you will need to define this by a fasta (___.fa) file 
+	*	if emplying -doMajorMinor 4, if forces the major allele according to the reference, you will need to define this by a fasta (___.fa) file
 
 
-Before getting started.. 
+Before getting started..
 
 we first need a file containg the root to all bam files from home dir - below as 'bam_filelist.txt'
 
@@ -745,7 +745,7 @@ Contig0 19      G       A       0.000000        45
 
 	* 'minor' == minor allele at the noted position
 
-	* 'unknownEM' == the minor allele frequency 
+	* 'unknownEM' == the minor allele frequency
 
 	* 'nInd' == the number of individuals for which there is coverage at each SNP
 
@@ -774,11 +774,11 @@ Contig52        675558  A       C       0.000006        8
 Contig52        675559  A       C       0.000006        8
 ```
 
-* ...and why do later contigs show more relevant sample numbers? 
+* ...and why do later contigs show more relevant sample numbers?
 
 
-* **NOTE:** are the regions with SNP positions of high or poor mapping quality? 
-are the regions with SNP position of excessive coverage? 
+* **NOTE:** are the regions with SNP positions of high or poor mapping quality?
+are the regions with SNP position of excessive coverage?
 You may need to supplement a csv(s) with categorical justification of regions with varied quality or putatively high-repeated regions (excessive coverage),
 filtering these cumulative SNP hits downstream in R
 
@@ -788,9 +788,9 @@ filtering these cumulative SNP hits downstream in R
 *Should we merge BEFORE or AFTER mapping?*
 
 	* (1) merging after mapped
-	
+
 	* (2) merge before mapped
-	
+
 ## Merge bams after mapping (hisat2 outputs)
 
 ### <span style="color:red">IMPORTANT:<span> merge lanes here (.bam stage)
@@ -830,7 +830,7 @@ module load bio/samtools/1.15.1
 ls *R1_001*.bam | awk -F '[_]' '{print $1"_"$2}' | sort | uniq > ID
 ```
 
-* output looks like this: 
+* output looks like this:
 
 ```
 ../adapter_trim.101
@@ -871,14 +871,14 @@ for i in `cat ./ID`;
 
 - when run in ```interactive``` mode, this loop takes up to ~1-2 hours
 
-## Call root directory of the merged bam files 
+## Call root directory of the merged bam files
 
-* when running **angsd**, we will need to call these merged bam files as a txt list file 
+* when running **angsd**, we will need to call these merged bam files as a txt list file
 
 * below is an example calling bam file lists for the Low pCO2 and moderately elevated pCO2 F1 cohort - an example with the first 25 samples form October 2022
 
 	- Moderately-elevated pCO2 cohort, 12 animals with the IDs in the 300s and 200s
-	
+
 ls -d "$PWD"/*.35*.bam "$PWD"/*30*.bam "$PWD"/*.2*.bam > Mod_pCO2_bamlist.txt
 
 	- Low pCO2 cohort, 12 animals with the IDs 3,4,5 and in the 100s
@@ -886,20 +886,18 @@ ls -d "$PWD"/*.35*.bam "$PWD"/*30*.bam "$PWD"/*.2*.bam > Mod_pCO2_bamlist.txt
 ls -d "$PWD"/*.3.bam "$PWD"/*.4.bam "$PWD"/*.5*.bam "$PWD"/*.1*.bam > Low_pCO2_bamlist.txt
 
 
-## Lets run ANGSD! 
+## Lets run ANGSD!
 
-* **Objective**: obtain SNP calls. chromosome/contig positions to infer genotype liklihoods and putativelly adaptive molecular candidates (we also have differential expression work!) 
+* **Objective**: obtain SNP calls. chromosome/contig positions to infer genotype liklihoods and putativelly adaptive molecular candidates (we also have differential expression work!)
 
-Terms to know regarding assemblies: 
+Terms to know regarding assemblies:
 
-**contigs** - genome assemblies are hierarchical - contigs are the shortest assembly component of a 
+**contigs** - genome assemblies are hierarchical - contigs are the shortest assembly component of a
 genome in which a contiguous length of genomic sequence is known on a high confidence level
 
-**scaffolds** - comprised of contigs, a longer component on this assembly hierachy, 
-created from chaining contigs together using additional information on the orientation of the contigs and their relative position. 
+**scaffolds** - comprised of contigs, a longer component on this assembly hierachy,
+created from chaining contigs together using additional information on the orientation of the contigs and their relative position.
 Contigs in scallods can be separated by gaps represented as 'N'
 
-**chromosomes** - assembled seqeunces from compoentns (scallods and thus originally contigs) the largest 
-genome assembly cmoponent comprised of assembled scaffolds, requires sufficient mapping information to build from the scaffold level 
-
-
+**chromosomes** - assembled seqeunces from compoentns (scallods and thus originally contigs) the largest
+genome assembly cmoponent comprised of assembled scaffolds, requires sufficient mapping information to build from the scaffold level
