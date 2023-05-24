@@ -21,6 +21,10 @@
 
 * Genewiz provides a one txt line .md5 file for each of the .gz sequence files
 
+You can concatenate using 'cat *.md5 > new_file.md5'
+
+	- example: cat *.md5 > ~/Airradians_lcWGS/F0_F2_April2023/output/md5checksum/April2023_reference.md5
+
 * first objective to assemble a cumulative file with these text lines in one .txt
 
 
@@ -129,6 +133,20 @@ d3ab7acfb6c23955471ab47ece590d56  5_R2_001
 
 How do these md5 checks compare to the reference? (Genewiz output) *check Oct2022_reference.md5*
 
+
+cat April2023_check.md5| head -2
+```
+d00b958fe8ff3f0a7308a1cd455790c7  ../../../share/nefsc/mcfarland_sequecenes/lcWGS_scallops_April2023/F0-B10_R1_001.fastq.gz
+58f4d2c3af4ba150cb024181bcaaf1ec  ../../../share/nefsc/mcfarland_sequecenes/lcWGS_scallops_April2023/F0-B10_R2_001.fastq.gz
+```
+
+cat April2023_check.md5 | awk -F "../" '{print $1 $8}' > April2023_check_summary.txt # use "" in -F to have mutliple delimiters
+cat April2023_check_summary.txt| head -2
+```
+d00b958fe8ff3f0a7308a1cd455790c7  F0-B10_R1_001.fastq.gz
+58f4d2c3af4ba150cb024181bcaaf1ec  F0-B10_R2_001.fastq.
+```
+
 cat Oct2022_reference.md5 | awk -F[./] '{print $1 $3}' > refsummary.txt
 
 ```
@@ -187,7 +205,7 @@ d3ab7acfb6c23955471ab47ece590d56  5_R2_001
 ```
 
 - check the read counts 
-ano  Oct2022_rawread_count.txt | head -2
+cat Oct2022_rawread_count.txt | head -2
 
 ```
 ../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R1_001.fastq.gz:5194197
