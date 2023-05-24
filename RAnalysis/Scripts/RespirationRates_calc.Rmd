@@ -37,9 +37,9 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", header=T) %>% 
-                          dplyr::filter(!(Date %in% "9/14/2021" | 
-                                          !Filename %in% 'Run_1_raw.txt')) %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
-                          dplyr::filter(!(Date %in% "10/26/2022" & 
+                          dplyr::filter(!(Date %in% "9/14/2021" & 
+                                          Filename %in% 'Run_1_raw.txt')) %>%  # read the calculate raw rates from 'resp_LoLin' script - contains the calculated rate (not normalized for blanks) for each sensor-channel
+                          dplyr::filter(!(Date %in% "10/26/2022" &
                                             Filename %in% 'run_1_raw.txt' & Channel %in% 'CH2')) %>%  # omit bad data point
                           dplyr::filter(!(Date %in% c("3/16/2023", # larvae from full reciprocal trial with F2s - analyzed separately in RespirationRates_calc_larvae
                                                      "4/7/2023",  # larvae from full reciprocal trial with F3s - analyzed separately in RespirationRates_calc_larvae 
@@ -363,7 +363,12 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH5' ~ 212.6,
                       filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH6' ~ 212.8,
                       filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH7' ~ 213.5, 
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH8' ~ 212)) %>% # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH8' ~ 212, # F2 data
+  
+                      # F3 DATA HERE :::::::::::
+                      
+                      filetype == "SDR_data" & Date %in% c('4/7/2023','4/12/2023','4/18/2023','4/21/2023') ~ 0.08, # F3 data 
+                      filetype == "SDR_data" & Date %in% c('5/18/2023') ~ 0.200)) %>%   # F2 data
   # BIOVOLUME 
   # note that biovolume was not measured for 9/14/2021, 9/30/2021, 10/26/21 (unfed only!), 9/22/22 (F2s only, SDR data)
  
