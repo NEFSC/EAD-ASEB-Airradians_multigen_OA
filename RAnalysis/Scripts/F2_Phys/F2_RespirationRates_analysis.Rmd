@@ -414,7 +414,7 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.71 # review the outlier-omitted b factor plot in previous chunk
+bLength = 2.0 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
@@ -498,7 +498,7 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.71 # review the outlier-omitted b factor plot in previous chunk
+bLength = 2.0 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)
@@ -574,6 +574,79 @@ write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/
 ```
 
 
+# F3s master file
+
+-   calculate RR rates with b factor and my mean tissue and mean shell length
+
+```{r, RR_formatted_F2smaster}
+
+# call all bfactors (calc above!) - these are using ALL DATA 
+bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
+bLength = 2.0 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
+
+meanLength <- mean(RR_master_F3$Length_um/1000) # 14.07185 mm
+
+#View(RR_formatted_F1s$TDW_um)
+RR_formatted_F3smaster <- RR_master_F3 %>% 
+  
+  # TDW b factor - using 'resp_umol_hr'
+  
+  dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = NA) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
+  
+  dplyr::mutate(resp_mg_hr_bFactorNormTDW.1g = NA) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
+  
+  dplyr::mutate(resp_umol_hr_bFactorNormTDW.MEAN = NA) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
+  
+  dplyr::mutate(resp_umol_hr_bFactorNormTDW.1g = NA) %>% # TDW b factor - using 'resp_umol_hr' only values with measured biovolume
+  
+  # Length b factor
+  dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
+                    (resp_mg_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
+  
+  dplyr::mutate(resp_umol_hr_bFactorNormLength.MEAN = 
+                    (resp_umol_hr_biovolcalc)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  correcred using 'resp_umol_hr_biovolcalc'
+  
+  
+  dplyr::select(c(Gen,
+                  Age,
+                  Date,
+                  pH,
+                  pCO2,
+                  Replicate,
+                  Chamber_tank,
+                  Number,
+                  Run,
+                  Channel,
+                  filetype,
+                  Filename,
+                  Food,
+                  Length_um,
+                  Length_mm,
+                  Dry_Shell_weight,
+                  Dry_Tissue_weight,
+                  whole_Dry_weight,
+                  volume,
+                  Biovolume_g_in_sw,
+                  measured_volume, # as vessel volume - meausred biovolume (NAs where note measured)
+                  Biovol_length3,
+                  calculated_volume, # as vessel volume - (biovol calc from length^3)
+                  Lpc,
+                  BLANK.mean_Lpc,
+                  resp_blankStand,
+                  resp_mg_hr, 
+                  resp_mg_hr_biovolcalc,
+                  resp_mg_hr_bFactorNormTDW.MEAN, 
+                  resp_mg_hr_bFactorNormTDW.1g,
+                  resp_mg_hr_bFactorNormLength.MEAN,
+                  resp_umol_hr,
+                  resp_umol_hr_biovolcalc,
+                  resp_umol_hr_bFactorNormTDW.MEAN,
+                  resp_umol_hr_bFactorNormTDW.1g,
+                  resp_umol_hr_bFactorNormLength.MEAN))
+#View(RR_formatted_F1smaster)
+write.csv(RR_formatted_F3smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_calc_master.csv")
+```
+
 
 
 # STANDARDIZE AND STATISTICAL ANALYSIS 
@@ -601,7 +674,7 @@ for (i in 1:nrow(ANOVA_Dates)) {
         AOVmod              <- aov(lm(data_loop$resp_mg_hr_bFactorNormLength.MEAN ~ data_loop$pCO2))
         DF_loop$Date        <- date_loop
         DF_loop$Age         <- data_loop$Age[1]
-        DF_loop$Metric      <- 'Respiration rate; TDW b factor normalized'
+        DF_loop$Metric      <- 'Respiration rate; Length b factor normalized'
         DF_loop$model       <- 'one-way AOV; x ~ treatment'
         DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
         DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
@@ -704,4 +777,46 @@ F2s.BOXPLOT_TDW_bfactor <- RR_formatted_F2smaster %>%
 pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2_RR_TDW.pdf")
 print(F2s.BOXPLOT_TDW_bfactor)
 dev.off()
+```
+
+
+## BOXPLOTS by SHELL LENGTH (b factor = 2.18) - F3s
+
+```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
+
+RR_formatted_F3smaster$pCO2 <- factor(RR_formatted_F3smaster$pCO2, 
+                                      levels = c("500 uatm", "800 uatm", "1200 uatm"))
+ 
+# LENGTH  ---------------------------------------------------------------------------- #
+
+F3s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F3smaster %>% 
+  ggplot(aes(x = factor(Date), 
+             y = resp_umol_hr_bFactorNormLength.MEAN, 
+             colour = pCO2)) +
+         geom_boxplot(alpha = 0.5, # color hue
+             width=0.6, # boxplot width
+             outlier.size=0, # make outliers small
+             fill="white", outlier.colour=NA, position=position_dodge(width=0.9)) + 
+         geom_point(pch = 19, 
+                    position = position_jitterdodge(0.01), 
+                    size=1) +
+         scale_colour_manual(values=c("forestgreen","orange", "purple")) +
+         theme_classic() + 
+         ggtitle("Resp * [ ( meanLength / Length_meas)^2.0]") +
+         theme(axis.title.y=element_text(size=7),
+               axis.title.x=element_text(size=7),
+               axis.text.x=element_text(size=7)) +
+         #ylim(0, 0.2) +
+         stat_summary(fun.y=mean, 
+                      geom = "errorbar", 
+                      aes(ymax = ..y.., ymin = ..y..), 
+                      width = 0.6, 
+                      size=0.4, 
+                      linetype = "dashed", 
+                      position = position_dodge(preserve = "single")) +
+         facet_wrap(~Date, scales = "free") #, scales = "free)
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_Length.pdf")
+print(F3s.BOXPLOT_Length_bfactor.MEAN)
+dev.off()
+
 ```
