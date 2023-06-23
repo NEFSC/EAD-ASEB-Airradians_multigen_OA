@@ -204,13 +204,11 @@ d3ab7acfb6c23955471ab47ece590d56  5_R2_001
 
 ```
 
-<<<<<<< HEAD
+
 - check the read counts 
+
 cat Oct2022_rawread_count.txt | head -2
-=======
-- check the read counts
-ano  Oct2022_rawread_count.txt | head -2
->>>>>>> ba9159bf9ecedd92c24e8925da16e39267b712b0
+
 
 ```
 ../../../share/nefsc/mcfarland_sequecenes/lcWGS_F1scallops_Oct2022/101_R1_001.fastq.gz:5194197
