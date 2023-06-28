@@ -347,9 +347,16 @@ echo "Raw MultiQC report generated." $(date)
 
 - save to gitrepo as multiqc_raw.html
 
+- here is our run from Oct 2022
 
 ```
-scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/multiqc_report.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/F1_lcWGS_25samples/multiqc_raw.html
+scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F1/output/fastp_multiQC/raw/multiqc_report.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/Oct2022_lcWGS_QCreport/multiqc_raw.html
+
+```
+
+- here is out run for April 2023
+```
+scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F0_F2_April2023/output/fastp_multiQC/multiqc_report.html C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/output/April2023_lcWGS_QCreport/multiqc_raw.html
 
 ```
 
