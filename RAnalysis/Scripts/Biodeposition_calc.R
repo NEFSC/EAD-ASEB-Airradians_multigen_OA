@@ -31,12 +31,12 @@ nrow(biodep) == nrow(biodep_f1) + nrow(biodep_f2) # TRUE
 # f   == POM available: Average POM of the water
 # SE  == Selection Efficiency: 1-(p/f) (organic content of pseudofeces/organic content of the water)
 # IFR == Inorganic Filtration Rate: IER + IRR (PIM feces + PIM pseudofeces; i.e. total inorganic matter filtered/collection time)
-# CR  == Cleanrance Rate: IFR/PIM of the water
+# CR  == Clearance Rate: IFR/PIM of the water
 # FR  == Filtration Rate: CR * TPM of the water
 # %RR == RR/FR (amount rejected/total amount filtered)
 # TIR == Total Ingestion Rate: FR - RR
 # OFR == Organic Filtration Rate: CR * POM of the water
-# ORI == Organic INgestion Rate: OFR-ORR
+# OIR == Organic Ingestion Rate: OFR-ORR
 # i   == Fraction of Organic Matter ingested: OIR/TIR (i.e. fraction of ingested material that was organic)
 # AR  == Assimilation Rate: OIR-OER (rate of POM filtration - rate of POM rejection - rate of POM egestion)
 # AE  == Assimilation Efficiency: AR/OIR
