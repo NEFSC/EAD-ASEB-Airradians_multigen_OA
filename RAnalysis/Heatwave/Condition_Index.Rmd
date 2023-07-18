@@ -67,7 +67,6 @@ ggplot(data=df, aes(x=pH, y=Condition.Index, fill=pH)) +
   theme(axis.text=element_text(size=12))+
   facet_wrap(~Temp)
 
-                        #labels=c("500 µatm", "800 µatm"))
   
 ```
 
@@ -104,6 +103,52 @@ summary(mod)
 ```{r}
 TukeyHSD(mod, conf.level = .95)
 ```
+
+```{r, echo=FALSE}
+ggplot(data=df, aes(x=pH, y=Shell_LW, fill=pH)) +
+  geom_boxplot()+  
+     #scale_fill_manual(values=c("forestgreen","orange"))+
+  #scale_fill_manual(values=c("gray90","gray54"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  labs(title="Shell Length to dry Shell Weight Ratio", x ="pH", y = "Condition Index")+ theme(axis.title.y = element_text(size = rel(1.3), angle =90), axis.title.x = element_text(size = rel(1.3), angle = 0))+
+  theme(axis.text=element_text(size=12))+
+  facet_wrap(~Temp)
+
+  
+```
+
+```{r}
+mod <- aov(Shell_LW ~pH*Temp, data=df)
+
+summary(mod)
+
+```
+
+
+```{r, echo=FALSE}
+ggplot(data=df, aes(x=pH, y=Dry.Shell..g., fill=pH)) +
+  geom_boxplot()+  
+     #scale_fill_manual(values=c("forestgreen","orange"))+
+  #scale_fill_manual(values=c("gray90","gray54"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  labs(title="Dry Tissue Weight", x ="pH", y = "Dry Tissue Weight (g)")+ theme(axis.title.y = element_text(size = rel(1.3), angle =90), axis.title.x = element_text(size = rel(1.3), angle = 0))+
+  theme(axis.text=element_text(size=12))+
+  facet_wrap(~Temp)
+
+
+ggplot(data=df, aes(x=pH, y=Dry.Tissue..g., fill=pH)) +
+  geom_boxplot()+  
+     #scale_fill_manual(values=c("forestgreen","orange"))+
+  #scale_fill_manual(values=c("gray90","gray54"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))+
+  labs(title="Dry Shell Weight", x ="pH", y = "Dry Shell Weight (g)")+ theme(axis.title.y = element_text(size = rel(1.3), angle =90), axis.title.x = element_text(size = rel(1.3), angle = 0))+
+  theme(axis.text=element_text(size=12))+
+  facet_wrap(~Temp)
+```
+
 
 # This prints out the R version information which is helpful for when you report your statisical methods
 ```{r}
