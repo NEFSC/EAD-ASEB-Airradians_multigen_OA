@@ -1,0 +1,56 @@
+---
+title: "Heatwave Mortality"
+author: "Katie McFarland"
+date: "7/18/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries
+```{r, include=FALSE}
+library("ggplot2")
+#library("tidyverse")
+library("car")
+library("nlme")
+#library(multcompView)
+#library("agricolae")
+#library(dplyr)
+library(Rmisc)
+
+#for nonparametric stats
+##library(ggpubr)
+##library(rstatix)
+##(dunn.test)
+```
+
+
+## Set Path. This is there the csv data file is stored on your computer. AKA set working directory so that your computer knows where to look for files
+```{r}
+#Set Path - telling R where to look for files
+
+setwd("C:/Users/katherine.mcfarland/Documents/4. GitHub/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Heatwave")
+```
+
+### Load Data -
+
+```{r}
+#Here we are assigning our data frame the name "df" so that we do not have to type out the full file name everytime we want to call it.
+
+df<-read.csv("Mortality_Heatwave.csv", header = T)
+#
+
+#to look at columns names of your data frame
+head(df)
+
+# assigning our controlled variables as factors 
+df$pH=as.factor(df$pH)
+df$Temp=as.factor(df$Temp)
+df$Rep=as.factor(df$Rep)
+
+
+#Sturcture of the data - to check that variables are properly assigned to facotr or variable
+str(df)
+```
