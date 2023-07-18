@@ -2,7 +2,7 @@
 # measure respiration rate from raw Loligo output data 
 # using Lolin.R (Olito etal. 201?) for reproducible and non-bias calculation of respiration rates
 
-# Written by: Sam J Gurr (last edit 8/31/2022)
+# Written by: Sam J Gurr (last edit 5/24/2023)
 
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -52,8 +52,12 @@ folder.names.table     <- data.frame(folder.names)
 # 13     20221116 - contains F2 juveniles at ~4 months old meausred with LoLigo (.txt files) 
 # 14     20230131 - contains F2 adults meausred with LoLigo (.txt files) 
 # 15     20230223 - contains F2 adults meausred with LoLigo (.txt files) 
-
-
+# 16     20230316 - contains F2 D-hinge larvae during a full-reciprocal OA challenge -NOTE: this is a later F1 spawn that does NOT reflect eh parentage for the F1s, this is a side epxeriment for a osspring OA challenge, SDR dish only
+# 17     20230327 - contains F2 adults meausred with LoLigo (.txt files) 
+# 18     20230407 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 19     20230412 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 20     20230421 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 21     20230518 - contains F3 spat during grow out under ONLy matched parentxoffspring pCO2, SDR dish only
 
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total             <- data.frame() # start dataframe 
@@ -64,14 +68,14 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 21:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
   
-  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
+  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830', '20230316', '20230407', '20230412', '20230421', '20230518')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
    } else if (folder.names.table[i,] %in% c('20211026', '20220922', '20221026')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
      file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
@@ -157,15 +161,27 @@ for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 20 & minutes < 50) # call between miutes 20 and 50 of the trials - took time to start in order to close chambers and channels stopped once below defined threshold (80 % a.s.)
      } else if (folder.names.table[i,] == '20220922' & (gsub(".*\\.","", file.names.table[m,]) == "csv")) { # call all runs with the SDR SensorDish system on 20220922 (.csv files)
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 50) # call data after 10 minutes
-     } else if (folder.names.table[i,] == '20221026') { # call all runs with Loligo on 20221026 (.csv files)
+     } else if (folder.names.table[i,] == '20221026') { 
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 10 & minutes < 60) # call data after 10 minutes
-     } else if (folder.names.table[i,] == '20221116') { # call all runs with Loligo on 20221026 (.csv files)
+     } else if (folder.names.table[i,] == '20221116') { 
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes < 75) # call data before minute 75 (when most reached 80% a.s. and finished), also the starting data was very clean in these runs!
-     } else if (folder.names.table[i,] == '20230131') { # call all runs with Loligo on 20221026 (.csv files)
+     } else if (folder.names.table[i,] == '20230131') { 
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes < 30) # call data before minute 30 minutes (when most reached 80% a.s. and finished)
-     } else if (folder.names.table[i,] == '20230223') { # call all runs with Loligo on 20221026 (.csv files)
+     } else if (folder.names.table[i,] == '20230223') { 
        Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes < 40) # call data before minute 30 minutes (when most reached 80% a.s. and finished)
-        } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
+     } else if (folder.names.table[i,] == '20230316') { 
+       Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 60 & minutes < 160) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
+     } else if (folder.names.table[i,] == '20230327') { 
+       Resp.Data_15sec = Resp.Data_15sec %>% dplyr::filter(minutes > 15 & minutes < 60)  # calls data < 60 minutes to truncate (partially) befire we reoxugenated the system for certain channels
+     } else if (folder.names.table[i,] == '20230407') { 
+       Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 20 & minutes < 120) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
+     } else if (folder.names.table[i,] == '20230412') { 
+       Resp.Data_15sec = Resp.Data_15sec %>% dplyr::filter(minutes < 30)  # note the log for this data started late after the plates wer loaded (1 hour later) - call 30 minutes of the very linear record to get data at highest DO
+     } else if (folder.names.table[i,] == '20230421') { 
+       Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 20 & minutes < 150) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
+     } else if (folder.names.table[i,] == '20230518') { 
+       Resp.Data_15sec = Resp.Data_15sec[seq(1, nrow(Resp.Data_15sec), 4), ] %>% dplyr::filter(minutes > 15 & minutes < 40) # calls data every minute to reduce load time - here we truncate where we have a linear trend and does not dip below hypoxia
+     } else { # note this should only call the txt files in 20211026 as there are no .csv files in 20210914
           # Resp.Data_15sec = Resp.Data %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
           Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 30 & minutes < 90)# for now we will run the whole dataset to see...
           Resp.Data_15sec = Resp.Data_15sec %>%  dplyr::filter(minutes > 60)# 20200829 larve data, omit the linital and target the remaining 
@@ -259,9 +275,13 @@ for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
 # (2) not normalized for volume chamber 
 # (3) not normalized for blank resp rate 
 # (4) not normalized for a size/individual metric (i.e. Tissue Dry weight, shell length, etc.)
+
 cumulative_resp_table <- read.csv(file=ouputNAME, header=TRUE) #call the pre existing cumulative table
 new_table             <- rbind(cumulative_resp_table, df_total) # bind the new table from the for loop to the pre exisiting table
-write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
+if (nrow(new_table) == nrow(cumulative_resp_table) + nrow(df_total)) {
+  write.table(new_table,ouputNAME,sep=",", row.names=FALSE)  # write out to the path names outputNAME
+} else {print("Did not overwrite!")}
+
 # View(new_table) # view if you like!
 
 # AFTER VISUAL INSPECTION OF PLOTS....

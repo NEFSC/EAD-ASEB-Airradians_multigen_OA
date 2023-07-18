@@ -48,6 +48,13 @@ folder.names.table     <- data.frame(folder.names)
 # 13     20221116 - contains F2 juveniles at ~4 months old meausred with LoLigo (.txt files) 
 # 14     20230131 - contains F2 adults meausred with LoLigo (.txt files) 
 # 15     20230223 - contains F2 adults meausred with LoLigo (.txt files) 
+# 16     20230316 - contains F2 D-hinge larvae during a full-reciprocal OA challenge -NOTE: this is a later F1 spawn that does NOT reflect eh parentage for the F1s, this is a side epxeriment for a osspring OA challenge, SDR dish only
+# 17     20230327 - contains F2 adults meausred with LoLigo (.txt files) 
+# 18     20230407 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 19     20230412 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 20     20230421 - contains F3 larvae during the full reciprocal OA challenge (parent x offpsring 3 pCO2s), SDR dish only
+# 21     20230517 - contains F3 spat during grow out under ONLy matched parentxoffspring pCO2, SDR dish only
+
 
 # Call the cumulative dataframe that we will write to in the for loop below
 df_total             <- data.frame() # start dataframe 
@@ -58,12 +65,12 @@ colnames(resp.table) <- c('Date', 'Channel', 'Lpc', 'Leq' , 'Lz', 'alpha','Filen
 # II. A bunch o' fors and if/elses - commented throughout!
 
 # outside 'i' loop - call each subfolder one at a time for analysis
-for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for(i in 21:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   # NOTE: when calling the raw files we need to accommodate the different formats
   # 20210914 used the 8-channel loligo system with raw output as .txt files with 'raw' in the title - call these using dplyr in the if/else below
   # 20210930 used the 24-channel SDR sensor dish with raw output as .csv files - call these in the if/else statement below 
   # call all txt files labeled 'raw' in each subfolder (i.e. 20210914) and create a table 
-  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
+  if (folder.names.table[i,] %in% c('20210930','20220420', '20220422','20220824', '20220829', '20220830', '20230316', '20230407', '20230412', '20230421', '20230517')) { # call data when ONLY the 24-channel SDR dish data was used (csv file output) 
     file.names.table    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "csv$", recursive = TRUE)))) 
   } else if (folder.names.table[i,] %in% c('20211026', '20220922')) { # for day(s)s when BOTH the loligo system (txt files) AND SDR dish (csv files) were used
     file.names.table1    <- data.frame(txt.files = (basename(list.files(path = paste(path.p,'/',folder.names.table[i,1],sep=''), pattern = "txt$", recursive = TRUE)))) %>%  dplyr::filter(grepl('raw', txt.files))#list all csv file names in the folder and subfolders
@@ -76,7 +83,7 @@ for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
   # inside 'm' loop - call each  raw .txt or raw .csv file file witin the subfolder 'i'
       for(m in 1:nrow(file.names.table)) { # for every raw .txt or csv file 'm' in the subfolder 'i' :::::::::::::::::::::::::::::::::::::
         
-            if (gsub(".*_raw.","", file.names.table[m,]) == "txt") {
+            if (gsub(".*_raw.","", file.names.table[m,1]) == "txt") {
               Resp.Data           <- read.delim2(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), header = TRUE,skip = 37, fileEncoding= "windows-1252") #reads in the data files
               
                 # for data spanning 2021 to 2022
@@ -109,7 +116,9 @@ for(i in 14:nrow(folder.names.table)) { # for every subfolder 'i' ::::::::::::::
               
               } else { 
                 
-                Resp.Data           <- read.table(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), sep = ',', header = TRUE,skip = 51) #reads in the data files
+               Resp.Data           <- read.table(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), sep = ',', header = TRUE,skip = 51) #reads in the data files
+                
+              # Resp.Data           <- read.table(file = paste(path.p,'/',folder.names.table[i,1], '/', file.names.table[m,1], sep=''), sep = ',', header = TRUE,skip = 47) #reads in the data files - IMPORTANT! skipping until row 47 works for later files on the F2 and F3 larvae
                 
                 # add the for loop here if/when the 24 channel Loligo (csv raw data outputs) is used in 2022!!!
                 # for data in 2021 and data in 2022 
