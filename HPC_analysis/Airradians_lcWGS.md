@@ -2,13 +2,16 @@
 .
 ## <span style="color:blue">**Table of Contents**</span>
   - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)
-	  - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)
-      - [Digital fingerprint md5sums](#run-checksum) (HPC script; <span style="color:green">**md5_checksum.sh**<span>)
-  - [1. MultiQC: Initial QC](#Quality-check-of-raw-reads) (HPC script; <span style="color:green">**mutliqc.sh**<span>)
-  - [2. Trimming and QC of 'clean' reads](#Trimming-and-post-trim-quality-check-of-'clean'-reads)
-	- [fastp - about/commands](#What-this-script-will-do...)
-	- [fastp and MulitiQC: Trim and QC](#shell-script-fastp_multiqc.sh) (HPC script; <span style="color:green">**fastp_mutliqc.sh**<span>)
-  - [3. Alignment of cleaned reads to reference](#HISAT2-Alignment-of-cleaned-reads-to-reference)
+      - [Digital fingerprint md5sums](#run-checksum)
+      - script: <span style="color:green">**md5_checksum.sh**<span>
+  - [1. MultiQC: Initial QC](#Quality-check-raw-reads)
+      - script: <span style="color:green">**mutliqc.sh**<span>
+  - [2. Trim and QC clean reads](#Trim-and-quality-check-clean-reads)
+	    - [about](#What-this-script-does)
+      - script: <span style="color:green">**fastp_mutliqc.sh**<span>
+  - [3. Alignment of cleaned reads to reference](#Alignment-of-cleaned-reads-to-reference)
+      - [about](#HISAT2-alignment)
+      - script: <span style="color:green">**HISAT2.sh**<span>
 	- [Upload reference genome](#Reference-genome-upload-to-HPC)
 	- [HISAT2 - about/commands](#HISAT2-alignment)
 	- [samtools - about/commands](#samtools)
@@ -205,7 +208,7 @@ d3ab7acfb6c23955471ab47ece590d56  5_R2_001
 ```
 
 
-- check the read counts 
+- check the read counts
 
 cat Oct2022_rawread_count.txt | head -2
 
@@ -280,7 +283,7 @@ comm -23 <(sort checksummary.txt | uniq) <(sort refsummary.txt | uniq) # returns
 * any output here, the file partially uploaded or is corrupted - reupload the .gez file
 
 
-# Quality check of raw reads
+# Quality check raw reads
 -------------------------------------------
 
 
@@ -374,10 +377,10 @@ scp sgurr@sedna.nwfsc2.noaa.gov:/Airradians_lcWGS/F0_F2_April2023/output/fastp_m
   - **Adapter Content**: high adapters present, 1-6% of sequences; **To do:** *trim adapter sequence*
 
 
-# Trimming and post-trim quality check of 'clean' reads
+# Trim and quality check clean reads
 -------------------------------------------
 
-### What this script will do...
+### What this script does
 - ``` --adapter_sequence ``` =
 	- trim adapter sequence ```AGATCGGAAGAGCACACGTCTGAACTCCAGTCA```
 	- common single-end adapter in Illumina. You can run a test on a fastq.gz to count
@@ -479,6 +482,8 @@ builds a HISAT2 index from a set of DNA sequences. Outputs 6 files that together
 ALL output files are needed to slign reads to the reference genome and the original sequence FASTA file(s)
 are no longer used for th HISAT2 alignment
 
+
+
 ``` -f <reads.fasta> ``` =
 the reads (i.e <m1>, <m2>, <m100>)
 FASTA files usually have extension .fa, .fasta, .mfa, .fna or similar.
@@ -509,8 +514,6 @@ Comma-separated list of files contained unparied reads to be aligned.
 ``` -p NTHREADS``` =
 Runs on separate processors, increasing -p increases HISAT2's memory footprint, increasing -p from 1 to 8
 increased the footprint by a few hundred megabytes
-
-Note: Erin Chile from Putnam Lab ran -p 8 for HISAT2 alignment of *Montipora* [here](https://github.com/echille/Montipora_OA_Development_Timeseries/blob/master/Amil/amil_RNAseq-analysis.sh)
 
 ``` -S <hit> ``` =
 file to write SAM alignments to. By default, alignments are written to the “standard out” or “stdout” filehandle (i.e. the console).
@@ -608,25 +611,21 @@ for i in ${array[@]}; do
                 echo "${i} bam-ified!"
         rm ${i}.sam
 done
-
 ```
-- HISAT2 complete with format prepared for StringTie assembler!
+
+- HISAT2 complete!
 
 
-## ANGSD: Genotype Likelihood
------------------------------------------------------------------
+# ANGSD: Genotype Likelihood
+-------------------------------------------
 
 ANGSD wikipedia-like site for all call  definitions and tutorial items here: http://www.popgen.dk/angsd/index.php/Main_Page
 
 ## About some core ANGSD calls...
 
-```-GL``` =
+```-GL``` =	1: SAMtools model;	2: GATK model
 
-	*	1: SAMtools model
-
-	*	2: GATK model
-
-* quality filtering
+**quality filtering**
 
 ```-minQ``` = minimum phred quality score
 
@@ -654,34 +653,33 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 ```-anc``` = ancetral state, if you do not have this you can use the assembly that you have maped against but remember to add -fold 1 n readSFS and real SFS sf2theta step
 
-```-doMaf``` =+9+
+```-doMaf``` =
 
-	*	1: Known major, and Known minor.
+*	1: Known major, and Known minor.
 		   Here both the major and minor allele is assumed to be known (inferred or given by user).
 		   The allele frequency is the obtained using based on the genotype likelihoods.
 		   The allele frequency estimator from genotype likelihoods are from this publication but using the EM algorithm and is briefly described here.
 
-	* 	2: Known major, Unknown minor.Here the major allele is assumed to be known (inferred or given by user) however the minor allele is not determined.
-		   Instead we sum over the 3 possible minor alleles weighted by their probabilities.
+* 2: Known major, Unknown minor.Here the major allele is assumed to be known (inferred or given by user) however the minor allele is not determined. Instead we sum over the 3 possible minor alleles weighted by their probabilities.
 
-	*	4: frequency based on genotype posterior probabilities.If genotype probabilities are used as input to ANGSD the allele frequency is estimated directly on these by summing over the probabitlies.
+*	4: frequency based on genotype posterior probabilities.If genotype probabilities are used as input to ANGSD the allele frequency is estimated directly on these by summing over the probabitlies.
 
-	*	8: frequency based on base counts.This method does not rely on genotype likelihood or probabilities but instead infers the allele frequency directly on the base counts.
+*	8: frequency based on base counts.This method does not rely on genotype likelihood or probabilities but instead infers the allele frequency directly on the base counts.
 
 
-* example: doMaf 1 outputs 'knownEM' as an allele frequency value based on geneotype liklihoods of the minor and manjor allele assumed as known
+  * example: doMaf 1 outputs 'knownEM' as an allele frequency value based on geneotype liklihoods of the minor and manjor allele assumed as known
 
 ```-doMajorMinor``` =
 
-	*	1: Infer major and minor from GL
+*	1: Infer major and minor from GL
 
-	*	2: Infer major and minor from allele counts
+*	2: Infer major and minor from allele counts
 
-	*	3: use major and minor from a file (requires -sites file.txt)
+*	3: use major and minor from a file (requires -sites file.txt)
 
-	*	4: Use reference allele as major (requires -ref)
+*	4: Use reference allele as major (requires -ref)
 
-	*	5: Use ancestral allele as major (requires -anc)
+*	5: Use ancestral allele as major (requires -anc)
 
 
 ```-P``` =
@@ -690,7 +688,7 @@ ANGSD wikipedia-like site for all call  definitions and tutorial items here: htt
 
 ```-ref``` =
 
-	*	if emplying -doMajorMinor 4, if forces the major allele according to the reference, you will need to define this by a fasta (___.fa) file
+*	if emplying -doMajorMinor 4, if forces the major allele according to the reference, you will need to define this by a fasta (___.fa) file
 
 
 Before getting started..
@@ -777,7 +775,7 @@ Contig0 19      G       A       0.000000        45
 
 	* 'nInd' == the number of individuals for which there is coverage at each SNP
 
-* thus, at Contig0 18 we have a high frequency of th eminor allale 'A' exhibited by 45 individuals, but wait.... how is this possible if we only have 25 ini
+* at Contig0 position 18 we have a high frequency of the minor allele 'A' exhibited by 45 individuals, but wait.... how is this possible if we only have 25 ini
 
 zcat angsd_mafs_SAMtools.gz.mafs.gz | tail -20
 
@@ -802,24 +800,15 @@ Contig52        675558  A       C       0.000006        8
 Contig52        675559  A       C       0.000006        8
 ```
 
-* ...and why do later contigs show more relevant sample numbers?
-
-
 * **NOTE:** are the regions with SNP positions of high or poor mapping quality?
-are the regions with SNP position of excessive coverage?
-You may need to supplement a csv(s) with categorical justification of regions with varied quality or putatively high-repeated regions (excessive coverage),
-filtering these cumulative SNP hits downstream in R
+are the regions with SNP position of excessive coverage? You may need to supplement a csv(s) with categorical justification of regions with varied quality or putatively high-repeated regions (excessive coverage), filtering these cumulative SNP hits downstream in R
 
 
 # Appears we need to merge our paired-end reads!!
 
-*Should we merge BEFORE or AFTER mapping?*
 
-	* (1) merging after mapped
 
-	* (2) merge before mapped
-
-## Merge bams after mapping (hisat2 outputs)
+* Let's merge bams files (hisat2 outputs)
 
 ### <span style="color:red">IMPORTANT:<span> merge lanes here (.bam stage)
 
@@ -917,15 +906,3 @@ ls -d "$PWD"/*.3.bam "$PWD"/*.4.bam "$PWD"/*.5*.bam "$PWD"/*.1*.bam > Low_pCO2_b
 ## Lets run ANGSD!
 
 * **Objective**: obtain SNP calls. chromosome/contig positions to infer genotype liklihoods and putativelly adaptive molecular candidates (we also have differential expression work!)
-
-Terms to know regarding assemblies:
-
-**contigs** - genome assemblies are hierarchical - contigs are the shortest assembly component of a
-genome in which a contiguous length of genomic sequence is known on a high confidence level
-
-**scaffolds** - comprised of contigs, a longer component on this assembly hierachy,
-created from chaining contigs together using additional information on the orientation of the contigs and their relative position.
-Contigs in scallods can be separated by gaps represented as 'N'
-
-**chromosomes** - assembled seqeunces from compoentns (scallods and thus originally contigs) the largest
-genome assembly cmoponent comprised of assembled scaffolds, requires sufficient mapping information to build from the scaffold level

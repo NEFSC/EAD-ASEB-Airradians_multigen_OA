@@ -36,7 +36,10 @@ Cvirg_seqID      <-  as.data.table(read.delim2(file = "RAnalysis/Data/Transcript
                               `colnames<-`("fullID")
 nrow(Cvirg_seqID) # 66625
 Cvirg_GOterms    <-  read.csv(file = "RAnalysis/Data/Transcriptomics/Cviginiva_GOterms.csv", header =T) %>% 
-                              dplyr::select(c('GeneID','Annotation_GO_ID')) %>% 
+                              dplyr::select(c('GeneID','Annotation_GO_ID', 'Length')) %>% 
+                              dplyr::group_by(GeneID,Annotation_GO_ID) %>% 
+                              dplyr::summarise(
+                                meanLength = mean(Length)) %>% 
                               unique() # there are many redundnat rows here
 nrow(Cvirg_GOterms) #35106
 # diamond result to obtain accession IDs of annotated genes Cvirg and Cgigas for gene ID, GO, and KEGG ID information 
@@ -147,6 +150,7 @@ Cvirg_ID.evalue <- merge(Cvirg_seqID,
                                  "blastxEval_CvirgProteinID",
                                  "blastxEval_CvirgGeneID", 
                                  "blastxEval_CvirgGOterms",
+                                 "meanLength",
                                  "Airradians_TranscriptID"))
 
 
@@ -160,7 +164,8 @@ Airr_Cvirg_master_seq_ID  <- merge(Airr.ID,Cvirg_ID.evalue,by="Airradians_Transc
 nrow(Airr_Cvirg_master_seq_ID) # 19168
 (nrow(Airr_Cvirg_master_seq_ID) / nrow(raw.countmatrix))*100 # 72.0737 % of genes in our count matrix are represented
 
-
+# write csv
+write.csv(Airr_Cvirg_master_seq_ID, file = "RAnalysis/Data/Transcriptomics/seq_id_AirrCvirg_MERGED_master.csv", row.names = FALSE)
 # 'Airr_Cvirg_master_seq_ID' IS OUT MAIN TAKEAWAY FROM THIS CHUNK
 
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -41,6 +41,8 @@ library(gplots)
 library(RColorBrewer)
 library(EnhancedVolcano)  # note: this was previously installed with the command `BiocManager::install("EnhancedVolcano")`
 library(pcaExplorer) # note: this was previously installed with the command `BiocManager::install("pcaExplorer")
+library(ggpubr)
+library(stringr)
 ```
 
 #### Set path
@@ -189,11 +191,10 @@ dds.run_F2  <- DESeq(dds_F2) # data for just F2s
 ## Transform Exp data 
 
 * Why?
- - the transformed data can be used to run simple prince component analysis to view how samples (by treatment) relate
- - identify whether samples appear as outliers sufficient for omission to rerun dds.run
+ - the transformed data can be used to run simple PCA 
+ - identify whether samples appear as outliers sufficient for omission and rerun dds.run
 
 ```{r expression data transformation}
-# Data transformations for heatmap and PCA visuals ======================================================================================= #
 
 # vstExp  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 vstExp     <- vst(dds.run_all)
@@ -205,6 +206,10 @@ rlogExp     <- rlogTransformation(dds.run_all)
 rlogExp_F1  <- rlogTransformation(dds.run_F1)
 rlogExp_F2  <- rlogTransformation(dds.run_F2)
 
+install.packages("PerformanceAnalytics")
+library("PerformanceAnalytics")
+dds.run_F1_df <- as.data.frame(assay(dds.run_F1))
+chart.Correlation(dds.run_F1_df[,c(1:5,15:20)], histogram=TRUE, pch=19)
 ```
 
 
@@ -229,9 +234,12 @@ pcaData_vstExp_F1    <- plotPCA(vstExp_F1, intgroup = "pCO2", returnData = TRUE)
 percentVar_vstExp_F1 <- round(100 * attr(pcaData_vstExp_F1, "percentVar"))
 png("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_vstExp_PCA.png", 1000, 1000, pointsize=20)
 ggplot(pcaData_vstExp_F1, aes(x = PC1, y = PC2, color = pCO2, label=name)) +
-  scale_shape_manual(values = c(4, 19, 17)) +
-  geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
-  geom_point(size =6) +
+  #scale_shape_manual(values = c(4, 19, 17)) +
+  #geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
+  geom_point(size =3) +
+  theme_classic() +
+  stat_ellipse() +
+  #theme(text = element_text(size=15)) +
   theme_classic() +
   theme(text = element_text(size=15)) +
   ggtitle("F1 PCA: vst expression data") +
@@ -253,11 +261,13 @@ pcaData_rlogExp_F1    <- plotPCA(rlogExp_F1, intgroup = "pCO2", returnData = TRU
 percentVar_rlogExp_F1  <- round(100 * attr(pcaData_rlogExp_F1, "percentVar"))
 png("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_rlogExp_PCA.png", 1000, 1000, pointsize=20)
 ggplot(pcaData_rlogExp_F1, aes(x = PC1, y = PC2, color = pCO2, label=name)) +
-  scale_shape_manual(values = c(4, 19, 17)) +
-  geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
-  geom_point(size =6) +
+  #scale_shape_manual(values = c(4, 19, 17)) +
+  #geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
+  geom_point(size =3) +
   theme_classic() +
-  theme(text = element_text(size=15)) +
+  stat_ellipse() +
+  #theme(text = element_text(size=15)) +
+  theme_classic() +
   ggtitle("F1 PCA: rlog expression data") +
   xlab(paste0("PC1: ", percentVar_rlogExp_F1[1], "% variance")) +
   ylab(paste0("PC2: ", percentVar_rlogExp_F1[2], "% variance")) +
@@ -284,11 +294,12 @@ pcaData_vstExp_F2    <- plotPCA(vstExp_F2, intgroup = "pCO2", returnData = TRUE)
 percentVar_vstExp_F2 <- round(100 * attr(pcaData_vstExp_F2, "percentVar"))
 png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_vstExp_PCA.png", 1000, 1000, pointsize=20)
 ggplot(pcaData_vstExp_F2, aes(x = PC1, y = PC2, color = pCO2, label=name)) +
-  scale_shape_manual(values = c(4, 19, 17)) +
-  geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
-  geom_point(size =6) +
+  #scale_shape_manual(values = c(4, 19, 17)) +
+  #geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
+  geom_point(size =3) +
   theme_classic() +
-  theme(text = element_text(size=15)) +
+  stat_ellipse() +
+  #theme(text = element_text(size=15)) +
   ggtitle("F2 PCA: vst expression data") +
   xlab(paste0("PC1: ", percentVar_vstExp_F2[1], "% variance")) + 
   ylab(paste0("PC2: ", percentVar_vstExp_F2[2], "% variance")) +
@@ -304,20 +315,21 @@ png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_rlogExp_mean_sd.png", 1
 meanSdPlot(assay(rlogExp_F2)) # shows the sd y axis (sq root of varaince in all samples) - flat curve may seem like a goals, BUT may be unreasonable in cases with MANY true DEGs from experimental conditions
 dev.off() # write
 # PCA plot rlog
-pcaData_rlogExp_F2    <- plotPCA(rlogExp_F2, intgroup = "pCO2", returnData = TRUE)
+pcaData_rlogExp_F2     <- plotPCA(rlogExp_F2, intgroup = "pCO2", returnData = TRUE)
 percentVar_rlogExp_F2  <- round(100 * attr(pcaData_rlogExp_F2, "percentVar"))
 png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_rlogExp_PCA.png", 1000, 1000, pointsize=20)
 ggplot(pcaData_rlogExp_F2, aes(x = PC1, y = PC2, color = pCO2, label=name)) +
-  scale_shape_manual(values = c(4, 19, 17)) +
-  geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
-  geom_point(size =6) +
+  geom_point(size =3) +
   theme_classic() +
-  theme(text = element_text(size=15)) +
+  stat_ellipse() +
+ # geom_text(aes(label=name),hjust=0.2, vjust=1.4, size=5) +
+ # theme(text = element_text(size=15)) +
   ggtitle("F2 PCA: rlog expression data") +
   xlab(paste0("PC1: ", percentVar_rlogExp_F2[1], "% variance")) +
   ylab(paste0("PC2: ", percentVar_rlogExp_F2[2], "% variance")) +
   coord_fixed()
 dev.off()
+
 
 ```
 
@@ -415,22 +427,43 @@ dev.off()
 # volcano plot 
 png("../../Output/Transcriptomics/DESeq2/F1_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
 EnhancedVolcano(DEGresults_F1,
-                lab = rownames(DEGresults_F1),
+                #lab = rownames(DEGresults_F2),
+                lab = NA, # no labels
+                #labSize = 4, # remove gene labels
                 x = 'log2FoldChange',
                 y = 'padj',
                 title = 'F1s: pCO2 Treatment (Low v High)',
                 subtitle = "DESeq2 - Differential expression",
-                FCcutoff = 1,
+                FCcutoff = 0.5,
                 pCutoff = 0.05,
                 pointSize = 4.0,
-                labSize = 6.0,
+                labSize = 3,
+                colAlpha = 1,
+                legendPosition = 'right',
+                legendLabSize = 12,
+                legendIconSize = 2,
+                widthConnectors = 0.75)
+dev.off()
+
+
+png("../../Output/Transcriptomics/DESeq2/F1_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
+EnhancedVolcano(DEGresults_F2,
+                #lab = rownames(DEGresults_F2),
+                lab = NA, # no labels
+                #labSize = 4, # remove gene labels
+                x = 'log2FoldChange',
+                y = 'padj',
+                title = 'F2s: pCO2 Treatment (Low v High)',
+                subtitle = "DESeq2 - Differential expression",
+                FCcutoff = 0.5,
+                pCutoff = 0.05,
+                pointSize = 4.0,
                 colAlpha = 1,
                 legendPosition = 'right',
                 legendLabSize = 12,
                 legendIconSize = 4.0,
                 widthConnectors = 0.75)
 dev.off()
-
 
 # Plot dispersion 
 
@@ -440,8 +473,85 @@ dev.off()
 
 ```
 
+## Figures for F1 and F2 data 
+```{r, Figs}
 
-* plot heatmap
+PCA_F1_vst <- ggplot(pcaData_vstExp_F1, 
+                     aes(x = PC1, 
+                         y = PC2, 
+                         color = pCO2, 
+                         label=name)) +
+                geom_point(size =3) +
+                #scale_fill_manual(c('grey50', 'white')) +
+                theme_classic() +
+                stat_ellipse() +
+                ylim(-20,20) +
+                xlim(-35,35) +
+                theme(legend.position = 'none') +
+                ggtitle("F1 PCA: vst expression data") +
+                xlab(paste0("PC1: ", percentVar_vstExp_F1[1], "% variance")) + 
+                ylab(paste0("PC2: ", percentVar_vstExp_F1[2], "% variance")) +
+                coord_fixed()
+PCA_F2_vst <- ggplot(pcaData_vstExp_F2, 
+                     aes(x = PC1, 
+                         y = PC2, 
+                         color = pCO2, 
+                         label=name)) +
+                geom_point(size =3) +
+                theme_classic() +
+                stat_ellipse() +
+                ylim(-20,20) +
+                xlim(-35,35) +
+                theme(legend.position = 'none') +
+                ggtitle("F2 PCA: vst expression data") +
+                xlab(paste0("PC1: ", percentVar_vstExp_F2[1], "% variance")) + 
+                ylab(paste0("PC2: ", percentVar_vstExp_F2[2], "% variance")) +
+                coord_fixed()
+
+F1_Volcano <- EnhancedVolcano(DEGresults_F1,
+                #lab = rownames(DEGresults_F2),
+                lab = NA, # no labels
+                #labSize = 4, # remove gene labels
+                x = 'log2FoldChange',
+                y = 'padj',
+                # title = 'F1s: pCO2 Treatment (Low v High)',
+                # subtitle = "DESeq2 - Differential expression",
+                titleLabSize = NA,
+                FCcutoff = 0.5,
+                pCutoff = 0.05,
+                pointSize = 2,
+                axisLabSize = 10,
+                labSize = 3,
+                colAlpha = 1,
+                legendPosition = "none",
+                # legendLabSize = 12,
+                # legendIconSize = 2,
+                widthConnectors = 0.75)
+F2_Volcano <- EnhancedVolcano(DEGresults_F2,
+                #lab = rownames(DEGresults_F2),
+                lab = NA, # no labels
+                #labSize = 4, # remove gene labels
+                x = 'log2FoldChange',
+                y = 'padj',
+                axisLabSize = 10,
+                # title = 'F2s: pCO2 Treatment (Low v High)',
+                # subtitle = "DESeq2 - Differential expression",
+                title = NA,
+                subtitle = NA,
+                FCcutoff = 0.5,
+                pCutoff = 0.05,
+                pointSize = 2,
+                colAlpha = 1,
+                legendPosition = "none",
+                # legendLabSize = 12,
+                widthConnectors = 0.75)
+?EnhancedVolcano
+ggarrange(PCA_F1_vst, PCA_F2_vst, 
+          F1_Volcano, F2_Volcano,
+          nrow=2, ncol=2)
+```
+
+## plot heatmap
 
 ```{r heatmap for transformed data}
 
