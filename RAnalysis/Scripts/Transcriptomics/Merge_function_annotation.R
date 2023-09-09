@@ -37,11 +37,17 @@ Cvirg_seqID      <-  as.data.table(read.delim2(file = "RAnalysis/Data/Transcript
 nrow(Cvirg_seqID) # 66625
 Cvirg_GOterms    <-  read.csv(file = "RAnalysis/Data/Transcriptomics/Cviginiva_GOterms.csv", header =T) %>% 
                               dplyr::select(c('GeneID','Annotation_GO_ID', 'Length')) %>% 
-                              dplyr::group_by(GeneID,Annotation_GO_ID) %>% 
+                              dplyr::group_by(GeneID) %>% # tif you add GO column here we get duplicates, some of the same gene ID calls (of diff length) have GO term or do not, weird!
                               dplyr::summarise(
                                 meanLength = mean(Length)) %>% 
-                              unique() # there are many redundnat rows here
-nrow(Cvirg_GOterms) #35106
+                              unique() # there are many redundant rows here
+subset(Cvirg_GOterms,duplicated(GeneID)) # no duplicates, BUT need to filter in the GO terms here 
+Cvirg_GOterms2 <- merge(Cvirg_GOterms,
+                       ( unique(read.csv(file = "RAnalysis/Data/Transcriptomics/Cviginiva_GOterms.csv", header =T) %>% 
+                          dplyr::select(c('GeneID','Annotation_GO_ID')) %>% 
+                          dplyr::filter(!Annotation_GO_ID == "")) ), 
+                       by = 'GeneID')
+nrow(Cvirg_GOterms2) #19667
 # diamond result to obtain accession IDs of annotated genes Cvirg and Cgigas for gene ID, GO, and KEGG ID information 
 #(1) Airradians protein database (...pep.fna file) with Cvirginica nucleotide query
 blastx_Airr_Cvirg <- as.data.table(read.delim2(file="HPC_Analysis/output/F1_TagSeq/blastx/AirrProDB_CvirgNQuery/airradians_diamond_out", header=F)) %>% 
@@ -54,8 +60,7 @@ blastx_Airr_Cgig  <- as.data.table(read.delim2(file="HPC_Analysis/output/F1_TagS
 # where do we go from here? We have to estimate which diamond (blast) was best for obtaining 
 # gene annotation for the Airradians transcripts - diagnostics below to reveal which obtained most gene relatedness
 
-
-
+  
 
 
 
@@ -119,9 +124,9 @@ Cvirg_seqID_editted <- as.data.frame(Cvirg_seqID[Cvirg_seqID$fullID %like% "XM_"
   dplyr::select(-fullID)) # remove the full ID
 
 nrow(Cvirg_seqID_editted) # 60201
-nrow(Cvirg_GOterms) # 35106
-Cvirg_seqIDMASTER <- full_join(Cvirg_seqID_editted,Cvirg_GOterms, by = 'GeneID')
-nrow(Cvirg_seqIDMASTER) # 62578
+nrow(Cvirg_GOterms2) # 19667 - only rows with a GO term present, meanLength of all unique gene IDs
+Cvirg_seqIDMASTER <- unique(merge(Cvirg_seqID_editted,Cvirg_GOterms2, by = 'GeneID'))
+nrow(Cvirg_seqIDMASTER) # 36573
 
 # write csv
 write.csv(Cvirg_seqIDMASTER, file = "RAnalysis/Data/Transcriptomics/seq_id_Cvirginica_master.csv", row.names = FALSE)
@@ -149,8 +154,8 @@ Cvirg_ID.evalue <- merge(Cvirg_seqID,
                   `colnames<-`(c("blastxEval_CvirgTranscriptID", 
                                  "blastxEval_CvirgProteinID",
                                  "blastxEval_CvirgGeneID", 
-                                 "blastxEval_CvirgGOterms",
                                  "meanLength",
+                                 "blastxEval_CvirgGOterms",
                                  "Airradians_TranscriptID"))
 
 
@@ -161,8 +166,8 @@ Cvirg_ID.evalue <- merge(Cvirg_seqID,
 # to facilitate functional analsiss of DEGs in the Airradians data 
 Airr_Cvirg_master_seq_ID  <- merge(Airr.ID,Cvirg_ID.evalue,by="Airradians_TranscriptID") 
 # merge2  <- merge(merge1, Cvirg_ID.bitsc,by="Airradians_TranscriptID", all=T)
-nrow(Airr_Cvirg_master_seq_ID) # 19168
-(nrow(Airr_Cvirg_master_seq_ID) / nrow(raw.countmatrix))*100 # 72.0737 % of genes in our count matrix are represented
+nrow(Airr_Cvirg_master_seq_ID) # 19014
+(nrow(Airr_Cvirg_master_seq_ID) / nrow(raw.countmatrix))*100 # 71.49464 % of genes in our count matrix are represented
 
 # write csv
 write.csv(Airr_Cvirg_master_seq_ID, file = "RAnalysis/Data/Transcriptomics/seq_id_AirrCvirg_MERGED_master.csv", row.names = FALSE)

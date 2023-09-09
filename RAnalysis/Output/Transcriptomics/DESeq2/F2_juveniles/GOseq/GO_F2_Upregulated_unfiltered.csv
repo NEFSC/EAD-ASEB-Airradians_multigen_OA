@@ -1,0 +1,7 @@
+"category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology"
+"GO:0051276",6.54629918791312e-05,1,2,152,"chromosome organization","BP"
+"GO:0065003",8.37023751274297e-05,1,2,158,"protein-containing complex assembly","BP"
+"GO:0005694",5.71588213245461e-05,1,2,130,"chromosome","CC"
+"GO:0005634",0.000679038484744254,1,2,465,"nucleus","CC"
+"GO:0032991",0.00525654417177069,1,2,1314,"protein-containing complex","CC"
+"GO:0003677",0.0013751504824236,1,2,669,"DNA binding","MF"

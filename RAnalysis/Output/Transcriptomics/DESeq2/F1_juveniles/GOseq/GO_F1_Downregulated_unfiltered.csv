@@ -1,0 +1,7 @@
+"category","over_represented_pvalue","under_represented_pvalue","numDEInCat","numInCat","term","ontology"
+"GO:0006412",1.30009224907088e-06,0.99999994652308,6,159,"translation","BP"
+"GO:0042254",1.96630863460189e-06,0.999999912945554,6,168,"ribosome biogenesis","BP"
+"GO:0005840",1.9901525725765e-06,0.999999911748391,6,164,"ribosome","CC"
+"GO:0003735",2.31896626566826e-07,0.999999993001579,6,110,"structural constituent of ribosome","MF"
+"GO:0019843",0.0191224994248828,0.999843193156482,1,8,"rRNA binding","MF"
+"GO:0003677",0.039773242231407,0.990971229095182,4,669,"DNA binding","MF"

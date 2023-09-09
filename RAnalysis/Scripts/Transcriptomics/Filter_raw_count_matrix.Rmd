@@ -68,19 +68,14 @@ raw_counts.matrix <-as.matrix(raw_counts.merged,
 ncol(raw_counts.matrix) # 39 samples
 nrow(raw_counts.matrix) # 26595 total genes
 
-raw_counts.as.table <- data.frame(transcript_id = row.names(raw_counts.merged), raw_counts.merged) # add back the rownames 'transcript_ID'
-rownames(raw_counts.as.table) <- NULL # ommit the rownames
-ncol(raw_counts.as.table) # 40 counting the transcript.ID that we want to keep! 
-
-
 write.csv(raw_counts.matrix, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/raw_count_matrix_editted.csv")
+
 # READ COUNTS 
 dim(raw_counts.matrix) # 26595 total genes 39 samples
 sum(raw_counts.matrix) # 82615647 total read counts 
 
 gene_sums <- data.frame(rowSums(raw_counts.matrix))  # all gene.IDs and the sum of unique reads
 
-transcript_sums <- colSums(raw_counts.matrix) # sum of reads for each sample
 mean(transcript_sums) # 2118350 == average raw read counts for each sample
 sd(transcript_sums) # 440350.8 == standard deviation of raw read counts per sample
 
@@ -88,56 +83,98 @@ gene_sums_gtr0 <- rowSums(raw_counts.matrix) > 0 # all gene.IDs with at least on
 sum(gene_sums_gtr0 == TRUE) # 7005 total genes with unique transcript reads 
 ( sum(gene_sums_gtr0 == TRUE) / (dim(raw_counts.matrix)[1]) ) *100 # 26.33954 % of genes have a unique mapped read
 ```
+```{r divie up to F1s and F2s}
+# read in the count matrix output in the previous chunk
+raw_counts_All <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/raw_count_matrix_editted.csv", header = T, sep = ',')
+colnames(raw_counts_All)[1] <- "transcript_id"# rename first column
+rownames(raw_counts_All)    <- NULL # ommit the rownames
 
+# exp metadata to call IDs for F1s vs F2s
+exp_data                          <- read.csv(file="../../Data/Transcriptomics/exp.metadata.csv", sep=',', header=TRUE)
 
+#F1
+raw_counts_F1                      <- raw_counts_All %>% 
+                                        dplyr::select(
+                                         transcript_id,# select gene ID of course
+                                         (exp_data %>% 
+                                            dplyr::filter(Date %in% 20211027))$SampleName_readmatrix) # select only sample IDs from F1s
+ncol(raw_counts_F1) # 21 - total 20 samples
 
+#F2
+raw_counts_F2                      <- raw_counts_All %>% 
+                                        dplyr::select(
+                                         transcript_id,# select gene ID of course
+                                         (exp_data %>% 
+                                        dplyr::filter(!SampleName_readmatrix %in% 
+                                                        "Ai37") %>% # remove sample 37 - not successfully sequenced
+                                        dplyr::filter(Date %in% 20220228))$SampleName_readmatrix) # select only sample IDs from F1s
+ncol(raw_counts_F2) # 20 - 19 total samples
+```
 
 
 # Filter read counts 
 About: usiing edgeR function 'cpm' here to filter by counts bper million 
 
-Below I am making two cut-offs (thresholds) as (1) lenient low-end (2) strict/more conservative 
-(1) < 3 counts per million in at least 50% of samples 
-(2) < 10 counts per million in at least 50% of samples 
+Below I am making two cut-offs ranging from 0 to 50 CPM to view plot sand make our decision
 
 Resulting umber of genes summarized in knitr table and output to TagSeq\Analysis\Data\filtered_counts'
 
-### For loop in 1 CPM increments to optimize the filtering threshold 
-Output is a grid filture for  days 0, 7, 14, 21 
+### For loop in 0-50 CPM
 ```{r CPM LOOP - Rarefaction-like appraoch to read filtering threshold}
-# For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+
+# prep the data 
+
+
+# For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+
+f_loop <- data.frame(c('all','F1', 'F2'))
+
 df_total <- data.frame() # start dataframe 
-loop.table <- data.frame(matrix(nrow = 1, ncol = 3)) # create dataframe to save cumunalitively during for loop
+loop.table <- data.frame(matrix(nrow = 1, ncol = 4)) # create dataframe to save cumunalitively during for loop
 colnames(loop.table)<-c('CPM_threshold', 
                         'total_genes', 
-                        'mean_reads_per_gene') # names for comuns in the for loop
+                        'mean_reads_per_gene',
+                        'dataset') # names for comuns in the for loop
 CPM_loop <- c(0:50) # set rande from 0 to 50 for CPM
 CPM_loop <- data.frame(CPM_loop)
 
-for (i in 1:nrow(CPM_loop)) {
+for (f in 1:nrow(f_loop)) { # f_loop reads all, F1, F2
   
-  var <- CPM_loop[i,1]
-  cts.merged     <- raw_counts.as.table[,c(1,na.omit(match(smpl_ref$SampleName_readmatrix, colnames(raw_counts.as.table))))]
-  cts.merged     <- data.frame(cts.merged[,-1], row.names=cts.merged[,1])
-  cts.matrix     <- as.matrix(cts.merged, row.names="transcript_id")
-  CPM            <- cpm(cts.matrix) # Obtain CPMs (counts oer million) using egdeR
-  thresh         <- CPM > var # Which values in myCPM are greater than 3?
-  keep           <- rowSums(thresh) >= (ncol(thresh)/2) # we would like to keep genes that have at least 50% TRUES in each row of thresh
-  rowSums(head(thresh)) # Summary of how many TRUEs there are in each row
-  table(rowSums(thresh)) # 6880 genes with TRUE in all 36 samples 
-  cts.matrix.LOOPED <- cts.matrix[keep,]
+  # raw_counts_loop  
+  if (f_loop[f,1] == "all") { # if all call all counts
+    raw_counts_loop = raw_counts_All 
+  } else if (f_loop[f,1] == "F1")  { # if F1 call F1s
+    raw_counts_loop = raw_counts_F1
+  } else (raw_counts_loop = raw_counts_F2)  # else F2s
   
-  total_genes           <- nrow(cts.matrix.LOOPED)
-  mean_reads_per_gene   <- mean( (rowSums(cts.matrix.LOOPED) / ncol(cts.matrix.LOOPED) ) ) 
-  
-  loop.table$CPM_threshold         <- var
-  loop.table$total_genes           <- total_genes
-  loop.table$mean_reads_per_gene   <- mean_reads_per_gene
+  for (i in 1:nrow(CPM_loop)) {
     
-  df <- data.frame(loop.table) # name dataframe for this singl e row
-  df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
-  #print(df_total) # print to monitor progress
-}
+    var <- CPM_loop[i,1]
+    cts.merged     <- raw_counts_loop[,c(1,na.omit(match(smpl_ref$SampleName_readmatrix, colnames(raw_counts_loop))))]
+    cts.merged     <- data.frame(cts.merged[,-1], row.names=cts.merged[,1])
+    cts.matrix     <- as.matrix(cts.merged, row.names="transcript_id")
+    CPM            <- cpm(cts.matrix) # Obtain CPMs (counts oer million) using egdeR
+    thresh         <- CPM > var # Which values in myCPM are greater than 3?
+    keep           <- rowSums(thresh) >= (ncol(thresh)/2) # we would like to keep genes that have at least 50% TRUES in each row of thresh
+    rowSums(head(thresh)) # Summary of how many TRUEs there are in each row
+    table(rowSums(thresh)) # 6880 genes with TRUE in all 36 samples 
+    cts.matrix.LOOPED <- cts.matrix[keep,]
+    
+    total_genes           <- nrow(cts.matrix.LOOPED)
+    mean_reads_per_gene   <- mean( (rowSums(cts.matrix.LOOPED) / ncol(cts.matrix.LOOPED) ) ) 
+    
+    loop.table$CPM_threshold         <- var
+    loop.table$total_genes           <- total_genes
+    loop.table$mean_reads_per_gene   <- mean_reads_per_gene
+    loop.table$dataset               <- f_loop[f,1]
+      
+    df <- data.frame(loop.table) # name dataframe for this singl e row
+    df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
+    #print(df_total) # print to monitor progress
+  } # inside i loop for cpm and plotting
+} # f loop to call all, f1 and f2 datra
+
+
 #df_total # view the loop data
 Filterfig <- df_total %>% 
   tidyr::gather(key = "variable", value = "measurement",
@@ -145,8 +182,9 @@ Filterfig <- df_total %>%
   # Start with a usual ggplot2 call:
   ggplot(aes(x = CPM_threshold)) +
   geom_line(aes(y = measurement)) +
+  #ggtitle("All samples") +
   geom_vline(xintercept = c(3,5,10), color = 'red') +
-  facet_wrap(. ~ variable, scales="free")
+  facet_wrap(. ~ variable*dataset, scales="free")
 
 
 
@@ -159,18 +197,17 @@ dev.off()
 
 # Filtered read matrices
 
-* CPM 3 in 50 % samples 
+* CPM 5 in 50 % samples 
 
 ```{r 3 CPM 50% samples}
 
+# All data :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+raw_counts.matrix
 CPM_matrix <- cpm(raw_counts.matrix) # Obtain CPMs (counts oer million) using egdeR
 head(CPM_matrix) # Have a look at the output
 
-View(head(raw_counts.matrix))
-View(head(CPM_matrix))
-
 # CPM 3 
-thresh.CPM3 <- CPM > 3 # Which values in myCPM are greater than 3?
+thresh.CPM3 <- CPM_matrix > 3 # Which values in myCPM are greater than 3?
 head(thresh.CPM3) # This produces a logical matrix with TRUEs and FALSES
 rowSums(head(thresh.CPM3)) # Summary of how many TRUEs there are in each row
 table(rowSums(thresh.CPM3)) # 6880 genes with TRUE in all 36 samples 
@@ -192,17 +229,105 @@ numgenes_3CPM <- dim(counts.matrix.3CPM)[1]
 samp_3CPM     <- dim(counts.matrix.3CPM)[2]
 
 # % Genes with annotation == (filtered genes with annotation / filtered genes) * 100 
-percent_pass_3cpm <- paste( ( (nrow(raw_counts.as.table %>% 
+percent_pass_3cpm <- paste( ( (nrow(raw_counts_All %>% 
                                      dplyr::filter(transcript_id  %in% (rownames(counts.matrix.3CPM))))) / 
-                               nrow(raw_counts.as.table) * 
+                               nrow(raw_counts_All) * 
                                100), " %", sep = '') # "9.48298552359466 %"
 # only ~9.5 percent of the transcripts passed this filter!
 
-
-
-
 # write csv
 write.csv(counts.matrix.3CPM,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/Filtered_counts_matrix/filtered_3cpm50perc.csv") # 'path' called in previous # write .csv section
+
+
+
+
+
+
+
+# F1  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+raw_counts_F1.matrix <- raw_counts_F1  %>% 
+  tibble::column_to_rownames(var = "transcript_id") %>% 
+  as.matrix()  
+
+F1_CPM_matrix <- cpm(raw_counts_F1.matrix) # Obtain CPMs (counts oer million) using egdeR
+head(F1_CPM_matrix) # Have a look at the output
+
+# CPM 3 
+F1_thresh.CPM3 <- F1_CPM_matrix > 3 # Which values in myCPM are greater than 3?
+head(F1_thresh.CPM3) # This produces a logical matrix with TRUEs and FALSES
+rowSums(head(F1_thresh.CPM3)) # Summary of how many TRUEs there are in each row
+table(rowSums(F1_thresh.CPM3)) # 1560  genes with TRUE in all 20 samples 
+F1_keep.CPM3 <- rowSums(F1_thresh.CPM3) >= floor(ncol(F1_thresh.CPM3)/2) # we would like to keep genes that have 50% TRUES - we have an odd number - 'floor' round down
+summary(F1_keep.CPM3) 
+#    Mode   FALSE    TRUE 
+# logical   23020    3575 
+F1_keep.CPM3_up <- rowSums(F1_thresh.CPM3) >= ceiling(ncol(F1_thresh.CPM3)/2) # we would like to keep genes that have 50% TRUES - we have an odd number - 'ceiling' round up
+summary(F1_keep.CPM3_up) 
+#    Mode   FALSE    TRUE 
+# logical   23020    3575 
+
+F1_counts.matrix.3CPM <- raw_counts_F1.matrix[F1_keep.CPM3_up,] # Subset the rows of countdata to keep the more highly expressed genes
+dim(F1_counts.matrix.3CPM) # 3575   20- 3575   passed genes and 20 samples
+
+F1_hist_3CPM     <- qplot((colSums(F1_counts.matrix.3CPM)) , geom="histogram")
+F1_numgenes_3CPM <- dim(F1_counts.matrix.3CPM)[1]
+F1_samp_3CPM     <- dim(F1_counts.matrix.3CPM)[2]
+
+# % Genes with annotation == (filtered genes with annotation / filtered genes) * 100 
+F1_percent_pass_3cpm <- paste( ( (nrow(raw_counts_F1 %>% 
+                                     dplyr::filter(transcript_id  %in% (rownames(F1_counts.matrix.3CPM))))) / 
+                               nrow(raw_counts_F1) * 
+                               100), " %", sep = '') # "9.48298552359466 %"
+#  ~13.4423763865388  percent of the transcripts passed this filter!
+# write csv
+write.csv(F1_counts.matrix.3CPM,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/Filtered_counts_matrix/F1_filtered_3cpm50perc.csv") # 'path' called in previous # write .csv section
+
+
+
+
+
+
+
+# F2  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+raw_counts_F2.matrix <- raw_counts_F2  %>% 
+  tibble::column_to_rownames(var = "transcript_id") %>% 
+  as.matrix()  
+
+F2_CPM_matrix <- cpm(raw_counts_F2.matrix) # Obtain CPMs (counts oer million) using egdeR
+head(F2_CPM_matrix) # Have a look at the output
+
+# CPM 3 
+F2_thresh.CPM3 <- F2_CPM_matrix > 3 # Which values in myCPM are greater than 3?
+head(F2_thresh.CPM3) # This produces a logical matrix with TRUEs and FALSES
+rowSums(head(F2_thresh.CPM3)) # Summary of how many TRUEs there are in each row
+table(rowSums(F2_thresh.CPM3)) # 1560  genes with TRUE in all 20 samples 
+F2_keep.CPM3 <- rowSums(F2_thresh.CPM3) >= floor(ncol(F2_thresh.CPM3)/2) # we would like to keep genes that have 50% TRUES - we have an odd number - 'floor' round down, as 9 instead of 10 (one treatment has 9!)
+summary(F2_keep.CPM3) 
+#    Mode   FALSE    TRUE 
+# logical   25012    1583
+F2_keep.CPM3_up <- rowSums(F2_thresh.CPM3) >= ceiling(ncol(F2_thresh.CPM3)/2) # we would like to keep genes that have 50% TRUES - we have an odd number - 'ceiling' round up
+summary(F2_keep.CPM3_up) 
+#    Mode   FALSE    TRUE 
+# logical   25083    1512 
+
+F2_counts.matrix.3CPM <- raw_counts_F2.matrix[F2_keep.CPM3_up,] # Subset the rows of countdata to keep the more highly expressed genes
+dim(F2_counts.matrix.3CPM) # 3575   20- 3575   passed genes and 20 samples
+
+F2_hist_3CPM     <- qplot((colSums(F2_counts.matrix.3CPM)) , geom="histogram")
+F2_numgenes_3CPM <- dim(F2_counts.matrix.3CPM)[1]
+F2_samp_3CPM     <- dim(F2_counts.matrix.3CPM)[2]
+
+# % Genes with annotation == (filtered genes with annotation / filtered genes) * 100 
+F2_percent_pass_3cpm <- paste( ( (nrow(raw_counts_F2 %>% 
+                                     dplyr::filter(transcript_id  %in% (rownames(F2_counts.matrix.3CPM))))) / 
+                               nrow(raw_counts_F2) * 
+                               100), " %", sep = '') # "9.48298552359466 %"
+#  ~5.68527918781726   percent of the transcripts passed this filter!
+# write csv
+write.csv(F2_counts.matrix.3CPM,"C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/Filtered_counts_matrix/F2_filtered_3cpm50perc.csv") # 'path' called in previous # write .csv section
+
 
 
 ```

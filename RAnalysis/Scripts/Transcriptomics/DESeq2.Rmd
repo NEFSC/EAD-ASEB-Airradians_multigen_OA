@@ -67,26 +67,33 @@ Below are both RAW counts filtered and unfiltered to run DESeq2
 # FILTERED COUNTS:  3 CPM (with edgeR) and 50% of samples 
 ```{r call the count matrices, include = TRUE}
 getwd()
-### raw counts tables 
-raw_counts_matrix_annotation  <- 
-  read.csv(file="../../Output/Transcriptomics/Raw_counts_matrix/raw_count_matrix_WITH_ANNOTATION.csv",
+# gather the 3CPM filtered read matrices 
+All_filtered_counts <-
+  read.csv(file="../../Output/Transcriptomics/Filtered_counts_matrix/filtered_3cpm50perc.csv", 
                                                sep=',', 
-                                               header=TRUE) #%>% dplyr::select(!c(Ai19, Ai3))
-counts_matrix <- 
-  data.frame(raw_counts_matrix_annotation[,-c(1,41:44)], # [,-c(1,39:42)] if you  run dplyr::select(!c(Ai19, Ai3))
-             row.names=raw_counts_matrix_annotation[,1])
+                                               header=TRUE)  %>% 
+  dplyr::rename(transcript_id = X) %>% 
+  tibble::column_to_rownames(var = "transcript_id") %>% 
+  as.matrix()  
 
-### filtered counts tables 3CPM - format matrix after upload [from Count_Matrix_Stats.Filter.R] 
-filtered_counts_matrix_annotation  <-
-  read.csv(file="../../Output/Transcriptomics/Filtered_counts_matrix/filter_3cmpm50perc_WITH_ANNOTATION.csv", 
+F1_filtered_counts <-
+  read.csv(file="../../Output/Transcriptomics/Filtered_counts_matrix/F1_filtered_3cpm50perc.csv", 
                                                sep=',', 
-                                               header=TRUE)  # %>% dplyr::select(!c(Ai19, Ai3))
-counts_matrix <- 
-  data.frame(filtered_counts_matrix_annotation[,-c(1,41:44)],#  [,-c(1,39:42)]if you run above dplyr::select(!c(Ai19, Ai3))
-             row.names=filtered_counts_matrix_annotation[,1]) 
+                                               header=TRUE)  %>% 
+  dplyr::rename(transcript_id = X) %>% 
+  tibble::column_to_rownames(var = "transcript_id") %>% 
+  as.matrix() 
 
 
-ncol(counts_matrix) # 39 samples
+F2_filtered_counts <-
+  read.csv(file="../../Output/Transcriptomics/Filtered_counts_matrix/F2_filtered_3cpm50perc.csv", 
+                                               sep=',', 
+                                               header=TRUE)   %>% 
+  dplyr::rename(transcript_id = X) %>% 
+  tibble::column_to_rownames(var = "transcript_id") %>% 
+  as.matrix() 
+                      
+           
 ```
 
 
@@ -108,17 +115,17 @@ exp_data  <- read.csv(file="../../Data/Transcriptomics/exp.metadata.csv", sep=',
 Exp.metadata       <- exp_data %>% 
                       dplyr::select(c('SampleName_readmatrix', 'pCO2')) %>% 
                       dplyr::rename(Sample.Name = SampleName_readmatrix) %>% # coondense dataset to build target matrix
-                      dplyr::filter(Sample.Name %in% colnames(counts_matrix))
+                      dplyr::filter(Sample.Name %in% colnames(All_filtered_counts))
 Exp.metadata.df    <- data.frame(Exp.metadata[,-1], row.names=Exp.metadata[,1]) # move Sample.Name column as row names  
 Exp.metadata.mtx   <- as.matrix(Exp.metadata.df, row.names="BayScallop.ID") # create matrix 
 
 # check for 'TRUE' in each - check before proceeding  design
-Exp.metadata.mtx_2 <- as.data.frame(Exp.metadata.mtx[match(colnames(counts_matrix),rownames(Exp.metadata.mtx)), ]) %>% dplyr::rename(pCO2 = 1)
-all(rownames(Exp.metadata.mtx_2) %in% colnames(counts_matrix)) # should be TRUE
-all(rownames(Exp.metadata.mtx_2) == colnames(counts_matrix)) # should be TRUE
+Exp.metadata.mtx_2 <- as.data.frame(Exp.metadata.mtx[match(colnames(All_filtered_counts),rownames(Exp.metadata.mtx)), ]) %>% dplyr::rename(pCO2 = 1)
+all(rownames(Exp.metadata.mtx_2) %in% colnames(All_filtered_counts)) # should be TRUE
+all(rownames(Exp.metadata.mtx_2) == colnames(All_filtered_counts)) # should be TRUE
 
 # build dds
-dds <- DESeqDataSetFromMatrix(countData = counts_matrix,
+dds <- DESeqDataSetFromMatrix(countData = All_filtered_counts,
                                       colData = Exp.metadata.mtx_2,
                                       design = ~pCO2) # DESeq Data Set (dds) - design as ~Primary_Treatment
 
@@ -126,28 +133,23 @@ dds <- DESeqDataSetFromMatrix(countData = counts_matrix,
 #  F1s ONLY ==  design = ~ pCO2
 # ========================================================== #
 
-# truncated the count matrix for just the F1s on 20211027
-counts_matrix_F1 <- counts_matrix %>% dplyr::select(
-  (exp_data %>% dplyr::filter(Date %in% 20211027))$SampleName_readmatrix) # select only sample IDs from F1s
-                                                  
-#####
 Exp.metadata_F1       <- exp_data %>% 
                       dplyr::filter(Date %in% 20211027) %>% 
                       dplyr::select(c('SampleName_readmatrix', 'pCO2')) %>% 
                       dplyr::rename(Sample.Name = SampleName_readmatrix) %>% # coondense dataset to build target matrix
-                      dplyr::filter(Sample.Name %in% colnames(counts_matrix))
+                      dplyr::filter(Sample.Name %in% colnames(F1_filtered_counts))
 Exp.metadata_F1.df    <- data.frame(Exp.metadata_F1[,-1], row.names=Exp.metadata_F1[,1]) # move Sample.Name column as row names  
 Exp.metadata_F1.mtx   <- as.matrix(Exp.metadata_F1.df, row.names="BayScallop.ID") # create matrix 
 
 # check for 'TRUE' in each - check before proceeding  design
-Exp.metadata_F1.mtx_2 <- as.data.frame(Exp.metadata_F1.mtx[match(colnames(counts_matrix_F1),
+Exp.metadata_F1.mtx_2 <- as.data.frame(Exp.metadata_F1.mtx[match(colnames(F1_filtered_counts),
                                                                  rownames(Exp.metadata_F1.mtx)), ]) %>%
                           dplyr::rename(pCO2 = 1)
-all(rownames(Exp.metadata_F1.mtx_2) %in% colnames(counts_matrix_F1)) # should be TRUE
-all(rownames(Exp.metadata_F1.mtx_2) == colnames(counts_matrix_F1)) # should be TRUE
+all(rownames(Exp.metadata_F1.mtx_2) %in% colnames(F1_filtered_counts)) # should be TRUE
+all(rownames(Exp.metadata_F1.mtx_2) == colnames(F1_filtered_counts)) # should be TRUE
 
 # build dds
-dds_F1 <- DESeqDataSetFromMatrix(countData = counts_matrix_F1,
+dds_F1 <- DESeqDataSetFromMatrix(countData = F1_filtered_counts,
                                       colData = Exp.metadata_F1.mtx_2,
                                       design = ~pCO2) # DESeq Data Set (dds) - design as ~Primary_Treatment
 
@@ -155,27 +157,22 @@ dds_F1 <- DESeqDataSetFromMatrix(countData = counts_matrix_F1,
 #  F2s ONLY ==  design = ~ pCO2
 # ========================================================== #
 
-# truncated the count matrix for just the F1s on 20211027
-counts_matrix_F2 <- counts_matrix %>% dplyr::select(
-  (exp_data %>% 
-     dplyr::filter(!SampleName_readmatrix %in% "Ai37") %>% # remove sample 37 - not successfully sequenced
-     dplyr::filter(Date %in% 20220228))$SampleName_readmatrix) # select only sample IDs from F1s
-
-#####
 Exp.metadata_F2       <- exp_data %>% 
                       dplyr::select(c('SampleName_readmatrix', 'pCO2')) %>% 
                       dplyr::rename(Sample.Name = SampleName_readmatrix) %>% # coondense dataset to build target matrix
-                      dplyr::filter(Sample.Name %in% colnames(counts_matrix))
+                      dplyr::filter(Sample.Name %in% colnames(F2_filtered_counts))
 Exp.metadata_F2.df    <- data.frame(Exp.metadata_F2[,-1], row.names=Exp.metadata_F2[,1]) # move Sample.Name column as row names  
 Exp.metadata_F2.mtx   <- as.matrix(Exp.metadata_F2.df, row.names="BayScallop.ID") # create matrix 
 
 # check for 'TRUE' in each - check before proceeding  design
-Exp.metadata_F2.mtx_2 <- as.data.frame(Exp.metadata_F2.mtx[match(colnames(counts_matrix_F2),rownames(Exp.metadata_F2.mtx)), ]) %>% dplyr::rename(pCO2 = 1)
-all(rownames(Exp.metadata_F2.mtx_2) %in% colnames(counts_matrix_F2)) # should be TRUE
-all(rownames(Exp.metadata_F2.mtx_2) == colnames(counts_matrix_F2)) # should be TRUE
+Exp.metadata_F2.mtx_2 <- as.data.frame(Exp.metadata_F2.mtx[match(colnames(F2_filtered_counts),
+                                                                 rownames(Exp.metadata_F2.mtx)), ]) %>% 
+                          dplyr::rename(pCO2 = 1)
+all(rownames(Exp.metadata_F2.mtx_2) %in% colnames(F2_filtered_counts)) # should be TRUE
+all(rownames(Exp.metadata_F2.mtx_2) == colnames(F2_filtered_counts)) # should be TRUE
 
 # build dds
-dds_F2 <- DESeqDataSetFromMatrix(countData = counts_matrix_F2,
+dds_F2 <- DESeqDataSetFromMatrix(countData = F2_filtered_counts,
                                       colData = Exp.metadata_F2.mtx_2,
                                       design = ~pCO2) # DESeq Data Set (dds) - design as ~Primary_Treatment
 
@@ -206,10 +203,10 @@ rlogExp     <- rlogTransformation(dds.run_all)
 rlogExp_F1  <- rlogTransformation(dds.run_F1)
 rlogExp_F2  <- rlogTransformation(dds.run_F2)
 
-install.packages("PerformanceAnalytics")
+# install.packages("PerformanceAnalytics")
 library("PerformanceAnalytics")
-dds.run_F1_df <- as.data.frame(assay(dds.run_F1))
-chart.Correlation(dds.run_F1_df[,c(1:5,15:20)], histogram=TRUE, pch=19)
+dds.run_F2_df <- as.data.frame(assay(dds.run_F2))
+chart.Correlation(dds.run_F2_df[,c(1:4,15:19)], histogram=TRUE, pch=19)
 ```
 
 
@@ -371,7 +368,7 @@ resdata.F1.annot     <- resdata.F1.annot[order(resdata.F1.annot$padj), ]  # Orde
 write.csv(resdata.F1.annot, "../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_DESeq2results_F1s.csv") # write
 # What are the Protein names of these DEGs?
 # first gather gene IDs for the DEGs (note: this is also used for the pheatmap in the transformed Exp heatmap)
-numDEGs_padj_F1 # 169 - number of DEGs (from above) - use as integer in call below
+numDEGs_padj_F1 # 150 - number of DEGs (from above) - use as integer in call below
 topgenes.IDs_F1 <- head(rownames(DEGresults.ordered_F1),numDEGs_padj_F1) # call gene IDs for DEGs: pdj < 0.05 FDR < 0.05 
 length(topgenes.IDs_F1) == numDEGs_padj_F1 # must be TRUE
 # DEGs Protein IDs - lets take a look shall we! 
@@ -402,7 +399,7 @@ resdata.F2.annot     <- resdata.F2.annot[order(resdata.F2.annot$padj), ]  # Orde
 write.csv(resdata.F2.annot, "../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_DESeq2results_F2s.csv") # write
 # What are the Protein names of these DEGs?
 # first gather gene IDs for the DEGs (note: this is also used for the pheatmap in the transformed Exp heatmap)
-numDEGs_padj_F2 # 17 - number of DEGs (from above) - use as integer in call below
+numDEGs_padj_F2 # 4 - number of DEGs (from above) - use as integer in call below
 topgenes.IDs_F2 <- head(rownames(DEGresults.ordered_F2),numDEGs_padj_F2) # call gene IDs for DEGs: pdj < 0.05 FDR < 0.05 
 length(topgenes.IDs_F2) == numDEGs_padj_F2 # must be TRUE
 # DEGs Protein IDs - lets take a look shall we! 
@@ -416,7 +413,7 @@ DEGs_annotated_F2s <- Airr_Cvirg_annotation %>% filter(Airradians_TranscriptID %
 
 ```{r histogram}
 # histogram of FDR
-png("../../Output/Transcriptomics/DESeq2/FDR_hist.png", 1000, 1000, pointsize=20)
+png("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_FDR_hist.png", 1000, 1000, pointsize=20)
 hist(DEGresults_F1$padj, breaks=20, col="grey") # view histogram
 abline(h=c( (nrow(DEGresults_F1)*0.05), 
             ((table(DEGresults_F1$padj < 0.1)[2]) + (nrow(DEGresults_F1)*0.1)),
@@ -424,8 +421,18 @@ abline(h=c( (nrow(DEGresults_F1)*0.05),
                   col=c("blue", "red", "red"), lty=c(1,2,1), lwd=c(1, 3, 1)) # add line at 
 dev.off()
 
+png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_FDR_hist.png", 1000, 1000, pointsize=20)
+hist(DEGresults_F2$padj, breaks=20, col="grey") # view histogram
+abline(h=c( (nrow(DEGresults_F2)*0.05), 
+            ((table(DEGresults_F2$padj < 0.1)[2]) + (nrow(DEGresults_F2)*0.1)),
+            ((table(DEGresults_F2$padj < 0.05)[2]) + (nrow(DEGresults_F2)*0.05)) ),
+                  col=c("blue", "red", "red"), lty=c(1,2,1), lwd=c(1, 3, 1)) # add line at 
+dev.off()
+
+?EnhancedVolcano
 # volcano plot 
-png("../../Output/Transcriptomics/DESeq2/F1_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
+# png("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
+pdf("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_DEGs-VolcanoPlot.pdf", width = 7, height = 5)
 EnhancedVolcano(DEGresults_F1,
                 #lab = rownames(DEGresults_F2),
                 lab = NA, # no labels
@@ -436,6 +443,7 @@ EnhancedVolcano(DEGresults_F1,
                 subtitle = "DESeq2 - Differential expression",
                 FCcutoff = 0.5,
                 pCutoff = 0.05,
+                 ylim = c(0,5),
                 pointSize = 4.0,
                 labSize = 3,
                 colAlpha = 1,
@@ -446,7 +454,8 @@ EnhancedVolcano(DEGresults_F1,
 dev.off()
 
 
-png("../../Output/Transcriptomics/DESeq2/F1_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
+# png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_DEGs-VolcanoPlot.png", 1000, 1000, pointsize=20)
+pdf("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_DEGs-VolcanoPlot.pdf", width = 7, height = 5)
 EnhancedVolcano(DEGresults_F2,
                 #lab = rownames(DEGresults_F2),
                 lab = NA, # no labels
@@ -456,6 +465,7 @@ EnhancedVolcano(DEGresults_F2,
                 title = 'F2s: pCO2 Treatment (Low v High)',
                 subtitle = "DESeq2 - Differential expression",
                 FCcutoff = 0.5,
+                 ylim = c(0,5),
                 pCutoff = 0.05,
                 pointSize = 4.0,
                 colAlpha = 1,
@@ -467,9 +477,14 @@ dev.off()
 
 # Plot dispersion 
 
-png("../../Output/Transcriptomics/DESeq2/dispersions.png", 1000, 1000, pointsize=20)
+png("../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_dispersions.png", 1000, 1000, pointsize=20)
 plotDispEsts(dds.run_F1, main="dispersions")
 dev.off()
+
+png("../../Output/Transcriptomics/DESeq2/F2_juveniles/F2_dispersions.png", 1000, 1000, pointsize=20)
+plotDispEsts(dds.run_F2, main="dispersions")
+dev.off()
+
 
 ```
 
@@ -481,13 +496,13 @@ PCA_F1_vst <- ggplot(pcaData_vstExp_F1,
                          y = PC2, 
                          color = pCO2, 
                          label=name)) +
-                geom_point(size =3) +
+                geom_point(size =4) +
                 #scale_fill_manual(c('grey50', 'white')) +
                 theme_classic() +
                 stat_ellipse() +
                 ylim(-20,20) +
                 xlim(-35,35) +
-                theme(legend.position = 'none') +
+                theme(legend.position = 'none',axis.text = element_text(size = 12)) +
                 ggtitle("F1 PCA: vst expression data") +
                 xlab(paste0("PC1: ", percentVar_vstExp_F1[1], "% variance")) + 
                 ylab(paste0("PC2: ", percentVar_vstExp_F1[2], "% variance")) +
@@ -497,12 +512,12 @@ PCA_F2_vst <- ggplot(pcaData_vstExp_F2,
                          y = PC2, 
                          color = pCO2, 
                          label=name)) +
-                geom_point(size =3) +
+                geom_point(size =4) +
                 theme_classic() +
                 stat_ellipse() +
                 ylim(-20,20) +
                 xlim(-35,35) +
-                theme(legend.position = 'none') +
+                theme(legend.position = 'none',axis.text = element_text(size = 12)) +
                 ggtitle("F2 PCA: vst expression data") +
                 xlab(paste0("PC1: ", percentVar_vstExp_F2[1], "% variance")) + 
                 ylab(paste0("PC2: ", percentVar_vstExp_F2[2], "% variance")) +
@@ -533,22 +548,28 @@ F2_Volcano <- EnhancedVolcano(DEGresults_F2,
                 #labSize = 4, # remove gene labels
                 x = 'log2FoldChange',
                 y = 'padj',
-                axisLabSize = 10,
                 # title = 'F2s: pCO2 Treatment (Low v High)',
                 # subtitle = "DESeq2 - Differential expression",
-                title = NA,
-                subtitle = NA,
+                # title = NA,
+                titleLabSize = NA,
                 FCcutoff = 0.5,
                 pCutoff = 0.05,
                 pointSize = 2,
+                axisLabSize = 10,
+                labSize = 3,
                 colAlpha = 1,
                 legendPosition = "none",
                 # legendLabSize = 12,
                 widthConnectors = 0.75)
-?EnhancedVolcano
+# ?EnhancedVolcano
 ggarrange(PCA_F1_vst, PCA_F2_vst, 
           F1_Volcano, F2_Volcano,
           nrow=2, ncol=2)
+
+pdf("../../Output/Transcriptomics/DESeq2/PCA_F1_F2_vst.pdf", width = 14, height = 5)
+ggarrange(PCA_F1_vst, PCA_F2_vst, 
+          nrow=1, ncol=2)
+dev.off()
 ```
 
 ## plot heatmap
@@ -593,7 +614,7 @@ rlog.heatmap <- pheatmap(topgenes_rlog.corrected_F1,
                             angle_col = 0,
                             fontsize = 8,
                             legend = TRUE)
-save_pheatmap(rlog.heatmap, filename = "../../Output/Transcriptomics/DESeq2/F1_rlog_heatmap.png") #Save pheatmap
+save_pheatmap(rlog.heatmap, filename = "../../Output/Transcriptomics/DESeq2/F1_juveniles/F1_rlog_heatmap.png") #Save pheatmap
 
 
 
@@ -614,7 +635,7 @@ vst.heatmap_F1 <- pheatmap(topgenes_vst.corrected_F1,
                             angle_col = 0,
                             fontsize = 8,
                             legend = TRUE)
-save_pheatmap(vst.heatmap, filename = "../../Output/Transcriptomics/DESeq2/vst_heatmap.png") #Save pheatmap
+save_pheatmap(vst.heatmap_F1, filename = "../../Output/Transcriptomics/DESeq2/F1_juveniles/vst_heatmap.png") #Save pheatmap
 
 ```
 

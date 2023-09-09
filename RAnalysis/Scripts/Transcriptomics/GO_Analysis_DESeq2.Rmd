@@ -49,7 +49,7 @@ path_out = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/
 LOAD DATA:
 Annotation and DE data (from DESeq2 Rmd script)
 ```{r Load_annot_and_DE_files, include = TRUE}
-### Panopea generosa - load .fna ('Geoduck_annotation') and foramt GO terms ('Geoduck_GOterms') and vectors
+# Annotation file - acheived with diamond against the Cvirginica genome - Airradians genome is unannotated!
 Airr_Cvirg_annotation <- read.csv(file="Data/Transcriptomics/seq_id_AirrCvirg_MERGED_master.csv",
                                   sep = ',', 
                                   header = T) %>% 
@@ -65,6 +65,23 @@ DE_F1s <-read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/F1_DESeq2results_F
 DE_F2s <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/F2_DESeq2results_F2s.csv", head = T) # write
 
 
+# filtered counts tables 3CPM - format matrix after upload [from Count_Matrix_Stats.Filter.R] 
+filtered_counts_all                 <- read.csv(file="Output/Transcriptomics/Filtered_counts_matrix/filtered_3cpm50perc.csv", sep=',', header=TRUE)  
+colnames(filtered_counts_all)[1]    <- "gene.ID"# rename Pgen gene ID column
+exp_data                            <- read.csv(file="Data/Transcriptomics/exp.metadata.csv", sep=',', header=TRUE)
+
+counts_F1                           <- filtered_counts_all %>% 
+                                          dplyr::select(
+                                            gene.ID,# select gene ID of course
+                                          (exp_data %>% dplyr::filter(Date %in% 20211027))$SampleName_readmatrix) # select only sample IDs from F1s
+
+counts_F2                           <- filtered_counts_all %>% 
+                                          dplyr::select(
+                                            gene.ID,# select gene ID of course
+                                            (exp_data %>% 
+                                               dplyr::filter(!SampleName_readmatrix %in% "Ai37") %>% # remove sample 37 - not successfully sequenced
+                                               dplyr::filter(Date %in% 20220228))$SampleName_readmatrix) # select only sample IDs from F1s
+
 # GOslim
 slim <- getOBOCollection("http://current.geneontology.org/ontology/subsets/goslim_generic.obo") #get GO database - # call goslim_generic.obo terms as 'slim'
 
@@ -74,7 +91,7 @@ slim <- getOBOCollection("http://current.geneontology.org/ontology/subsets/gosli
 
 # create a referecne from the Geoduck annotation file to merge with the DE sumamry lists 
 ref           <- Airr_Cvirg_annotation[,c(1,5)]
-colnames(ref) <- c("Airradians_TranscriptID", "gene.annotation")
+colnames(ref) <- c("Airradians_TranscriptID", "gene.annotation") # the Airradians transcript IDs (e.g. evm.model.Contig0.1) and the gO terms from diamond/blast with Cvirg genome
 
 # F1s - call padj < 0.05 and assign boolean to logfold change direction
 DE_F1s_dir <- DE_F1s %>% 
@@ -106,7 +123,7 @@ DE_F2s_dir <- DE_F2s %>%
 DE_Master <- rbind(DE_F1s_dir, DE_F2s_dir)
 
 # merge in the annotation 
-DE_Master_with_annotation <- merge(DE_Master, ref, by="Airradians_TranscriptID")
+DE_Master_with_annotation <- merge(DE_Master, ref, by="Airradians_TranscriptID", all = T) %>% dplyr::filter(!log2FoldChange %in% NA)
 
 # sanity check - row numbers should be equal 
 nrow(DE_Master) == nrow(DE_Master_with_annotation) # TRUE, must be TRUE or we have problems!
@@ -118,88 +135,14 @@ Prep Differential Expression data (from DESeq2) by Date and direction of DE
 ```{r}
 # Objective here is to call the DE genes (up and down) 
 # Gen 1  ------------------------------------------- #
-dim(DE_F1s_dir) # 169 DEGs
-DE_F1s_dir.UPREG  <- DE_F1s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 105
-DE_F1s_dir.DWNREG <- DE_F1s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 64
+dim(DE_F1s_dir) # 150 DEGs
+DE_F1s_dir.UPREG  <- DE_F1s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 91
+DE_F1s_dir.DWNREG <- DE_F1s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 59
 # Gen 2  ------------------------------------------- #
-dim(DE_F2s_dir) # 169 DEGs
-DE_F2s_dir.UPREG  <- DE_F2s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 8
-DE_F2s_dir.DWNREG <- DE_F2s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 9
+dim(DE_F2s_dir) # 4 DEGs
+DE_F2s_dir.UPREG  <- DE_F2s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 2
+DE_F2s_dir.DWNREG <- DE_F2s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 2
 ```
-
-
-# If youve run this befoe: after load and prep... you can skip down to GOslim to sload the goseq outputs 
-
-```{r Primary_Treatment_constant_DEGs}
-# Summary table for the frequency that DEGs occured 
-# unique(All_DEGs_Primary.Ambieant_v_Moderate$Day_Trmt) # unique DAy_treat to filter
-DE_freq.upreg <-All_DEGs_Primary.Ambieant_v_Moderate %>%
-            filter(Day_Trmt %in% c('Day7_Primary_AvM', 'Day14_Primary_AvM', 'Day21_Primary_AvM')) %>% 
-            filter(up == TRUE) %>% 
-            group_by(Row.names, up) %>%
-            dplyr::summarise(Freq = n()) %>% 
-            arrange(desc(Freq))
-DE_freq.upreg.summary <- DE_freq.upreg %>% group_by(Freq) %>% dplyr::summarise(num.transcripts = n(),Direction = "upregulated")
-
-DE_freq.downreg <-All_DEGs_Primary.Ambieant_v_Moderate %>%
-            filter(Day_Trmt %in% c('Day7_Primary_AvM', 'Day14_Primary_AvM', 'Day21_Primary_AvM')) %>% 
-            filter(down == TRUE) %>% 
-            group_by(Row.names, down) %>%
-            dplyr::summarise(Freq = n()) %>%
-            arrange(desc(Freq))
-DE_freq.downreg.summary  <- DE_freq.downreg %>% group_by(Freq) %>% dplyr::summarise(num.transcripts = n(),Direction = "downregulated")
-
-knitr::kable(rbind(DE_freq.upreg.summary, DE_freq.downreg.summary),caption = "Primary Treatment DEGs, occurances on days 7, 14, 21: (1 = unique; 2 = d days; 3 = all days)")
-
-# This knitr table shows that there are 10 downregulated genes and 13 upregulated genes on days 7 14 and 21
-# downregualted == higher gene expression by the Moderate history (relative to ambient)
-# upreagulted == higher gene expression by the Ambient history (relative to moderate)
-# Let's identify these genes for GO analysis 
-
-Contant_upreg <- DE_freq.upreg %>% dplyr::filter(Freq %in% 3) 
-Constant_upreg_DEGs <- Contant_upreg$Row.names
-
-Contant_dwnreg <- DE_freq.downreg %>% dplyr::filter(Freq %in% 3) 
-Contant_dwnreg_DEGs <- Contant_dwnreg$Row.names
-
-
-# Calculate the mean logfold change in the constant degs 
-Mean.LFC_downreg <- All_DEGs_Primary.Ambieant_v_Moderate %>%
-            filter(Day_Trmt %in% c('Day7_Primary_AvM', 'Day14_Primary_AvM', 'Day21_Primary_AvM')) %>% 
-            filter(down == TRUE) %>% 
-            filter(Row.names %in% Contant_dwnreg$Row.names) %>% # call only rownames (Gene IDs) from the constant downreg dataset (8 total)
-            group_by(Row.names) %>% 
-            dplyr::summarise(Freq = n(), # should be 3 for all - just a quick check that this works...
-                      mean.LFC = mean(log2FoldChange),
-                      sd.LFC = sd(log2FoldChange)) %>%
-            arrange(desc(mean.LFC))
-
-Mean.LFC_upreg <- All_DEGs_Primary.Ambieant_v_Moderate %>%
-            filter(Day_Trmt %in% c('Day7_Primary_AvM', 'Day14_Primary_AvM', 'Day21_Primary_AvM')) %>% 
-            filter(up == TRUE) %>% 
-            filter(Row.names %in% Contant_upreg$Row.names) %>% # call only rownames (Gene IDs) from the constant downreg dataset (8 total)
-            group_by(Row.names) %>% 
-            dplyr::summarise(Freq = n(), # should be 3 for all - just a quick check that this works...
-                      mean.LFC = mean(log2FoldChange),
-                      sd.LFC = sd(log2FoldChange)) %>%
-            arrange(desc(mean.LFC))
-
-
-# build annotation file to merge with the mean LFC tables
-annot.condenced <- Geoduck_annotation[,c(1,3:9)]
-annot.condenced$gene.length <- annot.condenced$V4 - annot.condenced$V3
-annot.condenced <- annot.condenced[,-c(2,3)]
-names(annot.condenced) <- c('Gene.ID', 'Uniprot', 'HGNC', 'fxn', 'Go.terms', 'Go.fxns','gene.length')
-
-# merge LFC mean constant primary genes with the annotation file 
-names(Mean.LFC_upreg)[1] <- "Gene.ID" # first change the name from Row.names
-names(Mean.LFC_downreg)[1] <- "Gene.ID" # first change the name from Row.names
-LFC_ALL.constant.primary <- rbind(Mean.LFC_upreg, Mean.LFC_downreg) # bind these
-Constant.primary.MASTER <- merge(LFC_ALL.constant.primary, annot.condenced, by ="Gene.ID") # merge with the annotation for Go HGNC, fxn, gene length, etc. 
-
-write.csv(Constant.primary.MASTER,paste(path_out,"Constant.Primary_master.csv"))
-```
-
 
 goseq
 Prepare dataframe(s) and vectors for goseq 
@@ -219,177 +162,59 @@ GO.terms                        <- data.frame(v1 = rep.int(AirrCgig_GOterms$tran
 Set ID and gene length vectors, and make a binary matrix indicating which genes are differentially expressed. These are used as input to nullp, which for calculates a Probability Weighting Function for each set of DEGs.
 ```{r Unique_genes}
 # Prepare dataframe(s) and vectors for goseq 
+
 # Format 'GO.term' for goseq from the P.generosa annotation .fna file 'Geoduck_annotation'
 IDvector.F1 <- as.vector(unique(DE_F1s_dir$Airradians_TranscriptID))   # call unique genes (those filtered and used in DESEq2) on day0 - 'IDvector'
 IDvector.F2 <- as.vector(unique(DE_F2s_dir$Airradians_TranscriptID))  # call unique genes (those filtered and used in DESEq2) on day7 - 'IDvector'
 GO_unique.genes.all <- as.vector(unique(Airr_Cvirg_annotation$Airradians_TranscriptID)) # call all unique genes for GO analysis (goseq)
 
 # Gene length 
-GO_gene.length <- Airr_Cvirg_annotation %>% dplyr::mutate(length = V4-V3) %>%  dplyr::select(c("V1","length"))
+GO_gene.length           <- unique(Airr_Cvirg_annotation %>% dplyr::select(c("Airradians_TranscriptID","meanLength")))
 names(GO_gene.length)[1] <- "gene.ID" # cange the column name to merge with the gene counts on each day to call ID and length vectors UNIQUE to the experiment day
+
 # merge length with counts data
-length_vector   <- GO_gene.length$length
-GeneLength.d0   <- merge(GO_gene.length, Day0_all.counts, by = "gene.ID")   # merge day0 counts with 'GO_gene.length' 
-GeneLength.d7   <- merge(GO_gene.length, Day7_all.counts, by = "gene.ID")  # merge day7 counts with 'GO_gene.length' 
-GeneLength.d14  <- merge(GO_gene.length, Day14_all.counts, by = "gene.ID")  # merge day14 counts with 'GO_gene.length' 
-GeneLength.d21  <- merge(GO_gene.length, Day21_all.counts, by = "gene.ID")  # merge day21 counts with 'GO_gene.length'
+length_vector   <- GO_gene.length$meanLength
+GeneLength.F1   <- merge(GO_gene.length, counts_F1, by = "gene.ID")   # merge day0 counts with 'GO_gene.length' 
+GeneLength.F2   <- merge(GO_gene.length, counts_F2, by = "gene.ID")  # merge day7 counts with 'GO_gene.length' 
+
 # call length values for goseq - confirms that the IDvector and length_vector are the same!!!
-length_vector.d0 <- GeneLength.d0$length    # length vector for all unique reads address in DESeq2 on day 0 
-sum(sapply(length_vector.d0,length)) == dim(Day0_all.counts)[1] #should be TRUE
-length_vector.d7 <- GeneLength.d7$length    # length vector for all unique reads address in DESeq2 on day 7
-sum(sapply(length_vector.d7,length)) == dim(Day7_all.counts)[1] #should be TRUE
-length_vector.d14 <- GeneLength.d14$length  # length vector for all unique reads address in DESeq2 on day 14
-sum(sapply(length_vector.d14,length)) == dim(Day14_all.counts)[1] #should be TRUE
-length_vector.d21 <- GeneLength.d21$length  # length vector for all unique reads address in DESeq2 on day 21
-sum(sapply(length_vector.d21,length)) == dim(Day21_all.counts)[1] #should be TRUE
+length_vector.F1 <- GeneLength.F1$meanLength    # length vector for all unique reads addressed in DESeq2 F1s
+sum(sapply(length_vector.F1,length)) == dim(counts_F1)[1] #should be TRUE
+length_vector.F2 <- GeneLength.F2$meanLength    # length vector for all unique reads address in DESeq2 F2s
+sum(sapply(length_vector.F2,length)) == dim(counts_F2)[1] #should be TRUE
+
+
 ```
 
 (4) Call DE datasets (from DESeq2) - merge to the genes list 'GO_unique.genes.all' to create a binary vector 0 = not DE'd; 1 = DE'd
 ```{r Binary_DEGs - must run the prep steps above}
-# (1) DEGs: Primary Ambient_v_Moderate 
+
+# F1s
+
+DE_F1s_UPREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F1s_dir.UPREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F1s_UPREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F1s_UPREG_boolean,length)) # 18874
+sum(DE_F1s_UPREG_boolean == 1) # should be 91 but is 83 -    missing due to no blast alignment to the Cvig genome
+
+DE_F1s_DWNREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F1s_dir.DWNREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F1s_DWNREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F1s_DWNREG_boolean,length)) # 18874
+sum(DE_F1s_DWNREG_boolean == 1) # should be 59 but is 37 -    missing due to no blast alignment to the Cvig genome
 
 
-# DAY 0 ------------------------------------------- #
+# F2s
+
+DE_F2s_UPREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F2s_dir.UPREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F2s_UPREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F2s_UPREG_boolean,length)) # 18874
+sum(DE_F2s_UPREG_boolean == 1) # should be 2
+
+DE_F2s_DWNREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F2s_dir.DWNREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F2s_DWNREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F2s_DWNREG_boolean,length)) # 18874
+sum(DE_F2s_DWNREG_boolean == 1) # should be 2 but is 1
 
 
-# DE.d0._Primary.UP    <-as.integer(IDvector.d0%in%(DE_d0.primary.UPREG$gene.ID)) # Day 0 - Primary - Upregulated DEGs
-# names(DE.d0._Primary.UP)=IDvector.d0
-DE.d0._Primary.UP    <-as.integer(GO_unique.genes.all%in%(DE_d0.primary.UPREG$gene.ID)) # Day 0 - Primary - Upregulated DEGs
-names(DE.d0._Primary.UP)=GO_unique.genes.all
-sum(sapply(DE.d0._Primary.UP,length)) # 34947 (9207 if you use the ID vecotr specific to filtered genes at Day 0)
-sum(DE.d0._Primary.UP == 1) # should be 11
-
-# DE.d0._Primary.DOWN  <-as.integer(IDvector.d0%in%(DE_d0.primary.DWNREG$gene.ID)) # Day 0 - Primary - Downregulated DEGs
-# names(DE.d0._Primary.DOWN)=IDvector.d0
-DE.d0._Primary.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d0.primary.DWNREG$gene.ID)) # Day 0 - Primary - Downregulated DEGs
-names(DE.d0._Primary.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d0._Primary.DOWN,length)) # 34947 (9207 if you use the ID vecotr specific to filtered genes at Day 0)
-sum(DE.d0._Primary.DOWN == 1) # should be 3
-
-# DE.d0._Primary.ALL   <-as.integer(IDvector.d0%in%(DE_d0.primary$gene.ID)) # Day 0 - Primary - All DEGs
-# names(DE.d0._Primary.ALL)=IDvector.d0
-DE.d0._Primary.ALL   <-as.integer(GO_unique.genes.all%in%(DE_d0.primary$gene.ID)) # Day 0 - Primary - All DEGs
-names(DE.d0._Primary.ALL)=GO_unique.genes.all
-sum(sapply(DE.d0._Primary.ALL,length)) # 34947 (9207 if you use the ID vecotr specific to filtered genes at Day 0)
-sum(DE.d0._Primary.ALL == 1) # should be 14
-
-
-
-# DAY 7 ------------------------------------------- #
-
-
-# DE.d7._Primary.UP    <-as.integer(IDvector.d7%in%DE_d7.primary.UPREG$gene.ID) # Day 7 - Primary - Upregulated DEGs
-# names(DE.d7._Primary.UP)=IDvector.d7
-DE.d7._Primary.UP    <-as.integer(GO_unique.genes.all%in%DE_d7.primary.UPREG$gene.ID) # Day 7 - Primary - Upregulated DEGs
-names(DE.d7._Primary.UP)=GO_unique.genes.all
-sum(sapply(DE.d7._Primary.UP,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7._Primary.UP == 1) # should be 62
-
-# DE.d7._Primary.DOWN  <-as.integer(IDvector.d7%in%(DE_d7.primary.DWNREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-# names(DE.d7._Primary.DOWN)=IDvector.d7
-DE.d7._Primary.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d7.primary.DWNREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-names(DE.d7._Primary.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d7._Primary.DOWN,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7._Primary.DOWN == 1) # should be 46
-
-# DE.d7._Primary.ALL   <-as.integer(IDvector.d7%in%(DE_d7.primary$gene.ID)) # Day 7 - Primary - All DEGs
-# names(DE.d7._Primary.ALL)=IDvector.d7
-DE.d7._Primary.ALL   <-as.integer(GO_unique.genes.all%in%(DE_d7.primary$gene.ID)) # Day 7 - Primary - All DEGs
-names(DE.d7._Primary.ALL)=GO_unique.genes.all
-sum(sapply(DE.d7._Primary.ALL,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7._Primary.ALL == 1) # should be 108
-
-
-
-
-DE.d7._Second.UPREG  <-as.integer(GO_unique.genes.all%in%(DE_d7.second.UPREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-names(DE.d7._Second.UPREG)=GO_unique.genes.all
-sum(sapply(DE.d7._Second.UPREG,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7._Second.UPREG == 1) # should be 14
-
-DE.d7._Second.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d7.second.DWNREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-names(DE.d7._Second.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d7._Second.DOWN,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7._Second.DOWN == 1) # should be 92
-
-DE.d7.MA_AM.UPREG  <-as.integer(GO_unique.genes.all%in%(DE_d7.MA_AM.UPREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-names(DE.d7.MA_AM.UPREG)=GO_unique.genes.all
-sum(sapply(DE.d7.MA_AM.UPREG,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7.MA_AM.UPREG == 1) # should be 31
-
-DE.d7.MA_AM.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d7.MA_AM.DWNREG$gene.ID)) # Day 7 - Primary - Downregulated DEGs
-names(DE.d7.MA_AM.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d7.MA_AM.DOWN,length)) # 34947 (8548 if you use the ID vecotr specific to filtered genes at Day 7) 
-sum(DE.d7.MA_AM.DOWN == 1) # should be 137
-
-
-
-# DAY 14 ------------------------------------------- #
-
-
-# DE.d14._Primary.UP    <-as.integer(IDvector.d14%in%(DE_d14.primary.UPREG$gene.ID)) # Day 14 - Primary - Upregulated DEGs
-# names(DE.d14._Primary.UP)=IDvector.d14
-DE.d14._Primary.UP    <-as.integer(GO_unique.genes.all%in%(DE_d14.primary.UPREG$gene.ID)) # Day 14 - Primary - Upregulated DEGs
-names(DE.d14._Primary.UP)=GO_unique.genes.all
-sum(sapply(DE.d14._Primary.UP,length)) # 34947 (8626 if you use the ID vecotr specific to filtered genes at Day 14)  
-sum(DE.d14._Primary.UP == 1) # should be 317
-
-# DE.d14._Primary.DOWN  <-as.integer(IDvector.d14%in%(DE_d14.primary.DWNREG$gene.ID)) # Day 14 - Primary - Downregulated DEGs
-# names(DE.d14._Primary.DOWN)=IDvector.d14
-DE.d14._Primary.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d14.primary.DWNREG$gene.ID)) # Day 14 - Primary - Downregulated DEGs
-names(DE.d14._Primary.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d14._Primary.DOWN,length)) # 34947 (8626 if you use the ID vecotr specific to filtered genes at Day 14) 
-sum(DE.d14._Primary.DOWN == 1) # should be 112
-
-# DE.d14._Primary.ALL   <-as.integer(IDvector.d14%in%(DE_d14.primary$gene.ID)) # Day 14 - Primary - All DEGs
-# names(DE.d14._Primary.ALL)=IDvector.d14
-DE.d14._Primary.ALL   <-as.integer(GO_unique.genes.all%in%(DE_d14.primary$gene.ID)) # Day 14 - Primary - All DEGs
-names(DE.d14._Primary.ALL)=GO_unique.genes.all
-sum(sapply(DE.d14._Primary.ALL,length)) # 34947 (8626 if you use the ID vecotr specific to filtered genes at Day 14) 
-sum(DE.d14._Primary.ALL == 1) # should be 429
-
-
-
-# DAY 21 ------------------------------------------- #
-
-
-
-# DE.d21._Primary.UP    <-as.integer(IDvector.d21%in%(DE_d21.primary.UPREG$gene.ID)) # Day 21 - Primary - Upregulated DEGs
-# names(DE.d21._Primary.UP)=IDvector.d21
-DE.d21._Primary.UP    <-as.integer(GO_unique.genes.all%in%(DE_d21.primary.UPREG$gene.ID)) # Day 21 - Primary - Upregulated DEGs
-names(DE.d21._Primary.UP)=GO_unique.genes.all
-sum(sapply(DE.d21._Primary.UP,length)) # 34947 (8421 if you use the ID vecotr specific to filtered genes at Day 21)  
-sum(DE.d21._Primary.UP == 1) # should be 101
-
-# DE.d21._Primary.DOWN  <-as.integer(IDvector.d21%in%(DE_d21.primary.DWNREG$gene.ID)) # Day 21 - Primary - Downregulated DEGs
-# names(DE.d21._Primary.DOWN)=IDvector.d21
-DE.d21._Primary.DOWN  <-as.integer(GO_unique.genes.all%in%(DE_d21.primary.DWNREG$gene.ID)) # Day 21 - Primary - Downregulated DEGs
-names(DE.d21._Primary.DOWN)=GO_unique.genes.all
-sum(sapply(DE.d21._Primary.DOWN,length)) # 34947 (8421 if you use the ID vecotr specific to filtered genes at Day 21)  
-sum(DE.d21._Primary.DOWN == 1) # should be 54
-
-# DE.d21._Primary.ALL   <-as.integer(IDvector.d21%in%(DE_d21.primary$gene.ID)) # Day 21 - Primary - All DEGs
-# names(DE.d21._Primary.ALL)=IDvector.d21
-DE.d21._Primary.ALL   <-as.integer(GO_unique.genes.all%in%(DE_d21.primary$gene.ID)) # Day 21 - Primary - All DEGs
-names(DE.d21._Primary.ALL)=GO_unique.genes.all
-sum(sapply(DE.d21._Primary.ALL,length)) # 34947 (8421 if you use the ID vecotr specific to filtered genes at Day 21)  
-sum(DE.d21._Primary.ALL == 1) # should be 155
-
-
-
-#Constant DEGs ------------------------------------ #
-
-
-
-# Note: these are degenes that were upregulated and downregulated throughout the 21-day experiment due to the effect of primary treatment
-# data from the cluster {r Primary_Treatment_constant_DEGs}
-DE_Contant_upreg <-as.integer(GO_unique.genes.all%in%(Contant_upreg$Row.names)) # Day 0 - Primary - All DEGs
-names(DE_Contant_upreg)=GO_unique.genes.all
-sum(DE_Contant_upreg == 1) # should be 14
-
-DE_Contant_dwnreg <-as.integer(GO_unique.genes.all%in%(Contant_dwnreg$Row.names)) # Day 0 - Primary - All DEGs
-names(DE_Contant_dwnreg)=GO_unique.genes.all
-sum(DE_Contant_dwnreg == 1) # should be  8
 ```
 
 Let's review what we have for goseq
@@ -400,21 +225,20 @@ Let's review what we have for goseq
 #  head(GO.terms)
 
 # (2) ID vector --------------- #
-# head(IDvector.d0)
-# head(IDvector.d7)
-# head(IDvector.d14)
-# head(IDvector.d21)
+# head(IDvector.F1)
+# head(IDvector.F2)
 
 # (3) Length vector ----------- #
-# head(length_vector.d0)
-# head(length_vector.d7)
-# head(length_vector.d14)
-# head(length_vector.d21)
+# head(length_vector.F1)
+# head(length_vector.F2)
 
 # (4) Binary DEG vectors ------ # 
-# head(DE.d21._Primary.UP)    # example of d21 prmary ambient_v_moderate upregulated DEGs
-# head(DE.d21._Primary.DOWN)  # example of d21 prmary ambient_v_moderate downregulated DEGs
-# head(DE.d21._Primary.ALL)   # example of d21 prmary ambient_v_moderate all DEGs
+# head(DE_F1s_UPREG_boolean)   
+# head(DE_F1s_DWNREG_boolean)  
+# head(DE_F2s_UPREG_boolean)    
+# head(DE_F2s_DWNREG_boolean) 
+
+
 ```
 
 It's goseq time!!!
@@ -422,344 +246,84 @@ Calculate Probability Weighting Function
 ```{r pwf}
 #Calculate Probability Weighting Function (using 'nullp')
 
-# (1) DEGs: Primary Ambient_v_Moderate 
+# F1s ------------------------------------------ #
+
+DEG.pwf_F1_up    <-nullp(DE_F1s_UPREG_boolean,  id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+DEG.pwf_F1_down  <-nullp(DE_F1s_DWNREG_boolean, id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+
+# F2s ------------------------------------------ #
+
+DEG.pwf_F2_up    <-nullp(DE_F2s_UPREG_boolean,  id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+DEG.pwf_F2_down  <-nullp(DE_F2s_DWNREG_boolean, id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
 
 
-# DAY 0 ------------------------------------------- #
-
-
-# DEG.pwf_d0.all    <-nullp(DE.d0._Primary.ALL,   id=IDvector.d0, bias.data=length_vector.d0) #weight vector by length of gene
-# DEG.pwf_d0.UP     <-nullp(DE.d0._Primary.UP,    id=IDvector.d0, bias.data=length_vector.d0) #weight vector by length of gene
-# DEG.pwf_d0.DOWN   <-nullp(DE.d0._Primary.DOWN,  id=IDvector.d0, bias.data=length_vector.d0) #weight vector by length of gene
-DEG.pwf_d0.all    <-nullp(DE.d0._Primary.ALL,   id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d0.UP     <-nullp(DE.d0._Primary.UP,    id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d0.DOWN   <-nullp(DE.d0._Primary.DOWN,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-# DAY 7 ------------------------------------------- #
-
-
-# DEG.pwf_d7.all    <-nullp(DE.d7._Primary.ALL,   id=IDvector.d7, bias.data=length_vector.d7) #weight vector by length of gene
-# DEG.pwf_d7.UP     <-nullp(DE.d7._Primary.UP,    id=IDvector.d7, bias.data=length_vector.d7) #weight vector by length of gene
-# DEG.pwf_d7.DOWN   <-nullp(DE.d7._Primary.DOWN,  id=IDvector.d7, bias.data=length_vector.d7) #weight vector by length of gene
-DEG.pwf_d7.all    <-nullp(DE.d7._Primary.ALL,   id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d7.UP     <-nullp(DE.d7._Primary.UP,    id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d7.DOWN   <-nullp(DE.d7._Primary.DOWN,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-DEG.pwf_d7.UP_second     <-nullp(DE.d7._Second.UPREG,    id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d7.DOWN_second   <-nullp(DE.d7._Second.DOWN,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-DEG.pwf_d7.UP_MA_AM     <-nullp(DE.d7.MA_AM.UPREG,    id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d7.DOWN_MA_AM   <-nullp(DE.d7.MA_AM.DOWN,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-
-# DAY 14 ------------------------------------------- #
-
-
-# DEG.pwf_d14.all   <-nullp(DE.d14._Primary.ALL,  id=IDvector.d14, bias.data=length_vector.d14) #weight vector by length of gene
-# DEG.pwf_d14.UP    <-nullp(DE.d14._Primary.UP,   id=IDvector.d14, bias.data=length_vector.d14) #weight vector by length of gene
-# DEG.pwf_d14.DOWN  <-nullp(DE.d14._Primary.DOWN, id=IDvector.d14, bias.data=length_vector.d14) #weight vector by length of gene
-DEG.pwf_d14.all   <-nullp(DE.d14._Primary.ALL,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d14.UP    <-nullp(DE.d14._Primary.UP,   id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d14.DOWN  <-nullp(DE.d14._Primary.DOWN, id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-
-# DAY 21 ------------------------------------------- #
-
-
-# DEG.pwf_d21.all   <-nullp(DE.d21._Primary.ALL,  id=IDvector.d21, bias.data=length_vector.d21) #weight vector by length of gene
-# DEG.pwf_d21.UP    <-nullp(DE.d21._Primary.UP,   id=IDvector.d21, bias.data=length_vector.d21) #weight vector by length of gene
-# DEG.pwf_d21.DOWN  <-nullp(DE.d21._Primary.DOWN, id=IDvector.d21, bias.data=length_vector.d21) #weight vector by length of gene
-DEG.pwf_d21.all   <-nullp(DE.d21._Primary.ALL,  id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d21.UP    <-nullp(DE.d21._Primary.UP,   id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_d21.DOWN  <-nullp(DE.d21._Primary.DOWN, id=GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-
-
-
-# Constant DEGs ------------------------------------ #
-
-
-DEG.pwf_Constant.UP   <- nullp(DE_Contant_upreg, GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
-DEG.pwf_Constant.DOWN <- nullp(DE_Contant_dwnreg, GO_unique.genes.all, bias.data=length_vector) #weight vector by length of gene
 ```
 
 Run goseq
 ```{r goseq}
-# (1) DEGs: Primary Ambient_v_Moderate 
-# DAY 0 ------------------------------------------- #
-GO_d0.all    <-goseq(DEG.pwf_d0.all,  GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d0.UP     <-goseq(DEG.pwf_d0.UP,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d0.DOWN   <-goseq(DEG.pwf_d0.DOWN, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-# DAY 7 ------------------------------------------- #
-GO_d7.all    <-goseq(DEG.pwf_d7.all,  GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d7.UP     <-goseq(DEG.pwf_d7.UP,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d7.DOWN   <-goseq(DEG.pwf_d7.DOWN, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
 
-GO_d7.UP_SECOND     <-goseq(DEG.pwf_d7.UP_second,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d7.DOWN_SECOND     <-goseq(DEG.pwf_d7.DOWN_second,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+# F1s ------------------------------------------ #
+GO_F1.UP     <-goseq(DEG.pwf_F1_up,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+GO_F1.DOWN   <-goseq(DEG.pwf_F1_down, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+# F2s ------------------------------------------ #
+GO_F2.UP     <-goseq(DEG.pwf_F2_up,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+GO_F2.DOWN   <-goseq(DEG.pwf_F2_down, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
 
-GO_d7.UP_MA_AM    <-goseq(DEG.pwf_d7.UP_MA_AM,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d7.DOWN_MA_AM    <-goseq(DEG.pwf_d7.DOWN_MA_AM,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-
-# DAY 14 ------------------------------------------- #
-GO_d14.all   <-goseq(DEG.pwf_d14.all,  GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d14.UP    <-goseq(DEG.pwf_d14.UP,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d14.DOWN  <-goseq(DEG.pwf_d14.DOWN, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-# DAY 21 ------------------------------------------- #
-GO_d21.all   <-goseq(DEG.pwf_d21.all,  GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d21.UP    <-goseq(DEG.pwf_d21.UP,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_d21.DOWN  <-goseq(DEG.pwf_d21.DOWN, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-# Constant DEGs ------------------------------------ #
-GO_Constant.UP   <- goseq(DEG.pwf_Constant.UP, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
-GO_Constant.DOWN <- goseq(DEG.pwf_Constant.DOWN, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
 ```
 
 Find only enriched GO terms that are statistically significant at cutoff
 ```{r}
 
 
-##### NOTE #####
-# each of the GO analysis below contains two data sets: 
-# (1) the UNFILTERED data (i.e. d0.UP.05 = day 0, upregualted genes, significant GO terms < 0.05)
-# (2) the FILTERED data (i.e. d0.UP.05_filtered = day 0, upregualted genes, significant GO terms < 0.05 AND filtered for BP terms >= 2 genes per term + MG terms >= 2 per term)
-# ....review  the compileGO.R script for the cumulative spreadsheet of ALL UNFILTERED GO terms for the funtional analysis of each pairwise DE below!
-
-
-# Day0 Primary Treatment effect  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
-
+# F1S------------------------------------------------------- #
 
 # UPREGULATED GENES - those with higher expression from ambient (control) stress priming
-d0.UP.05<-GO_d0.UP$category[GO_d0.UP$over_represented_pvalue<.05]
-d0.UP.05<-data.frame(d0.UP.05)
-colnames(d0.UP.05) <- c("category")
-d0.UP.05 <- merge(d0.UP.05, GO_d0.UP, by="category")
-d0.UP.05 <- d0.UP.05[order(d0.UP.05$ontology, d0.UP.05$over_represented_pvalue, -d0.UP.05$numDEInCat),]
-d0.UP.05$term <- as.factor(d0.UP.05$term)
-d0.UP.05_filtered <- d0.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d0.UP.05_filtered, ontology=="BP")) #number sig BP terms == 7
-nrow(filter(d0.UP.05_filtered, ontology=="MF")) #number sig MF terms == 5
-nrow(d0.UP.05_filtered) # == 12
+F1.UP.05<-GO_F1.UP$category[GO_F1.UP$over_represented_pvalue<.05]
+F1.UP.05<-data.frame(F1.UP.05)
+colnames(F1.UP.05) <- c("category")
+F1.UP.05 <- merge(F1.UP.05, GO_F1.UP, by="category")
+F1.UP.05 <- F1.UP.05[order(F1.UP.05$ontology, F1.UP.05$over_represented_pvalue, -F1.UP.05$numDEInCat),]
+F1.UP.05$term <- as.factor(F1.UP.05$term)
+F1.UP.05_filtered <- F1.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F1.UP.05_filtered, ontology=="BP")) #number sig BP terms == 8
+nrow(filter(F1.UP.05_filtered, ontology=="MF")) #number sig MF terms == 7
+nrow(F1.UP.05_filtered) # == 23
 #DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d0.DOWN.05<-GO_d0.DOWN$category[GO_d0.DOWN$over_represented_pvalue<.05]
-d0.DOWN.05<-data.frame(d0.DOWN.05)
-colnames(d0.DOWN.05) <- c("category")
-d0.DOWN.05 <- merge(d0.DOWN.05, GO_d0.DOWN, by="category")
-d0.DOWN.05 <- d0.DOWN.05[order(d0.DOWN.05$ontology, d0.DOWN.05$over_represented_pvalue, -d0.DOWN.05$numDEInCat),]
-d0.DOWN.05$term <- as.factor(d0.DOWN.05$term)
-d0.DOWN.05_filtered <- d0.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d0.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 7
-nrow(filter(d0.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 5
-nrow(d0.DOWN.05_filtered) # == 12
+F1.DOWN.05<-GO_F1.DOWN$category[GO_F1.DOWN$over_represented_pvalue<.05]
+F1.DOWN.05<-data.frame(F1.DOWN.05)
+colnames(F1.DOWN.05) <- c("category")
+F1.DOWN.05 <- merge(F1.DOWN.05, GO_F1.DOWN, by="category")
+F1.DOWN.05 <- F1.DOWN.05[order(F1.DOWN.05$ontology, F1.DOWN.05$over_represented_pvalue, -F1.DOWN.05$numDEInCat),]
+F1.DOWN.05$term <- as.factor(F1.DOWN.05$term)
+F1.DOWN.05_filtered <- F1.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F1.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 2
+nrow(filter(F1.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F1.DOWN.05_filtered) # == 4
 
-
-
-# Day7 Primary Treatment effect ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
-
+# F2S------------------------------------------------------- #
 
 # UPREGULATED GENES - those with higher expression from ambient (control) stress priming
-d7.UP.05<-GO_d7.UP$category[GO_d7.UP$over_represented_pvalue<.05]
-d7.UP.05<-data.frame(d7.UP.05)
-colnames(d7.UP.05) <- c("category")
-d7.UP.05 <- merge(d7.UP.05, GO_d7.UP, by="category")
-d7.UP.05 <- d7.UP.05[order(d7.UP.05$ontology, d7.UP.05$over_represented_pvalue, -d7.UP.05$numDEInCat),]
-d7.UP.05$term <- as.factor(d7.UP.05$term)
-d7.UP.05_filtered <- d7.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.UP.05_filtered, ontology=="BP")) #number sig BP terms == 85
-nrow(filter(d7.UP.05_filtered, ontology=="MF")) #number sig MF terms == 28
-nrow(d7.UP.05_filtered) # == 128
+F2.UP.05<-GO_F2.UP$category[GO_F2.UP$over_represented_pvalue<.05]
+F2.UP.05<-data.frame(F2.UP.05)
+colnames(F2.UP.05) <- c("category")
+F2.UP.05 <- merge(F2.UP.05, GO_F2.UP, by="category")
+F2.UP.05 <- F2.UP.05[order(F2.UP.05$ontology, F2.UP.05$over_represented_pvalue, -F2.UP.05$numDEInCat),]
+F2.UP.05$term <- as.factor(F2.UP.05$term)
+F2.UP.05_filtered <- F2.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F2.UP.05_filtered, ontology=="BP")) #number sig BP terms == 2
+nrow(filter(F2.UP.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F2.UP.05_filtered) # == 5
 #DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d7.DOWN.05<-GO_d7.DOWN$category[GO_d7.DOWN$over_represented_pvalue<.05]
-d7.DOWN.05<-data.frame(d7.DOWN.05)
-colnames(d7.DOWN.05) <- c("category")
-d7.DOWN.05 <- merge(d7.DOWN.05, GO_d7.DOWN, by="category")
-d7.DOWN.05 <- d7.DOWN.05[order(d7.DOWN.05$ontology, d7.DOWN.05$over_represented_pvalue, -d7.DOWN.05$numDEInCat),]
-d7.DOWN.05$term <- as.factor(d7.DOWN.05$term)
-d7.DOWN.05_filtered <- d7.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 40
-nrow(filter(d7.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 15
-nrow(d7.DOWN.05_filtered) # == 60
-
-
-
-
-# Day 7 seccond treament effect  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
-
-
-
-
-# SCOND TREATMETN EFFECT AMBIENT V MODERATE 
-d7.UP.05_second<-GO_d7.UP_SECOND$category[GO_d7.UP_SECOND$over_represented_pvalue<.05]
-d7.UP.05_second<-data.frame(d7.UP.05_second)
-colnames(d7.UP.05_second) <- c("category")
-d7.UP.05_second <- merge(d7.UP.05_second, GO_d7.UP_SECOND, by="category")
-d7.UP.05_second <- d7.UP.05_second[order(d7.UP.05_second$ontology, d7.UP.05_second$over_represented_pvalue, -d7.UP.05_second$numDEInCat),]
-d7.UP.05_second$term <- as.factor(d7.UP.05_second$term)
-d7.UP.05_second_filtered <- d7.UP.05_second %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.UP.05_second_filtered, ontology=="BP")) #number sig BP terms == 0
-nrow(filter(d7.UP.05_second_filtered, ontology=="MF")) #number sig MF terms == 1
-nrow(d7.UP.05_second_filtered) # == 19
-#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d7.DOWN.05_second<-GO_d7.DOWN_SECOND$category[GO_d7.DOWN_SECOND$over_represented_pvalue<.05]
-d7.DOWN.05_second<-data.frame(d7.DOWN.05_second)
-colnames(d7.DOWN.05_second) <- c("category")
-d7.DOWN.05_second <- merge(d7.DOWN.05_second, GO_d7.DOWN_SECOND, by="category")
-d7.DOWN.05_second <- d7.DOWN.05_second[order(d7.DOWN.05_second$ontology, d7.DOWN.05_second$over_represented_pvalue, -d7.DOWN.05_second$numDEInCat),]
-d7.DOWN.05_second$term <- as.factor(d7.DOWN.05_second$term)
-d7.DOWN.05_second_filtered <- d7.DOWN.05_second %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.DOWN.05_second_filtered, ontology=="BP")) #number sig BP terms == 33
-nrow(filter(d7.DOWN.05_second_filtered, ontology=="MF")) #number sig MF terms == 16
-nrow(d7.DOWN.05_second_filtered) # == 76
-
-
-
-
-# FULL TREATMETN HISTORY EFFECT MA VS. AM (AT DAY 7)
-
-d7.UP.05_MA_AM<-GO_d7.UP_MA_AM$category[GO_d7.UP_MA_AM$over_represented_pvalue<.05]
-d7.UP.05_MA_AM<-data.frame(d7.UP.05_MA_AM)
-colnames(d7.UP.05_MA_AM) <- c("category")
-d7.UP.05_MA_AM <- merge(d7.UP.05_MA_AM, GO_d7.UP_MA_AM, by="category")
-d7.UP.05_MA_AM <- d7.UP.05_MA_AM[order(d7.UP.05_MA_AM$ontology, d7.UP.05_MA_AM$over_represented_pvalue, -d7.UP.05_MA_AM$numDEInCat),]
-d7.UP.05_MA_AM$term <- as.factor(d7.UP.05_MA_AM$term)
-d7.UP.05_MA_AM_filtered <- d7.UP.05_MA_AM %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.UP.05_MA_AM_filtered, ontology=="BP")) #number sig BP terms == 3
-nrow(filter(d7.UP.05_MA_AM_filtered, ontology=="MF")) #number sig MF terms == 0
-nrow(d7.UP.05_MA_AM_filtered) # == 11
-#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d7.DOWN.05_MA_AM<-GO_d7.DOWN_MA_AM$category[GO_d7.DOWN_MA_AM$over_represented_pvalue<.05]
-d7.DOWN.05_MA_AM<-data.frame(d7.DOWN.05_MA_AM)
-colnames(d7.DOWN.05_MA_AM) <- c("category")
-d7.DOWN.05_MA_AM <- merge(d7.DOWN.05_MA_AM, GO_d7.DOWN_MA_AM, by="category")
-d7.DOWN.05_MA_AM <- d7.DOWN.05_MA_AM[order(d7.DOWN.05_MA_AM$ontology, d7.DOWN.05_MA_AM$over_represented_pvalue, -d7.DOWN.05_MA_AM$numDEInCat),]
-d7.DOWN.05_MA_AM$term <- as.factor(d7.DOWN.05_MA_AM$term)
-d7.DOWN.05_MA_AM_filtered <- d7.DOWN.05_MA_AM %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d7.DOWN.05_MA_AM_filtered, ontology=="BP")) #number sig BP terms == 39
-nrow(filter(d7.DOWN.05_MA_AM_filtered, ontology=="MF")) #number sig MF terms == 17
-nrow(d7.DOWN.05_MA_AM_filtered) # == 89
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Day14 Primary Treatment effect
-
-
-# UPREGULATED GENES - those with higher expression from ambient (control) stress priming
-d14.UP.05<-GO_d14.UP$category[GO_d14.UP$over_represented_pvalue<.05]
-d14.UP.05<-data.frame(d14.UP.05)
-colnames(d14.UP.05) <- c("category")
-d14.UP.05 <- merge(d14.UP.05, GO_d14.UP, by="category")
-d14.UP.05 <- d14.UP.05[order(d14.UP.05$ontology, d14.UP.05$over_represented_pvalue, -d14.UP.05$numDEInCat),]
-d14.UP.05$term <- as.factor(d14.UP.05$term)
-d14.UP.05_filtered <- d14.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d14.UP.05_filtered, ontology=="BP")) #number sig BP terms == 119
-nrow(filter(d14.UP.05_filtered, ontology=="MF")) #number sig MF terms == 62
-nrow(d14.UP.05_filtered) # == 208
-#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d14.DOWN.05<-GO_d14.DOWN$category[GO_d14.DOWN$over_represented_pvalue<.05]
-d14.DOWN.05<-data.frame(d14.DOWN.05)
-colnames(d14.DOWN.05) <- c("category")
-d14.DOWN.05 <- merge(d14.DOWN.05, GO_d14.DOWN, by="category")
-d14.DOWN.05 <- d14.DOWN.05[order(d14.DOWN.05$ontology, d14.DOWN.05$over_represented_pvalue, -d14.DOWN.05$numDEInCat),]
-d14.DOWN.05$term <- as.factor(d14.DOWN.05$term)
-d14.DOWN.05_filtered <- d14.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d14.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 146
-nrow(filter(d14.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 53
-nrow(d14.DOWN.05_filtered) # == 228
-
-
-
-# Day21 Primary Treatment effect
-
-
-
-# UPREGULATED GENES - those with higher expression from ambient (control) stress priming
-d21.UP.05<-GO_d21.UP$category[GO_d21.UP$over_represented_pvalue<.05]
-d21.UP.05<-data.frame(d21.UP.05)
-colnames(d21.UP.05) <- c("category")
-d21.UP.05 <- merge(d21.UP.05, GO_d21.UP, by="category")
-d21.UP.05 <- d21.UP.05[order(d21.UP.05$ontology, d21.UP.05$over_represented_pvalue, -d21.UP.05$numDEInCat),]
-d21.UP.05$term <- as.factor(d21.UP.05$term)
-d21.UP.05_filtered <- d21.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d21.UP.05_filtered, ontology=="BP")) #number sig BP terms == 65
-nrow(filter(d21.UP.05_filtered, ontology=="MF")) #number sig MF terms == 37
-nrow(d21.UP.05_filtered) # == 116
-#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-d21.DOWN.05<-GO_d21.DOWN$category[GO_d21.DOWN$over_represented_pvalue<.05]
-d21.DOWN.05<-data.frame(d21.DOWN.05)
-colnames(d21.DOWN.05) <- c("category")
-d21.DOWN.05 <- merge(d21.DOWN.05, GO_d21.DOWN, by="category")
-d21.DOWN.05 <- d21.DOWN.05[order(d21.DOWN.05$ontology, d21.DOWN.05$over_represented_pvalue, -d21.DOWN.05$numDEInCat),]
-d21.DOWN.05$term <- as.factor(d21.DOWN.05$term)
-d21.DOWN.05_filtered <- d21.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(d21.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 39
-nrow(filter(d21.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 16
-nrow(d21.DOWN.05_filtered) # == 67
-
-
-
-# ALL CONSTANT DEGS Primary Treatment effect
-
-
-
-# UPREGULATED GENES - those with higher expression from ambient (control) stress priming
-Const.UP.05<-GO_Constant.UP$category[GO_Constant.UP$over_represented_pvalue<.05]
-Const.UP.05<-data.frame(Const.UP.05)
-colnames(Const.UP.05) <- c("category")
-Const.UP.05 <- merge(Const.UP.05, GO_Constant.UP, by="category")
-Const.UP.05 <- Const.UP.05[order(Const.UP.05$ontology, Const.UP.05$over_represented_pvalue, -Const.UP.05$numDEInCat),]
-Const.UP.05$term <- as.factor(Const.UP.05$term)
-Const.UP.05_filtered <- Const.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(Const.UP.05_filtered, ontology=="BP")) #number sig BP terms == 65
-nrow(filter(Const.UP.05_filtered, ontology=="MF")) #number sig MF terms == 37
-nrow(Const.UP.05_filtered) # == 104
-#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
-Const.DOWN.05<-GO_Constant.DOWN$category[GO_Constant.DOWN$over_represented_pvalue<.05]
-Const.DOWN.05<-data.frame(Const.DOWN.05)
-colnames(Const.DOWN.05) <- c("category")
-Const.DOWN.05 <- merge(Const.DOWN.05, GO_Constant.DOWN, by="category")
-Const.DOWN.05 <- Const.DOWN.05[order(Const.DOWN.05$ontology, Const.DOWN.05$over_represented_pvalue, -Const.DOWN.05$numDEInCat),]
-Const.DOWN.05$term <- as.factor(Const.DOWN.05$term)
-Const.DOWN.05_filtered <- Const.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
-nrow(filter(Const.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 39
-nrow(filter(Const.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 16
-nrow(Const.DOWN.05_filtered) # == 16
-
-
-```
-
-Correct any un-annotated terms/ontologies
-```{r}
-NAs.ontology <- d0.UP.05 %>% subset(is.na(term))
-print(NAs.ontology)
-NAs.ontology <- d0.DOWN.05 %>% subset(is.na(term))
-print(NAs.ontology)
-
-NAs.ontology <- d7.UP.05 %>% subset(is.na(term))
-print(NAs.ontology)
-NAs.ontology <- d7.DOWN.05 %>% subset(is.na(term))
-print(NAs.ontology)
-
-NAs.ontology <- d14.UP.05 %>% subset(is.na(term))
-print(NAs.ontology)
-NAs.ontology <- d14.DOWN.05 %>% subset(is.na(term))
-print(NAs.ontology)
-
-NAs.ontology <- d21.UP.05 %>% subset(is.na(term))
-print(NAs.ontology)
-NAs.ontology <- d21.DOWN.05 %>% subset(is.na(term))
-print(NAs.ontology)
-
-# NO CASES OF NA
+F2.DOWN.05<-GO_F2.DOWN$category[GO_F2.DOWN$over_represented_pvalue<.05]
+F2.DOWN.05<-data.frame(F2.DOWN.05)
+colnames(F2.DOWN.05) <- c("category")
+F2.DOWN.05 <- merge(F2.DOWN.05, GO_F2.DOWN, by="category")
+F2.DOWN.05 <- F2.DOWN.05[order(F2.DOWN.05$ontology, F2.DOWN.05$over_represented_pvalue, -F2.DOWN.05$numDEInCat),]
+F2.DOWN.05$term <- as.factor(F2.DOWN.05$term)
+F2.DOWN.05_filtered <- F2.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F2.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 0
+nrow(filter(F2.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F2.DOWN.05_filtered) # == 1
 ```
 
 Save significant terms
@@ -771,47 +335,85 @@ Save significant terms
 # Review the output from this script - this spreadsheet contains ALL unfiltered data!!!
 
 
-write.csv(d0.UP.05, file    = "../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d0.DOWN.05, file  = "../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d0.UP.05_filtered, file    = "../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Upregulated.csv", row.names = FALSE)
-write.csv(d0.DOWN.05_filtered, file  = "../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Downregulated.csv", row.names = FALSE)
+write.csv(F1.UP.05, file    = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_F1_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.DOWN.05, file  = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_F1_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.UP.05_filtered, file    = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Upregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.DOWN.05_filtered, file  = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Downregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
 
+write.csv(F2.UP.05, file    = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_F2_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.DOWN.05, file  = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_F2_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.UP.05_filtered, file    = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Upregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.DOWN.05_filtered, file  = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Downregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
 
-write.csv(d7.UP.05, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.DOWN.05, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.UP.05_filtered, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Upregulated.csv", row.names = FALSE)
-write.csv(d7.DOWN.05_filtered, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Downregulated.csv", row.names = FALSE)
-
- 
-write.csv(d7.UP.05_second, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_SecondEffect_AvM_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.DOWN.05_second, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_SecondEffect_AvM_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.UP.05_second_filtered, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_SecondEffect_AvM_Upregulated.csv", row.names = FALSE)
-write.csv(d7.DOWN.05_second_filtered, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_SecondEffect_AvM_Downregulated.csv", row.names = FALSE)
-
-
-write.csv(d7.UP.05_MA_AM, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_GroupEffect_MAvAM_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.DOWN.05_MA_AM, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_GroupEffect_MAvAM_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d7.UP.05_MA_AM_filtered, file    = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_GroupEffect_MAvAM_Upregulated.csv", row.names = FALSE)
-write.csv(d7.DOWN.05_MA_AM_filtered, file  = "../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_GroupEffect_MAvAM_Downregulated.csv", row.names = FALSE)
-
-
-write.csv(d14.UP.05, file   = "../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d14.DOWN.05, file = "../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d14.UP.05_filtered, file   = "../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Upregulated.csv", row.names = FALSE)
-write.csv(d14.DOWN.05_filtered, file = "../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Downregulated.csv", row.names = FALSE)
-
-
-write.csv(d21.UP.05, file   = "../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d21.DOWN.05, file = "../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(d21.UP.05_filtered, file   = "../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Upregulated.csv", row.names = FALSE)
-write.csv(d21.DOWN.05_filtered, file = "../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Downregulated.csv", row.names = FALSE)
-
-
-write.csv(Const.UP.05, file   = "../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(Const.DOWN.05, file = "../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
-write.csv(Const.UP.05_filtered, file   = "../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Upregulated.csv", row.names = FALSE)
-write.csv(Const.DOWN.05_filtered, file = "../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Downregulated.csv", row.names = FALSE)
 ```
+
+Save GO_Results_Master files
+```{r - Save GO_Results_Master files}
+
+F1.UP.05_filtered   <- read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Upregulated.csv", h=T) %>% 
+  dplyr::mutate(Effect = 'Generation_1', Dir = 'up')  # unfiltered of GO terms <= 2 numDEinCAT
+
+F1.DOWN.05_filtered <- read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Downregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_1', Dir = 'down')# unfiltered of GO terms <= 2 numDEinCAT
+
+F2.UP.05_filtered   <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Upregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_2', Dir = 'up')# unfiltered of GO terms <= 2 numDEinCAT
+
+F2.DOWN.05_filtered <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Downregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_2', Dir = 'down')# unfiltered of GO terms <= 2 numDEinCAT
+
+# Master ALL WGCNA significant modules with treatment
+Master_goseq_results      <- rbind(F1.UP.05_filtered, F1.DOWN.05_filtered,
+                                   F2.UP.05_filtered, F2.DOWN.05_filtered)
+
+loopvars <- as.data.frame(c('Generation_1:up', 'Generation_1:down',
+                     'Generation_2:up', 'Generation_2:down'))
+
+
+DE_Master_with_annotation <- DE_Master_with_annotation %>% 
+  dplyr::mutate(Dir = case_when(up == 'TRUE' ~ 'up', up == 'FALSE' ~ 'down'))
+
+#  for the for loop...
+df_total             <- data.frame() # start dataframe 
+GO.table             <- data.frame(matrix(nrow = 0, ncol = 11)) # create dataframe to save cumunalitively during for loop
+colnames(GO.table)   <- c('Effect', 'Dir',  'GO_term' , 'GO_ID', 'ontology', 'pvalue',  'Gene_count', 'Gene_ratio', 'Transcript_ID', 'geneSymbol', 'Protein_name') # names for comuns in the for loop
+
+
+# un the loop
+for (i in 1:nrow(loopvars)) {
+  
+  gen <- gsub(':.*','',loopvars[2,1])
+  dir <- gsub('.*:','',loopvars[2,1])
+  
+  Ref.GO.terms       <- DE_Master_with_annotation %>%  
+                          dplyr::filter(Dir %in% dir & Effect %in% gen) %>% 
+                          dplyr::mutate(gene.annotation = strsplit(gene.annotation, ";")) %>%  
+                          unnest(gene.annotation) %>% 
+                          dplyr::rename(GO_ID = gene.annotation)
+   
+  GO.results         <- Master_goseq_results %>%  
+                          dplyr::filter(!ontology %in% 'CC') %>% 
+                          dplyr::select(!'under_represented_pvalue') %>% 
+                          dplyr::rename(Gene_count = numDEInCat, GO_term = term) %>% 
+                          dplyr::mutate(Gene_ratio = Gene_count/numInCat) %>% 
+                          dplyr::select(-'numInCat') %>% 
+                          dplyr::filter(Dir %in% dir & Effect %in% gen) %>% 
+                          dplyr::rename(GO_ID = category, pvalue = over_represented_pvalue)
+
+  # Master <- rbind(GO.table, (as.data.frame(merge(GO.results, Ref.GO.terms, by = c("GO_ID", 'Effect', 'Dir')))[,c(3,2,6,1,7,4,5,8,9,12,11)]) )
+  Master <- rbind(GO.table, (as.data.frame(merge(GO.results, Ref.GO.terms, by = c("GO_ID", 'Effect', 'Dir')))))
+  df       <- data.frame(Master) # name dataframe for this single row
+  df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
+  print(nrow(df_total)) # print to monitor progress      
+  
+} 
+
+
+
+# write.csv(Day2_larvae_master, file = "Output/WGCNA/day2_larvae/GO_analysis/RR_cutoff/Day2_GO_Results_Master.csv", row.names = FALSE)
+# write.csv(Day18_spat_master, file = "Output/WGCNA/day18_spat/GO_analysis/RR_cutoff/Day18_GO_Results_Master.csv", row.names = FALSE)
+```
+
 
 
 
@@ -1868,21 +1470,6 @@ for (i in 1:nrow(Master_GOslim)) {
 
 ```
 
-
-```{r Constant.primary.GO table}
-GO_Constant.UP_summary <- GO_Constant.UP %>% dplyr::select(c('category','numDEInCat','numInCat', 'term', 'ontology')) %>% dplyr::filter(!is.na(term)) %>% dplyr::filter(numDEInCat > 0)
-GO_Constant.UP_summary$DE_dir <- "upregulated"
-GO_Constant.DOWN_summary <- GO_Constant.DOWN %>% dplyr::select(c('category','numDEInCat','numInCat', 'term', 'ontology')) %>% dplyr::filter(!is.na(term)) %>% dplyr::filter(numDEInCat > 0)
-GO_Constant.DOWN_summary$DE_dir <- "downregulated"
-
-GO_constant.Master <- rbind(GO_Constant.UP_summary,GO_Constant.DOWN_summary)
-GO_constant.Master$perc.occurance <- GO_constant.Master$numDEInCat / GO_constant.Master$numInCat *100
-
-#knitr
-knitr::kable(GO_constant.Master, caption = "Summary table of constant GO terms Days 7, 14, 21")
-# Write csv
-write.csv(GO_constant.Master,paste(path_out,"Constant.Primary_GO.terms.csv"))
-```
 
 
 
