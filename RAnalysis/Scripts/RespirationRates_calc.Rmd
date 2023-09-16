@@ -176,7 +176,7 @@ blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge
                   dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz','filetype')) %>% # add 'Rate_mgO2_hour'hen the start and end is completed
                   dplyr::arrange(Date,pH, .by_group = TRUE)
 
-
+View(blanks_all_raw)
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -190,7 +190,7 @@ blanks_meansLoLin <- blanks_all_raw %>%
                        dplyr::group_by(Date, pH, Run, filetype) %>% # grouped by date, pH, and instrument - similar among Run
                        #dplyr::filter(Lpc <0) %>% # ommit blank calls that d/n represent oxygen consumption
                        dplyr::mutate(Lpc_filt = case_when(Lpc > 0 & Lpc < 0.005 ~ 0,TRUE ~ Lpc)) %>% #  when LPC is positive but veery close to zero - assign as zero
-                       dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc)),
+                       dplyr::summarise(BLANK.mean_Lpc = mean(abs(Lpc_filt)),
                                         #   = sd(abs(Lpc)),
                                         # BLANK.mean_Leq = mean(abs(Leq)), 
                                         # BLANK.mean_Lz  = mean(abs(Lz)),
@@ -356,14 +356,14 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
                       filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH8' ~ 68.53297,
                       filetype == "LoLigo_data" & Date %in% c('1/31/2023') & Channel == 'CH3' ~ 68.87473,                      
                       
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH1' ~ 198.2, # F2 data
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH2' ~ 212.5,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH3' ~ 209.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH4' ~ 211.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH5' ~ 212.6,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH6' ~ 212.8,
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH7' ~ 213.5, 
-                      filetype == "LoLigo_data" & Date %in% c('2/23/2023') & Channel == 'CH8' ~ 212, # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH1' ~ 198.2, # F2 data
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH2' ~ 212.5,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH3' ~ 209.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH4' ~ 211.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH5' ~ 212.6,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH6' ~ 212.8,
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH7' ~ 213.5, 
+                      filetype == "LoLigo_data" & Date %in% c('2/23/2023','3/27/2023') & Channel == 'CH8' ~ 212, # F2 data
   
                       # F3 DATA HERE :::::::::::
                       
@@ -444,8 +444,8 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-# print(Resp.outliers) # 21 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
-
+# print(Resp.outliers) # 24 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+View(Resp.Master)
 
 ```
 

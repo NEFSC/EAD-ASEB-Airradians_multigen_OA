@@ -14,25 +14,37 @@ README
 - summary of contents is as follows:
 
 	- F1 Bay scallops
+
 		- larvae/spat: NA
+
 		- juveniles: 20220914, 20220930, 20221026
+
 		- adults: 20220222, 20220301, 20220922, 20221026 (all text files with loligo system)
 
 	- F2 Bay scallops
+
 		- larvae/spat: 20220420 & 20220422 (failed spawn!), 20220824, 20220829, 20220830, 20220922 (SDR csv files)
+
 		- juveniles: 20221116 (text files with loligo system)
+
 		- adults: 20230131, 20230223 (text files with loligo system - note the vessels were remeasured and unique on 20230223 due to scrambled tubing!)
 
   - F2 Bay scallops (larval full reciprocal OA to D-hinge)
+
 	NOTE: these larvae are NOT representative of the F2 adults we have for genomics and were spawned for F3s, this was a full-reciprocal experiment with a 2023 spawn of F1s!  
+
     - D-hinge larvae day 2: 20230316
 
   - F3 Bay scallops (larval full reciprocal OA until settlement)
 	NOTE: this full reciprocal experiment is overlapped with the F3 grow out of the low, mid and high pCO2 cohorts (unlike the F2 full reciprocal larvae experiment). Therefore, the larvae are representative of the same cohorts for genomics of F3s
-    - D-hinge larvae day 2: 20230407 - no size data, based on individual counts - 80 ul plates
-    - Larvae day 7: 20230412 - no size data, based on individual counts - 80 ul plates
-		- Larvae day 16: 20230421 - no size data, based on individual counts - targeted a single individual per tank picked by hand (other timepoints measured volumetrically) - 80 ul plates
-		- Spat day 16: 20230518 - length data with imageJ (phots on google drive), single individual per tank picked by hand - 200 ul plates
+
+	- D-hinge larvae day 2: 20230407 - no size data, based on individual counts - 80 ul plates
+
+	- Larvae day 7: 20230412 - no size data, based on individual counts - 80 ul plates
+
+	- Larvae day 16: 20230421 - no size data, based on individual counts - targeted a single individual per tank picked by hand (other timepoints measured volumetrically) - 80 ul plates
+
+	- Spat day 16: 20230518 - length data with imageJ (phots on google drive), single individual per tank picked by hand - 200 ul plates
 
 #### 'Reference_resp_ID'
 

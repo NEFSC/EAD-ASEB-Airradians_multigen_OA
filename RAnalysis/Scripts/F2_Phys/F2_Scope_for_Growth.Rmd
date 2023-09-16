@@ -87,13 +87,14 @@ Biodeposition_adj    <- Biodeposition %>%
                           dplyr::rename(pH = treatment) %>% # rename to match 
                           dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours)) %>% 
                           dplyr::mutate(Date = case_when(Date == "02/01/2023" ~ '1/31/2023',
-                                                         Date == "02/24/2023" ~ '2/23/2023')) %>% 
+                                                         Date == "02/24/2023" ~ '2/23/2023',
+                                                         Date == "03/28/2023" ~ '3/27/2023')) %>% 
                           dplyr::select(-Length_mm) # lenngth is the exact same as the resp and Excretion data except diff sig figs and some missing
-nrow(Biodeposition_adj) # nrow 42
+nrow(Biodeposition_adj) # nrow 61
 
 # RR
 RespirationRates_adj <- RespirationRates %>% 
-                          dplyr::filter(Date %in% c('1/31/2023','2/23/2023')) %>% 
+                          dplyr::filter(Date %in% c('1/31/2023','2/23/2023', '3/27/2023')) %>% # , '3/27/2023'
                           dplyr::mutate(Replicate = 
                                         gsub("[^a-zA-Z]", "", Chamber_tank)) %>% # new replicate column - reflects RR dataset 
                           dplyr::select(c(Date, 
@@ -107,16 +108,17 @@ RespirationRates_adj <- RespirationRates %>%
                           dplyr::rename(RR_resp_umol_hr_bfactorTDW = 
                                           resp_umol_hr_bFactorNormTDW.1g) 
 RespirationRates_adj$Dry_Tissue_weight <- as.numeric(RespirationRates_adj$Dry_Tissue_weight)                     
-nrow(RespirationRates_adj) # 42
+nrow(RespirationRates_adj) # 63
 
 # ER
 # note - we will bfctor and mean corret for TDW)
-bTDW    <- 1.11 # FR_bfactor script using ALL F1 and F2 data!
+bTDW    <- 1.07 # FR_bfactor script using ALL F1 and F2 data!
 
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
                           dplyr::mutate(Date = case_when(Date == "01/31/2023" ~ '1/31/2023',
-                                                         Date == "02/23/2023" ~ '2/23/2023')) %>% 
+                                                         Date == "02/23/2023" ~ '2/23/2023',
+                                                         Date == "03/27/2023" ~ '3/27/2023',)) %>% 
                           dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr/1000) %>% 
                           dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
   
@@ -135,7 +137,7 @@ ExcretionRates_adj  <- ExcretionRates  %>%
                                           ExcretionRate_mg_hr_bFactorNormTDW,
                                           ExcretionRate_umol_hr_bFactorNormTDW))
 # sanity check before we merge
-nrow(ExcretionRates_adj)          == (nrow(RespirationRates_adj)  + nrow(Biodeposition_adj)) / 2 # should be TRUE
+nrow(ExcretionRates_adj)          == (nrow(RespirationRates_adj)  + nrow(Biodeposition_adj)) / 2 # FLASE becuase there were 2 outliers removed for biodep
 unique(ExcretionRates_adj$Date)   == unique(RespirationRates_adj$Date) # should be TRUE
 unique(RespirationRates_adj$Date) ==  unique(Biodeposition_adj$Date)  # should be TRUE
 ```
@@ -174,7 +176,7 @@ nrow(subset(ExcretionRates_adj,
 
 # now btwn RR and biodep
 nrow(subset(RespirationRates_adj, 
-            !(uniqueID %in% Biodeposition_adj$uniqueID))) # no discrepancies btwn files (yay!)
+            !(uniqueID %in% Biodeposition_adj$uniqueID))) # 2 discrepancies, these are the removed outliers from biodep
 ```
 
 ### Let's merge this thang!
@@ -184,7 +186,7 @@ nrow(subset(RespirationRates_adj,
 # merge RR and ER - check the number of rows == 42
 RR_ER_merge <- merge(RespirationRates_adj,ExcretionRates_adj) %>% dplyr::select(!pCO2)
 # ommitted pCO2 because biodep has the correct micro symbol and is merged below 
-nrow(RR_ER_merge) # 42 - no rows lost! 
+nrow(RR_ER_merge) # 63 - no rows lost! 
 
 # merge this data with the biodep - adjust the columns to be our master file!
 F2_Masterfile <- merge(RR_ER_merge, Biodeposition_adj, 
@@ -212,7 +214,7 @@ F2_Masterfile <- merge(RR_ER_merge, Biodeposition_adj,
                                   SE,
                                   AR,
                                   AE))
-nrow(F2_Masterfile) # 42 rows - as expected!!!!!
+nrow(F2_Masterfile) # 59 rows - as expected!!!!!
 # View(F2_Masterfile)
 
 
