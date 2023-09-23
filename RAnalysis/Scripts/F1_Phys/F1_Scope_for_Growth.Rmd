@@ -348,6 +348,7 @@ SGFmod_1027_KW <- kruskal.test(SFG ~ pCO2, data =F1_Masterfile_10_27_22)
 
 
 F1_Masterfile_2.0$pCO2 <- factor(F1_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
+F1_Masterfile_2.0$Date <- factor(F1_Masterfile_2.0$Date, levels= c('3/2/2022','9/23/2022','10/27/2022'))
 SFG_Pousse_F1          <- ggplot(data=F1_Masterfile_2.0, aes(x=pCO2, y=SFG, colour=pCO2)) +
                         scale_colour_manual(values=c("forestgreen","orange", "purple"))+
                         theme_classic() +  
