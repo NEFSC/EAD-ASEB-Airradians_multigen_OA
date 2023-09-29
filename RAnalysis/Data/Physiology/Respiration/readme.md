@@ -6,8 +6,8 @@ README
 
 ### About documents...
 
-
-#### '<YYYMMDD>'
+### (i) 'raw' folder
+#### folders as 'YYYMMDD'
 
 - each contains respiration data from that sampling date as yearmonthday
 
@@ -45,6 +45,8 @@ README
 	- Larvae day 16: 20230421 - no size data, based on individual counts - targeted a single individual per tank picked by hand (other timepoints measured volumetrically) - 80 ul plates
 
 	- Spat day 16: 20230518 - length data with imageJ (phots on google drive), single individual per tank picked by hand - 200 ul plates
+
+### (ii) 'metadata' folder
 
 #### 'Reference_resp_ID'
 

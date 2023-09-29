@@ -1,45 +1,34 @@
-## About files in folder 'Survival_Size'
+README
 
-### Data management 
+## About files in folder 'Dry_weights'
 
-**'F1, F2, etc.'**
+#### folders as 'YYYMMDD'
 
-	* data separated by scallop generation
-
-**'worksheet'**
-
-	* excel files uploaded from our shared project google drive - often containing tabs for separete dates and draft figures to visualize periodically
-	
-	* note: this day is *raw* but not formatted in a manner to import into and R for statistical anylysis, summary, and visualization
-
-**'cumualtive_raw'**
-
-	* csv files of the compiled data from *worksheets* as a single table for ease of import and analysis in R 
+- each contains data separated by generation **'F1, F2, etc.'**
 
 
-### other specifics
+### (i) 'cumulative_raw' folder
 
-**length (excel worksheets and raw cumulative csvs)**
+* csv files of the compiled data from *worksheets* as a single table for ease of import and analysis in R
 
-- contains all measurements of survival, shell length, dry weights (tissue, as free dry weight dry shell, etc.)
+### (ii) 'worksheets' folder
 
-- note: these data are from complete tank measurmentnts  or randomly chosen subsets measured *non-destructively* for lengths amoung OA treatment and replicate tanks;
-		these are not to be confused with the scallops destructively sampled for our suite of physiological measurements (respiration, clearance,ammonia excretion, etc.), as these were chosen based on mean size / size class
+* excel files uploaded from our shared project google drive - often containing tabs for separate dates and draft figures to visualize periodically
 
+* note: this day is *raw* but not formatted in a manner to import into and R for statistical analysis, summary, and visualization
 
-** dry weight.csv (excel worksheets and raw cumulative csvs)**
+#### Notes:
 
 - contains all dry tissue/shell and afdw
 
-- note: a fed v. unfed experiment occured on 9/30/21 and 10/26/2021 (manuscript in prep as of 2/4/22), only scallops from the 'fed' treatment are represented here
+- the fed v. unfed experiment occurred on 9/30/21 and 10/26/2021 (manuscript in prep as of 2/4/22), only scallops from the 'fed' treatment are represented in the cumulative raw - you will see 'unfed' in the worksheets
 
-- in all cases, dry weights (tissue dry weight 'TDW' and shell dry weight 'SDW') were completed after 36-72 hours at 60 Celcius.  Only whole dry weights (w/o dissection of tissue from shell) were measured
-		for scallops on 9/14/21 and 9/30/21 due to size and shell fragility for accurate separation of tissue from shell
+- in all cases, dry weights (tissue dry weight 'TDW' and shell dry weight 'SDW') were completed after 36-72 hours at 60 Celcius.  Only whole dry weights (w/o dissection of tissue from shell) were measured for scallops on 9/14/21 and 9/30/21 due to size and shell fragility for accurate separation of tissue from shell
 
-- two condition indices are measured using several methods
+- after a few months of growth out we decided to dissect tissue into compartments, gonad, adductor, and somatic - prior to this we solely separated full tissue from shell. **Please review the .xlxs format of the cumulative raw data, as the equations differ! -- depending on solely shell & tissue OR shell, gonad, somatic, and adductor!**
 
 - In the 'notes' column...:
 
 	* 'scallops used for RR and CR' = data pertaining to animals post 24-hour depuration and handled for respiration rate and clearance prior to dry weight/ash weight
 
-	* 'extras, also depurated       = data pertaining to animals post 24-hour depuration and not used for suite of physiological measurements
+	* 'extras, also depurated  = data pertaining to animals post 24-hour depuration and not used for suite of physiological measurements

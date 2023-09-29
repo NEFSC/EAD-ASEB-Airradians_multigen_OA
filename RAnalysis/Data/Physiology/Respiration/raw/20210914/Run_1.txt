@@ -1,0 +1,19 @@
+Date & time of file creation	9/14/2021 7:47 AM																																																																
+Data file path	C:\Users\user\Documents\BaySacllops_F1_9.14.21\Run_1.txt																																																																
+Raw data file path	C:\Users\user\Documents\BaySacllops_F1_9.14.21\Run_1_raw.txt																																																																
+																																																																	
+																																																																	
+Parameter/Chamber	Wet weight [g]	Resp. volume [mL]	Fish length [cm]	Fractional error [%]	Chamber notes																																																												
+Chamber 1	100	-97.9	10		8_A																																																												
+Chamber 2	100	-97.9			8_B																																																												
+Chamber 3	100	-97.9			8_C																																																												
+Chamber 4	100	-97.9			blank																																																												
+Chamber 5	100	-97.9	10		7.5_A																																																												
+Chamber 6	100	-97.9			7.5_B																																																												
+Chamber 7	100	-97.9			7.5_C																																																												
+Chamber 8	100	-97.9			blank																																																												
+																																																																	
+																																																																	
+Date &Time [DD-MM-YYYY/HH:MM:SS]	Time [sec]	Loop	Phase time [s]	CH 1 MO2 [mgO2/kg/hr]	CH 1 slope [%air sat./hr]	CH 1 R^2	CH 1 max O2 [%air sat.]	CH 1 min O2 [%air sat.]	CH 1 avg O2 [%air sat.]	CH 1 avg temp [°C]	CH 2 MO2 [mgO2/kg/hr]	CH 2 slope [%air sat./hr]	CH 2 R^2	CH 2 max O2 [%air sat.]	CH 2 min O2 [%air sat.]	CH 2 avg O2 [%air sat.]	CH 2 avg temp [°C]	CH 3 MO2 [mgO2/kg/hr]	CH 3 slope [%air sat./hr]	CH 3 R^2	CH 3 max O2 [%air sat.]	CH 3 min O2 [%air sat.]	CH 3 avg O2 [%air sat.]	CH 3 avg temp [°C]	CH 4 MO2 [mgO2/kg/hr]	CH 4 slope [%air sat./hr]	CH 4 R^2	CH 4 max O2 [%air sat.]	CH 4 min O2 [%air sat.]	CH 4 avg O2 [%air sat.]	CH 4 avg temp [°C]	CH 5 MO2 [mgO2/kg/hr]	CH 5 slope [%air sat./hr]	CH 5 R^2	CH 5 max O2 [%air sat.]	CH 5 min O2 [%air sat.]	CH 5 avg O2 [%air sat.]	CH 5 avg temp [°C]	CH 6 MO2 [mgO2/kg/hr]	CH 6 slope [%air sat./hr]	CH 6 R^2	CH 6 max O2 [%air sat.]	CH 6 min O2 [%air sat.]	CH 6 avg O2 [%air sat.]	CH 6 avg temp [°C]	CH 7 MO2 [mgO2/kg/hr]	CH 7 slope [%air sat./hr]	CH 7 R^2	CH 7 max O2 [%air sat.]	CH 7 min O2 [%air sat.]	CH 7 avg O2 [%air sat.]	CH 7 avg temp [°C]	CH 8 MO2 [mgO2/kg/hr]	CH 8 slope [%air sat./hr]	CH 8 R^2	CH 8 max O2 [%air sat.]	CH 8 min O2 [%air sat.]	CH 8 avg O2 [%air sat.]	CH 8 avg temp [°C]	AMB temp N°1 avg temp [°C]	AMB temp N°1 setpoint [°C]	AMB temp N°1 hysteresis [°C]	AMB temp N°2 avg temp [°C]	AMB temp N°2 setpoint [°C]	AMB temp N°2 hysteresis [°C]
+9/14/2021/7:58:11 AM	629	1	M600	1.5	15.749	0.052	124.63	103.55	111.11	21.44	-4.1	-58.286	0.991	94.36	84.37	89.15	21.44	-1.8	-27.825	0.881	97.12	92.64	94.45	21.44	NaN	NaN	0.000	96.75	90.87	NaN	21.44	-1.4	-23.133	0.691	101.09	97.08	99.72	21.54	-2.2	-33.289	0.953	99.87	94.40	96.94	21.54	-5.4	-75.929	0.988	105.18	92.21	98.99	21.54	0.2	-0.774	0.193	100.60	99.39	99.96	21.54	21.44	20.00	0.10	21.54	20.00	0.10
+9/14/2021/8:08:11 AM	1229	2	M600	NaN	NaN	0.000	110.44	99.80	NaN	21.43	NaN	NaN	0.000	85.97	81.48	NaN	21.43	-0.2	-1.793	0.233	92.97	91.59	92.50	21.43	NaN	NaN	0.000	91.03	80.63	NaN	21.43	NaN	NaN	0.000	100.26	90.82	NaN	21.53	-0.7	-8.506	0.624	94.45	92.24	93.38	21.53	-0.9	-11.633	0.572	92.60	84.12	91.53	21.53	-1.3	-17.256	0.143	101.48	89.36	99.75	21.53	21.43	20.00	0.10	21.53	20.00	0.10
