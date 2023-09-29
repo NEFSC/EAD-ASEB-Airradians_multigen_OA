@@ -9,6 +9,7 @@ output:
     df_print: paged
 ---
 
+### Set up, load libraries and set the working directory for the entire script
 
 ```{r setup, include=FALSE}
 
@@ -31,9 +32,21 @@ library(devtools)
 library(ggpubr)
 library(hrbrthemes)
 
+
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
-# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_parentXoffspring_OA/RAnalysis") # Work computer
+knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
+getwd()
+```
+
+#### load data 
+
+* Important: the raw data was already output with non-bias algorithm LoLinR - view RespirationRates_LoLin.R
+
+* about raw data 
+
+  * filter for solely relevant data by dates!  
+
+```{r, load data} 
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", header=T) %>% 
@@ -42,7 +55,7 @@ resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", head
                                                      "4/12/2023", # larvae from full reciprocal trial with F3s 
                                                      "4/21/2023")))# larvae from full reciprocal trial with F3s 
                           
-resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
+resp.ref            <- read.csv(file="Data/Physiology/Respiration/metadata/Reference_resp_ID.csv", header=T) %>% 
                               dplyr::filter((Date %in% c("3/16/2023", # larvae from full reciprocal trial with F2s
                                                      "4/7/2023",  # larvae from full reciprocal trial with F3s
                                                      "4/12/2023", # larvae from full reciprocal trial with F3s 
@@ -54,11 +67,15 @@ resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp
 
 ### Merge master resp data frame with lengths
 
+* view the first few lines to see if it merged well! 
+
+* aso view the unique dates to make sure we have the right data!
+
 ```{r merge resp with length data and treatment IDs, echo=FALSE}
 
 # merge the exp_metadata with the resp.data
-resp.data_merged                       <- merge(resp.data, resp.ref) %>% 
-                                            dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% 
+resp.data_merged                       <- merge(resp.data, resp.ref) %>% # merge em! 
+                                            dplyr::mutate(filetype = str_sub(Filename, -3,-1)) %>% # edit the filetype string
                                             dplyr::mutate(filetype = factor(ifelse(filetype == "csv", 
                                                                                    "SDR_data", 
                                                                                    "LoLigo_data"))) %>% 
@@ -71,7 +88,18 @@ unique(resp.data_merged$Date)
 ```
 
 
-#### Calculate blank rates, view means by day pH_treatment and instrument
+#### Calculate blank rates, calc means by day pH_treatment
+
+* what does this mean? 
+
+  * we have blanks for each treatment and timepoint - blanks were run with the corresponding treated pCO2 seawater, the same seawater was used to fill the respiration chambers/plates
+  
+* important! below you will find custom lines where some blanks were filtered out, these were poor data (e.g. positive rates, high noise, etc.) viewed manually from viewing the raw data plots and 
+the output non0bias rates
+
+  * raw plots found in 'Output/Respiration/plots_raw'
+  
+  * LoLinR non-bias respiration rate data and additional raw plots found in 'Output/Respiration/plots_alpha0.4_increm15sec' 
 
 ```{r call blanks, echo=FALSE}
 
@@ -91,6 +119,7 @@ write.csv(blanks_all_raw, "C:/Users/samjg/Documents/Github_repositories/Airradia
 # mean blanks for the LoLinR output ('Lpc') ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 blanks_means <- blanks_all_raw %>% 
+                       # filter out bad blanks 
                        dplyr::filter(!(Date %in% "3/16/2023" & Filename == 'SDR_799_resp_Plate1.csv' & Channel %in% c('B3', 'D3', 'D4'))) %>% 
                        dplyr::filter(!(Date %in% "3/16/2023" & Filename == 'SDR_873_resp_Plate2.csv' & Channel %in% ('C5'))) %>% 
                        dplyr::filter(!(Date %in% "3/16/2023" & Filename == 'SDR_979_resp_Plate3.csv' & Channel %in% c('D1', 'D4', 'D5'))) %>% 
@@ -101,7 +130,7 @@ blanks_means <- blanks_all_raw %>%
                        dplyr::mutate(Date_formatted =  gsub("-", "", substr( (strptime(Date, "%m/%d/%Y")), 1,10)) ) %>% 
                        dplyr::arrange(Date_formatted, Run, pH)
 
-write.csv(blanks_means, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_blanks_means_larvae.csv")
+write.csv(blanks_means, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/RR_blanks_means_larvae.csv")
 
 
 ```
@@ -113,10 +142,17 @@ write.csv(blanks_means, "C:/Users/samjg/Documents/Github_repositories/Airradians
 
 ```{r merge blanks_means for a master file, echo=FALSE}
 
-Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "filetype")) %>% # NOTE: this repeats for every distinct length value
-  dplyr::filter(!Lpc > 0) %>% # remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline (found 9/14/2021	pH 8	LoLigo_data	CH1)
-  dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc) %>%  # Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
-  dplyr::filter(!Chamber_tank %in% 'blank')
+Resp.Master <- merge(resp.data_merged, 
+                     blanks_means, 
+# NOTE: this repeats for every distinct length value
+                     by=c("Date", "pH", "Run", "filetype")) %>% 
+# remove values with positive O2 - should be none here, double check by removing the '!' and run partial pipeline (found 9/14/2021	pH 8	LoLigo_data	CH1)
+               dplyr::filter(!Lpc > 0) %>% 
+# Lpc =  Lolin calculated resp (used for SMR actual rates), raw value is negative, take the absolute value and subtract from the mean blank Lpc (already abs value)
+               dplyr::mutate(resp_blankStand = (abs(Lpc)) - BLANK.mean_Lpc) %>%  
+               dplyr::filter(!Chamber_tank %in% 'blank')
+
+head(Resp.Master)
 ```
 
 
@@ -124,61 +160,76 @@ Resp.Master <- merge(resp.data_merged, blanks_means, by=c("Date", "pH", "Run", "
 
 ######  dplyr::mutate for the following:
 
-* 'volume' of the different vessels throughout the fed*OA challenge
-* 'Age'
-* 'Fed_unfed'
-* 'pCO2'
+* 'volume' for larvae samples was ALWAYS 80 uL! (0.08 used below)
+* 'pCO2_offspring' 'pCO2_parents'- remember this was the full reciprocal challenge - these metadata are needed for analysis!
+* 'pCO2'- add pCO2 categories in replace of the categorical pH 
 
-NOTE: all resp runs for larva ein this R script were completed with 80ul-well SDR dishes (as 'dplyr::mutate(volume = 0.08)' called below!)
+NOTE: all resp runs for larvae in this R script were completed with 80ul-well SDR dishes (as 'dplyr::mutate(volume = 0.08)' called below!)
 ```{r master resp file, echo=FALSE}
 # View(Resp.Master[!is.na(Resp.Master$Length_um),])
 Resp.Master_OM <- Resp.Master %>% 
+                    
+                    dplyr::filter(!resp_blankStand < 0) %>% # omit respiration values that are positive  
+                    
+                    dplyr::mutate(volume = 0.08) %>% # F2 data
+                    # corrected for volume of the chamber and time (respblankstand is in minutes!)
+                    dplyr::mutate(resp_mg_hr = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute - DOUBLE CHECK
+                                                        (volume/1000) * # correct Liters - mg per L per min
+                                                         60) )  %>% # convert rate per minutes to rate per hour
+                    # convert mg L to minutes L
+                    dplyr::mutate(resp_umol_hr = (resp_mg_hr*1000) / 32) %>% # convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)            
   
-  dplyr::filter(!resp_blankStand < 0) %>% # ommit respiration values that are positive  
-  
-  dplyr::mutate(volume = 0.08) %>% # F2 data
-  # corrected for volume of the chamber and time (respblankstand is in minutes!)
-  dplyr::mutate(resp_mg_hr   = ( (abs(resp_blankStand)) *  # currently as just mg O2 per minute - DOUBLE CHECK
-                                      (volume/1000) * # correct Liters - mg per L per min
-                                       60) )  %>% # convert rate per minutes to rate per hour
-  # convert mg L to minutes L
-  dplyr::mutate(resp_umol_hr = (resp_mg_hr*1000) / 32) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)                                
-  #  convert to rate per individual
-  dplyr::mutate(resp_umol_hr_indiv = (resp_umol_hr) / Num_indivs) %>% #  convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)     
-  
-  # pH is the pH exposed during the expeirment - dub here as pH_offspring 
-  dplyr::rename(pH_offspring = pH) %>% 
-  
-  # creant pCO2 variable for the offspring condition based on the variable pH_offspring
-  dplyr::mutate(pCO2_offspring = 
-                  case_when(pH_offspring == 8.0 ~ "500 uatm", 
-                            pH_offspring == 7.5 ~ "800 uatm",
-                            pH_offspring == 7 ~ "1200 uatm")) %>% 
+                    #  convert to rate per individual
+                    dplyr::mutate(resp_umol_hr_indiv = (resp_umol_hr) / Num_indivs) %>% # convert mg L per hr to umol L hr- first by mg to ug (mg*1000 = ug) and then ug to umol (1 umol = 32 ug -  ug O2 div 32 ug/umol)
+                    
+                    # pH is the pH exposed during the expeirment - dub here as pH_offspring 
+                    dplyr::rename(pH_offspring = pH) %>% 
+                    
+                    # creant pCO2 variable for the offspring condition based on the variable pH_offspring
+                    dplyr::mutate(pCO2_offspring = 
+                                    case_when(pH_offspring == 8.0 ~ "500 uatm", 
+                                              pH_offspring == 7.5 ~ "800 uatm",
+                                              pH_offspring == 7 ~ "1200 uatm")) %>% 
+                  
+                    # creant pCO2 variable for the parental condition
+                    dplyr::mutate(pCO2_parents = 
+                                    case_when(pH_parents == 8.0 ~ "500 uatm", 
+                                              pH_parents == 7.5 ~ "800 uatm",
+                                              pH_parents == 7 ~ "1200 uatm")) %>% 
+                    
+                    dplyr::select(c(Date,
+                                    pCO2_parents,pH_parents,
+                                    pCO2_offspring, pH_offspring,
+                                    Channel,
+                                    Chamber_tank,
+                                    Num_indivs,
+                                    Lpc,
+                                    BLANK.mean_Lpc,
+                                    resp_blankStand,
+                                    resp_mg_hr,
+                                    resp_umol_hr,
+                                    resp_umol_hr_indiv,
+                                    Filename
+                                    ))
 
-  # creant pCO2 variable for the parental condition
-  dplyr::mutate(pCO2_parents = 
-                  case_when(pH_parents == 8.0 ~ "500 uatm", 
-                            pH_parents == 7.5 ~ "800 uatm",
-                            pH_parents == 7 ~ "1200 uatm")) %>% 
+
+```
+
+### filter out the bad data
+
+* what is 'bad' data and why omit? 
+
+  * these data omitted from our master file contained rates that were **less than** the blank, this can be due to an array of demonic intrusions (air bubbles for example) or the animal simply did not respire (less likely)
   
-  dplyr::select(c(Date,
-                  pCO2_parents,pH_parents,
-                  pCO2_offspring, pH_offspring,
-                  Channel,
-                  Chamber_tank,
-                  Num_indivs,
-                  Lpc,
-                  BLANK.mean_Lpc,
-                  resp_blankStand,
-                  resp_mg_hr,
-                  resp_umol_hr,
-                  resp_umol_hr_indiv,
-                  Filename
-                  ))
+  * Remember- we already filtered out the unreliable blanks, we can trust our corrected respiration rate values are true
+  
+  * we output these larvae-specific 'bad' data to view later if requested
+  
+```{r, diagnositcs- bad data!}
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives - 92
 nrow(Resp.outliers) # 92
-write.csv(Resp.outliers, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_bad_data_larvae.csv")
+write.csv(Resp.outliers, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/RR_bad_data_larvae.csv")
 
 ```
 
@@ -186,8 +237,7 @@ write.csv(Resp.outliers, "C:/Users/samjg/Documents/Github_repositories/Airradian
 ```{r Calculate Resp Rates & WRTIE CSV, echo=TRUE, message = FALSE, warning = FALSE}
 
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
-write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_calc_raw_larvae.csv")
-
+write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/RR_calc_raw_larvae.csv")
 
 View(Resp.Master_OM)
 ```
