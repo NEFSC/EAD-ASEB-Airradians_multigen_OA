@@ -53,11 +53,11 @@ nrow(biodep) == nrow(biodep_f1) + nrow(biodep_f2) # TRUE
 
 
 # (1) NAs: there is a single Na for ash filter weight - remove this
-nrow(biodep) # 336 rows
-biodep_f2$ash_filter_weight_mg # one instance of an NA
+nrow(biodep) # 405 rows
+nrow(biodep %>% dplyr::filter(ash_filter_weight_mg %in% NA)) #instance of an NA that IS NOT just NA for water_Input - N = 58
 subset(biodep, !is.na(ash_filter_weight_mg))$ash_filter_weight_mg # now the NA is gone,use this call in the start of the pipeline below
 biodep <- subset(biodep, !is.na(ash_filter_weight_mg)) # now the NA is gone,use this call in the start of the pipeline below
-nrow(biodep) # 296 rows (removed just a single row - GOOD!)
+nrow(biodep) # 347 rows  == 405-58 GREAT!
 biodep$ash_filter_weight_mg <- as.numeric(biodep$ash_filter_weight_mg)
 
 # (2) pseudofeces below detection limit: we took notes of samples that had low to no pseudofeces - these will need to be accounted for in our rejection rate calculations 
@@ -298,13 +298,14 @@ for (i in 1:3) { # only the F1 data for 20220302, 20220923, and 20221027
 View(Biodep_Master_F1s) # look at your master file!
 
 Biodep_Master_F1s_bad_data <- Biodep_Master_F1s %>% dplyr::filter(AE > 1 | AE < -1)
+nrow(Biodep_Master_F1s_bad_data) # no data considered to be the result of error!
+
+
 
 # F2 data!! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-
-
 # main diff here are the case_when for the first second and third rows in blanks_loop (as 7, 7.5 and 8 respectively)
-for (i in 4:5) { # only the F2 data 20230201, 20230224
+for (i in 4:6) { # only the F2 data 20230201, 20230224
   date_loop       <- dates[i,] # only the F2 data 20230201, 20230224
   blanks_loop     <- WaterSamples_blank_AVE %>% filter(Date %in% date_loop) %>% arrange(treatment)# filter blanks, sort as 7.5 then 8 for treatment pH
   waterinput_loop <- WaterSamples_input_AVE%>% filter(Date %in% date_loop) %>% arrange(treatment) # filter blanks, sort as 7.5 then 8 for treatment pH
@@ -393,6 +394,7 @@ View(Biodep_Master_F2s)
 # Shannon meeting 3/31/2023 - omit values that are NOT between -1 and 1 for AR 
 # note, two values for the F2s and no values for the F1s with this criteria - output the 'bad values' for the F2s and ommit in the master
 Biodep_Master_F2s_bad_data <- Biodep_Master_F2s %>% dplyr::filter(AE > 1 | AE < -1)
+nrow(Biodep_Master_F2s_bad_data) # 2 rows!
 Biodep_Master_F2s_OM       <- Biodep_Master_F2s %>% dplyr::filter(!(AE > 1 | AE < -1))
 
 # WRITE CSV OF THE MASTER FILE
@@ -420,7 +422,9 @@ library(car)
 
 
 Biodep_Master_F1 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F1.csv", header = T)
-Biodep_Master_F1 <- na.omit(Biodep_Master) # omit #6 pH7.5 on 20221027
+nrow(Biodep_Master_F1) # 43
+Biodep_Master_F1 <- na.omit(Biodep_Master_F1) # omit #6 pH7.5 on 20221027
+nrow(Biodep_Master_F1) # 43 - no NAs
 
 # (1) First, run anova within date for all records (for looped!)
 ANOVA_Dates       <- as.data.frame(unique(Biodep_Master_F1$Date)) # call a list to loop in 
@@ -464,22 +468,29 @@ for (i in 1:nrow(ANOVA_Dates)) {
         }
 }
 View(AOVdf_total) # view all the anova tests within data 
+View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
 # WRITE CSV OF THE MASTER FILE
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1_Biodeposition_ANOVA_table.csv")
+
+
+
+
 
 
 # F2s!! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 Biodep_Master_F2 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv", header = T)
+nrow(Biodep_Master_F2) # 61
 Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # 
+nrow(Biodep_Master_F2) # 61 - no NAs
 
 # (1) First, run anova within date for all records (for looped!)
 ANOVA_Dates       <- as.data.frame(unique(Biodep_Master_F2$Date)) # call a list to loop in 
 
 AOVdf_total       <- data.frame() # start dataframe, this will be the master output
 DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
-colnames(DF_loop) <- c('Date', 'Metric', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar') # names for comuns in the for loop
+colnames(DF_loop) <- c('Date', 'Metric', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif') # names for comuns in the for loop
 cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct', 'CR_correct', 'RR_Percent','OIR','AR','AE')) %>% `colnames<-`('biodep_meas')
 
 for (i in 1:nrow(ANOVA_Dates)) {
@@ -491,23 +502,40 @@ for (i in 1:nrow(ANOVA_Dates)) {
   
   for (m in 3:ncol(data_loop)) { # run anova and normality tests for each of these wihtin data i
     # high cholorphyll model
-    
-    AOVmod              <- aov(lm(data_loop[,m] ~ as.factor(data_loop$treatment)))
+
     DF_loop$Date        <- date_loop
     DF_loop$Metric      <- colnames(data_loop[m])
-    DF_loop$model       <- 'one-way AOV; x ~ treatment'
-    DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
-    DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
-    DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
-    DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
-    DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
-      'NO'} else {'YES'}
+    
+    # run both modles
+    AOVmod              <- aov(lm(data_loop[,m] ~ as.factor(data_loop$treatment)))
+    KWmod               <- kruskal.test(data_loop[,m] ~ as.factor(data_loop$treatment))
+    
+    # normality tests for the anova model - asign 
     DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
     DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
       'YES'} else {'NO'}
     DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
     DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
       'YES'} else {'NO'}
+    
+    if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+        DF_loop$model       <- 'one-way AOV; x ~ treatment'
+        DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+        DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+        DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+        DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+        DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+          'NO'} else {'YES'}
+
+      } else {
+        DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
+        DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
+        DF_loop$DF.denom    <- NA
+        DF_loop$F_val       <- NA
+        DF_loop$P_val       <- (KWmod)[[3]]
+        DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
+          'NO'} else {'YES'}
+      }
     
     # asign loop and cumulative output table
     df          <- data.frame(DF_loop) # name dataframe for this single row
@@ -516,6 +544,7 @@ for (i in 1:nrow(ANOVA_Dates)) {
   }
 }
 View(AOVdf_total) # view all the anova tests within data 
+View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
 # WRITE CSV OF THE MASTER FILE
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2_Biodeposition_ANOVA_table.csv")
 

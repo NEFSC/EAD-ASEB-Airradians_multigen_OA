@@ -1,0 +1,367 @@
+---
+title: "F1_Scope_for_growth"
+author: "Samuel Gurr"
+date: "2023-03-18"
+output: html_document
+---
+
+# F1s: scope for growth
+
+-   **objective**: to merge all data for F1s in which standard metabolic rates (resp), excretion rates, and biodeposition were completed **on the same individual(s)!**
+
+    -   Create 'F1_Master' file: merge together respiration, excretion and biodepsotion data by a unique identifier for the individual
+
+        -   i.e. date \* pH_treatment \* replicate tank \* dry tissue weight (mg)
+
+        -   Note! master file data are limited by the biodeposition runs - there's pleeenty of data for respiration and excretion in which biodeposition *was not* completed
+
+        -   these 'master' data use allometric scaling (b factor and mean correction) via **tissue dry weight** since *all* individuals used for biodeposition were large enough to separate tissue from shell for drying
+
+            -   important to state because the cumulative respiration and excretion data (both including individuals with and without biodeposition runs) is corrected via **shell length** applicable to all life stages, like those too small/fragile to obtatin accurate estimation of dry tissue
+
+    -   Calculate scope for growth
+
+    -   Plot data
+
+    -   Run statistics
+
+    -   (*Optional*) Adjust plots to emphasize significant effect(s)
+
+### load packages and set directory for this markdown file
+
+```{r setup}
+
+library(devtools) # devtools::install_github # use devtools to instlal github link
+library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from github
+library(dplyr)
+library(lubridate)
+library(rMR) 
+library(dplyr)
+library(stringr)
+library(rlang)
+library(ggplot2)
+library(ggfortify)
+library(DESeq2)
+library(devtools)
+library(ggbiplot)
+library(VennDiagram)# venn diagrams
+library(eulerr) #venn diagrams -  check out the R shiny app (http://eulerr.co/) 
+
+# set wd
+knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
+# getwd()
+
+```
+
+# (1) Create 'F1 Master' file
+
+## Load biodeposition, respiration, and excretion data
+
+```{r}
+
+Biodeposition    <- read.csv("Output/Biodeposition/Biodeposition_master_F1.csv", header = T)
+
+RespirationRates <- read.csv(file="Output/Respiration/F1_RR_calc_master.csv", header=T)
+
+ExcretionRates   <- read.csv(file="Output/ExcretionRates/F1/F1_ExcretionRates_master.csv", header=T) 
+```
+
+## Add minor adjustments to these files to assist merging
+
+-   importantly, we adjust the excretion data for b factor normalization below, other datasets are already prepped with this correction
+-   Note: : biodep does not have the columns to merge by including the Run, Vhamber_Tank, Replicate, etc. However... we can merge by the equal length and tissue dry weight in the RR dataset below! first we need to reformat a few things here
+-   b factor TDW from use of all data in both F1 and F1
+-   TDW correction to 1 g TDW (as opposed to a mean or median within the dataset)
+    -   biodeposition.R and RR_calc scripts contain this correction, excretion corrects in the chunk below
+
+```{r}
+unique(Biodeposition$Date)
+# biodep
+Biodeposition_adj    <- Biodeposition %>% 
+                          dplyr::select(-c(X, tank_ID.y)) %>% 
+                          dplyr::rename(tank_ID = tank_ID.x) %>% 
+                          dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+                          dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
+                          dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
+                          dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
+                          dplyr::rename(pH = treatment) %>% # rename to match 
+                          dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours)) %>% 
+                          dplyr::mutate(Date = case_when(Date == "03/02/2022" ~ '3/2/2022',
+                                                         Date == "09/23/2022" ~ '9/23/2022',
+                                                         Date == "10/27/2022" ~ '10/27/2022')) %>% 
+                          dplyr::select(-Length_mm) # lenngth is the exact same as the resp and Excretion data except diff sig figs and some missing
+nrow(Biodeposition_adj) # nrow 43
+
+# RR
+unique(RespirationRates$Date)
+RespirationRates_adj <- RespirationRates %>% 
+                          dplyr::filter(Date %in% c('3/1/2022','9/22/2022', '10/26/2022')) %>% # , '3/27/2023'
+                          dplyr::mutate(Date = case_when(Date == "3/1/2022" ~ '3/2/2022',
+                                                         Date == "9/22/2022" ~ '9/23/2022',
+                                                         Date == "10/26/2022" ~ '10/27/2022')) %>%                           
+                          dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", Chamber_tank)) %>% # new replicate column - reflects RR dataset 
+                          dplyr::select(c(Date, 
+                                          Age,  
+                                          pH, 
+                                          pCO2,
+                                          Replicate,
+                                          Length_mm, 
+                                          Dry_Tissue_weight,
+                                          resp_umol_hr_bFactorNormTDW.1g)) %>% 
+                          dplyr::rename(RR_resp_umol_hr_bfactorTDW = 
+                                          resp_umol_hr_bFactorNormTDW.1g) 
+RespirationRates_adj$Dry_Tissue_weight <- as.numeric(RespirationRates_adj$Dry_Tissue_weight)                     
+nrow(RespirationRates_adj) # 45
+
+# ER
+# note - we will bfctor and mean corret for TDW)
+bTDW    <- 1.07 # FR_bfactor script using ALL F1 and F1 data!
+unique(ExcretionRates$Date)
+ExcretionRates_adj  <- ExcretionRates  %>% 
+                          dplyr::filter(Date %in% c(20220301, 20220922, 20221026)) %>% 
+                          dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+                          dplyr::mutate(Date = case_when(Date == '03/01/2022' ~ '3/2/2022',
+                                                         Date == '09/22/2022' ~ '9/23/2022',
+                                                         Date == '10/26/2022' ~ '10/27/2022')) %>% 
+                          dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr/1000) %>% 
+                          dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
+  
+                          dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
+                                          (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
+                          
+                          dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW = 
+                                          (ExcretionRate_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
+                          dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
+                          dplyr::select(c(Date, 
+                                          pH, 
+                                          Replicate, 
+                                          Chamber_tank,
+                                          Length_um,
+                                          Dry_Tissue_weight,
+                                          ExcretionRate_mg_hr_bFactorNormTDW,
+                                          ExcretionRate_umol_hr_bFactorNormTDW))
+# sanity check before we merge
+nrow(ExcretionRates_adj)          == (nrow(RespirationRates_adj)  + nrow(Biodeposition_adj)) / 2 # FLASE becuase there were 2 outliers removed for biodep
+unique(ExcretionRates_adj$Date)   == unique(RespirationRates_adj$Date) # should be TRUE
+unique(RespirationRates_adj$Date) ==  unique(Biodeposition_adj$Date)  # should be TRUE
+```
+
+### Unique identifier
+
+-   Date \* pH \* dry tissue weight
+
+```{r}
+
+Biodeposition_adj$uniqueID <- paste(Biodeposition_adj$Date,
+                                 Biodeposition_adj$pH,
+                                 Biodeposition_adj$Dry_Tissue_weight, 
+                                 sep = '_')
+
+RespirationRates_adj$uniqueID <- paste(RespirationRates_adj$Date,
+                             RespirationRates_adj$pH,
+                             RespirationRates_adj$Dry_Tissue_weight, 
+                             sep = '_')
+
+ExcretionRates_adj$uniqueID <- paste(ExcretionRates_adj$Date,
+                             ExcretionRates_adj$pH,
+                             ExcretionRates_adj$Dry_Tissue_weight, 
+                             sep = '_')
+```
+
+### Test the unique identifier before merging
+
+```{r}
+# subset the ER data removing all instances that contain the same unique identifier 
+# returns nothing == we are good to merge!
+
+# btwn RR and ER
+nrow(subset(ExcretionRates_adj, 
+       !(uniqueID %in% RespirationRates_adj$uniqueID))) # no discrepancies btwn files (yay!)
+
+# now btwn RR and biodep
+nrow(subset(RespirationRates_adj, 
+            !(uniqueID %in% Biodeposition_adj$uniqueID))) # 2 discrepancies, these are the removed outliers from biodep
+```
+
+### Let's merge this thang!
+
+```{r}
+
+# merge RR and ER - check the number of rows == 42
+RR_ER_merge <- merge(RespirationRates_adj,ExcretionRates_adj) %>% dplyr::select(!pCO2)
+# ommitted pCO2 because biodep has the correct micro symbol and is merged below 
+nrow(RR_ER_merge) # 53 
+
+# merge this data with the biodep - adjust the columns to be our master file!
+F1_Masterfile <- merge(RR_ER_merge, Biodeposition_adj, 
+                    by = c('Date','uniqueID','Dry_Tissue_weight', 'Replicate', 'pH')) %>% 
+                  dplyr::select(c(Date, 
+                                  Age,
+                                  pCO2,
+                                  pH,
+                                  Replicate,
+                                  Chamber_tank,
+                                  Length_mm,
+                                  Dry_Tissue_weight,
+                                  RR_resp_umol_hr_bfactorTDW,
+                                  ExcretionRate_umol_hr_bFactorNormTDW,
+                                  IER_correct,
+                                  IRR_correct,
+                                  OER_correct,
+                                  ORR_correct,
+                                  CR_correct,
+                                  FR_correct,
+                                  RR_correct,
+                                  p,
+                                  f,
+                                  i,
+                                  SE,
+                                  AR,
+                                  AE))
+nrow(F1_Masterfile) # 48 rows
+# View(F1_Masterfile)
+
+
+```
+
+### Write the file to output folder
+
+```{r}
+
+write.csv(F1_Masterfile, "Output/F1_RR_ER_Biodep_master.csv")
+```
+
+# Scope for growth calc
+
+* Pousee et al. 
+The bioenergetics status of a bivalve can be assessed by calculating the “scope for growth” (SFG, [15,16]). 
+This estimator is based upon mathematical expressions that incorporate feeding functions such as clearance rate 
+(CR, the volume of water totally filtered per time unit) and assimilation efficiency (AE, the fraction of organic matter consumed that is assimilated), 
+and food availability to calculate the energy intake. Energy expenditures are estimated through respiration (RR) and excretion rates (ER) that are used 
+to determine the catabolized energy. The subtraction of this catabolized energy from the energy intake is the SFG. 
+
+(RR + ER) = energy expenditures
+(RR + ER) = energy expenditures
+
+
+
+
+RR was converted to oxygen-catabolized energy (R) using 14.0 J mg-1 O2, 
+ER converted to U using 24.83 J mg-1 NH4-N [45]. 
+The absorbed energy (A, J h-1) calculated as A = CR*AE*Δfood, with CR (L h-1) and AE (no unit) obtained from the biodeposition method and 
+Δfood the energetic content of the food (J mg-1) obtained from Δfood = (0.632+0.086 (%C))×4.184, where %C was the organic matter of the seston
+caloric value of dried phytoplankton = (0.632+0.086 *(%C)) where %C is the % of organic carbon 
+
+
+
+## SFG or P = A - (R + U)
+
+-   Widdows and Johnson 1988 " Physiological energetics of *Mytilus edulis*: Scope for Growth
+-   **P** = production - estimated from the difference between the energy absorbed from the food and energy expenditure via respiration and excretion - referred to as Scope for Growth (SGF)
+-   **A** = C x absorption efficiency
+    -   C = Clearnace rate (l g-1 h-1) x POM (mg L-1) x 23 J mg-1 ash free dry weight
+-   **R** = VO2 (ml O2 g-1 hr-1) x 20.33 J ml-1 O2
+-   **U** = mg NH4 g-1 hr-1 x 19.4 J mg-1 NH4
+
+
+
+
+```{r}
+unique(Biodep_blanks$Date)
+Biodep_blanks <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_input_blank.csv", h=T, sep =",") %>% 
+                            dplyr::filter(Type%in% 'blank') %>%  # blanks from the biodep rig, not the inpu, we stopped using input value to correct
+                            dplyr::filter(Date %in% c(20220302, 20220923, 20221027)) %>% 
+                            dplyr::mutate(Date = case_when(Date == 20220302 ~ '3/2/2022',
+                                                           Date == 20220923 ~ '9/23/2022',
+                                                           Date == 20221027 ~ '10/27/2022')) %>% 
+                            dplyr::select(c(Date,treatment,Perc_ORG_1)) %>% 
+                            dplyr::rename(pH = treatment)
+unique(Biodep_blanks$Date)# "3/2/2022"   "9/23/2022"  "10/27/2022"
+
+
+nrow(F1_Masterfile) == nrow(merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH"))) # TRUE = YAY!
+
+F1_Masterfile_2.0 <- merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH")) %>% 
+  dplyr::mutate(
+                # RR
+                RR_resp_mgO2_hr_bfactorTDW = ((RR_resp_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
+                RR_Joules_hr               = RR_resp_mgO2_hr_bfactorTDW*14, # convert to joules
+                # ER
+                ExcretionRate_mgNH4_bFactorNormTDW = ((ExcretionRate_umol_hr_bFactorNormTDW/1000)*18.04), # convert umol to mg NH4
+                ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
+                # caloric value of dried phytoplankton
+                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following Pousee et al. -referenced paper below for calculation
+                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2):306–10
+                # A
+                A_Joules_hr = (CR_correct*AE)*Food_Joules_mg,
+                # FINALLY SCOPE FOR GROWTH YALL
+                SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
+  )
+                
+
+
+# following the Widdows and Johnson 1988 aper described above..
+# Note- RR is in L O2 so we will multiply 20.33*1000 to account for 20.33 Joules per ml-1 O2 
+F1_Masterfile$RR_Energy_Widdows.1988     <- (20.33*F1_Masterfile$RR_resp_umol_hr_bfactorTDW)
+F1_Masterfile$RR_Excretion_Widdows.1988  <- (19.4*F1_Masterfile$ExcretionRate_umol_hr_bFactorNormTDW)
+
+F1_Masterfile$SfG_Widdows.1988           <- (  
+                        (F1_Masterfile$AR * (F1_Masterfile$CR_correct*23)) - 
+                        (F1_Masterfile$RR_Energy_Widdows.1988 + F1_Masterfile$RR_Excretion_Widdows.1988)
+                        )
+
+```
+
+```{r, analysis and plots}
+
+# stats
+library(car)
+unique(F1_Masterfile_2.0$Date)
+
+F1_Masterfile_3_2_2022 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '3/2/2022')
+SGFmod_322 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_3_2_2022 ))
+shapiro.test(resid(SGFmod_322)) # 0.2245
+leveneTest(SGFmod_322)# 0.7378
+summary(SGFmod_322)
+#             Df Sum Sq Mean Sq F value Pr(>F)
+# pCO2         1    266   265.7   1.236  0.279
+# Residuals   21   4514   215.0 
+
+
+F1_Masterfile_9_23_22<- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '9/23/2022')
+SGFmod_923 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_9_23_22 ))
+shapiro.test(resid(SGFmod_923)) # 0.8132
+leveneTest(SGFmod_923)# 0.8839
+summary(SGFmod_923)
+#             Df Sum Sq Mean Sq F value Pr(>F)
+# pCO2         1    491   490.7   0.656  0.435
+# Residuals   11   8225   747.7
+
+
+
+F1_Masterfile_10_27_22 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '10/27/2022')
+SGFmod_1027 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_10_27_22 ))
+shapiro.test(resid(SGFmod_1027)) # 0.009596
+leveneTest(SGFmod_1027)# 0.9256 **
+SGFmod_1027_KW <- kruskal.test(SFG ~ pCO2, data =F1_Masterfile_10_27_22)
+# Kruskal-Wallis chi-squared = 0.92308, df = 1, p-value = 0.3367
+
+
+F1_Masterfile_2.0$pCO2 <- factor(F1_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
+F1_Masterfile_2.0$Date <- factor(F1_Masterfile_2.0$Date, levels= c('3/2/2022','9/23/2022','10/27/2022'))
+SFG_Pousse_F1          <- ggplot(data=F1_Masterfile_2.0, aes(x=pCO2, y=SFG, colour=pCO2)) +
+                        scale_colour_manual(values=c("forestgreen","orange", "purple"))+
+                        theme_classic() +  
+                        geom_boxplot(fill="white", 
+                                     outlier.colour=NA, 
+                                     position=position_dodge(width=0.9)) +
+                        geom_point(position=position_jitterdodge()) +
+                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                        theme(axis.text.x=element_blank(),axis.title.x=element_blank()) +
+                        labs(title="F1 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
+                        facet_wrap(~Date)
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F1_SFG.pdf")
+print(SFG_Pousse_F1)
+dev.off()
+```

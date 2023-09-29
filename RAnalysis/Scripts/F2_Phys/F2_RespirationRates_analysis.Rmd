@@ -38,7 +38,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 RR_master_F1 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data
               # filter out the F2 measurements
-              filter(!Date %in% c('8/30/2022', '11/16/2022','8/30/2022', '11/16/2022', '1/31/2023', '2/23/2023')) %>% # an F2 measurement
+              filter(!Date %in% c('8/30/2022', '11/16/2022','8/30/2022', '11/16/2022', '1/31/2023', '2/23/2023', '3/27/2023',  '5/18/2023')) %>% # an F2 measurement
               filter(!(Date == '9/22/2022' & filetype =='SDR_data')) %>%  # F2s were also measured on 9/22 but with the SDR system (F1s with the LoLigo)
               dplyr::mutate(Age = case_when(Date == '9/14/2021'  ~ 50,
                                             Date == '9/30/2021'  ~ 66,
@@ -51,23 +51,26 @@ RR_master_F1 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>
               dplyr::mutate(Age = as.factor(Age)) %>% 
               dplyr::arrange(Age)
 unique(RR_master_F1$Date)
+ # "9/14/2021"  "9/30/2021"  "10/26/2021" "2/2/2022"   "3/1/2022"   "9/22/2022"  "10/26/2022" "3/27/2023"  "5/18/2023"
 
 # F2s ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 RR_master_F2 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data
               # filter out the F2 measurements
-              filter(Date %in% c('8/30/2022', '9/22/2022', '11/16/2022', '1/31/2023', '2/23/2023')) %>% # an F2 measurement
+              filter(Date %in% c('8/30/2022', '9/22/2022', '11/16/2022', '1/31/2023', '2/23/2023', '3/27/2023')) %>% # an F2 measurement
               filter(!(Date == '9/22/2022' & filetype =='LoLigo_data')) %>% # F1s were also measured on 9/22 but with the LoLigo system (F2s with the SDR)
   # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
               dplyr::mutate(Age = case_when(Date == '8/30/2022'   ~ 13,
                                             Date == '9/22/2022'   ~ 36,
                                             Date == '11/16/2022'  ~ 91, 
                                             Date == '1/31/2023'   ~ 167,
-                                            Date == '2/23/2023'   ~ 190)) %>% 
+                                            Date == '2/23/2023'   ~ 190,
+                                            Date == '3/27/2023'   ~ 222)) %>% 
               dplyr::mutate(Gen = 'F2') %>% 
               dplyr::mutate(Age = as.factor(Age)) %>% 
               dplyr::arrange(Age)
 unique(RR_master_F2$Date)
+# "8/30/2022"  "9/22/2022"  "11/16/2022" "1/31/2023"  "2/23/2023"  "3/27/2023"
 # View(RR_master)
 
 
@@ -80,7 +83,7 @@ RR_master_F3 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>
               dplyr::mutate(Age = as.factor(Age)) %>% 
               dplyr::arrange(Age)
 unique(RR_master_F3$Date)
-
+# "5/18/2023"
 
 RR_master <- rbind(RR_master_F1, RR_master_F2, RR_master_F3)
 ```
@@ -343,7 +346,7 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH LENGTH AND MO2 ::::::::::::::::::::::::::::::
 RR_master_OM               <- RR_master %>% filter(!is.na(resp_umol_hr_biovolcalc)) %>%  filter(!is.na(Length_um)) 
-nrow(RR_master_OM) # 327
+nrow(RR_master_OM) # 313
 RR_master_OM$log10_VO2     <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
 RR_master_OM$log10_Length  <- log10(as.numeric(RR_master_OM$Length_um)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_Length)) # 1.8502 == b factor
@@ -402,9 +405,9 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 
 ### summary:
 
--   Length b factor total = 1.71 (2.0 as of 5/24/2023 - added F3 spat)
--   Length b factor pCO2 moderate = 1.69 (2.0 as of 5/24/2023 - added F3 spat)
--   Length b factor pCO2 low = 1.74 (1.87 as of 5/24/2023 - added F3 spat)
+-   Length b factor total = 1.71 (2.0 as of 5/24/2023 - added F3 spat) (1.85 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
+-   Length b factor pCO2 moderate = 1.69 (2.0 as of 5/24/2023 - added F3 spat) (1.9 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
+-   Length b factor pCO2 low = 1.74 (1.87 as of 5/24/2023 - added F3 spat) (1.77 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
 
 # F1s master file
 
@@ -414,7 +417,7 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT, MO2_b.factorLENGTH_PLOT_facetted, nrow 
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
-bLength = 2.0 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+bLength = 1.85 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
@@ -498,7 +501,7 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
-bLength = 2.0 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
+bLength = 1.85 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)
@@ -582,7 +585,7 @@ write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.674 # review the outlier-omitted b factor plot in previous chunk
-bLength = 2.0 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
+bLength = 1.85 # previously 1.71) #review the outlier-omitted b factor plot in previous chunk
 
 meanLength <- mean(RR_master_F3$Length_um/1000) # 14.07185 mm
 

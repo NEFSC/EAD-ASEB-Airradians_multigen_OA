@@ -1,0 +1,3281 @@
+---
+title: "GO_Analysis_DESeq2_10cpm"
+author: "Samuel Gurr"
+date: "September, 6, 2023"
+output: html_document
+---
+
+## Setup: 
+
+```{r setup, include=TRUE}
+
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+
+```
+
+
+NOTE: after runinng this once... you can load the liibraries (below) and skip to 'the 'Find GOslim terms' to load the .csv files for plotting
+Load libraries
+```{r load_libraries, include = TRUE}
+# load libraries - notes show the install command needed to install (pre installed)
+library(goseq)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(gridExtra)
+library(tidyr)
+library(grDevices)
+library(reshape2)
+library(Rmisc)
+library(ggpubr)
+library(tibble)
+library(hrbrthemes)
+library(gridExtra)
+library(tidyr)
+library(zoo)
+library(ComplexHeatmap)
+library(circlize)
+library(GSEABase)
+library(data.table)
+library(stringr)
+```
+
+#### Set path
+
+```{r set the path out, include = TRUE}
+path_out = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Transcriptomics/DESeq2'
+```
+
+LOAD DATA:
+Annotation and DE data (from DESeq2 Rmd script)
+```{r Load_annot_and_DE_files, include = TRUE}
+# Annotation file - acheived with diamond against the Cvirginica genome - Airradians genome is unannotated!
+Airr_Cvirg_annotation <- read.csv(file="Data/Transcriptomics/seq_id_AirrCvirg_MERGED_master.csv",
+                                  sep = ',', 
+                                  header = T) %>% 
+                        dplyr::select(c('Airradians_TranscriptID',
+                                 "blastxEval_CvirgTranscriptID",
+                                 "blastxEval_CvirgProteinID",
+                                 "blastxEval_CvirgGeneID",
+                                 "blastxEval_CvirgGOterms",
+                                 "meanLength"))
+
+# DE files - all genes and filtered raw counts
+DE_F1s <-read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/F1_DESeq2results_F1s.csv", head = T) # write
+DE_F2s <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/F2_DESeq2results_F2s.csv", head = T) # write
+
+
+# filtered counts tables 3CPM - format matrix after upload [from Count_Matrix_Stats.Filter.R] 
+filtered_counts_all                 <- read.csv(file="Output/Transcriptomics/Filtered_counts_matrix/filtered_3cpm50perc.csv", sep=',', header=TRUE)  
+colnames(filtered_counts_all)[1]    <- "gene.ID"# rename Pgen gene ID column
+exp_data                            <- read.csv(file="Data/Transcriptomics/exp.metadata.csv", sep=',', header=TRUE)
+
+counts_F1                           <- filtered_counts_all %>% 
+                                          dplyr::select(
+                                            gene.ID,# select gene ID of course
+                                          (exp_data %>% dplyr::filter(Date %in% 20211027))$SampleName_readmatrix) # select only sample IDs from F1s
+
+counts_F2                           <- filtered_counts_all %>% 
+                                          dplyr::select(
+                                            gene.ID,# select gene ID of course
+                                            (exp_data %>% 
+                                               dplyr::filter(!SampleName_readmatrix %in% "Ai37") %>% # remove sample 37 - not successfully sequenced
+                                               dplyr::filter(Date %in% 20220228))$SampleName_readmatrix) # select only sample IDs from F1s
+
+# GOslim
+slim <- getOBOCollection("http://current.geneontology.org/ontology/subsets/goslim_generic.obo") #get GO database - # call goslim_generic.obo terms as 'slim'
+
+```
+
+```{r }
+
+# create a referecne from the Geoduck annotation file to merge with the DE sumamry lists 
+ref           <- Airr_Cvirg_annotation[,c(1,5)]
+colnames(ref) <- c("Airradians_TranscriptID", "gene.annotation") # the Airradians transcript IDs (e.g. evm.model.Contig0.1) and the gO terms from diamond/blast with Cvirg genome
+
+# F1s - call padj < 0.05 and assign boolean to logfold change direction
+DE_F1s_dir <- DE_F1s %>% 
+                    dplyr::select('Airradians_TranscriptID','log2FoldChange','padj') %>% 
+                    dplyr::filter(padj < 0.05) %>% 
+                    dplyr::mutate(dir =
+                      case_when(log2FoldChange > 0 ~ "up",
+                                log2FoldChange < 0 ~ "down")) %>% 
+                    dplyr::mutate(up = 
+                        case_when(dir == "up" ~ TRUE, .default = FALSE),
+                                  down = 
+                        case_when(dir == "down" ~ TRUE, .default = FALSE)) %>% 
+                    dplyr::select(-c(padj, dir)) %>% mutate(Effect = "Generation_1")
+
+# F2s - call padj < 0.05 and assign boolean to logfold change direction
+DE_F2s_dir <- DE_F2s %>% 
+                    dplyr::select('Airradians_TranscriptID','log2FoldChange','padj') %>% 
+                    dplyr::filter(padj < 0.05) %>% 
+                    dplyr::mutate(dir =
+                      case_when(log2FoldChange > 0 ~ "up",
+                                log2FoldChange < 0 ~ "down")) %>% 
+                    dplyr::mutate(up = 
+                        case_when(dir == "up" ~ TRUE, .default = FALSE),
+                                  down = 
+                        case_when(dir == "down" ~ TRUE, .default = FALSE)) %>% 
+                    dplyr::select(-c(padj, dir)) %>% mutate(Effect = "Generation_2")
+
+# rbind to merge the DE for Gen 1 and 2
+DE_Master <- rbind(DE_F1s_dir, DE_F2s_dir)
+
+# merge in the annotation 
+DE_Master_with_annotation <- merge(DE_Master, ref, by="Airradians_TranscriptID", all = T) %>% dplyr::filter(!log2FoldChange %in% NA)
+
+# sanity check - row numbers should be equal 
+nrow(DE_Master) == nrow(DE_Master_with_annotation) # TRUE, must be TRUE or we have problems!
+
+# write csv
+write.csv(DE_Master_with_annotation, file = "Output/Transcriptomics/DESeq2/DE_All_Annotation.csv", row.names = FALSE)
+```
+Prep Differential Expression data (from DESeq2) by Date and direction of DE 
+```{r}
+# Objective here is to call the DE genes (up and down) 
+# Gen 1  ------------------------------------------- #
+dim(DE_F1s_dir) # 150 DEGs
+DE_F1s_dir.UPREG  <- DE_F1s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 91
+DE_F1s_dir.DWNREG <- DE_F1s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 59
+# Gen 2  ------------------------------------------- #
+dim(DE_F2s_dir) # 4 DEGs
+DE_F2s_dir.UPREG  <- DE_F2s_dir %>% dplyr::filter(up %in% TRUE)         # UPREG call - 2
+DE_F2s_dir.DWNREG <- DE_F2s_dir %>% dplyr::filter(down %in% TRUE)       # DWNREG call - 2
+```
+
+goseq
+Prepare dataframe(s) and vectors for goseq 
+(1) Format 'GO.term' for goseq from the P.generosa annotation .fna file 'Geoduck_annotation'
+```{r GO.terms_data}
+# call the GO terms
+AirrCgig_GOterms                <- as.data.frame(Airr_Cvirg_annotation) %>% dplyr::select(c('Airradians_TranscriptID','blastxEval_CvirgGOterms'))
+colnames(AirrCgig_GOterms)[1:2] <- c('transcript.ID', 'GO.terms') # call gene name and the GO terms - (Uniprot ID 'V5')
+splitted                        <- strsplit(as.character(AirrCgig_GOterms$GO.terms), ";") #slit into multiple GO ids by delimiter'; ' remember the space after ; is needed here! without this you will only call the first listed GO term for each gene!
+GO.terms                        <- data.frame(v1 = rep.int(AirrCgig_GOterms$transcript.ID, sapply(splitted, length)), 
+                                              v2 = unlist(splitted)) #list all genes with each of their GO terms in a single row
+```
+
+
+(2) Unique Genes - vector based on all unique mapped reads  - Remember this is based on the genes for EACH sampling day becasue DEeq2 was run separately (i.e. days 0, 7, 14, and 21)
+(3) Gene length 
+Set ID and gene length vectors, and make a binary matrix indicating which genes are differentially expressed. These are used as input to nullp, which for calculates a Probability Weighting Function for each set of DEGs.
+```{r Unique_genes}
+# Prepare dataframe(s) and vectors for goseq 
+
+# Format 'GO.term' for goseq from the P.generosa annotation .fna file 'Geoduck_annotation'
+IDvector.F1 <- as.vector(unique(DE_F1s_dir$Airradians_TranscriptID))   # call unique genes (those filtered and used in DESEq2) on day0 - 'IDvector'
+IDvector.F2 <- as.vector(unique(DE_F2s_dir$Airradians_TranscriptID))  # call unique genes (those filtered and used in DESEq2) on day7 - 'IDvector'
+GO_unique.genes.all <- as.vector(unique(Airr_Cvirg_annotation$Airradians_TranscriptID)) # call all unique genes for GO analysis (goseq)
+
+# Gene length 
+GO_gene.length           <- unique(Airr_Cvirg_annotation %>% dplyr::select(c("Airradians_TranscriptID","meanLength")))
+names(GO_gene.length)[1] <- "gene.ID" # cange the column name to merge with the gene counts on each day to call ID and length vectors UNIQUE to the experiment day
+
+# merge length with counts data
+length_vector   <- GO_gene.length$meanLength
+GeneLength.F1   <- merge(GO_gene.length, counts_F1, by = "gene.ID")   # merge day0 counts with 'GO_gene.length' 
+GeneLength.F2   <- merge(GO_gene.length, counts_F2, by = "gene.ID")  # merge day7 counts with 'GO_gene.length' 
+
+# call length values for goseq - confirms that the IDvector and length_vector are the same!!!
+length_vector.F1 <- GeneLength.F1$meanLength    # length vector for all unique reads addressed in DESeq2 F1s
+sum(sapply(length_vector.F1,length)) == dim(counts_F1)[1] #should be TRUE
+length_vector.F2 <- GeneLength.F2$meanLength    # length vector for all unique reads address in DESeq2 F2s
+sum(sapply(length_vector.F2,length)) == dim(counts_F2)[1] #should be TRUE
+
+
+```
+
+(4) Call DE datasets (from DESeq2) - merge to the genes list 'GO_unique.genes.all' to create a binary vector 0 = not DE'd; 1 = DE'd
+```{r Binary_DEGs - must run the prep steps above}
+
+# F1s
+
+DE_F1s_UPREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F1s_dir.UPREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F1s_UPREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F1s_UPREG_boolean,length)) # 18874
+sum(DE_F1s_UPREG_boolean == 1) # should be 91 but is 83 -    missing due to no blast alignment to the Cvig genome
+
+DE_F1s_DWNREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F1s_dir.DWNREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F1s_DWNREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F1s_DWNREG_boolean,length)) # 18874
+sum(DE_F1s_DWNREG_boolean == 1) # should be 59 but is 37 -    missing due to no blast alignment to the Cvig genome
+
+
+# F2s
+
+DE_F2s_UPREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F2s_dir.UPREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F2s_UPREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F2s_UPREG_boolean,length)) # 18874
+sum(DE_F2s_UPREG_boolean == 1) # should be 2
+
+DE_F2s_DWNREG_boolean    <-as.integer(GO_unique.genes.all%in%(DE_F2s_dir.DWNREG$Airradians_TranscriptID)) # Day 0 - Primary - Upregulated DEGs
+names(DE_F2s_DWNREG_boolean)=GO_unique.genes.all
+sum(sapply(DE_F2s_DWNREG_boolean,length)) # 18874
+sum(DE_F2s_DWNREG_boolean == 1) # should be 2 but is 1
+
+
+```
+
+Let's review what we have for goseq
+```{r NOTE_checklist}
+# Review what we have for goseq....
+
+# (1) Go terms ---------------- #
+#  head(GO.terms)
+
+# (2) ID vector --------------- #
+# head(IDvector.F1)
+# head(IDvector.F2)
+
+# (3) Length vector ----------- #
+# head(length_vector.F1)
+# head(length_vector.F2)
+
+# (4) Binary DEG vectors ------ # 
+# head(DE_F1s_UPREG_boolean)   
+# head(DE_F1s_DWNREG_boolean)  
+# head(DE_F2s_UPREG_boolean)    
+# head(DE_F2s_DWNREG_boolean) 
+
+
+```
+
+It's goseq time!!!
+Calculate Probability Weighting Function
+```{r pwf}
+#Calculate Probability Weighting Function (using 'nullp')
+
+# F1s ------------------------------------------ #
+
+DEG.pwf_F1_up    <-nullp(DE_F1s_UPREG_boolean,  id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+DEG.pwf_F1_down  <-nullp(DE_F1s_DWNREG_boolean, id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+
+# F2s ------------------------------------------ #
+
+DEG.pwf_F2_up    <-nullp(DE_F2s_UPREG_boolean,  id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+DEG.pwf_F2_down  <-nullp(DE_F2s_DWNREG_boolean, id=GO_unique.genes.all, bias.data=length_vector) # weight vector by length of gene
+
+
+```
+
+Run goseq
+```{r goseq}
+
+# F1s ------------------------------------------ #
+GO_F1.UP     <-goseq(DEG.pwf_F1_up,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+GO_F1.DOWN   <-goseq(DEG.pwf_F1_down, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+# F2s ------------------------------------------ #
+GO_F2.UP     <-goseq(DEG.pwf_F2_up,   GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+GO_F2.DOWN   <-goseq(DEG.pwf_F2_down, GO_unique.genes.all, gene2cat=GO.terms, test.cats=c("GO:CC", "GO:BP", "GO:MF"), method="Wallenius", use_genes_without_cat=TRUE)
+
+```
+
+Find only enriched GO terms that are statistically significant at cutoff
+```{r}
+
+
+# F1S------------------------------------------------------- #
+
+# UPREGULATED GENES - those with higher expression from ambient (control) stress priming
+F1.UP.05<-GO_F1.UP$category[GO_F1.UP$over_represented_pvalue<.05]
+F1.UP.05<-data.frame(F1.UP.05)
+colnames(F1.UP.05) <- c("category")
+F1.UP.05 <- merge(F1.UP.05, GO_F1.UP, by="category")
+F1.UP.05 <- F1.UP.05[order(F1.UP.05$ontology, F1.UP.05$over_represented_pvalue, -F1.UP.05$numDEInCat),]
+F1.UP.05$term <- as.factor(F1.UP.05$term)
+F1.UP.05_filtered <- F1.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F1.UP.05_filtered, ontology=="BP")) #number sig BP terms == 8
+nrow(filter(F1.UP.05_filtered, ontology=="MF")) #number sig MF terms == 7
+nrow(F1.UP.05_filtered) # == 23
+#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
+F1.DOWN.05<-GO_F1.DOWN$category[GO_F1.DOWN$over_represented_pvalue<.05]
+F1.DOWN.05<-data.frame(F1.DOWN.05)
+colnames(F1.DOWN.05) <- c("category")
+F1.DOWN.05 <- merge(F1.DOWN.05, GO_F1.DOWN, by="category")
+F1.DOWN.05 <- F1.DOWN.05[order(F1.DOWN.05$ontology, F1.DOWN.05$over_represented_pvalue, -F1.DOWN.05$numDEInCat),]
+F1.DOWN.05$term <- as.factor(F1.DOWN.05$term)
+F1.DOWN.05_filtered <- F1.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F1.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 2
+nrow(filter(F1.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F1.DOWN.05_filtered) # == 4
+
+# F2S------------------------------------------------------- #
+
+# UPREGULATED GENES - those with higher expression from ambient (control) stress priming
+F2.UP.05<-GO_F2.UP$category[GO_F2.UP$over_represented_pvalue<.05]
+F2.UP.05<-data.frame(F2.UP.05)
+colnames(F2.UP.05) <- c("category")
+F2.UP.05 <- merge(F2.UP.05, GO_F2.UP, by="category")
+F2.UP.05 <- F2.UP.05[order(F2.UP.05$ontology, F2.UP.05$over_represented_pvalue, -F2.UP.05$numDEInCat),]
+F2.UP.05$term <- as.factor(F2.UP.05$term)
+F2.UP.05_filtered <- F2.UP.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F2.UP.05_filtered, ontology=="BP")) #number sig BP terms == 2
+nrow(filter(F2.UP.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F2.UP.05_filtered) # == 5
+#DOWNREGULATED GENES  - those with higher expression from moderate stress priming
+F2.DOWN.05<-GO_F2.DOWN$category[GO_F2.DOWN$over_represented_pvalue<.05]
+F2.DOWN.05<-data.frame(F2.DOWN.05)
+colnames(F2.DOWN.05) <- c("category")
+F2.DOWN.05 <- merge(F2.DOWN.05, GO_F2.DOWN, by="category")
+F2.DOWN.05 <- F2.DOWN.05[order(F2.DOWN.05$ontology, F2.DOWN.05$over_represented_pvalue, -F2.DOWN.05$numDEInCat),]
+F2.DOWN.05$term <- as.factor(F2.DOWN.05$term)
+F2.DOWN.05_filtered <- F2.DOWN.05 %>% filter(!(numDEInCat<2 & ontology == "BP"), !(numDEInCat<2 & ontology == "MF"))
+nrow(filter(F2.DOWN.05_filtered, ontology=="BP")) #number sig BP terms == 0
+nrow(filter(F2.DOWN.05_filtered, ontology=="MF")) #number sig MF terms == 1
+nrow(F2.DOWN.05_filtered) # == 1
+```
+
+Save significant terms
+```{r, warning=FALSE}
+
+##### NOTE #####
+# Save both the filtered and unfiltered data sets! (two output files for each pairwise DE analysis)
+# The data sets without the filter (number of genes for GO calls) were compiled into a cumulative data file 'compileGO_Master.R' in the Scripts folder 
+# Review the output from this script - this spreadsheet contains ALL unfiltered data!!!
+
+
+write.csv(F1.UP.05, file    = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_F1_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.DOWN.05, file  = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_F1_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.UP.05_filtered, file    = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Upregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F1.DOWN.05_filtered, file  = "Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Downregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+
+write.csv(F2.UP.05, file    = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_F2_Upregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.DOWN.05, file  = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_F2_Downregulated_unfiltered.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.UP.05_filtered, file    = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Upregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+write.csv(F2.DOWN.05_filtered, file  = "Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Downregulated.csv", row.names = FALSE) # unfiltered of GO terms <= 2 numDEinCAT
+
+```
+
+Save GO_Results_Master files
+```{r - Save GO_Results_Master files}
+
+F1.UP.05_filtered   <- read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Upregulated.csv", h=T) %>% 
+  dplyr::mutate(Effect = 'Generation_1', Dir = 'up')  # unfiltered of GO terms <= 2 numDEinCAT
+
+F1.DOWN.05_filtered <- read.csv("Output/Transcriptomics/DESeq2/F1_juveniles/GOseq/GO_0.05_F1_Downregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_1', Dir = 'down')# unfiltered of GO terms <= 2 numDEinCAT
+
+F2.UP.05_filtered   <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Upregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_2', Dir = 'up')# unfiltered of GO terms <= 2 numDEinCAT
+
+F2.DOWN.05_filtered <- read.csv("Output/Transcriptomics/DESeq2/F2_juveniles/GOseq/GO_0.05_F2_Downregulated.csv", h=T)  %>% 
+  dplyr::mutate(Effect = 'Generation_2', Dir = 'down')# unfiltered of GO terms <= 2 numDEinCAT
+
+# Master ALL WGCNA significant modules with treatment
+Master_goseq_results      <- rbind(F1.UP.05_filtered, F1.DOWN.05_filtered,
+                                   F2.UP.05_filtered, F2.DOWN.05_filtered)
+
+loopvars <- as.data.frame(c('Generation_1:up', 'Generation_1:down',
+                     'Generation_2:up', 'Generation_2:down'))
+
+
+DE_Master_with_annotation <- DE_Master_with_annotation %>% 
+  dplyr::mutate(Dir = case_when(up == 'TRUE' ~ 'up', up == 'FALSE' ~ 'down'))
+
+#  for the for loop...
+df_total             <- data.frame() # start dataframe 
+GO.table             <- data.frame(matrix(nrow = 0, ncol = 11)) # create dataframe to save cumunalitively during for loop
+colnames(GO.table)   <- c('Effect', 'Dir',  'GO_term' , 'GO_ID', 'ontology', 'pvalue',  'Gene_count', 'Gene_ratio', 'Transcript_ID', 'geneSymbol', 'Protein_name') # names for comuns in the for loop
+
+
+# un the loop
+for (i in 1:nrow(loopvars)) {
+  
+  gen <- gsub(':.*','',loopvars[2,1])
+  dir <- gsub('.*:','',loopvars[2,1])
+  
+  Ref.GO.terms       <- DE_Master_with_annotation %>%  
+                          dplyr::filter(Dir %in% dir & Effect %in% gen) %>% 
+                          dplyr::mutate(gene.annotation = strsplit(gene.annotation, ";")) %>%  
+                          unnest(gene.annotation) %>% 
+                          dplyr::rename(GO_ID = gene.annotation)
+   
+  GO.results         <- Master_goseq_results %>%  
+                          dplyr::filter(!ontology %in% 'CC') %>% 
+                          dplyr::select(!'under_represented_pvalue') %>% 
+                          dplyr::rename(Gene_count = numDEInCat, GO_term = term) %>% 
+                          dplyr::mutate(Gene_ratio = Gene_count/numInCat) %>% 
+                          dplyr::select(-'numInCat') %>% 
+                          dplyr::filter(Dir %in% dir & Effect %in% gen) %>% 
+                          dplyr::rename(GO_ID = category, pvalue = over_represented_pvalue)
+
+  # Master <- rbind(GO.table, (as.data.frame(merge(GO.results, Ref.GO.terms, by = c("GO_ID", 'Effect', 'Dir')))[,c(3,2,6,1,7,4,5,8,9,12,11)]) )
+  Master <- rbind(GO.table, (as.data.frame(merge(GO.results, Ref.GO.terms, by = c("GO_ID", 'Effect', 'Dir')))))
+  df       <- data.frame(Master) # name dataframe for this single row
+  df_total <- rbind(df_total,df) #bind to a cumulative list dataframe
+  print(nrow(df_total)) # print to monitor progress      
+  
+} 
+
+
+
+# write.csv(Day2_larvae_master, file = "Output/WGCNA/day2_larvae/GO_analysis/RR_cutoff/Day2_GO_Results_Master.csv", row.names = FALSE)
+# write.csv(Day18_spat_master, file = "Output/WGCNA/day18_spat/GO_analysis/RR_cutoff/Day18_GO_Results_Master.csv", row.names = FALSE)
+```
+
+
+
+
+
+
+
+
+GOslim analysis - data reduction from the many GO terms to more broad function/processes
+Read in files if previous steps not run.
+```{r}
+# PRIMARY EFFECT GO DATA SETS
+d0.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Upregulated.csv")
+d0.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Downregulated.csv")
+
+d7.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Upregulated.csv")
+d7.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Downregulated.csv")
+
+d14.UP.05   <- read.csv("../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Upregulated.csv")
+d14.DOWN.05 <- read.csv("../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Downregulated.csv")
+
+d21.UP.05   <- read.csv("../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Upregulated.csv")
+d21.DOWN.05 <- read.csv("../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Downregulated.csv")
+
+Constant.UP.05   <- read.csv("../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Upregulated.csv")
+Constant.DOWN.05 <- read.csv("../Output/GO/DESeq2_goseq/GO.05.ConstantDEGs_PrimEffect_Downregulated.csv")
+
+d0.UP.05$dir    <- "Up"
+d7.UP.05$dir    <- "Up"
+d14.UP.05$dir   <- "Up"
+d21.UP.05$dir   <- "Up"
+
+d0.DOWN.05$dir  <- "Down"
+d7.DOWN.05$dir  <- "Down"
+d14.DOWN.05$dir <- "Down"
+d21.DOWN.05$dir <- "Down"
+
+d0.UP.05$Day    <- "Day0"
+d7.UP.05$Day    <- "Day7"
+d14.UP.05$Day   <- "Day14"
+d21.UP.05$Day   <- "Day21"
+
+d0.DOWN.05$Day  <- "Day0"
+d7.DOWN.05$Day  <- "Day7"
+d14.DOWN.05$Day <- "Day14"
+d21.DOWN.05$Day <- "Day21"
+
+Master_goseq_results      <- rbind(d0.UP.05, d7.UP.05, d14.UP.05,d21.UP.05,
+                              d0.DOWN.05, d7.DOWN.05, d14.DOWN.05, d21.DOWN.05) # Master GOseq OF ALL PRIMARY EFFECTS
+Master_goseq_results <- Master_goseq_results %>%  dplyr::filter(!ontology %in% 'CC') # Master GOseq OF ALL PRIMARY EFFECTS
+
+DE_d0.primary <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day0/DE_Day0_Primary.csv", sep=',', header=TRUE)
+colnames(DE_d0.primary)[2] <- "gene.ID" # rename Pgen gene ID column
+DE_d0.primary$Day <- "Day0"
+
+DE_d7.primary <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day7/DE_Day7_Primary.csv", sep=',', header=TRUE) 
+colnames(DE_d7.primary)[2] <- "gene.ID"# rename Pgen gene ID column
+DE_d7.primary$Day <- "Day7"
+
+DE_d14.primary <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day14/DE_Day14_Primary.csv", sep=',', header=TRUE) 
+colnames(DE_d14.primary)[2] <- "gene.ID"# rename Pgen gene ID column
+DE_d14.primary$Day <- "Day14"
+
+DE_d21.primary <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day21/DE_Day21_Primary.csv", sep=',', header=TRUE) 
+colnames(DE_d21.primary)[2] <- "gene.ID"# rename Pgen gene ID column
+DE_d21.primary$Day <- "Day21"
+
+Master_DESeq2_results      <- rbind(DE_d0.primary[,c('gene.ID','up','down','Day')], DE_d7.primary[,c('gene.ID','up','down','Day')], 
+                                    DE_d14.primary[,c('gene.ID','up','down','Day')],DE_d21.primary[,c('gene.ID','up','down','Day')]) # Master DESeq2 
+
+
+# sECOND EFFECT ON DAY 7
+d7.Second.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GO.05.Day7_SecondEffect_AvM_Upregulated.csv")
+d7.Second.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GO.05.Day7_SecondEffect_AvM_Downregulated.csv")
+
+d7.MAvAM.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GO.05.Day7_GroupEffect_MAvAM_Upregulated.csv")
+d7.MAvAM.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GO.05.Day7_GroupEffect_MAvAM_Downregulated.csv")
+
+d7.Second.UP.05$dir    <- "Up"
+d7.Second.DOWN.05$dir  <- "Down"
+d7.MAvAM.UP.05$dir     <- "Up"
+d7.MAvAM.DOWN.05$dir   <- "Down"
+
+d7.Second.UP.05$effect    <- "secondAvM"
+d7.Second.DOWN.05$effect  <- "secondAvM"
+d7.MAvAM.UP.05$effect     <- "MAvAM"
+d7.MAvAM.DOWN.05$effect   <- "MAvAM"
+View(Master_DESeq2_results_SECOND)
+Master_goseq_results_SECOND  <- rbind(d7.Second.UP.05, d7.Second.DOWN.05, 
+                              d7.MAvAM.UP.05, d7.MAvAM.DOWN.05) # Master GOseq OF ALL PRIMARY EFFECTS
+Master_goseq_results_SECOND <- Master_goseq_results_SECOND %>%  dplyr::filter(!ontology %in% 'CC') # Master GOseq OF ALL PRIMARY EFFECTS
+
+DE_d7.second <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day7/DE_Day7_Second.csv", sep=',', header=TRUE) 
+colnames(DE_d7.second)[2] <- "gene.ID"# rename Pgen gene ID column
+DE_d7.second$effect <- "secondAvM"
+
+DE_d7.MAvAM <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/Day7/DE_Day7_MA_AM.csv", sep=',', header=TRUE) 
+colnames(DE_d7.MAvAM)[2] <- "gene.ID"# rename Pgen gene ID column
+DE_d7.MAvAM$effect <- "MAvAM"
+
+Master_DESeq2_results_SECOND  <- rbind(DE_d7.second[,c('gene.ID','up','down','effect')], DE_d7.MAvAM[,c('gene.ID','up','down','effect')]) #
+
+
+
+# Build a master list of all genes and GO terms 'Pgen_GOterms2'
+Geoduck_annotation <- read.delim2(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Seq_details/Panopea-generosa-genes-annotations.txt", header=F) # Load themaster Pgenerosa gene list 
+Pgen_GOterms <- Geoduck_annotation %>% dplyr::select(c('V1','V8')) # select only two columns - those with the gene IDs and those with the GO terms
+Pgen_GOterms2 <- strsplit(Pgen_GOterms$V8, split = "; ") # create a string splitting by delimiter '; ' - view the data to see that this separates each GO term entry in the string
+Pgen_GOterms2 <- data.frame(gene.ID = rep(Pgen_GOterms$V1, sapply(Pgen_GOterms2, length)), Go.terms = unlist(Pgen_GOterms2)) # create new dataframe 'Pgen_GOterms2' listing genes for each GO term (MUCH longer!)
+Pgen_GOterms2 <- na.omit(Pgen_GOterms2) # ommit the NAs  - genes without GO annotation
+
+
+Pgen_condenced <- Geoduck_annotation[,c(1,7)] # load just the PGEN ID and the putative gene terms
+Pgen_condenced$Gene_term    <- sub(" \\(EC.*", "", Pgen_condenced$V7)  # str_extract(annot.condenced$V7, "[^(]+")
+Pgen_reference <- na.omit(Pgen_condenced[c(1,3)])
+names(Pgen_reference)  <- c('PgenIDs', 'Gene_terms')
+
+
+
+######################################################################################################################################################
+###################################################################################################################################################### #
+#
+#
+# PRIMARY EFFECT  GOSLIM ANALYSIS LOOP
+#
+#
+###################################################################################################################################################### #
+######################################################################################################################################################
+# call all the module colors and days to loop GOslim analysis 
+GOslimLoop_vars <- unique(Master_goseq_results[c(8,9)]) 
+GOslimLoop_vars <- GOslimLoop_vars %>%dplyr::filter(!Day =='Day0')
+
+# FOR LOOP FOR GOSLIM ANALYSIS AND CSV OUTPUTS 
+for (i in 1:nrow(GOslimLoop_vars)) {
+  # call the target dataset
+  goseq_res         <- Master_goseq_results %>%  dplyr::filter(dir %in% GOslimLoop_vars[i,1], Day %in% GOslimLoop_vars[i,2])
+  if (GOslimLoop_vars[i,1] == 'Up') {DESeq2_res <- Master_DESeq2_results %>%  dplyr::filter(up == 'TRUE') 
+  } else {DESeq2_res <- Master_DESeq2_results %>%  dplyr::filter(up == 'FALSE') }
+  DESeq2_res_2       <- DESeq2_res  %>%  dplyr::filter(Day %in% GOslimLoop_vars[i,2])
+  gene_names         <- DESeq2_res_2$gene.ID # all gene IDs in the particular WGCNA module 
+  # Biological Function - run GOslim
+  goseq_res_BP        <- goseq_res %>%  filter(ontology=="BP") # BP - all GO terms upregulated
+  BP_GOcollection     <- GOCollection(goseq_res_BP$category)
+  GOslims_BP          <- data.frame(goSlim(BP_GOcollection, slim, "BP")) #Find common parent terms to slim down our list
+  GOslims_BP$category <- row.names(GOslims_BP) #save rownames as category
+  
+  # Molecular Function - run GOslim
+  goseq_res_MF        <- goseq_res %>%  filter(ontology=="MF") # BP - all GO terms upregulated
+  MF_GOcollection     <- GOCollection(goseq_res_MF$category)
+  GOslims_MF          <- data.frame(goSlim(MF_GOcollection, slim, "MF")) #Find common parent terms to slim down our list
+  GOslims_MF$category <- row.names(GOslims_MF) #save rownames as category
+  
+  # ====================================================================================
+  # Get mapped terms - add to the GOslims datatable 
+  # from Sam White's Biostars [post](https://support.bioconductor.org/p/128407/#128409).
+  # ====================================================================================
+  # Write function mappedIds to get the query terms that mapped to the slim categories 
+  # ...in other words, add a column to your slim dataframe with all the GO terms from goseq
+  mappedIds <-  function(df, collection, OFFSPRING) {  #the command to run requires a dataframe of slim terms, like slims_MF above, your list of query terms, and the offspring from the GOCollection by goSlim
+    map <- as.list(OFFSPRING[rownames(df)]) # Subset GOcollection offspring by the rownames of your dataframe
+    mapped <- lapply(map, intersect, ids(collection)) #Find the terms that intersect between the subset made above of your query terms and the GOids from the GO collection
+    df[["go_terms"]] <- vapply(unname(mapped), paste, collapse = ";", character(1L)) #Add column "go_terms" with matching terms 
+    df #show resulting dataframe
+  }
+   
+  BPslim_Mapped <- mappedIds(GOslims_BP, BP_GOcollection, GOBPOFFSPRING)
+  MFslim_Mapped <- mappedIds(GOslims_MF, MF_GOcollection, GOMFOFFSPRING)
+  
+  
+  # BIOLOGICAL PROCESS
+  BPslim             <- filter(BPslim_Mapped, Term!="biological_process") #filter out empty slims and term "biological process" and slims with < 2 GO terms (omitted the Count>=2)
+  BPsplitted         <- strsplit(as.character(BPslim$go_terms), ";") #split into multiple GO ids
+  BPslim$BPsplitted  <- BPsplitted
+  for (n in 1:nrow(BPslim)) {
+    table       <- data.frame(GOlist = unlist(BPslim[n,6])) # call the BPsplitted column of characters and create a small table to filter
+    table       <- unique(table)
+    
+    Pgen_module  <- Pgen_GOterms2 %>% dplyr::filter(gene.ID %in% gene_names) # d7_Mod.Brown$X calls the gene names in the origin Module membership dataframe at the start of this script
+    Pgen_loop    <- Pgen_module %>% dplyr::filter(Go.terms %in% table$GOlist) # filter Gene IDs with the GO term
+    Pgen_geneIDs <- Pgen_loop[-2] # ommit the GO.terms to call unique gene calls 
+    Pgen_geneIDs <- unique(Pgen_geneIDs) # call unique Gene calls (unique genes that had the GO term within each of the GOslim bins)
+   
+    BPslim$Gene.Count[n] <- nrow(Pgen_geneIDs)  # count of unique GeneIDs in each GOslim bin
+    BPslim$Gene.IDs[[n]] <- vapply((Pgen_geneIDs$gene.ID), paste, collapse = ";", character(1L))
+    } # end n in 1:nrow
+  
+  BPslim_A <- data.frame(Term = rep.int(BPslim$Term, sapply(BPsplitted, length)), go_term = unlist(BPsplitted)) #list all
+  BPslim_B <- merge(BPslim_A, BPslim, by="Term") #Add back counts, term, and category info
+  BPslim_C <- unique(setDT(BPslim_B)[order(go_term, -Gene.Count)], by = "category") #remove duplicate offspring terms, keeping only those in the larger umbrella term (Count number)
+  BPslim_final <- BPslim_C[,c(1,5,3,2,6,8:9)]
+  colnames(BPslim_final) <- c("slim_term", "slim_cat", "GO_count", "GO_terms", "GO_list", "Gene_count", "Gene_IDs")
+  BPslim_final[["Gene_IDs"]] <- vapply(unname(BPslim_final$Gene_IDs), paste, collapse = ";", character(1L)) # convert from a list to simply a charaacter string with ; delimiter
+  #BPslim_final <- data.frame(slim_term=BPslim_C$Term, slim_cat=BPslim_C$category, category=BPslim_C$go_term, Gene.Count=BPslim_C$Gene.Count, GO.Count=BPslim_C$Count, Gene.IDs=BPslim_C$Gene.IDs) #rename columns) #rename columns
+  BPslim_final$module_day <- paste(GOslimLoop_vars[i,2], GOslimLoop_vars[i,1], sep = '_')
+  
+  
+        if (nrow(goseq_res_BP) >0) {
+        BPslim_GOterm_summary       <- BPslim_final[,c(1,2,5,7)]
+        s <- strsplit(BPslim_GOterm_summary$GO_list, split = ";")
+        BPslim_GOterm_summary_2     <- data.frame(slim_term = rep(BPslim_GOterm_summary$slim_term, sapply(s, length)),
+                                                  Gene_IDs  = rep(BPslim_GOterm_summary$Gene_IDs, sapply(s, length)),
+                                                   GO_terms = unlist(s))
+        colnames(goseq_res_BP)[1]   <- 'GO_terms'
+        BPslim_GOterm_summary_final <- merge(goseq_res_BP, BPslim_GOterm_summary_2, by = 'GO_terms')
+        
+        
+        s_2 <- strsplit(BPslim_GOterm_summary_final$Gene_IDs, split = ";")
+        BPslim_GOterm_gene_annotation <- data.frame(slim_term      = rep(BPslim_GOterm_summary_final$slim_term, sapply(s_2, length)),
+                                                    over_represented_pvalue = rep(BPslim_GOterm_summary_final$over_represented_pvalue, sapply(s_2, length)),
+                                                    GO_terms       = rep(BPslim_GOterm_summary_final$GO_terms, sapply(s_2, length)),
+                                                    term           = rep(BPslim_GOterm_summary_final$term, sapply(s_2, length)),
+                                                    ontology       = rep(BPslim_GOterm_summary_final$ontology, sapply(s_2, length)),
+                                                    Day            = rep(BPslim_GOterm_summary_final$Day, sapply(s_2, length)),
+                                                    dir            = rep(BPslim_GOterm_summary_final$dir, sapply(s_2, length)),
+                                                    PgenIDs        = unlist(s_2))
+        BP_master_gene_reference <- merge(BPslim_GOterm_gene_annotation, Pgen_reference, by = "PgenIDs")
+        
+        } else (c(BPslim_GOterm_summary_final = NULL, BP_master_gene_reference = NULL))
+  
+  
+  # MOLECULAR FUNCTION
+  MFslim             <- filter(MFslim_Mapped, Term!="molecular_function") #filter out empty slims and term "biological process" (omitted the Count>=2)
+  MFsplitted         <- strsplit(as.character(MFslim$go_terms), ";") #split into multiple GO ids
+  MFslim$MFsplitted  <- MFsplitted
+  for (m in 1:nrow(MFslim)) {
+    table       <- data.frame(GOlist = unlist(MFslim[m,6])) # call the MFsplitted column of characters and create a small table to filter
+    table       <- unique(table)
+    
+    Pgen_module  <- Pgen_GOterms2 %>% dplyr::filter(gene.ID %in% gene_names) # d7_Mod.Brown$X calls the gene names in the origin Module membership dataframe at the start of this script
+    Pgen_loop    <- Pgen_module %>% dplyr::filter(Go.terms %in% table$GOlist) # filter Gene IDs with the GO term
+    Pgen_geneIDs <- Pgen_loop[-2] # ommit the GO.terms to call unique gene calls 
+    Pgen_geneIDs <- unique(Pgen_geneIDs) # call unique Gene calls (unique genes that had the GO term within each of the GOslim bins)
+    
+    MFslim$Gene.Count[m] <- nrow(Pgen_geneIDs)  # count of unique GeneIDs in each GOslim bin
+    MFslim$Gene.IDs[[m]] <- vapply((Pgen_geneIDs$gene.ID), paste, collapse = ";", character(1L))
+    } # end m in 1:nrow
+  
+    MFslim_A <- data.frame(Term = rep.int(MFslim$Term, sapply(MFsplitted, length)), go_term = unlist(MFsplitted)) #list all
+    MFslim_B <- merge(MFslim_A, MFslim, by="Term") #Add back counts, term, and category info
+    MFslim_C <- unique(setDT(MFslim_B)[order(go_term, -Gene.Count)], by = "category") #remove duplicate offspring terms, keeping only those in the larger umbrella term (Count number)
+    MFslim_final <- MFslim_C[,c(1,5,3,2,6,8:9)]
+    colnames(MFslim_final) <- c("slim_term", "slim_cat", "GO_count", "GO_terms", "GO_list", "Gene_count", "Gene_IDs")
+    MFslim_final[["Gene_IDs"]] <- vapply(unname(MFslim_final$Gene_IDs), paste, collapse = ";", character(1L)) # convert from a list to simply a charaacter string with ; delimiter
+    # MFslim_final <- data.frame(slim_term=MFslim_C$Term, slim_cat=MFslim_C$category, category=MFslim_C$go_term, Gene.Count=MFslim_C$Gene.Count, GO.Count=MFslim_C$Count) #rename columns) #rename columns
+    MFslim_final$module_day <- paste(GOslimLoop_vars[i,2], GOslimLoop_vars[i,1], sep = '_')
+    
+    
+    
+            if (nrow(goseq_res_MF) >0) {
+        MFslim_GOterm_summary       <- MFslim_final[,c(1,2,5,7)]
+        s <- strsplit(MFslim_GOterm_summary$GO_list, split = ";")
+        MFslim_GOterm_summary_2     <- data.frame(slim_term = rep(MFslim_GOterm_summary$slim_term, sapply(s, length)),
+                                                  Gene_IDs  = rep(MFslim_GOterm_summary$Gene_IDs, sapply(s, length)),
+                                                   GO_terms = unlist(s))
+        colnames(goseq_res_MF)[1]   <- 'GO_terms'
+        MFslim_GOterm_summary_final <- merge(goseq_res_MF, MFslim_GOterm_summary_2, by = 'GO_terms')
+        
+        
+        s_2 <- strsplit(MFslim_GOterm_summary_final$Gene_IDs, split = ";")
+        MFslim_GOterm_gene_annotation <- data.frame(slim_term      = rep(MFslim_GOterm_summary_final$slim_term, sapply(s_2, length)),
+                                                    over_represented_pvalue = rep(MFslim_GOterm_summary_final$over_represented_pvalue, sapply(s_2, length)),
+                                                    GO_terms       = rep(MFslim_GOterm_summary_final$GO_terms, sapply(s_2, length)),
+                                                    term           = rep(MFslim_GOterm_summary_final$term, sapply(s_2, length)),
+                                                    ontology       = rep(MFslim_GOterm_summary_final$ontology, sapply(s_2, length)),
+                                                    Day            = rep(MFslim_GOterm_summary_final$Day, sapply(s_2, length)),
+                                                    dir            = rep(MFslim_GOterm_summary_final$dir, sapply(s_2, length)),
+                                                    PgenIDs        = unlist(s_2))
+        MF_master_gene_reference <- merge(MFslim_GOterm_gene_annotation, Pgen_reference, by = "PgenIDs")
+        
+        } else (c(MFslim_GOterm_summary_final = NULL, MF_master_gene_reference = NULL))
+    
+    
+    
+    
+    # save GOslim final datasets for BP and MF of each  module in their respective folder(s) by Day
+    write.csv(MFslim_final, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOslim_MolFunction_",GOslimLoop_vars[i,1], "regulated.csv", sep ='')) # save csv file              
+    write.csv(BPslim_final, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOslim_BiolProc_",GOslimLoop_vars[i,1], "regulated.csv", sep ='')) # save csv file       
+
+    write.csv(MFslim_GOterm_summary_final, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOterms_and_GOslim_MolFunction_",GOslimLoop_vars[i,1], "regulated.csv", sep ='')) # save csv file
+    write.csv(BPslim_GOterm_summary_final, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOterms_and_GOslim_BiolProc_",GOslimLoop_vars[i,1], "regulated.csv", sep ='')) # save csv file
+    
+    write.csv(MF_master_gene_reference, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOterms_and_GOslim_MolFunction_",GOslimLoop_vars[i,1], "regulated_GENE_REFERENCE.csv", sep ='')) # save csv
+    write.csv(BP_master_gene_reference, file = paste("../Output/GO/DESeq2_goseq/", GOslimLoop_vars[i,2], "/GOterms_and_GOslim_BiolProc_",GOslimLoop_vars[i,1], "regulated_GENE_REFERENCE.csv", sep ='')) # save csv       
+    
+    print(paste(GOslimLoop_vars[i,2], GOslimLoop_vars[i,1], "done", sep = ' '))
+}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+######################################################################################################################################################
+###################################################################################################################################################### #
+#
+#
+# SECOND RREATMENT EFFECT  GOSLIM ANALYSIS LOOP (AMBIETN VS. MODERATE AND THE FULL INTERACTION AM V. MA)
+#
+#
+###################################################################################################################################################### #
+######################################################################################################################################################
+# call all the module colors and days to loop GOslim analysis 
+GOslimLoop_vars_SECOND<- unique(Master_goseq_results_SECOND[c(8,9)]) 
+fix(GOslimLoop_vars_SECOND2)
+GOslimLoop_vars_SECOND_OM <- GOslimLoop_vars_SECOND[-1,]
+# FOR LOOP FOR GOSLIM ANALYSIS AND CSV OUTPUTS 
+for (i in 1:nrow(GOslimLoop_vars_SECOND_OM)) {
+  # call the target dataset
+  goseq_res         <- Master_goseq_results_SECOND %>%  dplyr::filter(dir %in% GOslimLoop_vars_SECOND_OM[i,1], effect %in% GOslimLoop_vars_SECOND_OM[i,2])
+  if (GOslimLoop_vars_SECOND_OM[i,1] == 'Up') {DESeq2_res <- Master_DESeq2_results_SECOND %>%  dplyr::filter(up == 'TRUE') 
+  } else {DESeq2_res <- Master_DESeq2_results_SECOND %>%  dplyr::filter(up == 'FALSE') }
+  DESeq2_res_2       <- DESeq2_res  %>%  dplyr::filter(effect %in% GOslimLoop_vars_SECOND_OM[i,2])
+  gene_names         <- DESeq2_res_2$gene.ID # all gene IDs in the particular WGCNA module 
+  # Biological Function - run GOslim
+  goseq_res_BP        <- goseq_res %>%  filter(ontology=="BP") # BP - all GO terms upregulated
+  BP_GOcollection     <- GOCollection(goseq_res_BP$category)
+  GOslims_BP          <- data.frame(goSlim(BP_GOcollection, slim, "BP")) #Find common parent terms to slim down our list
+  GOslims_BP$category <- row.names(GOslims_BP) #save rownames as category
+  
+  # Molecular Function - run GOslim
+  goseq_res_MF        <- goseq_res %>%  filter(ontology=="MF") # BP - all GO terms upregulated
+  MF_GOcollection     <- GOCollection(goseq_res_MF$category)
+  GOslims_MF          <- data.frame(goSlim(MF_GOcollection, slim, "MF")) #Find common parent terms to slim down our list
+  GOslims_MF$category <- row.names(GOslims_MF) #save rownames as category
+  
+  # ====================================================================================
+  # Get mapped terms - add to the GOslims datatable 
+  # from Sam White's Biostars [post](https://support.bioconductor.org/p/128407/#128409).
+  # ====================================================================================
+  # Write function mappedIds to get the query terms that mapped to the slim categories 
+  # ...in other words, add a column to your slim dataframe with all the GO terms from goseq
+  mappedIds <-  function(df, collection, OFFSPRING) {  #the command to run requires a dataframe of slim terms, like slims_MF above, your list of query terms, and the offspring from the GOCollection by goSlim
+    map <- as.list(OFFSPRING[rownames(df)]) # Subset GOcollection offspring by the rownames of your dataframe
+    mapped <- lapply(map, intersect, ids(collection)) #Find the terms that intersect between the subset made above of your query terms and the GOids from the GO collection
+    df[["go_terms"]] <- vapply(unname(mapped), paste, collapse = ";", character(1L)) #Add column "go_terms" with matching terms 
+    df #show resulting dataframe
+  }
+   
+  BPslim_Mapped <- mappedIds(GOslims_BP, BP_GOcollection, GOBPOFFSPRING)
+  MFslim_Mapped <- mappedIds(GOslims_MF, MF_GOcollection, GOMFOFFSPRING)
+  
+  
+  # BIOLOGICAL PROCESS
+  BPslim             <- filter(BPslim_Mapped, Term!="biological_process") #filter out empty slims and term "biological process" and slims with < 2 GO terms (omitted the Count>=2)
+  BPsplitted         <- strsplit(as.character(BPslim$go_terms), ";") #split into multiple GO ids
+  BPslim$BPsplitted  <- BPsplitted
+  for (n in 1:nrow(BPslim)) {
+    table       <- data.frame(GOlist = unlist(BPslim[n,6])) # call the BPsplitted column of characters and create a small table to filter
+    table       <- unique(table)
+    
+    Pgen_module  <- Pgen_GOterms2 %>% dplyr::filter(gene.ID %in% gene_names) # d7_Mod.Brown$X calls the gene names in the origin Module membership dataframe at the start of this script
+    Pgen_loop    <- Pgen_module %>% dplyr::filter(Go.terms %in% table$GOlist) # filter Gene IDs with the GO term
+    Pgen_geneIDs <- Pgen_loop[-2] # ommit the GO.terms to call unique gene calls 
+    Pgen_geneIDs <- unique(Pgen_geneIDs) # call unique Gene calls (unique genes that had the GO term within each of the GOslim bins)
+   
+    BPslim$Gene.Count[n] <- nrow(Pgen_geneIDs)  # count of unique GeneIDs in each GOslim bin
+    BPslim$Gene.IDs[[n]] <- vapply((Pgen_geneIDs$gene.ID), paste, collapse = ";", character(1L))
+    } # end n in 1:nrow
+  
+  BPslim_A <- data.frame(Term = rep.int(BPslim$Term, sapply(BPsplitted, length)), go_term = unlist(BPsplitted)) #list all
+  BPslim_B <- merge(BPslim_A, BPslim, by="Term") #Add back counts, term, and category info
+  BPslim_C <- unique(setDT(BPslim_B)[order(go_term, -Gene.Count)], by = "category") #remove duplicate offspring terms, keeping only those in the larger umbrella term (Count number)
+  BPslim_final <- BPslim_C[,c(1,5,3,2,6,8:9)]
+  colnames(BPslim_final) <- c("slim_term", "slim_cat", "GO_count", "GO_terms", "GO_list", "Gene_count", "Gene_IDs")
+  BPslim_final[["Gene_IDs"]] <- vapply(unname(BPslim_final$Gene_IDs), paste, collapse = ";", character(1L)) # convert from a list to simply a charaacter string with ; delimiter
+  #BPslim_final <- data.frame(slim_term=BPslim_C$Term, slim_cat=BPslim_C$category, category=BPslim_C$go_term, Gene.Count=BPslim_C$Gene.Count, GO.Count=BPslim_C$Count, Gene.IDs=BPslim_C$Gene.IDs) #rename columns) #rename columns
+  BPslim_final$effect_dir <- paste(GOslimLoop_vars_SECOND_OM[i,2], GOslimLoop_vars_SECOND_OM[i,1], sep = '_')
+  
+  
+        if (nrow(goseq_res_BP) >1) {
+        BPslim_GOterm_summary       <- BPslim_final[,c(1,2,5,7)]
+        s <- strsplit(BPslim_GOterm_summary$GO_list, split = ";")
+        BPslim_GOterm_summary_2     <- data.frame(slim_term = rep(BPslim_GOterm_summary$slim_term, sapply(s, length)),
+                                                  Gene_IDs  = rep(BPslim_GOterm_summary$Gene_IDs, sapply(s, length)),
+                                                   GO_terms = unlist(s))
+        colnames(goseq_res_BP)[1]   <- 'GO_terms'
+        BPslim_GOterm_summary_final <- merge(goseq_res_BP, BPslim_GOterm_summary_2, by = 'GO_terms')
+        
+        
+        s_2 <- strsplit(BPslim_GOterm_summary_final$Gene_IDs, split = ";")
+        BPslim_GOterm_gene_annotation <- data.frame(slim_term      = rep(BPslim_GOterm_summary_final$slim_term, sapply(s_2, length)),
+                                                    over_represented_pvalue = rep(BPslim_GOterm_summary_final$over_represented_pvalue, sapply(s_2, length)),
+                                                    GO_terms       = rep(BPslim_GOterm_summary_final$GO_terms, sapply(s_2, length)),
+                                                    term           = rep(BPslim_GOterm_summary_final$term, sapply(s_2, length)),
+                                                    ontology       = rep(BPslim_GOterm_summary_final$ontology, sapply(s_2, length)),
+                                                    effect            = rep(BPslim_GOterm_summary_final$effect, sapply(s_2, length)),
+                                                    dir            = rep(BPslim_GOterm_summary_final$dir, sapply(s_2, length)),
+                                                    PgenIDs        = unlist(s_2))
+        BP_master_gene_reference <- merge(BPslim_GOterm_gene_annotation, Pgen_reference, by = "PgenIDs")
+        
+    # save GOslim final datasets for BP and MF of each  module in their respective folder(s) by Day
+    write.csv(BPslim_final, file = paste("../Output/GO/DESeq2_goseq/Day7/GOslim_BiolProc_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1], "regulated.csv", sep ='')) 
+    write.csv(BPslim_GOterm_summary_final, file = paste("../Output/GO/DESeq2_goseq/Day7/GOterms_and_GOslim_BiolProc_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1], "regulated.csv", sep ='')) 
+    write.csv(BP_master_gene_reference, file = paste("../Output/GO/DESeq2_goseq/Day7/GOterms_and_GOslim_BiolProc_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1],  "regulated_GENE_REFERENCE.csv", sep ='')) 
+    
+    
+        } else (c(BPslim_GOterm_summary_final = NULL, BP_master_gene_reference = NULL))
+  
+  
+  # MOLECULAR FUNCTION
+  MFslim             <- filter(MFslim_Mapped, Term!="molecular_function") #filter out empty slims and term "biological process" (omitted the Count>=2)
+  MFsplitted         <- strsplit(as.character(MFslim$go_terms), ";") #split into multiple GO ids
+  MFslim$MFsplitted  <- MFsplitted
+  for (m in 1:nrow(MFslim)) {
+    table       <- data.frame(GOlist = unlist(MFslim[m,6])) # call the MFsplitted column of characters and create a small table to filter
+    table       <- unique(table)
+    
+    Pgen_module  <- Pgen_GOterms2 %>% dplyr::filter(gene.ID %in% gene_names) # d7_Mod.Brown$X calls the gene names in the origin Module membership dataframe at the start of this script
+    Pgen_loop    <- Pgen_module %>% dplyr::filter(Go.terms %in% table$GOlist) # filter Gene IDs with the GO term
+    Pgen_geneIDs <- Pgen_loop[-2] # ommit the GO.terms to call unique gene calls 
+    Pgen_geneIDs <- unique(Pgen_geneIDs) # call unique Gene calls (unique genes that had the GO term within each of the GOslim bins)
+    
+    MFslim$Gene.Count[m] <- nrow(Pgen_geneIDs)  # count of unique GeneIDs in each GOslim bin
+    MFslim$Gene.IDs[[m]] <- vapply((Pgen_geneIDs$gene.ID), paste, collapse = ";", character(1L))
+    } # end m in 1:nrow
+  
+    MFslim_A <- data.frame(Term = rep.int(MFslim$Term, sapply(MFsplitted, length)), go_term = unlist(MFsplitted)) #list all
+    MFslim_B <- merge(MFslim_A, MFslim, by="Term") #Add back counts, term, and category info
+    MFslim_C <- unique(setDT(MFslim_B)[order(go_term, -Gene.Count)], by = "category") #remove duplicate offspring terms, keeping only those in the larger umbrella term (Count number)
+    MFslim_final <- MFslim_C[,c(1,5,3,2,6,8:9)]
+    colnames(MFslim_final) <- c("slim_term", "slim_cat", "GO_count", "GO_terms", "GO_list", "Gene_count", "Gene_IDs")
+    MFslim_final[["Gene_IDs"]] <- vapply(unname(MFslim_final$Gene_IDs), paste, collapse = ";", character(1L)) # convert from a list to simply a charaacter string with ; delimiter
+    # MFslim_final <- data.frame(slim_term=MFslim_C$Term, slim_cat=MFslim_C$category, category=MFslim_C$go_term, Gene.Count=MFslim_C$Gene.Count, GO.Count=MFslim_C$Count) #rename columns) #rename columns
+    MFslim_final$effect_dir <- paste(GOslimLoop_vars_SECOND_OM[i,2], GOslimLoop_vars_SECOND_OM[i,1], sep = '_')
+    
+    
+    
+            if (nrow(goseq_res_MF) >1) {
+        MFslim_GOterm_summary       <- MFslim_final[,c(1,2,5,7)]
+        s <- strsplit(MFslim_GOterm_summary$GO_list, split = ";")
+        MFslim_GOterm_summary_2     <- data.frame(slim_term = rep(MFslim_GOterm_summary$slim_term, sapply(s, length)),
+                                                  Gene_IDs  = rep(MFslim_GOterm_summary$Gene_IDs, sapply(s, length)),
+                                                   GO_terms = unlist(s))
+        colnames(goseq_res_MF)[1]   <- 'GO_terms'
+        MFslim_GOterm_summary_final <- merge(goseq_res_MF, MFslim_GOterm_summary_2, by = 'GO_terms')
+        
+        
+        s_2 <- strsplit(MFslim_GOterm_summary_final$Gene_IDs, split = ";")
+        MFslim_GOterm_gene_annotation <- data.frame(slim_term      = rep(MFslim_GOterm_summary_final$slim_term, sapply(s_2, length)),
+                                                    over_represented_pvalue = rep(MFslim_GOterm_summary_final$over_represented_pvalue, sapply(s_2, length)),
+                                                    GO_terms       = rep(MFslim_GOterm_summary_final$GO_terms, sapply(s_2, length)),
+                                                    term           = rep(MFslim_GOterm_summary_final$term, sapply(s_2, length)),
+                                                    ontology       = rep(MFslim_GOterm_summary_final$ontology, sapply(s_2, length)),
+                                                    effect         = rep(MFslim_GOterm_summary_final$effect, sapply(s_2, length)),
+                                                    dir            = rep(MFslim_GOterm_summary_final$dir, sapply(s_2, length)),
+                                                    PgenIDs        = unlist(s_2))
+        MF_master_gene_reference <- merge(MFslim_GOterm_gene_annotation, Pgen_reference, by = "PgenIDs")
+        
+            # save GOslim final datasets for BP and MF of each  module in their respective folder(s) by Day
+     write.csv(MFslim_final, file = paste("../Output/GO/DESeq2_goseq/Day7/GOslim_MolFunction_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1], "regulated.csv", sep ='')) 
+     write.csv(MFslim_GOterm_summary_final, file = paste("../Output/GO/DESeq2_goseq/Day7/GOterms_and_GOslim_MolFunction_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1],  "regulated.csv", sep ='')) 
+     write.csv(MF_master_gene_reference, file = paste("../Output/GO/DESeq2_goseq/Day7/GOterms_and_GOslim_MolFunction_",GOslimLoop_vars_SECOND_OM[i,2], "_", GOslimLoop_vars_SECOND_OM[i,1],  "regulated_GENE_REFERENCE.csv", sep ='')) 
+        
+        } else (c(MFslim_GOterm_summary_final = NULL, MF_master_gene_reference = NULL))
+    
+    print(paste(GOslimLoop_vars_SECOND_OM[i,2], GOslimLoop_vars_SECOND_OM[i,1], "done", sep = ' '))
+}
+
+```
+
+
+
+PLOTTING  GOslim --log1- pvalue plots 
+PRIMARY  EFFECT
+```{r}
+# read in the outputs from the previous... (note- we did not run goslim fror Day0 DEGs because there were very very few)
+
+D7_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day7/primary_effect/GOterms_and_GOslim_BiolProc_Upregulated.csv")
+D7_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day7/primary_effect/GOterms_and_GOslim_BiolProc_Downregulated.csv")
+D7_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day7/primary_effect/GOterms_and_GOslim_MolFunction_Upregulated.csv")
+D7_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day7/primary_effect/GOterms_and_GOslim_MolFunction_Downregulated.csv")
+
+D14_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOterms_and_GOslim_BiolProc_Upregulated.csv")
+D14_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOterms_and_GOslim_BiolProc_Downregulated.csv")
+D14_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOterms_and_GOslim_MolFunction_Upregulated.csv")
+D14_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOterms_and_GOslim_MolFunction_Downregulated.csv")
+
+D21_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOterms_and_GOslim_BiolProc_Upregulated.csv")
+D21_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOterms_and_GOslim_BiolProc_Downregulated.csv")
+D21_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOterms_and_GOslim_MolFunction_Upregulated.csv")
+D21_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOterms_and_GOslim_MolFunction_Downregulated.csv")
+
+
+
+#MASTER FOR PLOTTING 
+# biological process upregulated 
+BP_UP_Master <- rbind(D7_Goslim_UP_BP, D14_Goslim_UP_BP, D21_Goslim_UP_BP)
+BP_UP_Master$day_dir <- paste(BP_UP_Master$Day, BP_UP_Master$dir, sep ='_')
+BP_UP_Master$day_dir <- factor(BP_UP_Master$day_dir , levels = c("Day7_Up", "Day14_Up", "Day21_Up"))
+# biological process donwregualted 
+BP_DOWN_Master <- rbind(D7_Goslim_DOWN_BP, D14_Goslim_DOWN_BP, D21_Goslim_DOWN_BP)
+BP_DOWN_Master$day_dir <- paste(BP_DOWN_Master$Day, BP_DOWN_Master$dir, sep ='_')
+BP_DOWN_Master$day_dir <- factor(BP_DOWN_Master$day_dir , levels = c("Day7_Down", "Day14_Down", "Day21_Down"))
+
+# molecular function upregulated 
+MF_UP_Master <- rbind(D7_Goslim_UP_MF, D14_Goslim_UP_MF, D21_Goslim_UP_MF)
+MF_UP_Master$day_dir <- paste(MF_UP_Master$Day, MF_UP_Master$dir, sep ='_')
+MF_UP_Master$day_dir <- factor(MF_UP_Master$day_dir , levels = c("Day7_Up", "Day14_Up", "Day21_Up"))
+# molecular function donwregualted 
+MF_DOWN_Master <- rbind(D7_Goslim_DOWN_MF, D14_Goslim_DOWN_MF, D21_Goslim_DOWN_MF)
+MF_DOWN_Master$day_dir <- paste(MF_DOWN_Master$Day, MF_DOWN_Master$dir, sep ='_')
+MF_DOWN_Master$day_dir <- factor(MF_DOWN_Master$day_dir , levels = c("Day7_Down", "Day14_Down", "Day21_Down"))
+
+
+############################################################################################################## 3
+#  Biological Process Upregulated 
+BP_UP_Plot <-ggplot(data = BP_UP_Master, aes(x = day_dir, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Biological Process: Primary Effect upregulated genes (higher by ambient history)') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Biol_Process_Upregulated_DEGs_PrimEffect.pdf", sep =''), width=15, height=35)
+print(BP_UP_Plot)
+dev.off()
+
+############################################################################################################## 3
+#  Molecular Function Upregulated 
+MF_UP_Plot <-ggplot(data = MF_UP_Master, aes(x = day_dir, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(MF_UP_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(MF_UP_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Molecular Function: Primary Effect upregulated genes (higher by ambient history)') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Mol_Function_Upregulated_DEGs_PrimEffect.pdf", sep =''), width=25, height=15)
+print(MF_UP_Plot)
+dev.off()
+
+
+
+
+
+
+
+
+############################################################################################################## 3
+#  Biological Process Downregulated 
+BP_DOWN_Plot <-ggplot(data = BP_DOWN_Master, aes(x = day_dir, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(BP_DOWN_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(BP_DOWN_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Biological Process: Primary Effect Downregulated genes (higher by ambient history)') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Biol_Process_Downregulated_DEGs_PrimEffect.pdf", sep =''), width=15, height=35)
+print(BP_DOWN_Plot)
+dev.off()
+
+############################################################################################################## 3
+#  Molecular Function Downregulated 
+MF_DOWN_Plot <-ggplot(data = MF_DOWN_Master, aes(x = day_dir, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(MF_DOWN_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(MF_DOWN_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Molecular Function: Primary Effect Downregulated genes (higher by Moderate stress history)') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Mol_Function_Downregulated_DEGs_PrimEffect.pdf", sep =''), width=20, height=4)
+print(MF_DOWN_Plot)
+dev.off()
+
+```
+
+
+PLOTTING  GOslim --log1- pvalue plots 
+SECOND EFFECT AND GROUP EFFECT PLOTS (DAY 7)
+```{r}
+# read in the outputs from the previous... (note- we did not run goslim fror Day0 DEGs because there were very very few)
+# DAY 7 - SECOND TREATMENT EFFECT AMBIENT > MODERATE
+# D7_Goslim_secondAvM_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day7/secondAvM/GOterms_and_GOslim_BiolProc_secondAvM_Upregulated.csv") #no upregualted terms! 
+D7_Goslim_secondAvM_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GOterms_and_GOslim_BiolProc_secondAvM_Downregulated.csv")
+# D7_Goslim_secondAvM_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day7/secondAvM/GOterms_and_GOslim_MolFunction_secondAvM_Upregulated.csv") #no upregualted terms! 
+D7_Goslim_secondAvM_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GOterms_and_GOslim_MolFunction_secondAvM_Downregulated.csv")
+
+
+# DAY 7 - GROUP TREATMENT EFFECT MA > AM
+D7_Goslim_MAvAM_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GOterms_and_GOslim_BiolProc_MAvAM_Upregulated.csv") 
+D7_Goslim_MAvAM_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GOterms_and_GOslim_BiolProc_MAvAM_Downregulated.csv")
+# D7_Goslim_MAvAM_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GOterms_and_GOslim_MolFunction_MAvAM_Upregulated.csv") # no upregualted molecular function terms!
+D7_Goslim_MAvAM_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GOterms_and_GOslim_MolFunction_MAvAM_Downregulated.csv")
+
+
+############################################################################################################## 
+# DAY 7 - MA  versus AM - Full model effect 
+#  Biological Process Upregulated 
+BP_UP_Plot_MAvAM <-ggplot(data = D7_Goslim_MAvAM_UP_BP, aes(x = effect, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Biological Process: Day 7 Full model effect MA versus AM') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/Biol_Process_Upregulated_DEGs_MAvAM.pdf", sep =''), width=15, height=15)
+print(BP_UP_Plot_MAvAM)
+dev.off()
+
+#  Biological Process Upregulated 
+BP_DOWN_Plot_MAvAM <-ggplot(data = D7_Goslim_MAvAM_DOWN_BP, aes(x = effect, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(BP_UP_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Biological Process: Day 7 Full model effect MA versus AM') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/Biol_Process_Downregulated_DEGs_MAvAM.pdf", sep =''), width=15, height=10)
+print(BP_DOWN_Plot_MAvAM)
+dev.off()
+
+
+############################################################################################################## 3
+#  Molecular Function Upregulated 
+MF_DOWN_Plot_MAvAM <-ggplot(data = D7_Goslim_MAvAM_DOWN_MF, aes(x = effect, y = forcats::fct_rev(term))) + 
+  geom_tile(aes(fill= -log10(over_represented_pvalue), width = 1)) + 
+  scale_fill_gradient(low = "grey95", high = "black",limits=c(0, (ceiling(max(-log10(MF_UP_Master$over_represented_pvalue))))), breaks=seq(0, (ceiling(max(-log10(MF_UP_Master$over_represented_pvalue)))),by=2))  +
+  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                     strip.text.x = element_text(size = 8, face = "bold"),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_text(size=8),
+                     axis.text = element_text(size = 8), legend.position = "right",
+                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+  ggtitle('Molecular Function: Day 7 Full model effect MA versus AM') +
+  # facet_wrap(~ (substr(slim_term, 1,30)))
+  facet_wrap((substr(slim_term, 1,30)) ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/Mol_Function_Downregulated_DEGs_MAvAM.pdf", sep =''), width=15, height=10)
+print(MF_DOWN_Plot_MAvAM)
+dev.off()
+
+
+
+
+```
+
+
+
+
+PLOTTING  GOslim - gene count plots 
+```{r}
+# read in the outputs from the previous... (note- we did not run goslim fror Day0 DEGs because there were very very few)
+
+D7_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day7/GOslim_BiolProc_Upregulated.csv")
+D7_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day7/GOslim_BiolProc_Downregulated.csv")
+
+D7_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day7/GOslim_MolFunction_Upregulated.csv")
+D7_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day7/GOslim_MolFunction_Downregulated.csv")
+
+
+D14_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOslim_BiolProc_Upregulated.csv")
+D14_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOslim_BiolProc_Downregulated.csv")
+
+D14_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOslim_MolFunction_Upregulated.csv")
+D14_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day14/GOslim_MolFunction_Downregulated.csv")
+
+
+
+D21_Goslim_UP_BP    <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOslim_BiolProc_Upregulated.csv")
+D21_Goslim_DOWN_BP  <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOslim_BiolProc_Downregulated.csv")
+
+D21_Goslim_UP_MF    <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOslim_MolFunction_Upregulated.csv")
+D21_Goslim_DOWN_MF  <- read.csv("../Output/GO/DESeq2_goseq/Day21/GOslim_MolFunction_Downregulated.csv")
+
+
+
+#MASTER FOR PLOTTING 
+# biological process upregulated 
+BP_UP_Master <- rbind(D7_Goslim_UP_BP, D14_Goslim_UP_BP, D21_Goslim_UP_BP)
+BP_UP_Master$module_day <- factor(BP_UP_Master$module_day , levels = c("Day7_Up", "Day14_Up", "Day21_Up"))
+# biological process donwregualted 
+BP_DOWN_Master <- rbind(D7_Goslim_DOWN_BP, D14_Goslim_DOWN_BP, D21_Goslim_DOWN_BP)
+BP_DOWN_Master$module_day <- factor(BP_DOWN_Master$module_day , levels = c("Day7_Down", "Day14_Down", "Day21_Down"))
+
+
+MF_UP_Master <- rbind(D7_Goslim_UP_MF, D14_Goslim_UP_MF, D21_Goslim_UP_MF)
+MF_UP_Master$module_day <- factor(MF_UP_Master$module_day , levels = c("Day7_Up", "Day14_Up", "Day21_Up"))
+# biological process donwregualted 
+MF_DOWN_Master <- rbind(D7_Goslim_DOWN_MF, D14_Goslim_DOWN_MF, D21_Goslim_DOWN_MF)
+MF_DOWN_Master$module_day <- factor(MF_DOWN_Master$module_day , levels = c("Day7_Down", "Day14_Down", "Day21_Down"))
+
+
+# plots
+BP_UP_Plot <- BP_UP_Master %>% dplyr::filter(Gene_count >= 5) %>%  
+              ggplot(aes(x = "BP_Upreg", y = forcats::fct_rev(slim_term))) + 
+                geom_tile(aes(fill=Gene_count, width = 1)) + 
+                scale_fill_gradient(low = "grey95", high = "grey10",limits=c(0, 20), breaks=seq(0,20,by=5)) +
+                facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                   strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                   strip.text.x = element_text(size = 8, face = "bold"),
+                                   axis.title.x = element_blank(),
+                                   axis.title.y = element_text(size=8),
+                                   axis.text = element_text(size = 8), legend.position = "right",
+                                   plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                ggtitle('GOslim Biological Process: Upregulated DEGs Primary Effect All')
+
+BP_DOWN_Plot <- BP_DOWN_Master %>% dplyr::filter(Gene_count >= 5) %>%  
+                ggplot(aes(x = "BP_Downreg", y = forcats::fct_rev(slim_term))) + 
+                  geom_tile(aes(fill=Gene_count, width = 1)) + 
+                  scale_fill_gradient(low = "grey95", high = "grey10",limits=c(0, 20), breaks=seq(0,20,by=5)) +
+                  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                     strip.text.x = element_text(size = 8, face = "bold"),
+                                     axis.title.x = element_blank(),
+                                     axis.title.y = element_text(size=8),
+                                     axis.text = element_text(size = 8), legend.position = "right",
+                                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                  ggtitle('GOslim Biological Process: Downregulated DEGs Primary Effect All')
+
+
+
+
+
+MF_UP_Plot <-MF_UP_Master %>% dplyr::filter(Gene_count >= 2) %>% 
+             ggplot(aes(x = "MF_Upreg", y = forcats::fct_rev(slim_term))) + 
+                geom_tile(aes(fill=Gene_count, width = 1)) + 
+                scale_fill_gradient(low = "grey95", high = "grey10",limits=c(0, 20), breaks=seq(0,20,by=5)) +
+                facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                   strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                   strip.text.x = element_text(size = 8, face = "bold"),
+                                   axis.title.x = element_blank(),
+                                   axis.title.y = element_text(size=8),
+                                   axis.text = element_text(size = 8), legend.position = "right",
+                                   plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                ggtitle('GOslim Mol Function: Upregulated DEGs Primary Effect All')
+
+MF_DOWN_Plot <-MF_DOWN_Master %>% dplyr::filter(Gene_count >= 2) %>% 
+                 ggplot(aes(x = "MF_Downreg", y = forcats::fct_rev(slim_term))) + 
+                  geom_tile(aes(fill=Gene_count, width = 1)) + 
+                  scale_fill_gradient(low = "grey95", high = "grey10",limits=c(0, 20), breaks=seq(0,20,by=5)) +
+                  facet_grid(~module_day, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                     strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                     strip.text.x = element_text(size = 8, face = "bold"),
+                                     axis.title.x = element_blank(),
+                                     axis.title.y = element_text(size=8),
+                                     axis.text = element_text(size = 8), legend.position = "right",
+                                     plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                  ggtitle('GOslim Mol Function: Downregulated DEGs Primary Effect All')
+
+
+
+
+# SAVE PLOTS  ------------------------------------------------------------------------------------------------- #
+pdf(paste("../Output/GO/DESeq2_goseq/GOslim_PrimEff_BiolProcess.pdf", sep =''), width=20, height=8)
+print(ggarrange(BP_UP_Plot, BP_DOWN_Plot,         
+                plotlist = NULL,
+                ncol = 2,
+                nrow = 1,
+                labels = NULL))
+dev.off() 
+
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOslim_PrimEff_MolFunction.pdf", sep =''), width=20, height=8)
+print(ggarrange(MF_UP_Plot, MF_DOWN_Plot,         
+                plotlist = NULL,
+                ncol = 2,
+                nrow = 1,
+                labels = NULL))
+dev.off() 
+
+```
+
+
+
+
+
+
+
+prep
+```{r prep data}
+# add ontology column  ---------------------------------------------------------------------------------------- #
+All.UP_BPslim_final$Ontolgy <- "BP_Upregulated_all"
+All.UP_MFslim_final$Ontolgy <- "MF_Upregulated_all"
+
+All.DOWN_BPslim_final$Ontolgy <- "BP_Downregulated_all"
+All.DOWN_MFslim_final$Ontolgy <- "MF_Downregulated_all"
+
+# BIND DATA TO FACET THE PLOTS BY UP AND DOWN REG   ---------------------------------------------------------- #
+# bp
+BP_All <- rbind(All.UP_BPslim_final, All.DOWN_BPslim_final) # merge the data by binding rows 
+BP_All$Ont <- "BP" # create a new common clumn to call in the plot 
+BP_All$Ontolgy <- factor(BP_All$Ontolgy, levels = c("BP_Upregulated_all", "BP_Downregulated_all"))# reorder the facotr level for the facet wrap plot 
+BP_All_filtered <- BP_All %>%  dplyr::filter(Gene.Count > 1) # ommit all with gene counts >1
+# mf
+MF_All <- rbind(All.UP_MFslim_final, All.DOWN_MFslim_final) # merge the data by binding rows 
+MF_All$Ont <- "MF" # create a new common clumn to call in the plot 
+MF_All$Ontolgy <- factor(MF_All$Ontolgy, levels = c("MF_Upregulated_all", "MF_Downregulated_all")) # reorder the facotr level for the facet wrap plot 
+MF_All_filtered <- MF_All %>%  dplyr::filter(Gene.Count > 1) # ommit all with gene counts >1
+```
+
+Stacked bar plots -  Gene Counts within GOslim term (NOTE: there are likely duplicates (or more) BETWEEN the GOslim bins - however EACH bin contains UNIQUE genes)
+```{r barplots - ALL DEGs PrimEffect} 
+# create color palette  --------------------------------------------------------------------------------------- #
+library(RColorBrewer)
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7") # color blind pallette
+OrangeRed <- brewer.pal(2, "OrRd") 
+GreenBlue <- brewer.pal(2, "GnBu") 
+
+
+# PLOTTING --------------------------------------------------------------------------------------------------- #
+BP_Plot_PrimEffect_All <- ggplot(data = BP_All_filtered, aes(x = Ont, y = Gene.Count, fill=forcats::fct_reorder(slim_term,Gene.Count,.desc = TRUE))) + # BP plot
+                               geom_bar(color = "white",size=1.5,stat="identity") + # call bar and create lines between each slim term
+                               scale_fill_manual(values =  rev( colorRampPalette(OrangeRed)( (nrow(BP_All)) ) ) )+ # fill with pallette accomodating the max nmber of slim terms
+                               geom_text(aes(label = forcats::fct_reorder(slim_term,Gene.Count,.desc = TRUE)), colour = "black", position="stack", size = 7, vjust = 1.25) + # add labels
+                               theme_classic() + # classic theme
+                               ylim(0, 300) + 
+                               theme(legend.position = "none",text = element_text(size=25)) +
+                               facet_wrap(~Ontolgy) # facet by the upregulated and downregulated datasets
+
+MF_Plot_PrimEffect_All <- ggplot(data = MF_All_filtered, aes(x = Ont, y = Gene.Count, fill=forcats::fct_reorder(slim_term,Gene.Count,.desc = TRUE))) + # MF plot
+                               geom_bar(color = "white",size=1.5,stat="identity") + # call bar and create lines between each slim term
+                               scale_fill_manual(values =  rev( colorRampPalette(GreenBlue)( (nrow(MF_All)) ) ) )+ # fill with pallette accomodating the max nmber of slim terms
+                               geom_text(aes(label = forcats::fct_reorder(slim_term,Gene.Count,.desc = TRUE)), colour = "black", position="stack", size = 7, vjust = 1.25) + # add labels
+                               theme_classic() + # classic theme
+                               ylim(0, 100) +
+                               theme(legend.position = "none",text = element_text(size=25)) +
+                               facet_wrap(~Ontolgy) # facet by the upregulated and downregulated datasets
+
+# SAVE PLOTS  ------------------------------------------------------------------------------------------------- #
+pdf(paste("../Output/GO/DESeq2_goseq/GOslim_All_PrimEff_BP.pdf", sep =''), width=15, height=20)
+print(ggarrange(BP_Plot_PrimEffect_All,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()     
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOslim_All_PrimEff_MF.pdf", sep =''), width=15, height=20)
+print(ggarrange(MF_Plot_PrimEffect_All,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()     
+
+```
+
+Geomtile Heatmaps
+```{r geom_tile heatmaps- ALL DEGs PrimEffect}
+
+# plots
+BP_Plot_PrimEffect_All <-ggplot(data = BP_All_filtered, aes(x = Ont, y = slim_term)) + 
+                          geom_tile(aes(fill=Gene.Count, width = 1)) + 
+                          scale_fill_gradient(low = "thistle1", high = "steelblue4") +
+                          facet_grid(~Ontolgy, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                          theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                             panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                             strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                             strip.text.x = element_text(size = 8, face = "bold"),
+                                             axis.title.x = element_blank(),
+                                             axis.title.y = element_text(size=8),
+                                             axis.text = element_text(size = 8), legend.position = "right",
+                                             plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                          ggtitle('GOslim Biological Process: DESeq2 DEGs PrimEffect')
+
+# plot MF
+MF_Plot_PrimEffect_All <-ggplot(data = MF_All_filtered, aes(x = Ont, y = slim_term)) + 
+                          geom_tile(aes(fill=Gene.Count, width = 1)) + 
+                          scale_fill_gradient(low = "azure2", high = "springgreen4") +
+                          facet_grid(~Ontolgy, labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                          theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                             panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                                             strip.text.y = element_text(angle=0, size = 8, face = "bold"),
+                                             strip.text.x = element_text(size = 8, face = "bold"),
+                                             axis.title.x = element_blank(),
+                                             axis.title.y = element_text(size=8),
+                                             axis.text = element_text(size = 8), legend.position = "right",
+                                             plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                          ggtitle('GOslim Molecular Function: DESeq2 DEGs PrimEffect')
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOslim_All_PrimEff_Heatmap.pdf", sep =''), width=20, height=8)
+print(ggarrange(BP_Plot_PrimEffect_All, MF_Plot_PrimEffect_All,         
+                plotlist = NULL,
+                ncol = 2,
+                nrow = 1,
+                labels = NULL))
+dev.off() 
+```
+
+
+Follow-up from the stacked blots above...
+What are the genesin the GOslimss of interest
+Extract genes in GOslim bins of interest and plots their LFC results (DESeq2)
+```{r} 
+# prep data for the for loop plotting...
+# add column 'DE.direction'
+All.DOWN_MFslim$DE.direction  <- "downregulated"
+All.DOWN_BPslim$DE.direction  <- "downregulated"
+All.UP_MFslim$DE.direction    <- "upregulated"
+All.UP_BPslim$DE.direction    <- "upregulated"
+
+# add column 'Experiment.note'
+All.DOWN_MFslim$Experiment.note  <- "All_Days_PrimaryEfffect"
+All.DOWN_BPslim$Experiment.note  <- "All_Days_PrimaryEfffect"
+All.UP_MFslim$Experiment.note    <- "All_Days_PrimaryEfffect"
+All.UP_BPslim$Experiment.note    <- "All_Days_PrimaryEfffect"
+
+# ommit rownames
+rownames(All.DOWN_MFslim)<-NULL
+rownames(All.DOWN_BPslim)<-NULL
+rownames(All.UP_MFslim)  <-NULL
+rownames(All.UP_BPslim)  <-NULL
+
+# merge data frames to build a master GOslim
+Master_GOslim <- rbind(All.DOWN_MFslim[,c(10,7,9,8,3,4,5)], All.DOWN_BPslim[,c(10,7,9,8,3,4,5)], All.UP_MFslim[,c(10,7,9,8,3,4,5)], All.UP_BPslim[,c(10,7,9,8,3,4,5)]) # merge for a master table with rbind
+
+# load DESeq2 results 
+All_DEGs_Primary.Ambieant_v_Moderate<-read.csv("C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/DESeq2/10cpm/DE_PrimaryTreatment.All.csv")
+All_DEGs_Primary.Ambieant_v_Moderate <- All_DEGs_Primary.Ambieant_v_Moderate[2:(ncol(All_DEGs_Primary.Ambieant_v_Moderate))] # ommit the first column - DESEq2 results data 
+names(All_DEGs_Primary.Ambieant_v_Moderate)[1] <- 'Gene.ID' # rename the column 
+
+Pgen_annot <- Geoduck_annotation[,c(1,7)]# call only the gene ID and gene names in the annotation csv
+names(Pgen_annot) <- c('Gene.ID', 'Gene.name') # rename the columns 
+Pgen_annot$Gene.name <- str_extract(Pgen_annot$Gene.name, "[^(]+") # call all gene names before the delimiter ( when the EC code is included)
+
+# loop through the gene IDsin each GOslim bin, DESeq2 results heatmap facetted by sampling day in for loop
+for (i in 1:nrow(Master_GOslim)) {
+  
+  genes <- data.frame(geneids = unlist(Master_GOslim[i,4]))
+  
+  if (Master_GOslim[i,3] == "downregulated") {
+  
+    DEG_data <- All_DEGs_Primary.Ambieant_v_Moderate %>% dplyr::filter(down %in% TRUE)  # filter only downregualted genes
+    DEG_data_loop <- DEG_data %>% dplyr::filter(Gene.ID %in% genes$geneids)
+    DEG_data_merge <- merge(Pgen_annot, DEG_data_loop, by ="Gene.ID")
+    
+    DEG_data_merge$Day_Trmt <- str_extract(DEG_data_merge$Day_Trmt, "[^_]+")
+    
+    Plot <- DEG_data_merge %>% #mutate(Day_Trmt = fct_relevel(Day_Trmt,  "Day7", "Day14", "Day21")) %>% 
+              ggplot(aes(x = "NA", y = Gene.name)) + 
+                geom_tile(aes(fill=log2FoldChange, width = 1)) + 
+                scale_fill_gradient(low = "orangered3", high = "orange1") +
+                facet_grid(~Day_Trmt, scales = "free_y", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                strip.text.y = element_text(angle=0, size = 11, face = "bold"),
+                strip.text.x = element_text(size = 12, face = "bold"),
+                axis.title.x = element_blank(),
+                axis.title.y = element_text(size=15),
+                axis.text = element_text(size = 12), legend.position = "right",
+                plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                ggtitle(Master_GOslim[i,5])
+    pdf(paste("../Output/GO/DESeq2_goseq/All_PrimEff_GOslim/Downregulated/",Master_GOslim[i,5],".pdf", sep =''), width=18, height=10)
+    print(Plot)
+    dev.off()
+  
+    } else {
+        DEG_data <- All_DEGs_Primary.Ambieant_v_Moderate %>% dplyr::filter(up %in% TRUE)  # filter only downregualted genes
+        DEG_data_loop <- DEG_data %>% dplyr::filter(Gene.ID %in% genes$geneids)
+        DEG_data_merge <- merge(Pgen_annot, DEG_data_loop, by ="Gene.ID")
+        
+        DEG_data_merge$Day_Trmt <- str_extract(DEG_data_merge$Day_Trmt, "[^_]+")
+        
+        Plot <- DEG_data_merge %>% #mutate(Day_Trmt = fct_relevel(Day_Trmt,  "Day7", "Day14", "Day21")) %>% 
+                  ggplot(aes(x = "NA", y = Gene.name)) + 
+                    geom_tile(aes(fill=log2FoldChange, width = 1)) + 
+                    scale_fill_gradient(low = "palegreen1", high = "green4") +
+                    facet_grid( ~Day_Trmt, scales = "free_y", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+                    theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+                    strip.text.y = element_text(angle=0, size = 11, face = "bold"),
+                    strip.text.x = element_text(size = 12, face = "bold"),
+                    axis.title.x = element_blank(),
+                    axis.title.y = element_text(size=15),
+                    axis.text = element_text(size = 12), legend.position = "right",
+                    plot.margin = unit(c(0,1,0,0.25), "cm"))+
+                    ggtitle(Master_GOslim[i,5])
+        pdf(paste("../Output/GO/DESeq2_goseq/All_PrimEff_GOslim/Upregulated/",Master_GOslim[i,5],".pdf", sep =''), width=18, height=10)
+        print(Plot)
+        dev.off()
+  } # end of if else statement
+
+} # end of for loop
+
+
+```
+
+
+
+
+Geom_Segment Plotting: -log1- p alue all primary efffect down regualted and upregulated genes (figure 2B)
+# SECOND EFFECT (A v M main effect AND full group effect MA versus AM)
+```{r All Upreg and Downreg GO terms in response to priming}
+
+# Build a master list of all genes and GO terms 'Pgen_GOterms2'
+Geoduck_annotation <- read.delim2(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Seq_details/Panopea-generosa-genes-annotations.txt", header=F) # Load themaster Pgenerosa gene list 
+Pgen_GOterms <- Geoduck_annotation %>% dplyr::select(c('V1','V8')) # select only two columns - those with the gene IDs and those with the GO terms
+Pgen_GOterms2 <- strsplit(Pgen_GOterms$V8, split = "; ") # create a string splitting by delimiter '; ' - view the data to see that this separates each GO term entry in the string
+Pgen_GOterms2 <- data.frame(gene.ID = rep(Pgen_GOterms$V1, sapply(Pgen_GOterms2, length)), Go.terms = unlist(Pgen_GOterms2)) # create new dataframe 'Pgen_GOterms2' listing genes for each GO term (MUCH longer!)
+Pgen_GOterms2 <- na.omit(Pgen_GOterms2) # ommit the NAs  - genes without GO annotation
+
+d7.UP.second_AvM.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GO.05.Day7_SecondEffect_AvM_Upregulated.csv")
+d7.UP.second_AvM.05$Dir = "Upregulated"
+d7.DOWN.second_AvM.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/second_effect_AvM/GO.05.Day7_SecondEffect_AvM_Downregulated.csv")
+d7.DOWN.second_AvM.05$Dir = "Downregulated"
+
+d7.UP.MAvAM.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GO.05.Day7_GroupEffect_MAvAM_Upregulated.csv")
+d7.UP.MAvAM.05$Dir = "Upregulated"
+d7.DOWN.MAvAM.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/group_effect_MAvAM/GO.05.Day7_GroupEffect_MAvAM_Downregulated.csv")
+d7.DOWN.MAvAM.05$Dir = "Downregulated"
+
+# Master ALL DESeq2 significant modules with treatment
+Second_goseq_results      <- rbind(d7.UP.second_AvM.05, d7.DOWN.second_AvM.05)
+MAvAM_goseq_results      <- rbind(d7.UP.MAvAM.05, d7.DOWN.MAvAM.05)
+
+
+
+# PLOTS 
+# Second Treatment effect Ambient > Moderate 
+AvM_BiolProcess <- Second_goseq_results %>%  dplyr::filter(ontology %in% ('BP')) %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Biological Process: Day 7 Second Treatment Ambient v Moderate") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Dir ~., scales="free_y", ncol= 1, strip.position="right")
+
+
+AvM_MolFunction <- Second_goseq_results %>%  dplyr::filter(ontology %in% ('MF')) %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Molecular Function: Day 7 Second Treatment Ambient v Moderate") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Dir ~., scales="free_y", ncol= 1, strip.position="right")
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7_SecondEffect_AvM_plots/GOplot_DESeq2_Day7_AvM_BP.pdf", sep =''), width=10, height=12)
+print(ggarrange(AvM_BiolProcess,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 2,
+            labels = NULL))
+dev.off()   
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7_SecondEffect_AvM_plots/GOplot_DESeq2_Day7_AvM_MF.pdf", sep =''), width=25, height=8)
+print(ggarrange(AvM_MolFunction,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()   
+
+
+# Second Treatment effect Ambient > Moderate 
+MVvAM_BiolProcess <- MAvAM_goseq_results %>%  dplyr::filter(ontology %in% ('BP')) %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Biological Process: Day 7 Full Model MA v AM") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Dir ~., scales="free_y", ncol= 1, strip.position="right")
+
+
+MVvAM_MolFunction <- MAvAM_goseq_results %>%  dplyr::filter(ontology %in% ('MF')) %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Molecular Function: Day 7 Full Model MA v AM") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Dir ~., scales="free_y", ncol= 1, strip.position="right")
+
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7_FullModEffect_MAvAM_plots/GOplot_DESeq2_Day7_MAvAM_BP.pdf", sep =''), width=10, height=12)
+print(ggarrange(MVvAM_BiolProcess,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()   
+
+pdf(paste("../Output/GO/DESeq2_goseq/Day7_FullModEffect_MAvAM_plots/GOplot_DESeq2_Day7_MAvAM_MF.pdf", sep =''), width=10, height=8)
+print(ggarrange(MVvAM_MolFunction,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 2,
+            labels = NULL))
+dev.off()      
+
+
+```
+
+Geom_Segment Plotting: -log1- p alue all primary efffect down regualted and upregulated genes (figure 2B)
+# PRIMARY Effect
+```{r All Upreg and Downreg GO terms in response to priming}
+
+# Build a master list of all genes and GO terms 'Pgen_GOterms2'
+Geoduck_annotation <- read.delim2(file="C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Seq_details/Panopea-generosa-genes-annotations.txt", header=F) # Load themaster Pgenerosa gene list 
+Pgen_GOterms <- Geoduck_annotation %>% dplyr::select(c('V1','V8')) # select only two columns - those with the gene IDs and those with the GO terms
+Pgen_GOterms2 <- strsplit(Pgen_GOterms$V8, split = "; ") # create a string splitting by delimiter '; ' - view the data to see that this separates each GO term entry in the string
+Pgen_GOterms2 <- data.frame(gene.ID = rep(Pgen_GOterms$V1, sapply(Pgen_GOterms2, length)), Go.terms = unlist(Pgen_GOterms2)) # create new dataframe 'Pgen_GOterms2' listing genes for each GO term (MUCH longer!)
+Pgen_GOterms2 <- na.omit(Pgen_GOterms2) # ommit the NAs  - genes without GO annotation
+
+
+
+d0.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Upregulated.csv")
+d0.UP.05$Day = "Day0"
+d0.UP.05$Dir = "Upregulated"
+d0.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day0/GO.05.Day0_PrimEffect_Downregulated.csv")
+d0.DOWN.05$Day = "Day0"
+d0.DOWN.05$Dir = "Downregulated"
+
+d7.UP.05    <- read.csv("../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Upregulated.csv")
+d7.UP.05$Day = "Day7"
+d7.UP.05$Dir = "Upregulated"
+d7.DOWN.05  <- read.csv("../Output/GO/DESeq2_goseq/Day7/GO.05.Day7_PrimEffect_Downregulated.csv")
+d7.DOWN.05$Day = "Day7"
+d7.DOWN.05$Dir = "Downregulated"
+
+d14.UP.05   <- read.csv("../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Upregulated.csv")
+d14.UP.05$Day = "Day14"
+d14.UP.05$Dir = "Upregulated"
+d14.DOWN.05 <- read.csv("../Output/GO/DESeq2_goseq/Day14/GO.05.Day14_PrimEffect_Downregulated.csv")
+d14.DOWN.05$Day = "Day14"
+d14.DOWN.05$Dir = "Downregulated"
+
+d21.UP.05   <- read.csv("../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Upregulated.csv")
+d21.UP.05$Day = "Day21"
+d21.UP.05$Dir = "Upregulated"
+d21.DOWN.05 <- read.csv("../Output/GO/DESeq2_goseq/Day21/GO.05.Day21_PrimEffect_Downregulated.csv")
+d21.DOWN.05$Day = "Day21"
+d21.DOWN.05$Dir = "Downregulated"
+
+# Master ALL DESeq2 significant modules with treatment
+Master_goseq_results      <- rbind(d0.UP.05, d0.DOWN.05, 
+                              d7.UP.05, d7.DOWN.05,
+                              d14.UP.05, d14.DOWN.05, 
+                              d21.UP.05, d21.DOWN.05)
+# View(Master_goseq_results)
+
+
+# call enriched GO terms and plot 
+#  UPREGULATED GENES! 
+# day 0 UPREGULATED
+GO_d0.UP.05.a<-d0.UP.05$category[d0.UP.05$over_represented_pvalue<.05] # change twice here
+GO_d0.UP.05<-data.frame(GO_d0.UP.05.a)
+colnames(GO_d0.UP.05) <- c("category")
+GO_d0.UP.05 <- merge(GO_d0.UP.05, d0.UP.05, by="category") # change here
+GO_d0.UP.05 <- GO_d0.UP.05[order(-GO_d0.UP.05$numDEInCat),]
+GO_d0.UP.05$term <- as.factor(GO_d0.UP.05$term)
+
+d0_UP_MF <- GO_d0.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd0_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d0_UP'))
+d0_UP_BP <- GO_d0.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd0_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d0_UP'))
+
+# day 7 UPREGULATED
+GO_d7.UP.05.a<-d7.UP.05$category[d7.UP.05$over_represented_pvalue<.05] # change twice here
+GO_d7.UP.05<-data.frame(GO_d7.UP.05.a)
+colnames(GO_d7.UP.05) <- c("category")
+GO_d7.UP.05 <- merge(GO_d7.UP.05, d7.UP.05, by="category") # change here
+GO_d7.UP.05 <- GO_d7.UP.05[order(-GO_d7.UP.05$numDEInCat),]
+GO_d7.UP.05$term <- as.factor(GO_d7.UP.05$term)
+
+d7_UP_MF <- GO_d7.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd7_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d7_UP'))
+d7_UP_BP <- GO_d7.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd7_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d7_UP'))
+
+# day 14 UPREGULATED
+GO_d14.UP.05.a<-d14.UP.05$category[d14.UP.05$over_represented_pvalue<.05] # change twice here
+GO_d14.UP.05<-data.frame(GO_d14.UP.05.a)
+colnames(GO_d14.UP.05) <- c("category")
+GO_d14.UP.05 <- merge(GO_d14.UP.05, d14.UP.05, by="category") # change here
+GO_d14.UP.05 <- GO_d14.UP.05[order(-GO_d14.UP.05$numDEInCat),]
+GO_d14.UP.05$term <- as.factor(GO_d14.UP.05$term)
+
+d14_UP_MF <- GO_d14.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd14_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d14_UP'))
+d14_UP_BP <- GO_d14.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd14_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d14_UP'))
+
+# day 21 UPREGULATED
+GO_d21.UP.05.a<-d21.UP.05$category[d21.UP.05$over_represented_pvalue<.05] # change twice here
+GO_d21.UP.05<-data.frame(GO_d21.UP.05.a)
+colnames(GO_d21.UP.05) <- c("category")
+GO_d21.UP.05 <- merge(GO_d21.UP.05, d21.UP.05, by="category") # change here
+GO_d21.UP.05 <- GO_d21.UP.05[order(-GO_d21.UP.05$numDEInCat),]
+GO_d21.UP.05$term <- as.factor(GO_d21.UP.05$term)
+
+d21_UP_MF <- GO_d21.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd21_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d21_UP'))
+d21_UP_BP <- GO_d21.UP.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd21_UP', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d21_UP'))
+
+
+#======================================================================= #
+# bind the rows of MF and BP in the clustered modules (those twith primary treatment effect in same pattern/directionality)
+MF_UP <- rbind(d0_UP_MF, d7_UP_MF, d14_UP_MF, d21_UP_MF) 
+BP_UP <- rbind(d0_UP_BP, d7_UP_BP, d14_UP_BP, d21_UP_BP)
+
+
+MF_UP$term <- gsub(",.*$", "", MF_UP$term)
+MF_UP$Day = factor(MF_UP$Day, levels = c("Day0", "Day7", "Day14", "Day21"))
+MF_UP_plot <- MF_UP  %>%  mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Molecular Function: Upregulated DEGs Primary Effect (higher by ambient history)") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Day ~., scales="free_y", ncol= 1, strip.position="right")
+                  #facet_wrap(~ Day,nrow = 1)
+
+BP_UP$term <- gsub(",.*$", "", BP_UP$term)
+BP_UP$Day = factor(BP_UP$Day, levels = c("Day0", "Day7", "Day14", "Day21"))
+BP_UP_plot <- BP_UP  %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Biological Process: Upregulated DEGs Primary Effect (higher by ambient history)") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Day ~., scales="free_y", ncol= 1, strip.position="right")
+
+
+
+# Downregulated plots 
+# day 0 DOWNREGULATED
+GO_d0.DOWN.05.a<-d0.DOWN.05$category[d0.DOWN.05$over_represented_pvalue<.05] # change twice here
+GO_d0.DOWN.05<-data.frame(GO_d0.DOWN.05.a)
+colnames(GO_d0.DOWN.05) <- c("category")
+GO_d0.DOWN.05 <- merge(GO_d0.DOWN.05, d0.DOWN.05, by="category") # change here
+GO_d0.DOWN.05 <- GO_d0.DOWN.05[order(-GO_d0.DOWN.05$numDEInCat),]
+GO_d0.DOWN.05$term <- as.factor(GO_d0.DOWN.05$term)
+
+d0_DOWN_MF <- GO_d0.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd0_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d0_DOWN'))
+d0_DOWN_BP <- GO_d0.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd0_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d0_DOWN'))
+
+# day 7 DOWNREGULATED
+GO_d7.DOWN.05.a<-d7.DOWN.05$category[d7.DOWN.05$over_represented_pvalue<.05] # change twice here
+GO_d7.DOWN.05<-data.frame(GO_d7.DOWN.05.a)
+colnames(GO_d7.DOWN.05) <- c("category")
+GO_d7.DOWN.05 <- merge(GO_d7.DOWN.05, d7.DOWN.05, by="category") # change here
+GO_d7.DOWN.05 <- GO_d7.DOWN.05[order(-GO_d7.DOWN.05$numDEInCat),]
+GO_d7.DOWN.05$term <- as.factor(GO_d7.DOWN.05$term)
+
+d7_DOWN_MF <- GO_d7.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd7_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d7_DOWN'))
+d7_DOWN_BP <- GO_d7.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd7_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d7_DOWN'))
+
+# day 14 DOWNREGULATED
+GO_d14.DOWN.05.a<-d14.DOWN.05$category[d14.DOWN.05$over_represented_pvalue<.05] # change twice here
+GO_d14.DOWN.05<-data.frame(GO_d14.DOWN.05.a)
+colnames(GO_d14.DOWN.05) <- c("category")
+GO_d14.DOWN.05 <- merge(GO_d14.DOWN.05, d14.DOWN.05, by="category") # change here
+GO_d14.DOWN.05 <- GO_d14.DOWN.05[order(-GO_d14.DOWN.05$numDEInCat),]
+GO_d14.DOWN.05$term <- as.factor(GO_d14.DOWN.05$term)
+
+d14_DOWN_MF <- GO_d14.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd14_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d14_DOWN'))
+d14_DOWN_BP <- GO_d14.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd14_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d14_DOWN'))
+
+# day 21 DOWNREGULATED
+GO_d21.DOWN.05.a<-d21.DOWN.05$category[d21.DOWN.05$over_represented_pvalue<.05] # change twice here
+GO_d21.DOWN.05<-data.frame(GO_d21.DOWN.05.a)
+colnames(GO_d21.DOWN.05) <- c("category")
+GO_d21.DOWN.05 <- merge(GO_d21.DOWN.05, d21.DOWN.05, by="category") # change here
+GO_d21.DOWN.05 <- GO_d21.DOWN.05[order(-GO_d21.DOWN.05$numDEInCat),]
+GO_d21.DOWN.05$term <- as.factor(GO_d21.DOWN.05$term)
+
+d21_DOWN_MF <- GO_d21.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd21_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('MF_d21_DOWN'))
+d21_DOWN_BP <- GO_d21.DOWN.05 %>% 
+  drop_na(ontology) %>% 
+  mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) ),
+         ontology = paste(ontology, 'd21_DOWN', sep = "_")) %>%
+  dplyr::filter(ontology %in% ('BP_d21_DOWN'))
+
+
+#======================================================================= #
+# bind the rows of MF and BP in the clustered modules (those twith primary treatment effect in same pattern/directionality)
+MF_DOWN <- rbind(d0_DOWN_MF, d7_DOWN_MF, d14_DOWN_MF, d21_DOWN_MF) 
+BP_DOWN <- rbind(d0_DOWN_BP, d7_DOWN_BP, d14_DOWN_BP, d21_DOWN_BP)
+
+
+MF_DOWN$term <- gsub(",.*$", "", MF_DOWN$term)
+MF_DOWN$Day = factor(MF_DOWN$Day, levels = c("Day0", "Day7", "Day14", "Day21"))
+MF_DOWN_plot <- MF_DOWN  %>% mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Molecular Function: Downregulated DEGs Primary Effect (higher by Moderate history)") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Day ~., scales="free_y", ncol= 1, strip.position="right")
+
+BP_DOWN$term <- gsub(",.*$", "", BP_DOWN$term)
+BP_DOWN$Day = factor(BP_DOWN$Day, levels = c("Day0", "Day7", "Day14", "Day21"))
+BP_DOWN_plot <- BP_DOWN    %>%  mutate(term = fct_reorder(term, -log10(over_represented_pvalue))) %>%
+                  #mutate(term = fct_reorder(term, Day)) %>%
+                  ggplot(aes(x=term, y=-log10(over_represented_pvalue))) +
+                  geom_segment( aes(x=term ,xend=term, y=1, yend=-log10(over_represented_pvalue)), color="grey95", size = 3) +
+                  geom_point(size=3, shape = 15, colour = "grey70") +
+                  coord_flip() +
+                  theme(
+                    panel.grid.minor.y = element_blank(),
+                    panel.grid.major.y = element_blank(),
+                    legend.position="bottom"
+                  ) +
+                  xlab("") +
+                  ylab("") +
+                  ggtitle("Biological Process: Downregulated DEGs Primary Effect (higher by Moderate history)") +
+                  #geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+                  theme_bw() + #Set background color 
+                  theme(panel.border = element_blank(), # Set border
+                        panel.grid.major = element_blank(), #Set major gridlines
+                        panel.grid.minor = element_blank(), #Set minor gridlines
+                        axis.line = element_line(colour = "black"), #Set axes color
+                        plot.background=element_blank()) + #Set the plot background #set title attributes
+                  #geom_hline(yintercept=0.25, linetype="dashed",  color = "black", size=2) +
+                  facet_wrap(Day ~., scales="free_y", ncol= 1, strip.position="right")
+
+# MOLECULAR FUNCTION GRAPHS OUTPUT 
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOplot_DESeq2_PrimEffect_Upregulated_MF.pdf", sep =''), width=10, height=12)
+print(ggarrange(MF_UP_plot,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()      
+
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOplot_DESeq2_PrimEffect_Downregulated_MF.pdf", sep =''), width=10, height=12)
+print(ggarrange(MF_DOWN_plot,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()      
+
+
+# BIOLOFICAL PROCESS GRAPHS OUTPUT
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOplot_DESeq2_PrimEffect_Upregulated_BP.pdf", sep =''), width=10, height=18)
+print(ggarrange(BP_UP_plot,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()      
+
+
+pdf(paste("../Output/GO/DESeq2_goseq/GOplot_DESeq2_PrimEffect_Downregulated_BP.pdf", sep =''), width=10, height=18)
+print(ggarrange(BP_DOWN_plot,         
+                plotlist = NULL,
+                ncol = 1,
+                nrow = 1,
+            labels = NULL))
+dev.off()      
+
+
+```
+
+Plotting: Day 0
+```{r plots_Day0.Primary}
+#How many enriched GO terms do we have
+# class(GO_d14.all)
+# head(GO_d14.all)
+# tail(GO.wall)
+# nrow(GO.wall)
+
+# UPREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+UP_enriched.GO.05.a<-GO_d0.UP$category[GO_d0.UP$over_represented_pvalue<.05] # change twice here
+UP_enriched.GO.05<-data.frame(UP_enriched.GO.05.a)
+colnames(UP_enriched.GO.05) <- c("category")
+UP_enriched.GO.05 <- merge(UP_enriched.GO.05, GO_d0.UP, by="category") # change here
+UP_enriched.GO.05 <- UP_enriched.GO.05[order(-UP_enriched.GO.05$numDEInCat),]
+UP_enriched.GO.05$term <- as.factor(UP_enriched.GO.05$term)
+head(UP_enriched.GO.05)
+
+UP_MF <- subset(UP_enriched.GO.05, ontology=="MF")
+UP_MF <- UP_MF[order(-UP_MF$numDEInCat),]
+UP_CC <- subset(UP_enriched.GO.05, ontology=="CC")
+UP_CC <- UP_CC[order(-UP_CC$numDEInCat),]
+UP_BP <- subset(UP_enriched.GO.05, ontology=="BP")
+UP_BP <- UP_BP[order(-UP_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_UP <- UP_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_UP <- UP_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_UP <- UP_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# DOWNREGULATED DEGs ------------------------------------------------------------------------------- # 
+#Find only enriched GO terms that are statistically significant at cutoff 
+DOWN_enriched.GO.05.a<-GO_d0.DOWN$category[GO_d0.DOWN$over_represented_pvalue<.05]
+DOWN_enriched.GO.05<-data.frame(DOWN_enriched.GO.05.a)
+colnames(DOWN_enriched.GO.05) <- c("category")
+DOWN_enriched.GO.05 <- merge(DOWN_enriched.GO.05, GO_d0.DOWN, by="category")
+DOWN_enriched.GO.05 <- DOWN_enriched.GO.05[order(-DOWN_enriched.GO.05$numDEInCat),]
+DOWN_enriched.GO.05$term <- as.factor(DOWN_enriched.GO.05$term)
+head(DOWN_enriched.GO.05)
+
+DOWN_MF <- subset(DOWN_enriched.GO.05, ontology=="MF")
+DOWN_MF <- DOWN_MF[order(-DOWN_MF$numDEInCat),]
+DOWN_CC <- subset(DOWN_enriched.GO.05, ontology=="CC")
+DOWN_CC <- DOWN_CC[order(-DOWN_CC$numDEInCat),]
+DOWN_BP <- subset(DOWN_enriched.GO.05, ontology=="BP")
+DOWN_BP <- DOWN_BP[order(-DOWN_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_DOWN <- DOWN_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_DOWN <- DOWN_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_DOWN <- DOWN_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# GOplot <- grid.arrange(MFplot, CCplot, BPplot, ncol=3, clip="off")
+# ggsave("GOplot.pdf", GOplot, width = 21, height = 21, units = c("in"))
+
+# Merge plots!
+num_up   <- dim(DE_d0.primary.UPREG)[1] # call num upregulated genes
+num_down <-dim(DE_d0.primary.DWNREG)[1] # call num downregulated genes
+
+GOplot.merge_UP <- UP_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 0 Upregulated DEGs") +
+  geom_label(aes(x = 0.5, y = 0.5, label = paste(num_up, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_UP
+
+GOplot.merge_DOWN <- DOWN_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 0 Downregulated DEGs") +
+  geom_label(aes(x = 0.5, y = 1.5, label = paste(num_down, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_DOWN
+
+GO.plot_d0.Primary<-grid.arrange(GOplot.merge_UP, GOplot.merge_DOWN, nrow=2, clip="off")
+ggsave("../Output/GO/goseq/Day0/GOplot_d0.Primary.pdf", GO.plot_d0.Primary, width = 21, height = 21, units = c("in"))
+getwd()
+```
+
+Plotting: Day 7
+```{r plots_Day7.Primary}
+#How many enriched GO terms do we have
+# class(GO_d14.all)
+# head(GO_d14.all)
+# tail(GO.wall)
+# nrow(GO.wall)
+
+# UPREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+UP_enriched.GO.05.a<-GO_d7.UP$category[GO_d7.UP$over_represented_pvalue<.05]
+UP_enriched.GO.05<-data.frame(UP_enriched.GO.05.a)
+colnames(UP_enriched.GO.05) <- c("category")
+UP_enriched.GO.05 <- merge(UP_enriched.GO.05, GO_d7.UP, by="category")
+UP_enriched.GO.05 <- UP_enriched.GO.05[order(-UP_enriched.GO.05$numDEInCat),]
+UP_enriched.GO.05$term <- as.factor(UP_enriched.GO.05$term)
+head(UP_enriched.GO.05)
+
+UP_MF <- subset(UP_enriched.GO.05, ontology=="MF")
+UP_MF <- UP_MF[order(-UP_MF$numDEInCat),]
+UP_CC <- subset(UP_enriched.GO.05, ontology=="CC")
+UP_CC <- UP_CC[order(-UP_CC$numDEInCat),]
+UP_BP <- subset(UP_enriched.GO.05, ontology=="BP")
+UP_BP <- UP_BP[order(-UP_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_UP <- UP_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_UP <- UP_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_UP <- UP_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# DOWNREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+DOWN_enriched.GO.05.a<-GO_d7.DOWN$category[GO_d7.DOWN$over_represented_pvalue<.05]
+DOWN_enriched.GO.05<-data.frame(DOWN_enriched.GO.05.a)
+colnames(DOWN_enriched.GO.05) <- c("category")
+DOWN_enriched.GO.05 <- merge(DOWN_enriched.GO.05, GO_d7.DOWN, by="category")
+DOWN_enriched.GO.05 <- DOWN_enriched.GO.05[order(-DOWN_enriched.GO.05$numDEInCat),]
+DOWN_enriched.GO.05$term <- as.factor(DOWN_enriched.GO.05$term)
+head(DOWN_enriched.GO.05)
+
+DOWN_MF <- subset(DOWN_enriched.GO.05, ontology=="MF")
+DOWN_MF <- DOWN_MF[order(-DOWN_MF$numDEInCat),]
+DOWN_CC <- subset(DOWN_enriched.GO.05, ontology=="CC")
+DOWN_CC <- DOWN_CC[order(-DOWN_CC$numDEInCat),]
+DOWN_BP <- subset(DOWN_enriched.GO.05, ontology=="BP")
+DOWN_BP <- DOWN_BP[order(-DOWN_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_DOWN <- DOWN_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_DOWN <- DOWN_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_DOWN <- DOWN_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# GOplot <- grid.arrange(MFplot, CCplot, BPplot, ncol=3, clip="off")
+# ggsave("GOplot.pdf", GOplot, width = 21, height = 21, units = c("in"))
+
+# Merge plots!
+num_up   <- dim(DE_d7.primary.UPREG)[1] # call num upregulated genes
+num_down <-dim(DE_d7.primary.DWNREG)[1] # call num downregulated genes
+
+GOplot.merge_UP <- UP_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 7 Upregulated DEGs") +
+  geom_label(aes(x = 2, y = 2, label = paste(num_up, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_UP
+
+GOplot.merge_DOWN <- DOWN_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 7 Downregulated DEGs") +
+  geom_label(aes(x = 2, y = 2, label = paste(num_down, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_DOWN
+
+GO.plot_d7.Primary<-grid.arrange(GOplot.merge_UP, GOplot.merge_DOWN, nrow=2, clip="off")
+ggsave("../Output/GO/goseq/Day7/GOplot_d7.Primary.pdf", GO.plot_d7.Primary, width = 21, height = 21, units = c("in"))
+```
+
+Plotting: Day 14
+```{r plots_Day14.Primary}
+#How many enriched GO terms do we have
+# class(GO_d14.all)
+# head(GO_d14.all)
+# tail(GO.wall)
+# nrow(GO.wall)
+
+# UPREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+UP_enriched.GO.05.a<-GO_d14.UP$category[GO_d14.UP$over_represented_pvalue<.05]
+UP_enriched.GO.05<-data.frame(UP_enriched.GO.05.a)
+colnames(UP_enriched.GO.05) <- c("category")
+UP_enriched.GO.05 <- merge(UP_enriched.GO.05, GO_d14.UP, by="category")
+UP_enriched.GO.05 <- UP_enriched.GO.05[order(-UP_enriched.GO.05$numDEInCat),]
+UP_enriched.GO.05$term <- as.factor(UP_enriched.GO.05$term)
+head(UP_enriched.GO.05)
+
+UP_MF <- subset(UP_enriched.GO.05, ontology=="MF")
+UP_MF <- UP_MF[order(-UP_MF$numDEInCat),]
+UP_CC <- subset(UP_enriched.GO.05, ontology=="CC")
+UP_CC <- UP_CC[order(-UP_CC$numDEInCat),]
+UP_BP <- subset(UP_enriched.GO.05, ontology=="BP")
+UP_BP <- UP_BP[order(-UP_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_UP <- UP_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_UP <- UP_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_UP <- UP_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# DOWNREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+DOWN_enriched.GO.05.a<-GO_d14.DOWN$category[GO_d14.DOWN$over_represented_pvalue<.05]
+DOWN_enriched.GO.05<-data.frame(DOWN_enriched.GO.05.a)
+colnames(DOWN_enriched.GO.05) <- c("category")
+DOWN_enriched.GO.05 <- merge(DOWN_enriched.GO.05, GO_d14.DOWN, by="category")
+DOWN_enriched.GO.05 <- DOWN_enriched.GO.05[order(-DOWN_enriched.GO.05$numDEInCat),]
+DOWN_enriched.GO.05$term <- as.factor(DOWN_enriched.GO.05$term)
+head(DOWN_enriched.GO.05)
+
+DOWN_MF <- subset(DOWN_enriched.GO.05, ontology=="MF")
+DOWN_MF <- DOWN_MF[order(-DOWN_MF$numDEInCat),]
+DOWN_CC <- subset(DOWN_enriched.GO.05, ontology=="CC")
+DOWN_CC <- DOWN_CC[order(-DOWN_CC$numDEInCat),]
+DOWN_BP <- subset(DOWN_enriched.GO.05, ontology=="BP")
+DOWN_BP <- DOWN_BP[order(-DOWN_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_DOWN <- DOWN_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_DOWN <- DOWN_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_DOWN <- DOWN_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# GOplot <- grid.arrange(MFplot, CCplot, BPplot, ncol=3, clip="off")
+# ggsave("GOplot.pdf", GOplot, width = 21, height = 21, units = c("in"))
+
+# Merge plots!
+num_up   <- dim(DE_d14.primary.UPREG)[1] # call num upregulated genes
+num_down <-dim(DE_d14.primary.DWNREG)[1] # call num downregulated genes
+
+GOplot.merge_UP <- UP_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 14 Upregulated DEGs") +
+  geom_label(aes(x = 2, y = 20, label = paste(num_up, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_UP
+
+GOplot.merge_DOWN <- DOWN_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 14 Downregulated DEGs") +
+  geom_label(aes(x = 2, y = 6, label = paste(num_down, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_DOWN
+
+GO.plot_d14.Primary<- grid.arrange(GOplot.merge_UP, GOplot.merge_DOWN, nrow=2, clip="off")
+ggsave("../Output/GO/goseq/Day14/GOplot_d14.Primary.pdf", GO.plot_d14.Primary, width = 21, height = 21, units = c("in"))
+```
+
+Plotting: Day 21
+```{r plots_Day21.Primary}
+#How many enriched GO terms do we have
+# class(GO_d14.all)
+# head(GO_d14.all)
+# tail(GO.wall)
+# nrow(GO.wall)
+
+# UPREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+UP_enriched.GO.05.a<-GO_d21.UP$category[GO_d21.UP$over_represented_pvalue<.05]
+UP_enriched.GO.05<-data.frame(UP_enriched.GO.05.a)
+colnames(UP_enriched.GO.05) <- c("category")
+UP_enriched.GO.05 <- merge(UP_enriched.GO.05, GO_d21.UP, by="category")
+UP_enriched.GO.05 <- UP_enriched.GO.05[order(-UP_enriched.GO.05$numDEInCat),]
+UP_enriched.GO.05$term <- as.factor(UP_enriched.GO.05$term)
+head(UP_enriched.GO.05)
+
+UP_MF <- subset(UP_enriched.GO.05, ontology=="MF")
+UP_MF <- UP_MF[order(-UP_MF$numDEInCat),]
+UP_CC <- subset(UP_enriched.GO.05, ontology=="CC")
+UP_CC <- UP_CC[order(-UP_CC$numDEInCat),]
+UP_BP <- subset(UP_enriched.GO.05, ontology=="BP")
+UP_BP <- UP_BP[order(-UP_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_UP <- UP_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_UP <- UP_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_UP <- UP_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# DOWNREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+DOWN_enriched.GO.05.a<-GO_d21.DOWN$category[GO_d21.DOWN$over_represented_pvalue<.05]
+DOWN_enriched.GO.05<-data.frame(DOWN_enriched.GO.05.a)
+colnames(DOWN_enriched.GO.05) <- c("category")
+DOWN_enriched.GO.05 <- merge(DOWN_enriched.GO.05, GO_d21.DOWN, by="category")
+DOWN_enriched.GO.05 <- DOWN_enriched.GO.05[order(-DOWN_enriched.GO.05$numDEInCat),]
+DOWN_enriched.GO.05$term <- as.factor(DOWN_enriched.GO.05$term)
+head(DOWN_enriched.GO.05)
+
+DOWN_MF <- subset(DOWN_enriched.GO.05, ontology=="MF")
+DOWN_MF <- DOWN_MF[order(-DOWN_MF$numDEInCat),]
+DOWN_CC <- subset(DOWN_enriched.GO.05, ontology=="CC")
+DOWN_CC <- DOWN_CC[order(-DOWN_CC$numDEInCat),]
+DOWN_BP <- subset(DOWN_enriched.GO.05, ontology=="BP")
+DOWN_BP <- DOWN_BP[order(-DOWN_BP$numDEInCat),]
+
+# Molecular Processes
+MFplot_DOWN <- DOWN_MF %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Molecular Function") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+#Cellular Processes
+CCplot_DOWN <- DOWN_CC %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("Cellular Component") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# Biological Processes 
+BPplot_DOWN <- DOWN_BP %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="none") +
+  xlab("") +
+  ylab("") +
+  ggtitle("Biological Process") + #add a main title
+  theme(plot.title = element_text(face = 'bold', 
+                                  size = 12, 
+                                  hjust = 0)) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank())#Set the plot background
+
+# GOplot <- grid.arrange(MFplot, CCplot, BPplot, ncol=3, clip="off")
+# ggsave("GOplot.pdf", GOplot, width = 21, height = 21, units = c("in"))
+
+# Merge plots!
+num_up   <- dim(DE_d21.primary.UPREG)[1] # call num upregulated genes
+num_down <-dim(DE_d21.primary.DWNREG)[1] # call num downregulated genes
+
+GOplot.merge_UP <- UP_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 21 Upregulated DEGs") +
+  geom_label(aes(x = 2, y = 7, label = paste(num_up, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_UP
+
+GOplot.merge_DOWN <- DOWN_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Day 21 Downregulated DEGs") +
+  geom_label(aes(x = 2, y = 3, label = paste(num_down, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_DOWN
+
+GO.plot_d21.Primary<-grid.arrange(GOplot.merge_UP, GOplot.merge_DOWN, nrow=2, clip="off")
+ggsave("../Output/GO/goseq/Day21/GOplot_d21.Primary.pdf", GO.plot_d21.Primary, width = 21, height = 21, units = c("in"))
+```
+
+Plotting: Constant DEGs Days 7 14 21 affected by Primary treatment history
+```{r Constant_All}
+#How many enriched GO terms do we have
+# class(GO_d14.all)
+# head(GO_d14.all)
+# tail(GO.wall)
+# nrow(GO.wall)
+
+# UPREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+UP_enriched.GO.05.a<-GO_Constant.UP$category[GO_Constant.UP$over_represented_pvalue<.05]
+UP_enriched.GO.05<-data.frame(UP_enriched.GO.05.a)
+colnames(UP_enriched.GO.05) <- c("category")
+UP_enriched.GO.05 <- merge(UP_enriched.GO.05, GO_Constant.UP, by="category")
+UP_enriched.GO.05 <- UP_enriched.GO.05[order(-UP_enriched.GO.05$numDEInCat),]
+UP_enriched.GO.05$term <- as.factor(UP_enriched.GO.05$term)
+head(UP_enriched.GO.05)
+
+UP_MF <- subset(UP_enriched.GO.05, ontology=="MF")
+UP_MF <- UP_MF[order(-UP_MF$numDEInCat),]
+UP_CC <- subset(UP_enriched.GO.05, ontology=="CC")
+UP_CC <- UP_CC[order(-UP_CC$numDEInCat),]
+UP_BP <- subset(UP_enriched.GO.05, ontology=="BP")
+UP_BP <- UP_BP[order(-UP_BP$numDEInCat),]
+
+# Molecular Processes
+head(UP_MF)
+
+MFplot_UP <- UP_MF %>%
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#00BFC4') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Mol Fxn: Constant DEGs UPREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+#Cellular Processes
+CCplot_UP <- UP_CC %>% 
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#7CAE00') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Cell Comp: Constant DEGs UPREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+# Biological Processes 
+BPplot_UP <- UP_BP %>%
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#69b3a2') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Biol Proc: Constant DEGs UPREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+
+# DOWNREGULATED DEGs ------------------------------------------------------------------------------- #
+#Find only enriched GO terms that are statistically significant at cutoff 
+DOWN_enriched.GO.05.a<-GO_Constant.DOWN$category[GO_Constant.DOWN$over_represented_pvalue<.05]
+DOWN_enriched.GO.05<-data.frame(DOWN_enriched.GO.05.a)
+colnames(DOWN_enriched.GO.05) <- c("category")
+DOWN_enriched.GO.05 <- merge(DOWN_enriched.GO.05, GO_Constant.DOWN, by="category")
+DOWN_enriched.GO.05 <- DOWN_enriched.GO.05[order(-DOWN_enriched.GO.05$numDEInCat),]
+DOWN_enriched.GO.05$term <- as.factor(DOWN_enriched.GO.05$term)
+head(DOWN_enriched.GO.05)
+
+DOWN_MF <- subset(DOWN_enriched.GO.05, ontology=="MF")
+DOWN_MF <- DOWN_MF[order(-DOWN_MF$numDEInCat),]
+DOWN_CC <- subset(DOWN_enriched.GO.05, ontology=="CC")
+DOWN_CC <- DOWN_CC[order(-DOWN_CC$numDEInCat),]
+DOWN_BP <- subset(DOWN_enriched.GO.05, ontology=="BP")
+DOWN_BP <- DOWN_BP[order(-DOWN_BP$numDEInCat),]
+
+# Molecular Function
+MFplot_DOWN <- DOWN_MF %>%
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#00BFC4') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Mol Fxn: Constant DEGs DOWNREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+#Cellular Processes
+CCplot_DOWN <- DOWN_CC %>% 
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#7CAE00') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Cell Comp: Constant DEGs DOWNREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+# Biological Processes 
+BPplot_DOWN <- DOWN_BP %>%
+              mutate(term = fct_reorder(term, (-log10(over_represented_pvalue)) )) %>%
+              ggplot(aes(ontology, term, fill= ontology, alpha = over_represented_pvalue)) + 
+              geom_tile(fill = '#69b3a2') +
+              scale_alpha_continuous(range = c(1, 0.3)) +
+              theme_classic2() + 
+              ggtitle("GO Biol Proc: Constant DEGs DOWNREGULATED") +
+              xlab("") +
+              ylab('') +
+              theme(legend.position="none") 
+
+
+# GOplot <- grid.arrange(MFplot, CCplot, BPplot, ncol=3, clip="off")
+# ggsave("GOplot.pdf", GOplot, width = 21, height = 21, units = c("in"))
+
+# Merge plots!
+num_up   <- dim(Contant_upreg)[1] # call num upregulated genes
+num_down <-dim(Contant_dwnreg)[1] # call num downregulated genes
+
+GOplot.merge_UP <- UP_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Constant Upregulated DEGs") +
+  geom_label(aes(x = 1, y = 3, label = paste(num_up, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_UP
+
+GOplot.merge_DOWN <- DOWN_enriched.GO.05 %>% drop_na(ontology) %>% mutate(term = fct_reorder(term, numDEInCat)) %>%
+  mutate(term = fct_reorder(term, ontology)) %>%
+  ggplot( aes(x=term, y=numDEInCat) ) +
+  geom_segment( aes(x=term ,xend=term, y=0, yend=numDEInCat), color="grey") +
+  geom_point(size=3, aes(colour = ontology)) +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position="bottom"
+  ) +
+  xlab("") +
+  ylab("") +
+  ggtitle("GO: Constant Downregulated DEGs") +
+  geom_label(aes(x = 1, y = 3, label = paste(num_down, "DEGs"))) +
+  theme_bw() + #Set background color 
+  theme(panel.border = element_blank(), # Set border
+        panel.grid.major = element_blank(), #Set major gridlines
+        panel.grid.minor = element_blank(), #Set minor gridlines
+        axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()) #Set the plot background #set title attributes
+# GOplot.merge_DOWN
+
+GO.plot_Constant<-grid.arrange(GOplot.merge_UP, GOplot.merge_DOWN, nrow=2, clip="off")
+ggsave("C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Output/GO/GOplot_Constant.Primary.pdf", GO.plot_Constant, width = 21, height = 21, units = c("in"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### GO_MWU - not using this for the paper but did a bit of work here... Can review it for future data
+Create all files for the GO_MWU.R script
+output two-column csv of just the gene.id and log2fc 
+```{r GO_MWU files - Primary_Treatment}
+DE_d0.P <- data.frame(DE_d0.primary[,c(2,4)])
+write.csv(DE_d0.P,"C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Data/GO/GO_MWU/d0.P.DE_GO.terms.csv",row.names=FALSE,quote=FALSE)
+
+DE_d7.P <- data.frame(DE_d7.primary[,c(2,4)])
+write.csv(DE_d7.P,"C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Data/GO/GO_MWU/d7.P.DE_GO.terms.csv",row.names=FALSE,quote=FALSE)
+
+DE_d14.P <- data.frame(DE_d14.primary[,c(2,4)])
+write.csv(DE_d14.P,"C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Data/GO/GO_MWU/d14.P.DE_GO.terms.csv",row.names=FALSE,quote=FALSE)
+
+DE_d21.P <- data.frame(DE_d21.primary[,c(2,4)])
+write.csv(DE_d21.P,"C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Data/GO/GO_MWU/d21.P.DE_GO.terms.csv",row.names=FALSE,quote=FALSE)
+
+```
+
+### Genewalk
+
+link to tutorial: https://churchman.med.harvard.edu/genewalk/#tutorial
+Citation (bioRxiv preprint): Ietswaart, R., Gyori, B. M., Bachman, J. A., Sorger, P. K., & Churchman, L. S. (2019). GeneWalk identifies relevant gene functions for a biological context using network representation learning. bioRxiv, 755579.
+About: Genewalk is curently designed to perform function network analysis of DEGs with human and mouse identifiers
+
+```{r prep genewalk files}
+Geoduck.gene_HGNC.list <- Geoduck_annotation %>% dplyr::select(c("V1","V6")) # call the geoduck gene ID and the HGNC in the annotation file
+colnames(Geoduck.gene_HGNC.list) <- c("gene.ID", "HGNC_symbol") # rename columns
+# note that the HGNC column contains the HNC code with the model taxa as 'HUMAN, MOUSE, CHICK, etc.'
+Geoduck.gene_HGNC.list$HGNC<- sapply(strsplit((Geoduck.gene_HGNC.list$HGNC), "_"), '[', 1) # this splits the HGNC by the delimiter "_" and calls just the HGNC code - note the model taxa is now absent from the dataframe! 
+
+
+# change the col name of the gene.ID  in the DE datasets
+
+# DAY 0 ------------------------------------------- #
+
+# UPREGULATED
+
+GW.d0.primary.UPREG <- merge((DE_d0.primary.UPREG[order(DE_d0.primary.UPREG$log2FoldChange, decreasing = TRUE),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d0.upreg.percHGNC <- ((dim(na.omit(GW.d0.primary.UPREG))[1]) / (dim(DE_d0.primary.UPREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DOWNREGULATED
+GW.d0.primary.DWNREG <- merge((DE_d0.primary.DWNREG[order(DE_d0.primary.DWNREG$log2FoldChange),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d0.downreg.percHGNC <- ((dim(na.omit(GW.d0.primary.DWNREG))[1]) / (dim(DE_d0.primary.DWNREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DAY 7 ------------------------------------------- #
+
+# UPREGULATED
+GW.d7.primary.UPREG <- merge((DE_d7.primary.UPREG[order(DE_d7.primary.UPREG$log2FoldChange, decreasing = TRUE),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d7.upreg.percHGNC <- ((dim(na.omit(GW.d7.primary.UPREG))[1]) / (dim(DE_d7.primary.UPREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DOWNREGULATED
+GW.d7.primary.DWNREG <- merge((DE_d7.primary.DWNREG[order(DE_d7.primary.DWNREG$log2FoldChange),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d7.downreg.percHGNC <- ((dim(na.omit(GW.d7.primary.DWNREG))[1]) / (dim(DE_d7.primary.DWNREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DAY 14 ------------------------------------------- #
+
+# UPREGULATED
+GW.d14.primary.UPREG <- merge((DE_d14.primary.UPREG[order(DE_d14.primary.UPREG$log2FoldChange, decreasing = TRUE),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d14.upreg.percHGNC <- ((dim(na.omit(GW.d14.primary.UPREG))[1]) / (dim(DE_d14.primary.UPREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DOWNREGULATED
+GW.d14.primary.DWNREG <- merge((DE_d14.primary.DWNREG[order(DE_d14.primary.DWNREG$log2FoldChange),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC") # sort to order by greatest logfold change and merge with HGNC list
+d14.downreg.percHGNC <- ((dim(na.omit(GW.d14.primary.DWNREG))[1]) / (dim(DE_d14.primary.DWNREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DAY 21 ------------------------------------------- #
+
+# UPREGULATED
+GW.d21.primary.UPREG <- merge((DE_d21.primary.UPREG[order(DE_d21.primary.UPREG$log2FoldChange, decreasing = TRUE),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d21.upreg.percHGNC <- ((dim(na.omit(GW.d21.primary.UPREG))[1]) / (dim(DE_d21.primary.UPREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+# DOWNREGULATED
+GW.d21.primary.DWNREG <- merge((DE_d21.primary.DWNREG[order(DE_d21.primary.DWNREG$log2FoldChange),]), Geoduck.gene_HGNC.list, by = "gene.ID") %>% dplyr::select("HGNC")
+d21.downreg.percHGNC <- ((dim(na.omit(GW.d21.primary.DWNREG))[1]) / (dim(DE_d21.primary.DWNREG)[1]) )*100 # percent of DEGs with HGNC ID
+
+
+### OUTPUT Genewalk tables as csv wihtout header
+GW.d0.primary.UPREG.om   <- na.omit(GW.d0.primary.UPREG)
+GW.d0.primary.DWNREG.om  <- na.omit(GW.d0.primary.DWNREG)
+
+GW.d7.primary.UPREG.om   <- na.omit(GW.d7.primary.UPREG)
+GW.d7.primary.DWNREG.om  <- na.omit(GW.d7.primary.DWNREG) 
+
+GW.d14.primary.UPREG.om  <- na.omit(GW.d14.primary.UPREG)
+GW.d14.primary.DWNREG.om <- na.omit(GW.d14.primary.DWNREG)
+
+GW.d21.primary.UPREG.om  <- na.omit(GW.d21.primary.UPREG)
+GW.d21.primary.DWNREG.om <- na.omit(GW.d21.primary.DWNREG)
+
+path_genewalk='C:/Users/samjg/Documents/Github_repositories/Pgenerosa_TagSeq_Metabolomics/TagSeq/Analysis/Data/GO/Genewalk_files/' # call path
+# output files 
+write.table(GW.d0.primary.UPREG.om,paste(path_genewalk,"Day0_upreg.csv", sep =''),sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+write.table(GW.d0.primary.DWNREG.om, paste(path_genewalk,"Day0_downreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+
+write.table(GW.d7.primary.UPREG.om,paste(path_genewalk,"Day7_upreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+write.table(GW.d7.primary.DWNREG.om,paste(path_genewalk,"Day7_downreg.csv", sep =''), sep=",", col.names=FALSE, row.names=FALSE, quote=FALSE)
+
+write.table(GW.d14.primary.UPREG.om,paste(path_genewalk,"Day14_upreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+write.table(GW.d14.primary.DWNREG.om,paste(path_genewalk,"Day14_downreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+
+write.table(GW.d21.primary.UPREG.om,paste(path_genewalk,"Day21_upreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+write.table(GW.d21.primary.DWNREG.om,paste(path_genewalk,"Day21_downreg.csv", sep =''), sep=",", col.names=FALSE,row.names=FALSE, quote=FALSE)
+```
+
+```{r Genewalk_knitr_table}
+GW_summarytable <- data.frame(matrix(nrow = 4, ncol = 8)) # create a new data table
+colnames(GW_summarytable)<-c('Day', 'Treatment', 'DEGs_upreg', 'numHGNC_upreg', 'percHGNC_upreg', 'DEGs_dwnreg', 'numHGNC_dwnreg', 'percHGNC_dwnreg') 
+GW_summarytable$Day <- c("0","7","14","21")
+GW_summarytable$Treatment <- "Ambient_v_Moderate"
+GW_summarytable$DEGs_upreg <- c((dim(DE_d0.primary.UPREG)[1]), (dim(DE_d7.primary.UPREG)[1]), (dim(DE_d14.primary.UPREG)[1]), (dim(DE_d21.primary.UPREG)[1]))
+GW_summarytable$numHGNC_upreg <- c((dim(na.omit(GW.d0.primary.UPREG))[1]),(dim(na.omit(GW.d7.primary.UPREG))[1]),(dim(na.omit(GW.d14.primary.UPREG))[1]),(dim(na.omit(GW.d21.primary.UPREG))[1]))
+GW_summarytable$percHGNC_upreg <- c(d0.upreg.percHGNC,d7.upreg.percHGNC,d14.upreg.percHGNC,d21.upreg.percHGNC)
+GW_summarytable$DEGs_dwnreg <- c((dim(DE_d0.primary.DWNREG)[1]), (dim(DE_d7.primary.DWNREG)[1]), (dim(DE_d14.primary.DWNREG)[1]), (dim(DE_d21.primary.DWNREG)[1]))
+GW_summarytable$numHGNC_dwnreg<- c((dim(na.omit(GW.d0.primary.DWNREG))[1]),(dim(na.omit(GW.d7.primary.DWNREG))[1]),(dim(na.omit(GW.d14.primary.DWNREG))[1]),(dim(na.omit(GW.d21.primary.DWNREG))[1]))
+GW_summarytable$percHGNC_dwnreg <- c(d0.downreg.percHGNC,d7.downreg.percHGNC,d14.downreg.percHGNC,d21.downreg.percHGNC)
+
+knitr::kable(GW_summarytable, caption = "Summary table of Genewalk files - total DEGs and mapping abund HGNC IDs")
+# Write csv
+write.csv(GW_summarytable,paste(path_genewalk,"Summary_HGNC_hits.csv"))
+```
+
