@@ -1,0 +1,154 @@
+---
+title: "Larval Growth and Survival"
+author: "Katie McFarland"
+date: "9/29/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library("ggplot2")
+library("tidyverse")
+library(Rmisc)
+library(rcompanion)
+library(FSA)
+```
+
+```{r}
+#Set Path
+setwd("C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Larvae")
+```
+
+
+#Larval Survival
+```{r}
+df<-read.csv("larval_survival.csv", header = T)
+
+df$Percent_Survival_trans <- asin(sqrt(df$Percent_Survival))
+
+head(df)
+str(df)
+```
+
+```{r}
+df$treatment <- factor(df$treatment,levels = c("Low OA", "Moderate OA", "High OA"))
+
+df$Parental_OA <- factor(df$Parental_OA,levels = c("Wild", "LOW", "MODERATE", "HIGH"))
+```
+
+### make data frames for each generation
+```{r}
+df_F1 <- df%>%
+  filter(Generation=="1")
+
+df_F2 <- df%>%
+  filter(Generation=="2")
+
+df_F3 <- df%>%
+  filter(Generation=="3")
+```
+
+# F1 Larval Survival
+```{r}
+
+stL <- summarySE(df_F1, measurevar="Percent_Survival", groupvars=c("Age", "treatment"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Percent_Survival, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Percent_Survival-se, ymax=Percent_Survival+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+ 
+```
+
+# F2 Larval Survival
+```{r}
+
+stL <- summarySE(df_F2, measurevar="Percent_Survival", groupvars=c("Age", "treatment"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Percent_Survival, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Percent_Survival-se, ymax=Percent_Survival+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+ 
+```
+# F3 Larval Survival
+```{r}
+
+stL <- summarySE(df_F3, measurevar="Percent_Survival", groupvars=c("Age", "treatment", "Parental_OA"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Percent_Survival, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Percent_Survival-se, ymax=Percent_Survival+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))+
+  facet_wrap("Parental_OA")
+ 
+```
+
+# Stats
+Lenght data do not meet the assumptions of noramlity even with an asin(sqrt()) transformation
+```{r}
+leveneTest(Percent_Survival_trans ~ treatment, data=df_F1)
+shapiro.test(df_F1$Percent_Survival_trans)
+
+leveneTest(Percent_Survival_trans ~ treatment, data=df_F2)
+shapiro.test(df_F2$Percent_Survival_trans)
+
+leveneTest(Percent_Survival_trans ~ treatment, data=df_F3)
+shapiro.test(df_F3$Percent_Survival_trans)
+```
+
+#Non parametric Stats
+### F1 Survival
+```{r}
+scheirerRayHare(Percent_Survival ~ treatment*Age,
+                data = df_F1)
+
+dunnTest(Percent_Survival ~ treatment,
+                data = df_F1,
+              method="bh")
+
+```
+
+### F2 Survival
+```{r}
+scheirerRayHare(Percent_Survival ~ treatment*Age,
+                data = df_F2)
+
+res.kruskal <- kruskal.test(Percent_Survival ~ treatment, data = df_F2)
+res.kruskal
+
+```
+
+### F3 Survival
+```{r}
+
+
+scheirerRayHare(Percent_Survival ~ treatment*Parental_OA,
+                data = df_F3)
+
+dunnTest(Percent_Survival ~ treatment,
+                data = df_F3,
+              method="bh")
+
+dunnTest(Percent_Survival ~ Parental_OA,
+                data = df_F3,
+              method="bh")
+```

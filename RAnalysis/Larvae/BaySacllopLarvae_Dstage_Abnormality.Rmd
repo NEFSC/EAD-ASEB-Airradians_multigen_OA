@@ -1,0 +1,316 @@
+---
+title: "Bay Scallop Larve - D Stage Abnormality Rates"
+author: "Katie McFarland"
+date: "12/13/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+library(rcompanion)
+library(FSA)
+library(car)
+```
+
+
+```{r}
+#Set Path
+setwd("C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae")
+```
+
+### Load Data
+```{r}
+#Here we are assing our data fram the name "df" so that we do not have to type out the full file name everytime we want to call it.
+df<-read.csv("Dstage.data.csv", header = T)
+
+df$Percent.deformed=as.numeric(df$Percent.deformed)
+
+dfParent=as.factor(df$Parent)
+dfTtreatment=as.factor(df$Treatment)
+df$Rep=as.factor(df$Rep)
+df$Year=as.factor(df$Year)
+df$Run=as.factor(df$Run)
+
+df$Treatment <- factor(df$Treatment,levels = c("Low OA", "Moderate OA", "High OA"))
+
+df$Parent <- factor(df$Parent,levels = c("Wild", "LOW", "MODERATE", "HIGH"))
+
+#to look at columns names of your data frame
+head(df)
+
+#Sturcture of the data - to check that variables are properly assigned to facotr or variable
+str(df)
+```
+```{r}
+
+#df$Par_Off <- paste("Par:",df$Parent, " ", "Off:", df$Treatment)
+
+
+ggplot(data=df, aes(x=Run, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed, grouped by parentage (2023: F3 Larvae) ", x ="Generation", y = "Percent Deformed")+
+ # facet_wrap(~Par_Off)
+  facet_wrap(~Parent+Treatment)
+```
+
+```{r}
+df$Percent.deformed_trans <- asin(sqrt(df$Percent.deformed))
+
+leveneTest(Percent.deformed_trans ~ Treatment, data=df)
+shapiro.test(df$Percent.deformed_trans)
+```
+
+
+
+# Stats across genrations
+Data did not meet the assumptions of normality so the non parametric Scheirer Ray Hare test was used to test for signifcance among treatments and prental exposures.
+```{r}
+scheirerRayHare(Percent.deformed ~ Treatment*Run,
+                data = df)
+
+scheirerRayHare(Percent.deformed ~ Treatment*Parent,
+                data = df)
+
+scheirerRayHare(Percent.deformed ~ Run*Parent,
+                data = df)
+
+dunnTest(Percent.deformed ~ Run,
+                data = df,
+              method="bh")
+```
+
+
+### Low parental exposure across generations (all larval treatmeents)
+```{r}
+df_low <- df%>%
+  filter(Parent %in% c("LOW"))
+
+leveneTest(Percent.deformed_trans ~ Run, data=df_low)
+shapiro.test(df_low$Percent.deformed_trans)
+
+scheirerRayHare(Percent.deformed ~ Treatment*Run,
+                data = df_low)
+
+
+dunnTest(Percent.deformed ~ Run,
+                data = df_low,
+              method="bh")
+```
+
+### Low larval exposure and Low parental exposure ("control") across generations
+```{r}
+
+df_low_low <- df_low%>%
+  filter(Treatment %in% c("Low OA"))
+
+leveneTest(Percent.deformed_trans ~ Run, data=df_low_low)
+shapiro.test(df_low_low$Percent.deformed_trans)
+
+mod <- aov(Percent.deformed_trans ~Run, data = df_low_low)
+summary(mod)
+
+TukeyHSD(mod)
+```
+
+
+################## 
+
+# Broken down for each experiment 
+
+### F1: Two runs
+
+```{r}
+
+df_2021 <- df%>%
+  filter(Year=="2021")
+
+ggplot(data=df_2021, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed (2021: F1 Larvae) ", x ="Treatment", y = "Percent Deformed")+
+  facet_wrap("Run")
+```
+
+
+```{r}
+df_run1 <- df%>%
+  filter(Run=="1")
+
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_run1)
+shapiro.test(df_run1$Percent.deformed_trans)
+
+df_run2 <- df%>%
+  filter(Run=="2")
+
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_run2)
+shapiro.test(df_run2$Percent.deformed_trans)
+```
+
+
+```{r}
+dunnTest(Percent.deformed ~ Treatment,
+                data = df_run1,
+              method="bh")
+dunnTest(Percent.deformed ~ Treatment,
+                data = df_run2,
+              method="bh")
+```
+
+
+```{r}
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_2021)
+shapiro.test(df_2021$Percent.deformed_trans)
+```
+
+### F2 April 2022
+
+```{r}
+df_2022 <- df%>%
+  filter(Year=="2022")
+
+df_2022_3 <- df_2022%>%
+  filter(Run=="3")
+
+ggplot(data=df_2022_3, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed, grouped by parentage (2022: F2 Larvae) ", x ="Treatment", y = "Percent Deformed")+
+  facet_wrap("Parent")
+```
+
+
+```{r}
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_2022_3)
+shapiro.test(df_2022_3$Percent.deformed_trans)
+```
+
+
+```{r}
+scheirerRayHare(Percent.deformed ~ Treatment*Parent,
+                data = df_2022_3)
+
+dunnTest(Percent.deformed ~ Treatment,
+                data = df_2022_3,
+              method="bh")
+
+dunnTest(Percent.deformed ~ Parent,
+                data = df_2022_3,
+              method="bh")
+```
+
+
+### F2 August 2022
+
+```{r}
+df_2022 <- df%>%
+  filter(Year=="2022")
+
+df_2022_4 <- df_2022%>%
+  filter(Run=="4")
+
+ggplot(data=df_2022_4, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed (2022: F2 Larvae) ", x ="Treatment", y = "Percent Deformed")
+```
+
+```{r}
+
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_2022_4)
+shapiro.test(df_2022_4$Percent.deformed_trans)
+```
+
+```{r}
+
+res.kruskal <- kruskal.test(Percent.deformed ~ Treatment, data = df_2022_4)
+res.kruskal
+
+```
+
+
+### F3 Larval April 2023
+
+```{r}
+df_6 <- df%>%
+  filter(Run=="6")
+
+ggplot(data=df_6, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed, grouped by parentage (2023: F3 Larvae) ", x ="Treatment", y = "Percent Deformed")+
+  facet_wrap("Parent")
+```
+
+```{r}
+leveneTest(Percent.deformed_trans ~ Treatment, data=df_6)
+shapiro.test(df_6$Percent.deformed_trans)
+```
+
+```{r}
+mod <- aov(Percent.deformed_trans ~Treatment * Parent, data = df_6)
+summary(mod)
+```
+
+
+```{r}
+scheirerRayHare(Percent.deformed ~ Treatment*Parent,
+                data = df_6)
+
+dunnTest(Percent.deformed ~ Treatment,
+                data = df_6,
+              method="bh")
+
+dunnTest(Percent.deformed ~ Parent,
+                data = df_6,
+              method="bh")
+```
+
+
+
+### Trimming the F3 to look at differences
+```{r}
+
+df_6_trim <- df_6%>%
+  filter(Parent %in% c("MODERATE", "LOW"))
+
+ggplot(data=df_6_trim, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Deformed, grouped by parentage (2023: F3 Larvae) ", x ="Treatment", y = "Percent Deformed")+
+  facet_wrap("Parent")
+```
+
+```{r}
+scheirerRayHare(Percent.deformed ~ Treatment*Parent,
+                data = df_6_trim)
+
+#dunnTest(Percent.deformed ~ Treatment,
+#                data = df_6_trim,
+ #             method="bh")
+
+#dunnTest(Percent.deformed ~ Parent,
+  #              data = df_6_trim,
+   #           method="bh")
+```
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

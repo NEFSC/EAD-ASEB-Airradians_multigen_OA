@@ -1,0 +1,141 @@
+---
+title: "Metamorphosis"
+author: "Katie McFarland"
+date: "4/24/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+library(rcompanion)
+library(FSA)
+```
+
+
+```{r}
+#Set Path
+setwd("C:/Users/katherine.mcfarland/Documents/Acidification/2020 OAP - scallops/R")
+```
+
+### Load Data
+```{r}
+#Here we are assing our data fram the name "df" so that we do not have to type out the full file name everytime we want to call it.
+df<-read.csv("metamorphosis.csv", header = T)
+
+#df$Percent.deformed=as.numeric(df$Percent.deformed)
+
+dfParent=as.factor(df$Parent)
+dfTtreatment=as.factor(df$Treatment)
+dfExposure.OAt=as.factor(df$Exposure.OA)
+
+df$Generation=as.factor(df$Generation)
+
+df$Treatment <- factor(df$Treatment,levels = c("Low OA", "Moderate OA", "High OA"))
+
+df$Exposure.OA <- factor(df$Exposure.OA,levels = c("LOW", "MODERATE", "HIGH"))
+
+df$Parent <- factor(df$Parent,levels = c("LOW", "MODERATE", "HIGH"))
+
+#to look at columns names of your data frame
+head(df)
+
+#Sturcture of the data - to check that variables are properly assigned to facotr or variable
+str(df)
+```
+```{r}
+
+df_F2_21 <- df%>%
+  filter(Age=="21")
+
+ggplot(data=df_F2_21, aes(x=Exposure.OA, y=sucessful.metamorphosis, fill=Exposure.OA)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Successful metamorphosis (2023: F2 Larvae - Age 21 days) ", x ="Treatment", y = "Percent sucessful metamorphosis")
+#+  facet_wrap("Parent")
+```
+
+
+```{r}
+
+df_F3_19 <- df%>%
+  filter(Age=="19")
+
+ggplot(data=df_F3_19, aes(x=Exposure.OA, y=sucessful.metamorphosis, fill=Exposure.OA)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent Successful metamorphosis, grouped by parentage (2023: F3 Larvae - Age 19 days) ", x ="Treatment", y = "Percent sucessful metamorphosis")+
+  facet_wrap("Parent")
+```
+
+```{r}
+
+df_F3_19 <- df%>%
+  filter(Age=="19")
+
+ggplot(data=df_F3_19, aes(x=Exposure.OA, y=metamorphesed, fill=Exposure.OA)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent metamorphesed, grouped by parentage (2023: F3 Larvae - Age 19 days) ", x ="Treatment", y = "Percent sucessful metamorphosis")+
+  facet_wrap("Parent")
+```
+```{r}
+
+df_F3_19_trim <- df_F3_19%>%
+   filter(Parent %in% c("HIGH", "LOW"))
+  #filter(Parent=="HIGH, LOW")
+
+ggplot(data=df_F3_19_trim, aes(x=Exposure.OA, y=metamorphesed, fill=Exposure.OA)) +
+  geom_boxplot()+  scale_fill_manual(values=c("forestgreen","orange", "purple"))+
+  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(title="Percent metamorphesed, grouped by parentage (2023: F3 Larvae - Age 19 days) ", x ="Treatment", y = "Percent sucessful metamorphosis")+
+  facet_wrap("Parent")
+```
+
+```{r}
+leveneTest(sucessful.metamorphosis ~ Exposure.OA, data=df)
+shapiro.test(df$sucessful.metamorphosis)
+
+df$sucessful.metamorphosis_trans <- asin(sqrt(df$sucessful.metamorphosis))
+
+df_F2_21 <- df%>%
+  filter(Age=="21")
+
+leveneTest(sucessful.metamorphosis_trans ~ Exposure.OA, data=df_F2_21)
+shapiro.test(df_F2_21$sucessful.metamorphosis_trans)
+
+df_F3_19 <- df%>%
+  filter(Age=="19")
+leveneTest(sucessful.metamorphosis_trans ~ Exposure.OA, data=df_F3_19)
+shapiro.test(df_F3_19$sucessful.metamorphosis_trans)
+```
+```{r}
+kruskal.test(sucessful.metamorphosis ~ Exposure.OA, data = df_F2_21)
+```
+
+
+
+```{r}
+scheirerRayHare(sucessful.metamorphosis ~ Exposure.OA*Parent,
+                data = df_F3_19)
+
+dunnTest(sucessful.metamorphosis ~ Exposure.OA,
+                data = df_F3_19,
+              method="bh")
+
+dunnTest(sucessful.metamorphosis ~ Parent,
+                data = df_F3_19,
+              method="bh")
+```
+

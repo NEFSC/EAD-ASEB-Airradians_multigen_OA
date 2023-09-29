@@ -1,0 +1,121 @@
+---
+title: "Larval Growth"
+author: "Katie McFarland"
+date: "9/29/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE}
+library("ggplot2")
+library("tidyverse")
+library(Rmisc)
+library(rcompanion)
+library(FSA)
+```
+
+```{r}
+#Set Path
+setwd("C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Larvae")
+```
+
+# Larval Growth Data
+```{r}
+df<-read.csv("larval_growth.csv", header = T)
+
+df$Length<-as.numeric(df$Length)
+
+head(df)
+str(df)
+```
+
+
+```{r}
+df$treatment <- factor(df$treatment,levels = c("Low OA", "Moderate OA", "High OA"))
+
+df$Parental_OA <- factor(df$Parental_OA,levels = c("Wild", "LOW", "MODERATE", "HIGH"))
+```
+
+### make data frames for each generation
+```{r}
+df_F1 <- df%>%
+  filter(Generation=="1")
+
+df_F2 <- df%>%
+  filter(Generation=="2")
+
+df_F3 <- df%>%
+  filter(Generation=="3")
+```
+
+
+# F1 Larval Survival
+```{r}
+
+stL <- summarySE(df_F1, measurevar="Length", groupvars=c("Age", "treatment"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Length, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Length-se, ymax=Length+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+
+# F2 Larval Survival
+```{r}
+
+stL <- summarySE(df_F2, measurevar="Length", groupvars=c("Age", "treatment"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Length, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Length-se, ymax=Length+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+ 
+```
+# F3 Larval Survival
+```{r}
+
+stL <- summarySE(df_F3, measurevar="Length", groupvars=c("Age", "treatment"))
+stL 
+
+ggplot(stL, aes(x=Age, y=Length, color=treatment))+ geom_line()+
+  geom_point()+ 
+   geom_errorbar(aes(ymin=Length-se, ymax=Length+se), width=.2,
+                position=position_dodge(.1)) +
+  scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+  theme(legend.position="right", legend.direction="vertical", legend.title = element_blank())+ theme_bw() + 
+  labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))+
+  facet_wrap("Parental_OA")
+ 
+```
+
+
+# Stats
+Lenght data do not meet the assumptions of noramlity 
+```{r}
+leveneTest(Length ~ treatment, data=df_F1)
+shapiro.test(df_F1$Length)
+
+leveneTest(Length ~ treatment, data=df_F2)
+shapiro.test(df_F2$Length)
+
+#leveneTest(Length ~ treatment, data=df_F3)
+#shapiro.test(df_F3$Length)
+```
+
+
+
