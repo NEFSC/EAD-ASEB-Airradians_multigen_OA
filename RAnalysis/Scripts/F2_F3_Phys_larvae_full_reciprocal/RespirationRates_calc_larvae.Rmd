@@ -35,7 +35,7 @@ library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
-getwd()
+# getwd()
 ```
 
 #### load data 

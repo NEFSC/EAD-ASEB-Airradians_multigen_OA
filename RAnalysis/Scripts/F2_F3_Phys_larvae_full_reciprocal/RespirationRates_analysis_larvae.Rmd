@@ -50,7 +50,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 ```{r}
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-RR_master <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/RR_calc_raw_larvae.csv", header=T)
+RR_master <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/data/RR_calc_raw_larvae.csv", header=T)
 
 RR_master_F2_Dhinge <- RR_master %>% dplyr::filter(Date %in% '3/16/2023')
 RR_master_F3_Dhinge <- RR_master %>% dplyr::filter(Date %in% '4/7/2023')
@@ -181,7 +181,6 @@ dev.off()
 
 RR_master_F3_Dhinge$pCO2_parents   <- factor(RR_master_F3_Dhinge$pCO2_parents, levels = c("500 uatm", "800 uatm", "1200 uatm"))
 RR_master_F3_Dhinge$pCO2_offspring <- factor(RR_master_F3_Dhinge$pCO2_offspring, levels = c("500 uatm", "800 uatm", "1200 uatm"))
- 
 
 
 F3_Dinge_BOXPLOT_Parent <- RR_master_F3_Dhinge %>% 
@@ -277,7 +276,7 @@ F3_Dinge_BOXPLOT_ParentxOffspring <- RR_master_F3_Dhinge %>%
 # VIEW PLOTS 
 ggarrange( (ggarrange(F3_Dinge_BOXPLOT_Parent, F3_Dhinge_BOXPLOT_Offspring, ncol=2)),
            F3_Dinge_BOXPLOT_ParentxOffspring, nrow = 2)
-# sdve plots 
+# save plots 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/Larvae/plots/F3_RR_larvae_2DPF.pdf"), width = 8, height = 8)
 ggarrange( (ggarrange(F3_Dinge_BOXPLOT_Parent, F3_Dhinge_BOXPLOT_Offspring, ncol=2)),
            F3_Dinge_BOXPLOT_ParentxOffspring, nrow = 2)
@@ -286,8 +285,10 @@ dev.off()
 ```
 
 
-### Date 20230412 - 7 DPF (pdays post fertilization)
+### Date 20230412 - 7 DPF (days post fertilization)
 
+
+#### Figures 20230412, F3 7 DPF
 
 ```{r, Fig F3 larvae RR 7 DPF, echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
@@ -295,6 +296,9 @@ dev.off()
 RR_master_F3_7day$pCO2_parents   <- factor(RR_master_F3_7day$pCO2_parents, levels = c("500 uatm", "800 uatm", "1200 uatm"))
 RR_master_F3_7day$pCO2_offspring <- factor(RR_master_F3_7day$pCO2_offspring, levels = c("500 uatm", "800 uatm", "1200 uatm"))
  
+# two data points near 0 
+RR_master_F3_7day %>% dplyr::filter(resp_umol_hr_indiv > 0.0005)
+
 
 # PLOT 7 day larvae from 20230412
 F3_7day_BOXPLOT_Parent <- RR_master_F3_7day %>% 
@@ -312,7 +316,7 @@ F3_7day_BOXPLOT_Parent <- RR_master_F3_7day %>%
                                    scale_fill_manual(values=c("white", "grey60", "grey15")) +
                                    #scale_colour_manual(values=c("forestgreen","orange")) +
                                    theme_classic() + 
-                                   ggtitle("F3 Dhinge 20230412 (parentpCO2)") +
+                                   ggtitle("F3 7 DPF 20230412 (parentpCO2)") +
                                    xlab("Respiration rates - 7 day larvae") +
                                    theme(axis.title.y=element_text(size=7),
                                          axis.title.x=element_text(size=7),
@@ -340,7 +344,7 @@ F3_7day_BOXPLOT_Offspring <- RR_master_F3_7day %>%
                                                 position = position_jitterdodge(0.01), 
                                                 size=1) +
                                      scale_colour_manual(values=c("forestgreen","orange", "purple")) +
-                                     ggtitle("F3 Dhinge 20230412 (larvaepCO2)") +
+                                     ggtitle("F3 7 DPF 20230412 (larvaepCO2)") +
                                      theme_classic() + 
                                      theme(axis.title.y=element_text(size=7),
                                            axis.title.x=element_text(size=7),
@@ -357,7 +361,7 @@ F3_7day_BOXPLOT_Offspring <- RR_master_F3_7day %>%
 
 F3_7day_BOXPLOT_ParentxOffspring <- RR_master_F3_7day %>% 
                                         dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>%  # omits two dramatic outliers CHECK THESE!
-                                        ggplot(aes(x = factor(pCO2_parents), 
+                                        ggplot(aes(x = factor(pCO2_offspring), 
                                                    y = resp_umol_hr_indiv, 
                                                    colour = pCO2_offspring,
                                                    fill = pCO2_parents)) +
@@ -371,7 +375,7 @@ F3_7day_BOXPLOT_ParentxOffspring <- RR_master_F3_7day %>%
                                                scale_fill_manual(values=c("white", "grey60", "grey15")) +
                                                scale_colour_manual(values=c("forestgreen","orange", "purple")) +
                                                theme_classic() + 
-                                               ggtitle("F3 Dhinge 20230412 (larvaepCO2 x parentpCO2)") +
+                                               ggtitle("F3 7 DPF 20230412 (larvaepCO2 x parentpCO2)") +
                                                # ggtitle("F3 Respiration rates - 7 day larvae 20230412") +
                                                theme(axis.title.y=element_text(size=7),
                                                      axis.title.x=element_text(size=7),
@@ -384,7 +388,7 @@ F3_7day_BOXPLOT_ParentxOffspring <- RR_master_F3_7day %>%
                                                             size=0.4, 
                                                             linetype = "dashed", 
                                                             position = position_dodge(preserve = "single")) +
-                                               facet_wrap(~pCO2_offspring) #, scales = "free)
+                                               facet_wrap(~pCO2_parents) #, scales = "free)
 
 # VIEW PLOTS 
 ggarrange( (ggarrange(F3_7day_BOXPLOT_Parent, F3_7day_BOXPLOT_Offspring, ncol=2)),
@@ -396,6 +400,95 @@ ggarrange( (ggarrange(F3_7day_BOXPLOT_Parent, F3_7day_BOXPLOT_Offspring, ncol=2)
 dev.off()
 
 ```
+
+
+#### Stats 20230412, F3 7 DPF
+
+
+```{r, stats F3 7 DPF}
+
+
+
+
+# full model
+
+
+
+RR_F3_7DPF_full.mod <- lm(resp_umol_hr_indiv ~ pCO2_parents * pCO2_offspring,
+                          data = (RR_master_F3_7day %>% dplyr::filter(!resp_umol_hr_indiv > 0.0005)) )
+
+shapiro.test(resid(RR_F3_7DPF_full.mod)) # 0.03848 - non-normal
+leveneTest(RR_F3_7DPF_full.mod) # 0.2965 - homogeneity of variance pass
+summary(aov(RR_F3_7DPF_full.mod))
+#                             Df    Sum Sq   Mean Sq F value Pr(>F)
+# pCO2_parents                 2 2.773e-08 1.386e-08   1.390  0.278
+# pCO2_offspring               2 2.370e-08 1.185e-08   1.188  0.330
+# pCO2_parents:pCO2_offspring  4 1.614e-08 4.034e-09   0.404  0.803
+# Residuals                   16 1.596e-07 9.978e-09
+
+
+
+
+
+# within histories 
+
+
+
+
+### low pCO2
+RR_F3_7DPF_Lowhist.mod <- lm(resp_umol_hr_indiv ~ pCO2_offspring,
+                          data = (RR_master_F3_7day %>% 
+                                    dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>% 
+                                    dplyr::filter(pCO2_parents %in% '500 uatm')) )
+
+shapiro.test(resid(RR_F3_7DPF_Lowhist.mod)) # 0.2857 - normal
+leveneTest(RR_F3_7DPF_Lowhist.mod) # 0.3293 - homogeneity of variance pass
+summary(aov(RR_F3_7DPF_Lowhist.mod))
+#                Df    Sum Sq   Mean Sq F value Pr(>F)
+# pCO2_offspring  2 2.078e-08 1.039e-08   0.791  0.495
+# Residuals       6 7.878e-08 1.313e-08
+
+
+
+
+
+### moderate pCO2
+RR_F3_7DPF_Moderatehist.mod <- lm(resp_umol_hr_indiv ~ pCO2_offspring,
+                          data = (RR_master_F3_7day %>% 
+                                    dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>% 
+                                    dplyr::filter(pCO2_parents %in% '800 uatm')) )
+
+shapiro.test(resid(RR_F3_7DPF_Moderatehist.mod)) # 0.9895 - normal
+leveneTest(RR_F3_7DPF_Moderatehist.mod) # 0.4294 - homogeneity of variance pass
+summary(aov(RR_F3_7DPF_Moderatehist.mod))
+#                Df    Sum Sq   Mean Sq F value Pr(>F)  
+# pCO2_offspring  2 1.426e-08 7.129e-09   13.09 0.0176 *
+# Residuals       4 2.179e-09 5.450e-10
+TukeyHSD(aov(RR_F3_7DPF_Moderatehist.mod))
+# $pCO2_offspring
+#                             diff           lwr          upr     p adj
+# 800 uatm-500 uatm  -2.592220e-06 -7.852437e-05 7.333993e-05 0.9918885
+# 1200 uatm-500 uatm  9.832117e-05  1.514167e-05 1.815007e-04 0.0292334
+# 1200 uatm-800 uatm  1.009134e-04  2.498124e-05 1.768455e-04 0.0196851
+
+
+
+
+### high pCO2
+RR_F3_7DPF_Highhist.mod <- lm(resp_umol_hr_indiv ~ pCO2_offspring,
+                          data = (RR_master_F3_7day %>% 
+                                    dplyr::filter(!resp_umol_hr_indiv > 0.0005) %>% 
+                                    dplyr::filter(pCO2_parents %in% '1200 uatm')) )
+
+shapiro.test(resid(RR_F3_7DPF_Highhist.mod)) # 0.8153 - normal
+leveneTest(RR_F3_7DPF_Highhist.mod) # 0.3722 - homogeneity of variance pass
+summary(aov(RR_F3_7DPF_Highhist.mod))
+#                Df    Sum Sq   Mean Sq F value Pr(>F)
+# pCO2_offspring  2 4.800e-09 2.398e-09   0.183  0.837
+# Residuals       6 7.868e-08 1.311e-08
+
+```
+
 
 
 ### Date 20230421 - 16 DPF (pdays post fertilization)
