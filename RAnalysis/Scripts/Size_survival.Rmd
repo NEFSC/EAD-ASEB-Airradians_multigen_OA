@@ -173,19 +173,51 @@ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/
 F1_length_lineplot_SPAT.ADULT
 dev.off()
 
+
+
+
+```
+
+
+```{r, foodxOA survival and length}
+
+FoodOA_LarvaeSize_Plot <- F1_length_MEANS %>% 
+                                    dplyr::filter(Life_stage %in% 'larvae') %>% 
+                                    dplyr::filter(pH %in% c(7.5, 8.0)) %>% 
+                                      ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
+                                        geom_line( stat = "identity", size=1.0)+  # aes(linetype = factor(pCO2)),
+                                        geom_point(aes(shape=pCO2), size =3)+
+                                        scale_color_manual(values=c("black","black")) +
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000), ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme_bw() +  
+                                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid", "1200 uatm" = "solid"))  +
+                                        theme(text = element_text(size=15))
+
+
 LarvaeSurvival_Summ$pCO2 <- factor(LarvaeSurvival_Summ$pCO2, c("500 μatm","800 μatm","1200 μatm"))
 ## Use geom_line and geom_point to plot over time
-LarvaeSurvival_Plot <-ggplot(data=LarvaeSurvival_Summ, aes(x=Day, y=Survival, color=pCO2)) +
-  geom_line( stat = "identity", size=1.0)+
-  geom_point()+ 
-  scale_color_manual(values=c("darkorange2","forestgreen", "purple"))+
-  geom_errorbar(aes(ymin=Survival-se, ymax=Survival+se), width=.2,
-                position=position_dodge(.1))+
-  theme_bw() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-  scale_x_continuous(name ="Age (days)") +
-  scale_y_continuous(name ="Survival (%)")+
-  theme(text = element_text(size=15))
-LarvaeSurvival_Plot
+
+FoodOA_LarvaeSurvival_Plot <-LarvaeSurvival_Summ %>% 
+                        dplyr::filter(Treatment %in% c('Low', 'Moderate')) %>% 
+                        ggplot(aes(x=Day, y=Survival, color=pCO2)) +
+                        geom_line( stat = "identity", size=1.0)+
+                        geom_point(aes(shape=pCO2), size =3)+ 
+                        scale_color_manual(values=c("black","black")) +
+                        geom_errorbar(aes(ymin=Survival-se, ymax=Survival+se), width=.2,
+                                      position=position_dodge(.1))+
+                        theme_bw() +  
+                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                        scale_x_continuous(name ="Age (days)") +
+                        scale_y_continuous(name ="Survival (%)")+
+                        theme(text = element_text(size=15))
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA-foodsupply/RAnalysis/Output/Survival_size/Larvae_SurvivalSize.pdf"), width=9, height=6)
+ggarrange(FoodOA_LarvaeSize_Plot,FoodOA_LarvaeSurvival_Plot, ncol=2)
+dev.off()
 
 ```
 
@@ -682,6 +714,7 @@ LarvaeSurvival_Plot
 pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/Larval_survival.pdf"),width=10, height=7)
 LarvaeSurvival_Plot
 dev.off()
+
 
 ```
 
