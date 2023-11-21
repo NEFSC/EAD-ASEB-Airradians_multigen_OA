@@ -150,15 +150,39 @@ dev.off()
 
 
 ## Use geom_line and geom_point to plot over time
-F1_length_lineplot_SPAT.ADULT <- F1_length_MEANS %>% 
+F1_length_lineplot_Growout_All <- F1_length_MEANS %>% 
                                     dplyr::filter(!Life_stage %in% 'larvae') %>% 
-                                    mutate(Life_stage = factor(Life_stage, levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
                                     dplyr::filter(!pH %in% 7) %>% 
                                       ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
                                         geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
                                         geom_point()+ 
                                         scale_color_manual(values=c("forestgreen", "darkorange2"))+
-                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000), ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000),
+                                                          ymax=(Length_um/1000)+(se/1000)), width=.2,
+                                                      position=position_dodge(.1))+
+                                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="Age (days)") +
+                                        scale_y_continuous(name ="Shell length (mm)")  + 
+                                        #scale_linetype_manual(values = c("500 μatm" = "solid", "800 μatm" = "solid"))  +
+                                        theme(legend.position="none") +
+                                        theme_classic() +
+                                        ggtitle("F1 length")
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_length_lineplot_growout_all.pdf"), width=9, height=6)
+F1_length_lineplot_Growout_All
+dev.off()
+
+## Use geom_line and geom_point to plot over time
+F1_length_lineplot_SPAT.ADULT <- F1_length_MEANS %>% 
+                                    dplyr::filter(!Life_stage %in% 'larvae') %>% 
+                                    mutate(Life_stage = factor(Life_stage, 
+                                                               levels = c("larvae", "spat", "juvenile", "adult"))) %>% # relevel for the facets to occur in correct order
+                                    dplyr::filter(!pH %in% 7) %>% 
+                                      ggplot(aes(x=Age_DPF, y=(Length_um/1000), color=pCO2)) +
+                                        geom_line(size = 0.5) +  # aes(linetype = factor(pCO2)),
+                                        geom_point()+ 
+                                        scale_color_manual(values=c("forestgreen", "darkorange2"))+
+                                        geom_errorbar(aes(ymin=(Length_um/1000)-(se/1000),
+                                                          ymax=(Length_um/1000)+(se/1000)), width=.2,
                                                       position=position_dodge(.1))+
                                         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
                                         scale_x_continuous(name ="Age (days)") +
