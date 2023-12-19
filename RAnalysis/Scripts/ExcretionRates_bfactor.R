@@ -16,33 +16,75 @@ library(car)
 # SET WORKING DIRECTORY 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 
+
+
 # LOAD DATA & cater to this script 
+
+# Extretion data 
 ER_F1_raw <- read.csv(file="Data/Physiology/Excretion_rates/F1/cumultative_raw/F1_Excretion_master.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
 ER_F2_raw <- read.csv(file="Data/Physiology/Excretion_rates/F2/cumultative_raw/F2_Excretion_master.csv", header=T,stringsAsFactors=FALSE, fileEncoding="latin1") # master data file
 
-Size_data <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T) 
-unique(Size_data$Date)
+# how many datapoints do we have 
+nrow(ER_F1_raw) # 82
+unique(ER_F1_raw$Date) # 20220202 20220301 20211026 20220922 20221026
+nrow(ER_F2_raw) # 84 
+unique(ER_F2_raw$Date) # 20221116 20230131 20230223 20230327
+82+84 # 166 total
 
+# bind together these datasets
 Excretion_data <- rbind(ER_F1_raw, ER_F2_raw)
+nrow(Excretion_data) # 166
 
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# EDIT AND MERG DATA  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# lets look into these data 
+# we have 1-3 measurments per replicate tank
+Excretion_count <- as.data.frame(Excretion_data %>% 
+                        dplyr::select(c(Date, pH, Replicate)) %>% 
+                        dplyr::group_by(Date, pH, Replicate) %>% 
+                        summarise(n=n())) %>% dplyr::mutate(Date = as.factor(Date))
+Excretion_count
 
-list(unique(Excretion_data$Date)) # 20220202 20220301 20211026 20220922 20221026 20221116 20230131 20230223 20230327- call these dates in the size data and only Loligo RR data (large animals measured excretion!)
 
-Size_data_2 <- Size_data %>% 
+# Size data 
+Size_data <- read.csv(file="Data/Physiology/Respiration/Metadata/Reference_resp_size.csv", header=T) 
+
+Size_data_filt <- Size_data %>% 
   dplyr::mutate(Date = paste("20",(format(as.Date(Date, "%m/%d/%Y"), "%y%m%d")), sep ='')) %>% # change format of the date to the format in Excretion_data
   dplyr::select(-c(Food, Shell_tin_weight, tin_plus_shell, Tissue_tin_.weight, tin_plus_tissue, Plate, Vessel_well_volume, Notes)) %>%  # get rid of unneeded column(s)
   dplyr::filter(Date %in% unique(Excretion_data$Date)) %>% # 20220202 20220301 20211026 20220922 20221026- call these dates in te size dat
   dplyr::filter(!Instrument %in% 'SDR_24channel') %>% # dates occasionally have resp for F2s with SDr, call the Loligo system for the correct animals
   dplyr::select(-Instrument) # now we can omit Instrument column
 nrow(Size_data_2) # 166
-nrow(Excretion_data) # 175
+
+# lets look into these data 
+# we have 1-3 measurments per replicate tank
+Size_count <- as.data.frame(Size_data_filt %>% 
+                    dplyr::select(c(Date, pH, Replicate)) %>% 
+                    dplyr::group_by(Date, pH, Replicate) %>% 
+                    summarise(n=n())) %>% dplyr::mutate(Date = as.factor(Date))
+Size_count
+
+
+# sanity check
+# see whether the datasets differ in any way
+setdiff(Size_count, Excretion_count) # nmo output means data are exactly the same!
+
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# EDIT AND MERG DATA  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+list(unique(Excretion_data$Date)) # 20220202 20220301 20211026 20220922 20221026 20221116 20230131 20230223 20230327- call these dates in the size data and only Loligo RR data (large animals measured excretion!)
+
+nrow(Excretion_data) # 166
+
+unique(Size_data_2$Date)
+unique(Excretion_data$Date)
+
 # View(Size_data_2)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
 
-Excretion_data_OM     <- merge(Excretion_data, Size_data_2) %>% dplyr::filter(!Dry_Tissue_weight %in% '<add here>')
+Excretion_data_OM  <- merge(Excretion_data, Size_data_2) %>% dplyr::filter(!Dry_Tissue_weight %in% '<add here>')
+nrow(Excretion_data_OM) # 145 - with the dry tissue weights omiited
 # View(Excretion_data_OM)
 # View(Excretion_data)
 # View(Size_data_2)
@@ -70,22 +112,23 @@ ER_b.factor_PLOT <- Excretion_data_OM %>%
   geom_smooth(method = lm, color = 'red') +
   ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
 ER_b.factor_PLOT
-# b factor == 1.07 for TDW
+# b factor == 1.06 for TDW
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# NNORMALIZED BASED ON B FACTOR 1.11 (ABOVE)::::::::::::::::::::::::::::::
+# NORMALIZED BASED ON B FACTOR 1.06 (ABOVE)::::::::::::::::::::::::::::::
 
 Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
   dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
-  dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (1/(as.numeric(Dry_Tissue_weight)))^1.07) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
+  dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  ExcretionRate_umol_mL_hr*( (1/(as.numeric(Dry_Tissue_weight)))^1.06) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
   dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", pH == 7.5 ~ "800 μatm", pH == 7.0 ~ "1200 μatm"))
-unique(Excretion_master$Date)
 
 
 F1_Excretion_master_bfactor<- Excretion_master %>% 
-                          dplyr::filter(!Date %in% c('20230131','20230223')) 
+                          dplyr::filter(!Date %in% c('20230131','20230223','20230327')) 
+nrow(F1_Excretion_master_bfactor) # 78
 F2_Excretion_master_bfactor <- Excretion_master %>% 
                           dplyr::filter(Date %in% c('20230131','20230223','20230327')) 
+nrow(F2_Excretion_master_bfactor) # 63
 
 # WRITE CSV OF THE MASTER FILE
 write.csv(F1_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")

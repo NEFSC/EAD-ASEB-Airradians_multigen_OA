@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
-
 library(rcompanion)
 library(FSA)
 library(car)
@@ -22,7 +21,8 @@ library(car)
 
 ```{r}
 #Set Path
-setwd("C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae")
+# setwd("C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae")
+setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Larvae")
 ```
 
 ### Load Data
@@ -48,6 +48,7 @@ head(df)
 #Sturcture of the data - to check that variables are properly assigned to facotr or variable
 str(df)
 ```
+
 ```{r}
 
 #df$Par_Off <- paste("Par:",df$Parent, " ", "Off:", df$Treatment)
@@ -252,7 +253,109 @@ ggplot(data=df_6, aes(x=Treatment, y=Percent.deformed, fill=Treatment)) +
   #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   labs(title="Percent Deformed, grouped by parentage (2023: F3 Larvae) ", x ="Treatment", y = "Percent Deformed")+
   facet_wrap("Parent")
+
+
+
+Run6_mean_deformaties <- df_6 %>% 
+                dplyr::select(Treatment,Parent,Percent.deformed) %>% 
+                na.omit() %>% 
+                dplyr::group_by(Treatment,Parent) %>% 
+                dplyr::summarise(mean_Perc_def = mean(Percent.deformed), 
+                                 n           = n(),
+                                 sd_Perc_def   = sd(Percent.deformed),
+                                 se_Perc_def   = sd_Perc_def/(sqrt(n)))
+
+library(forcats)
+
+ggplot(Run6_mean_deformaties) +
+  geom_errorbar(aes(x=Treatment, 
+                     ymin=mean_Perc_def-se_Perc_def, 
+                     ymax=mean_Perc_def+se_Perc_def), 
+                 width=0, # removes the horizontal line
+                 colour="black", 
+                 size=1) +
+  geom_bar(aes(x=Treatment, y=mean_Perc_def,fill=factor(Treatment)), 
+            stat="identity",
+           width = 0.75,
+           alpha = 0.5) +
+  labs(title="F3 Abnormalities- Full cross exposure", 
+      x ="pCO2 Offspring Exposure", 
+      y = "Percent Abnormalities") +
+   scale_fill_manual(breaks=c("Low OA", "Moderate OA", "High OA"), 
+                       values=c("forestgreen","orange", "purple")) +
+  theme_classic() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.text=element_text(size=12),
+        legend.position="none") +
+  facet_wrap(~Parent)
+
+
+Run6PLot_MeanSE_deformaties <- ggplot(data=Run6_mean_deformaties, 
+                                       aes(x=fct_relevel(Treatment, c("Low OA", "Moderate OA", "High OA")), 
+                                           y=Percent.deformed_trans, 
+                                           colour=fct_relevel(Treatment, c("Low OA", "Moderate OA", "High OA")))) +
+                                       # scale_linetype(c("dotted","solid")) +
+                                       # scale_linetype_manual(breaks=c("Low", "High"), values=c("dashed","solid")) +
+                                       scale_colour_manual(breaks=c("Low OA", "Moderate OA", "High OA"), 
+                                                           values=c("forestgreen","orange", "purple")) +
+                                       geom_bar() + 
+                                       stat_summary(fun.y="mean", size = 0.8, 
+                                                    position = position_dodge2(width = 1)) +
+                                       stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                                    fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                                    geom = 'errorbar', 
+                                                    width = 0,
+                                                    position = position_dodge2(width = 1)) +
+                                       labs(title="F3 Abnormalities- Full cross exposure", 
+                                            x ="pCO2 Offspring Exposure", 
+                                            y = "Percent Abnormalities") +
+                                       theme_classic() +
+                                       theme(panel.grid.major = element_blank(), 
+                                             panel.grid.minor = element_blank(), 
+                                             axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                                             axis.text=element_text(size=12),
+                                            legend.position="none") +
+                                       facet_wrap(~Parent)
+Run6PLot_MeanSE_deformaties
+
 ```
+
+
+```{r, F3 run 6 stats by history}
+
+df_6_HIGH     <- df_6 %>% dplyr::filter(Parent %in% "HIGH")
+df_6_MODERATE <- df_6 %>% dplyr::filter(Parent %in% "MODERATE")
+df_6_LOW      <- df_6 %>% dplyr::filter(Parent %in% "LOW")
+
+
+anova_HIGH <- lm(Percent.deformed_trans ~ Treatment, data = df_6_HIGH)
+shapiro.test(resid(anova_HIGH)) # 0.7455
+leveneTest(anova_HIGH) # 0.865
+summary(aov(anova_HIGH))
+#             Df   Sum Sq  Mean Sq F value Pr(>F)
+# Treatment    2 0.000305 0.000152   0.033  0.968
+# Residuals    6 0.027538 0.004590
+
+anova_MODERATE <- lm(Percent.deformed_trans ~ Treatment, data = df_6_MODERATE)
+shapiro.test(resid(anova_MODERATE)) # 0.5231
+leveneTest(anova_MODERATE) # 0.7784
+summary(aov(anova_MODERATE))
+#             Df Sum Sq Mean Sq F value Pr(>F)
+# Treatment    2 0.1244 0.06218   2.761  0.141
+# Residuals    6 0.1351 0.02252
+
+anova_LOW <- lm(Percent.deformed_trans ~ Treatment, data = df_6_LOW)
+shapiro.test(resid(anova_LOW)) # 0.9679
+leveneTest(anova_LOW) # 0.102
+summary(aov(anova_LOW))
+#             Df Sum Sq Mean Sq F value Pr(>F)  
+# Treatment    2 0.2222 0.11108   5.188 0.0603 .
+# Residuals    5 0.1071 0.02141
+
+```
+
 
 ```{r}
 leveneTest(Percent.deformed_trans ~ Treatment, data=df_6)
