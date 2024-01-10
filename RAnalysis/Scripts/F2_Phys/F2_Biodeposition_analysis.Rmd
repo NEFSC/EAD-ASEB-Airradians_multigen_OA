@@ -1,0 +1,603 @@
+---
+title: "F2_Biodeposition_analysis"
+author: "Samuel Gurr"
+date: "2024-01-10"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EAD-ASEB-Airradians_Larvae_crossgen_OA/RAnalysis") # Sam's
+```
+
+
+
+```{r load libraries}
+
+library(ggplot2)
+library(dplyr)
+library(car)
+
+```
+
+
+```{r load data}
+
+# F1s
+
+Biodep_Master_F2 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
+nrow(Biodep_Master_F2) # 43
+Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # omit #6 pH7.5 on 20221027
+nrow(Biodep_Master_F2) # 43 - no NAs
+
+```
+
+
+```{r statistics}
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# STATISTICS::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+# (1) First, run anova within date for all records (for looped!)
+ANOVA_Dates       <- as.data.frame(unique(Biodep_Master_F2$Date)) # call a list to loop in 
+
+AOVdf_total       <- data.frame() # start dataframe, this will be the master output
+
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+
+colnames(DF_loop) <- c('Date', 'Metric', 'model', 'ShapiroWilk', 
+                       'ResidNorm', 'Levenes', 'HomogVar', 
+                       'DF.num' , 'DF.denom',  'F_val','P_val', 'SigDif') # names for comuns in the for loop
+
+cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct', 
+                                     'CR_correct', 'RR_Percent',
+                                     'OIR','AR','AE')) %>% 
+                    `colnames<-`('biodep_meas')
+
+for (i in 1:nrow(ANOVA_Dates)) {
+  
+  date_loop     <- as.character(ANOVA_Dates[i,])
+  data_loop     <- Biodep_Master_F2 %>% 
+                          dplyr::filter(Date %in% date_loop) %>% 
+                          dplyr::select(Date, treatment, tank_ID.x, cols_m_loop$biodep_meas)
+  
+        for (m in 4:ncol(data_loop)) { # run anova and normality tests for each of these wihtin data i
+        # high cholorphyll model
+        
+        date_loop_MEAN <- as.data.frame(
+                              data_loop %>% 
+                              summarySE(measurevar=colnames(data_loop[m]), groupvars=c("Date","treatment","tank_ID.x")) 
+                              )
+          
+        DF_loop$Date        <- date_loop
+        DF_loop$Metric      <- colnames(date_loop_MEAN[5])
+        
+        # run both modles
+        AOVmod              <- aov(lm(date_loop_MEAN[,5] ~ as.factor(date_loop_MEAN$treatment)))
+        KWmod               <- kruskal.test(date_loop_MEAN[,5]  ~ as.factor(date_loop_MEAN$treatment))
+        
+        # normality tests for the anova model - asign 
+        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+          'YES'} else {'NO'}
+        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+          'YES'} else {'NO'}
+        
+       if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+          DF_loop$model       <- 'one-way AOV; x ~ treatment'
+          DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+          DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+          DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+          DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+          DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+            'NO'} else {'YES'}
+
+        } else {
+          DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
+          DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
+          DF_loop$DF.denom    <- NA
+          DF_loop$F_val       <- NA
+          DF_loop$P_val       <- (KWmod)[[3]]
+          DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
+            'NO'} else {'YES'}
+        }
+        
+        # asign loop and cumulative output table
+        df          <- data.frame(DF_loop) # name dataframe for this single row
+        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
+        print(AOVdf_total) # print to monitor progress
+        }
+}
+View(AOVdf_total) # view all the anova tests within data 
+View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
+# WRITE CSV OF THE MASTER FILE
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_ANOVA_table.csv")
+
+
+
+```
+
+
+```{r plots}
+
+# what effects are sigificnat?
+AOVdf_total %>% dplyr::filter(P_val < 0.05) %>% dplyr::select(Date, Metric)
+# 20230224	SE			
+# 20230224	OIR			
+# 20230224	CR_correct			
+# 20230224	RR_Percent			
+# 20230224	AR			
+# 20230224	AE		
+
+# 20230328	SE			
+# 20230328	AE
+
+
+# add a few columns for plotting 
+
+Biodep_Master_F2 <- Biodep_Master_F2 %>% 
+                        dplyr::mutate(Age = case_when(Date == "20230201" ~  190, 
+                                                      Date == "20230224" ~  213, 
+                                                      Date == "20230328" ~  245)) %>% 
+                        dplyr::mutate(pCO2 = case_when(treatment == 8 ~ "500 μatm", # add column for pCO2
+                                                       treatment == 7.5 ~ "800 μatm",
+                                                       treatment == 7.0 ~ "1200 μatm")) %>% # %>% #edit this!
+                        dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm","1200 μatm")))# relevel for plotting!
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# PLOTTING :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# Selection Efficiency
+
+F2_SE_MEANS <- summarySE(Biodep_Master_F2, measurevar="SE", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_SE_Plot  <- F2_SE_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=SE, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=SE-se, 
+                                            ymax=SE+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Selection Efficiency") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Selection Efficiency")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+# Orgnaic Ingestion Rate
+
+F2_OIR_MEANS <- summarySE(Biodep_Master_F2, measurevar="OIR", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_OIR_Plot  <- F2_OIR_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=OIR, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=OIR-se, 
+                                            ymax=OIR+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Organic Ingestion Rate") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Orgnaic Ingestion Rate")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+
+# Clearance Rate (corrected)
+
+F2_CR_correct_MEANS <- summarySE(Biodep_Master_F2, measurevar="CR_correct", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_CR_correct_Plot  <- F2_CR_correct_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=CR_correct, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=CR_correct-se, 
+                                            ymax=CR_correct+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Clearance Rate (corrected)") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Clearance Rate (corrected)")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+# Rejection Rate (corrected)
+
+F2_RR_correct_MEANS <- summarySE(Biodep_Master_F2, measurevar="RR_correct", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_RR_correct_Plot  <- F2_RR_correct_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=RR_correct, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=RR_correct-se, 
+                                            ymax=RR_correct+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Rejection Rate (corrected)") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+  
+                          scale_y_continuous(name ="Rejection Rate (corrected)")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+# Absorption Rate 
+
+F2_AR_MEANS <- summarySE(Biodep_Master_F2, measurevar="AR", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_AR_Plot  <- F2_AR_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=AR, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=AR-se, 
+                                            ymax=AR+se), 
+                                        width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Absorption Rate") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Absorption Rate")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+# Absorption Efficiency 
+
+F2_AE_MEANS <- summarySE(Biodep_Master_F2, measurevar="AE", 
+                              groupvars=c("Age", "pCO2"))
+
+F2_AE_Plot  <- F2_AE_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=AE, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=AE-se, 
+                                            ymax=AE+se), 
+                                        width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Absorption Efficiency") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Absorption Efficiency")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+ggarrange(F2_OIR_Plot,F2_RR_correct_Plot, F2_CR_correct_Plot,
+          F2_SE_Plot, F2_AR_Plot, F2_AE_Plot,
+          ncol = 3, nrow = 2)
+
+# output the plot 
+library(ggpubr)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_plots.pdf"), width = 10, height= 6)
+ggarrange(F2_OIR_Plot,F2_RR_correct_Plot, F2_CR_correct_Plot,
+          F2_SE_Plot, F2_AR_Plot, F2_AE_Plot,
+          ncol = 3, nrow = 2)
+dev.off()
+
+
+```
+
+# F2S ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Biodep_Master_F2$pCO2 <- factor(Biodep_Master_F2$pCO2, 
+                                levels = c("500 μatm", "800 μatm", "1200 μatm"))
+
+
+AE_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , AE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Efficiency, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# AE_boxplot
+
+
+AR_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , AR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Rate, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# AR_boxplot
+
+OIR_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , OIR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Organic Ingestion Rate, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# OIR_boxplot
+
+
+FR_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , FR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Filtration Rate, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# FR_boxplot
+
+RR_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Percent Rejection Rate, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# RR_boxplot
+
+SE_boxplot_F2 <- Biodep_Master_F2 %>% 
+  ggplot(aes(pCO2 , SE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange", "purple")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Selection Efficiency, F2 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Date)
+# SE_boxplot
+
+# output the plot 
+library(ggpubr)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2_Biodeposition_Boxplots.pdf"), width = 10, height= 8)
+ggarrange(SE_boxplot_F2,
+          RR_boxplot_F2, 
+          OIR_boxplot_F2, 
+          FR_boxplot_F2, 
+          AE_boxplot_F2, 
+          AR_boxplot_F2)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CR_correct_boxplot <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C',
+                                        Date == '20221027' ~ '13.3C')) %>%  
+  #filter(!AE < 0) %>% 
+  ggplot(aes(pCO2 , CR_correct , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Clearance Rate, F1 Scallops") +
+  theme(axis.text.x=element_blank()) +
+  facet_wrap(~Temperature)
+CR_correct_boxplot
+ 
+
+
+
+
+
+#  KAITE'S mas POSTER FIGURE FOR MAS 2022
+
+Biodep_Master_16_20C <- Biodep_Master %>% 
+  dplyr::mutate(Temperature = case_when(Date == '20220302' ~ '16C', 
+                                        Date == '20220923' ~ '20C',
+                                        Date == '20221027' ~ '13.3C')) %>%  
+  dplyr::filter(Temperature %in% c('16C', '20C'))
+
+
+
+AE_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , AE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Assimilation Efficiency") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank()) +
+  facet_wrap(~Temperature)
+# AE_boxplot
+
+OIR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , OIR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Organic Ingestion Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# OIR_boxplot
+
+
+FR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , FR , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Filtration Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# FR_boxplot
+
+RR_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , RR_Percent , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Percent Rejection Rate") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+# RR_boxplot
+
+SE_boxplot <- Biodep_Master_16_20C %>% 
+  ggplot(aes(pCO2 , SE , fill = pCO2)) +
+  theme(panel.grid=element_blank()) +
+  geom_boxplot(size=0.2, alpha=0.1, aes(fill=pCO2)) +
+  scale_fill_manual(values=c("forestgreen","orange")) +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_classic() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="black", fill="white") +
+  ggtitle("Selection Efficiency") +
+  theme(axis.text.x=element_blank(),axis.title.x = element_blank(),legend.position = "none") +
+  facet_wrap(~Temperature)
+
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_Boxplots_MAS_poster.pdf"), width = 20, height= 4)
+ggarrange(SE_boxplot,RR_boxplot, OIR_boxplot, FR_boxplot, nrow = 1, ncol = 5)
+dev.off()
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/AE_Boxplot_MAS_poster.pdf"), width = 5, height= 4)
+ggarrange(AE_boxplot, nrow = 1, ncol = 1)
+dev.off()

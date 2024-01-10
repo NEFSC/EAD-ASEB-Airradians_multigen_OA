@@ -1,0 +1,397 @@
+---
+title: "F2_DryWeights_analysis"
+author: "Samuel Gurr"
+date: "2024-01-05"
+output: html_document
+---
+
+# Objectives: 
+
+* (i) view the mean, variation, and number of samples
+
+* (ii) plot the data 
+
+* (iii) run stats
+
+### set up load libraries and set working dir for the script 
+```{r setup, include= FALSE, echo = FALSE}
+
+# LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(lme4)
+library(lmerTest)
+library(performance)
+library(car)
+library(ggpubr)
+library(SciViews)
+library(Rmisc)
+
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+
+```
+
+## Load data 
+
+```{r, load data}
+
+# F2s
+F2_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F2/cumulative_raw/F2_dry_weights_raw_2.csv",
+                          header=T,stringsAsFactors=FALSE, fileEncoding="latin1") 
+
+# unique dates for the dry weight data 
+unique(F2_dryweights$Date_sampled)
+# View(F1_dryweights)
+
+F2_dryweights <- F2_dryweights[!is.na(F2_dryweights$pH),] %>% # master data file
+                    dplyr::mutate(pCO2 = as.factor(case_when(pH == 8 ~ "500 μatm", # add column for pCO2
+                                                   pH == 7.5 ~ "800 μatm",
+                                                   pH == 7 ~ "1200 μatm"))) %>% 
+                    dplyr::mutate(Age = case_when(Date_sampled == "11/16/2022" ~  93,
+                                                  Date_sampled == "1/27/2023" ~  165,
+                                                  Date_sampled == "2/27/2023" ~  196,
+                                                  Date_sampled == "3/23/2023" ~  220,
+                                                  Date_sampled == "3/28/2023" ~  225)) %>% # %>% #edit this!
+                    dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm","1200 μatm")))# relevel for plotting!
+
+```
+
+# (i) summary of data 
+
+```{r dry weights, echo = FALSE}
+F2_dryweights$Shell_length_mm <- as.numeric(F2_dryweights$Shell_length_mm)
+F2_dryweights[!is.na(F2_dryweights$Shell_length_mm),] %>%  # ommit rows with NA for shell length - if not you get errors here
+            summarySE(measurevar="Shell_length_mm", groupvars=c("Age","pCO2")) %>% 
+            dplyr::arrange(Shell_length_mm)
+
+F2_dryweights[!is.na(F2_dryweights$Shell_length_mm),] %>%  # ommit rows with NA for shell length - if not you get errors here
+            summarySE(measurevar="Shell_length_mm", groupvars=c("Age","pCO2","Tank_Replicate")) %>% 
+            dplyr::arrange(Shell_length_mm) %>% 
+            dplyr::arrange(Age, pCO2, Tank_Replicate)
+
+```
+
+
+# (ii) plot data 
+
+### Dry weights data
+
+* raw data 
+
+* normalized to shell size 
+
+```{r, F1 dry shell weight master file}
+
+# data - clean up the master file, calc length normalized weight for plotting
+# select only necessary columns 
+# filter for those with > 0 weight
+# as numeric for plotting and stats
+
+F2_dry_weights_master <- F2_dryweights %>% 
+                              dplyr::select(c('Age','pH','Tank_Replicate', 'pCO2', # sample metadata
+                                              'Shell_length_mm', # length to normalize
+                                              'Dry_Shell_weight_g' , 'Dry_Tissue_weight_g', 'Dry_Gonad_weight_g', 'Dry_Muscle_weight_g')) %>% 
+                              # dplyr::filter(!Shell_length_mm == 'MEASURE THIS') %>%  # check this row, omit for now
+                              dplyr::filter(!Dry_Shell_weight_g < 0) %>%  # one sample with a negative value here,.. omit!
+                              #na.omit() %>% 
+                              dplyr::mutate(Dry_Shell_weight_g = as.numeric(Dry_Shell_weight_g)) %>% 
+                              dplyr::mutate(Shell_length_mm = as.numeric(Shell_length_mm)) %>% 
+            # NOTE: for F2s, we have data on 11/16 that was solely measured for dry tissue and dry shell weights. Tissue including the adductor and remaining somatic
+            # however all data thereafter separates out gonad and muscle from remaining tissue (as the same 'tissue' columns on 11/16) thereafore we need 
+            # do be diligent here to not confound these data comparisons - below I remedied this matter
+                              dplyr::mutate(Dry_Somatic_weight_g = case_when(Age == 93 ~ Dry_Tissue_weight_g, # age 93 is "11/16/2022" - done above in prev cluster
+                                                                            .default = Dry_Tissue_weight_g + Dry_Muscle_weight_g)) %>% # in all other cases add tissue and muscle
+                              # length normalize all data
+                              dplyr::mutate(Dry_Shell_weight_g_LENGTHnormalized    = Dry_Shell_weight_g/Shell_length_mm, # nromalized dry weights to length
+                                            Dry_Somatic_weight_g_LENGTHnormalized  = Dry_Somatic_weight_g/Shell_length_mm,
+                                            Dry_Gonad_weight_g_LENGTHnormalized    = Dry_Gonad_weight_g/Shell_length_mm,
+                                            Dry_Muscle_weight_g_LENGTHnormalized   = Dry_Muscle_weight_g/Shell_length_mm) %>% 
+                              dplyr::mutate(Prop_Gonad_weight = Dry_Gonad_weight_g_LENGTHnormalized /
+                                                               (Dry_Gonad_weight_g_LENGTHnormalized + Dry_Somatic_weight_g_LENGTHnormalized))
+
+```
+
+
+# Raw dry shell weights 
+
+```{r Figures - raw dry shell weigts}
+
+# Not normalized to shell length
+F2_dry_shell_Summ <-summarySE(F2_dry_weights_master, measurevar="Dry_Shell_weight_g", 
+                              groupvars=c("Age", "pCO2"))
+F2_dry_shell_Summ # print the summary table 
+
+
+DryShellWeight_Boxplot <- F2_dry_weights_master %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=Dry_Shell_weight_g, 
+                                     color=as.factor(pCO2))) +
+                          geom_boxplot(position=position_dodge(.8))+ 
+                          geom_point(position=position_jitterdodge(0.8))+
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          ggtitle("Raw Dry Shell Weights (g) - all data") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(),
+                                panel.grid.minor = element_blank())+ 
+                          scale_y_continuous(name ="Dry shell weight (g)")+
+                          theme(text = element_text(size=10))
+                          
+DryShellWeight_MeanSE <- F2_dry_shell_Summ %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=Dry_Shell_weight_g, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple3"))+
+                          geom_errorbar(aes(ymin=Dry_Shell_weight_g-se, 
+                                            ymax=Dry_Shell_weight_g+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Raw Dry Shell Weights (g) - mean+-SE") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank())+ 
+                          scale_y_continuous(name ="Dry shell weight (g)")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
+ggarrange(DryShellWeight_Boxplot, DryShellWeight_MeanSE, nrow=2)
+
+
+```
+
+
+#  NORMALIZED to shell length
+
+```{r Figures - normalized to length dry shell weigts}
+
+
+
+F2_dry_shell_NORM_Summ <- F2_dry_weights_master[!is.na(F2_dry_shell$Dry_Shell_weight_g_LENGTHnormalized),] %>% 
+                            summarySE(measurevar="Dry_Shell_weight_g_LENGTHnormalized", 
+                                      groupvars=c("Age", "pCO2" ,"Tank_Replicate"))
+F2_dry_shell_NORM_Summ # print the summary table 
+
+# points are the mean for each replicate tank 
+DryShellWeight_NORM_Boxplot <- F2_dry_shell_NORM_Summ %>% 
+                                ggplot(aes(x=as.factor(Age), 
+                                           y=Dry_Shell_weight_g_LENGTHnormalized, 
+                                           color=as.factor(pCO2))) +
+                                geom_boxplot(position=position_dodge(.8))+ 
+                                geom_point(position=position_jitterdodge(0.8))+
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("Length-normalized Dry Shell Weights (g) - all data") +
+                                theme_classic() +  
+                                xlab("Age (dpf)") +
+                               #xlab("Age (d)") +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                scale_y_continuous(name ="Dry shell weight (g)")+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10))
+
+# now take the means by Date pCO2  and tank and remove the tank group - means and st error by date and pCO2
+F2_dry_shell_NORM_MEAN <- F2_dry_shell_NORM_Summ %>% 
+                            summarySE(measurevar="Dry_Shell_weight_g_LENGTHnormalized", 
+                                      groupvars=c("Age", "pCO2"))
+
+
+DryShellWeight_NORM_MeanSE <- F2_dry_shell_NORM_MEAN %>% 
+                                ggplot(aes(x=as.factor(Age), 
+                                           y=Dry_Shell_weight_g_LENGTHnormalized, 
+                                           color=as.factor(pCO2))) +
+                                geom_point(position=position_dodge(.5))+ 
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                geom_errorbar(aes(ymin=Dry_Shell_weight_g_LENGTHnormalized-se, 
+                                                  ymax=Dry_Shell_weight_g_LENGTHnormalized+se), 
+                                              width=.2,
+                                              position=position_dodge(.5))+
+                                ggtitle("Length-normalized Dry Shell Weights (g) - mean+-SE") +
+                                theme_classic() +  
+                                xlab("Age (dpf)") +
+                               #xlab("Age (d)") +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                scale_y_continuous(name ="Dry shell weight (g)")+
+                                geom_line(stat = "identity", size=1.0)+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10)) 
+
+ggarrange(DryShellWeight_NORM_Boxplot, DryShellWeight_NORM_MeanSE, nrow=2)
+
+
+```
+
+
+#  Shell weight by length association
+
+```{r Figures - normalized to length dry shell weigts}
+F2_DryShell_ShellLength_Regression <- F2_dry_weights_master %>%
+                                dplyr::filter(!Shell_length_mm > 70) %>% 
+                                ggplot(aes(x=Shell_length_mm, 
+                                           y=Dry_Shell_weight_g, 
+                                           color=as.factor(pCO2))) +
+                                geom_point(position=position_dodge(.5))+ 
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("F2 (Age 93-295 DPF): Dry SHELL weights v. shell length") +
+                                theme_classic() +  
+                                xlab("Shell length (mm)") +
+                               #xlab("Age (d)") +
+                                scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                geom_smooth(method = "loess", se=TRUE)+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10))  +
+                                scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) 
+
+
+
+F2_DrySomatic_ShellLength_Regression <- F2_dry_weights_master %>%
+                                dplyr::filter(!Shell_length_mm > 70) %>% 
+                                ggplot(aes(x=Shell_length_mm, 
+                                           y=Dry_Somatic_weight_g, 
+                                           color=as.factor(pCO2))) +
+                                geom_point(position=position_dodge(.5))+ 
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("F2 (Age 93-295 DPF): Dry SOMATIC weights v. shell length") +
+                                theme_classic() +  
+                                xlab("Shell length (mm)") +
+                               #xlab("Age (d)") +
+                                scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                geom_smooth(method = "loess", se=TRUE)+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10))  +
+                                scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) 
+
+
+F2_DryGonad_ShellLength_Regression <- F2_dry_weights_master %>%
+                                dplyr::filter(!Shell_length_mm > 70) %>% 
+                                ggplot(aes(x=Shell_length_mm, 
+                                           y=Dry_Gonad_weight_g, 
+                                           color=as.factor(pCO2))) +
+                                geom_point(position=position_dodge(.5))+ 
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("F2 (Age 93-295 DPF): Dry GONAD weights v. shell length") +
+                                theme_classic() +  
+                                xlab("Shell length (mm)") +
+                               #xlab("Age (d)") +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                scale_y_continuous(name ="Dry somatic tissue weight (g)")+
+                                geom_smooth(method = "loess", se=TRUE)+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10)) +
+                                scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) 
+
+
+F2_Prop_ShellLength_Regression <- F2_dry_weights_master %>%
+                                      dplyr::filter(!Shell_length_mm > 70) %>% 
+                                      dplyr::filter(!Prop_Gonad_weight < 0) %>% 
+                                      ggplot(aes(x=as.numeric(Shell_length_mm), 
+                                                 y=as.numeric(Prop_Gonad_weight), 
+                                                 color=as.factor(pCO2),
+                                                 group=as.factor(pCO2))) +
+                                      geom_point()+ 
+                                      scale_color_manual(values=c("forestgreen",
+                                                                  "darkorange2",
+                                                                  "purple3"))+
+                                      ggtitle("F2 (Age 93-295 DPF): Proportion gonad weight") +
+                                      theme_classic() +  
+                                      xlab("Shell length (mm)") +
+                                     #xlab("Age (d)") +
+                                      theme(panel.grid.major = element_blank(), 
+                                            panel.grid.minor = element_blank())+ 
+                                      scale_y_continuous(name ="Proportion dry gonad weight (% fraction)")+
+                                      stat_smooth(method = 'nls', 
+                                                  method.args = list(start = c(a=0.1, b=0.001)), 
+                                                  formula = y~a*exp(b*x), colour = 'grey10', se = FALSE) +
+                                      #geom_smooth(method = "lm", se=FALSE) +
+                                      labs(color='pCO2 treatment') +
+                                      theme(text = element_text(size=10)) +
+                                      scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                      #10 % gonad tissue in individuals 7 mm smaller 
+                                      geom_hline(yintercept = 0.1, color = "grey30", size = 1, linetype = "dashed", alpha = 0.5) +
+                                      geom_vline(xintercept = 31, color = "purple3", size = 1, linetype = "dashed", alpha = 0.5) + 
+                                      geom_vline(xintercept = 40, color = "forestgreen", size = 1, linetype = "dashed", alpha = 0.5) +
+                                      # 15 % gonad tissue in individuals 10 mm smaller 
+                                      geom_hline(yintercept = 0.2, color = "grey30", size = 1, linetype = "dotted", alpha = 0.5) +
+                                      geom_vline(xintercept = 40, color = "purple3", size = 1, linetype = "dotted", alpha = 0.5) + 
+                                      geom_vline(xintercept = 48, color = "forestgreen", size = 1, linetype = "dotted", alpha = 0.5) 
+# F2_Prop_ShellLength_Regression
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/DryWeights/F2/F2_DryWeights.pdf"), width = 12, height = 8)
+ggarrange(F2_DryShell_ShellLength_Regression, F2_DrySomatic_ShellLength_Regression, 
+          F2_DryGonad_ShellLength_Regression, F2_Prop_ShellLength_Regression)
+dev.off()
+```
+
+
+```{r}
+# PORPORTION GONAD WEIGHT
+
+F2_gonad_prop_summ <- F2_dry_weights_master[!is.na(F2_dry_weights_master$Prop_Gonad_weight),] %>% 
+                            summarySE(measurevar="Prop_Gonad_weight", 
+                                      groupvars=c("Age", "pCO2" ,"Tank_Replicate"))
+F2_gonad_prop_summ # print the summary table 
+
+# points are the mean for each replicate tank 
+Prop_Gonad_Boxplot <- F2_gonad_prop_summ %>% 
+                                ggplot(aes(x=as.factor(Age), 
+                                           y=Prop_Gonad_weight, 
+                                           color=as.factor(pCO2))) +
+                                geom_boxplot(position=position_dodge(.8))+ 
+                                geom_point(position=position_jitterdodge(0.8))+
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("F2 (Age 93-295 DPF): Proportion Gonad Weight") +
+                                theme_classic() +  
+                                xlab("Age (dpf)") +
+                               #xlab("Age (d)") +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                scale_y_continuous(name ="Proportion gonad weight (g)")+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10))
+
+F2_PropGonad_Regression <- F2_gonad_prop_summ %>%
+                                ggplot(aes(x=as.factor(Age), 
+                                           y=Prop_Gonad_weight, 
+                                           color=as.factor(pCO2))) +
+                                geom_point(position=position_dodge(.5))+ 
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2",
+                                                            "purple3"))+
+                                ggtitle("F2 (Age 93-295 DPF):  Proportion Gonad Weight") +
+                                theme_classic() +  
+                                xlab("Age (dpf)") +
+                               #xlab("Age (d)") +
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                                scale_y_continuous(name ="Proportion gonad weight (g)")+
+                                geom_smooth(method = "loess", se=FALSE)+
+                                labs(color='pCO2 treatment') +
+                                theme(text = element_text(size=10)) 
+
+```

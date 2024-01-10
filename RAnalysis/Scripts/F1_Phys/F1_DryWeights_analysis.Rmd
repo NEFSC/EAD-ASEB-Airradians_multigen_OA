@@ -83,10 +83,12 @@ F1_dryweights[!is.na(F1_dryweights$Shell_length_mm),] %>%  # ommit rows with NA 
 
 * normalized to shell size 
 
-```{r, dry shell weight figures}
+```{r, F1 dry shell weight master file}
 
-# data 
-
+# data - clean up the master file, calc length normalized weight for plotting
+# select only necessary columns 
+# filter for those with > 0 weight
+# as numeric for plotting and stats
 F1_dry_shell <- F1_dryweights %>% 
   dplyr::select(c('Age','pH','pH_Replicate', 'pCO2', 'Shell_length_mm','Dry_Shell_weight_g')) %>% 
   # dplyr::filter(!Shell_length_mm == 'MEASURE THIS') %>%  # check this row, omit for now
@@ -97,7 +99,12 @@ F1_dry_shell <- F1_dryweights %>%
   dplyr::mutate(Dry_Shell_weight_g_LENGTHnormalized = Dry_Shell_weight_g/Shell_length_mm)
 
 
+```
 
+
+# Raw dry shell weights 
+
+```{r Figures - raw dry shell weigts}
 
 # Not normalized to shell length
 
@@ -114,12 +121,14 @@ DryShellWeight_Boxplot <- F1_dry_shell %>%
                                      color=as.factor(pCO2))) +
                           geom_boxplot(position=position_dodge(.8))+ 
                           geom_point(position=position_jitterdodge(0.8))+
-                          scale_color_manual(values=c("forestgreen","darkorange2"))+
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2"))+
                           ggtitle("Raw Dry Shell Weights (g) - all data") +
                           theme_classic() +  
                           xlab("Age (dpf)") +
                          #xlab("Age (d)") +
-                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          theme(panel.grid.major = element_blank(),
+                                panel.grid.minor = element_blank())+ 
                           scale_y_continuous(name ="Dry shell weight (g)")+
                           theme(text = element_text(size=15))
                           
@@ -128,7 +137,8 @@ DryShellWeight_MeanSE <- F1_dry_shell_Summ %>%
                                      y=Dry_Shell_weight_g, 
                                      color=as.factor(pCO2))) +
                           geom_point(position=position_dodge(.5))+ 
-                          scale_color_manual(values=c("forestgreen","darkorange2"))+
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2"))+
                           geom_errorbar(aes(ymin=Dry_Shell_weight_g-se, 
                                             ymax=Dry_Shell_weight_g+se), width=.2,
                                         position=position_dodge(.5))+
@@ -136,7 +146,8 @@ DryShellWeight_MeanSE <- F1_dry_shell_Summ %>%
                           theme_classic() +  
                           xlab("Age (dpf)") +
                          #xlab("Age (d)") +
-                          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank())+ 
                           scale_y_continuous(name ="Dry shell weight (g)")+
                           geom_line(stat = "identity", size=1.0)+
                           theme(text = element_text(size=15))
@@ -144,10 +155,12 @@ DryShellWeight_MeanSE <- F1_dry_shell_Summ %>%
 ggarrange(DryShellWeight_Boxplot, DryShellWeight_MeanSE, nrow=2)
 
 
-
+```
 
 
 #  NORMALIZED to shell length
+
+```{r Figures - normalized to length dry shell weigts}
 
 
 
@@ -163,12 +176,14 @@ DryShellWeight_NORM_Boxplot <- F1_dry_shell %>%
                                            color=as.factor(pCO2))) +
                                 geom_boxplot(position=position_dodge(.8))+ 
                                 geom_point(position=position_jitterdodge(0.8))+
-                                scale_color_manual(values=c("forestgreen","darkorange2"))+
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2"))+
                                 ggtitle("Length-normalized Dry Shell Weights (g) - all data") +
                                 theme_classic() +  
                                 xlab("Age (dpf)") +
                                #xlab("Age (d)") +
-                                theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
                                 scale_y_continuous(name ="Dry shell weight (g)")+
                                 theme(text = element_text(size=15))
                           
@@ -177,7 +192,8 @@ DryShellWeight_NORM_MeanSE <- F1_dry_shell_NORM_Summ %>%
                                            y=Dry_Shell_weight_g_LENGTHnormalized, 
                                            color=as.factor(pCO2))) +
                                 geom_point(position=position_dodge(.5))+ 
-                                scale_color_manual(values=c("forestgreen","darkorange2"))+
+                                scale_color_manual(values=c("forestgreen",
+                                                            "darkorange2"))+
                                 geom_errorbar(aes(ymin=Dry_Shell_weight_g_LENGTHnormalized-se, 
                                                   ymax=Dry_Shell_weight_g_LENGTHnormalized+se), 
                                               width=.2,
@@ -186,7 +202,8 @@ DryShellWeight_NORM_MeanSE <- F1_dry_shell_NORM_Summ %>%
                                 theme_classic() +  
                                 xlab("Age (dpf)") +
                                #xlab("Age (d)") +
-                                theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
                                 scale_y_continuous(name ="Dry shell weight (g)")+
                                 geom_line(stat = "identity", size=1.0)+
                                 theme(text = element_text(size=15))
@@ -195,4 +212,26 @@ ggarrange(DryShellWeight_NORM_Boxplot, DryShellWeight_NORM_MeanSE, nrow=2)
 
 
 ```
-# (ii) plot data 
+
+* (iii) run stats
+
+## Note: we need to consolidate the data to means within tank replicates! 
+
+```{r}
+
+F1_stats_lengtnorm <-  F1_dry_shell[!is.na(F1_dry_shell$Dry_Shell_weight_g_LENGTHnormalized),] %>%
+                          summarySE(measurevar="Dry_Shell_weight_g_LENGTHnormalized", 
+                          groupvars=c("Age", "pCO2", "pH_Replicate"))
+
+
+loop_x <- as.data.frame(unique(F1_stats_lengtnorm$Age))
+
+for (i in 1:nrow(loop_x)) {
+  
+  loop_data <- F1_stats_lengtnorm %>% dplyr::filter(Age == loop_x[i,])
+  
+                                                    
+  
+}
+
+```

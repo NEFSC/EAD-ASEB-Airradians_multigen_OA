@@ -40,7 +40,7 @@ Biodep <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_mult
 
 
 # Respiration rate (lolinR rates)
-RR <- read.csv(file="Output/Respiration/RR_F1s_calc_master.csv", header=T) %>% 
+RR <- read.csv(file="Output/Respiration/F1/F1_RR_calc_master.csv", header=T) %>% 
   filter(!Food %in% 'unfed') %>% # omit low food trial data
   # filter out the F2 measurements
   filter(!Date %in% c('8/30/2022', '11/16/2022')) %>% # an F2 measurement
@@ -81,7 +81,7 @@ O2consumption_start.end  <- read.csv(file="Output/Respiration/RR_start_end_maste
 
 
 # ammonia excretion
-ER <- read.csv(file="Output/ExcretionRates/ExcretionRates_master.csv", header=T)  %>% 
+ER <- read.csv(file="Output/ExcretionRates/F1/F1_ExcretionRates_master.csv", header=T)  %>% 
   dplyr::select(c(Date, pH, Replicate, Chamber_tank, Run, Number,
                   Length_um,
                   Dry_Tissue_weight,
@@ -99,12 +99,13 @@ unique(ER$Date) # 20211026 20220202 20220301 20220922 20221026
 
 # Prep the date for Biodep merge :::::::::::::::::::::::::::::::::::::::::
 
-# NOTE: only 3/1/2022', '9/22/2022', '10/26/2022' - notice that the biodep dates are one day after respiratio, need to change this to merge properly
+# NOTE: only 3/1/2022', '9/22/2022', '10/26/2022' - notice that the biodep dates are one day after respiratio, need to change this to merge properl
 
+unique(RR$Date)
 
 # prep the resp data 
 RR_prepped <- RR %>% # just call desired dates tat overlap with biodep for merge
-  dplyr::mutate(Date = format(strptime(Date, format = "%Y-%m-%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+  dplyr::mutate(Date = format(strptime(Date, format = "%m/%d/%Y"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
   filter(Date %in% c('03/01/2022', '09/22/2022', '10/26/2022')) # the only dates we need to merge with biodep
 RR_prepped$Dry_Tissue_weight <- as.numeric(RR_prepped$Dry_Tissue_weight)
 nrow(RR_prepped) # 45
@@ -130,16 +131,17 @@ nrow(ER_prepped) # 45
 # prep the biodep data - lets match the RR data 
 # note the calc biodep is already corrected for 0.822 bfactor
 Biodep_prepped <- Biodep %>% # unique(Biodep$Date) # "03/02/2022" "09/23/2022" "10/27/2022" - need to change to reflect RR_prepped (above)
+  dplyr::rename(tank_ID = tank_ID.x) %>% 
   dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
   dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
   dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
   dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
   dplyr::rename(pH = treatment) %>% # rename to match 
-  dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours, pCO2)) %>% 
+  dplyr::select(-c(tank_ID.y, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours, pCO2)) %>% 
   dplyr::mutate(Date = case_when(Date == "03/02/2022" ~ '03/01/2022',
                                  Date == "09/23/2022" ~ '09/22/2022',
                                  Date == "10/27/2022" ~ '10/26/2022'))
-Biodep_prepped$Chamber_tank <- paste(substring(Biodep$tank_ID  , 1, nchar(Biodep$tank_ID  )-1), Biodep_prepped$Replicate, sep = "_")
+Biodep_prepped$Chamber_tank <- paste0(Biodep_prepped$pH, "_", Biodep_prepped$Replicate)
 nrow(Biodep_prepped) # 43 rows                        
                                  
 
@@ -163,7 +165,7 @@ subset(RR_prepped, !(uniqueID %in% Biodep_prepped$uniqueID)) # three discrepanci
 # 3/1/2022 CH6 run 1 7.5_B - not present in the biodep file... we measured another 7.5_B whereas this was for only resp,  all is good! 
 # 3/1/2022 CH2 run 2 8E - not present in the biodep file... lets review the RR data 
 # 9/22/2022 CH7 8_D - there was no biodep *D on this data, animal was not used for biodep just respiration - all is good! 
-# 10/26/2022 CH6 7.5_F
+# 10/26/2022 CH6 7.5_F 
 
 
 
@@ -184,7 +186,7 @@ MASTER_ALL <- merge(RR_ER_merge, Biodep_prepped) %>%
                                         Date == '10/26/2022' ~ '13.3C')) %>%  
   dplyr::mutate(pH_Temperature = paste(pCO2,'_',Temperature, sep = '')) %>% 
   dplyr::mutate(Age = as.factor(Age)) %>% dplyr::arrange(Age)
-nrow(MASTER_ALL) # 42 rows - as expected!!!!!
+nrow(MASTER_ALL) # 41 rows - as expected!!!!!
 
 
 
@@ -222,7 +224,12 @@ MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(5,6,26,31,61:62)], # all numeric (phys + 
 summary(MASTER_ALL_1)
 
 
-MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(26,31,60,58,53,55,51)], 
+MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(26,31,53,63)], 
+                         center = TRUE,
+                         scale. = TRUE)
+summary(MASTER_ALL_1)
+
+MASTER_ALL_1   <- prcomp(MASTER_ALL[,c(26,31)], # only SMR and ER 
                          center = TRUE,
                          scale. = TRUE)
 summary(MASTER_ALL_1)
@@ -253,6 +260,46 @@ PCA_Temp <- ggbiplot(MASTER_ALL_1,
   theme(legend.direction = 'horizontal',
         legend.position = 'top')
 # PCA_Temp
+
+
+# TEMPERATURE HAS A BIG EFFECT!  
+MASTER_20C     <- MASTER_ALL %>%  dplyr::filter(Temperature %in% '20C')
+MASTER_20C_PCA <- prcomp(MASTER_20C[,c(26,31,53,63)], 
+                         center = TRUE,
+                         scale. = TRUE)
+PCA_20c_pCO2 <- ggbiplot(MASTER_20C_PCA,
+                     obs.scale = 1,
+                     var.scale = 1,
+                     groups = as.factor(MASTER_20C$pCO2),
+                     ellipse = TRUE,
+                     circle = TRUE,
+                     ellipse.prob = 0.67) +
+                scale_color_discrete(name = '') +  
+                theme_classic() + 
+                ggtitle("pCO2 effet under 20C") +
+                theme(legend.direction = 'horizontal',
+                      legend.position = 'top')
+
+
+MASTER_16C     <- MASTER_ALL %>%  dplyr::filter(Temperature %in% '16C')
+MASTER_16C_PCA <- prcomp(MASTER_16C[,c(26,31,53,63)], 
+                         center = TRUE,
+                         scale. = TRUE)
+PCA_16c_pCO2 <- ggbiplot(MASTER_16C_PCA,
+                         obs.scale = 1,
+                         var.scale = 1,
+                         groups = as.factor(MASTER_16C$pCO2),
+                         ellipse = TRUE,
+                         circle = TRUE,
+                         ellipse.prob = 0.67) +
+  scale_color_discrete(name = '') +  
+  theme_classic() + 
+  ggtitle("pCO2 effet under 16C") +
+  theme(legend.direction = 'horizontal',
+        legend.position = 'top')
+
+
+
 
 PCA_pCO2Temp <- ggbiplot(MASTER_ALL_1,
                      obs.scale = 1,

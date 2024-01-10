@@ -1,0 +1,224 @@
+---
+title: "F2_Lengths_analysis"
+author: "Samuel Gurr"
+date: "2024-01-05"
+output: html_document
+---
+
+# Objectives: 
+
+* (i) view the mean, variation, and number of samples
+
+* (ii) plot the data 
+
+* (iii) run stats
+
+### set up load libraries and set working dir for the script 
+```{r setup, include= FALSE, echo = FALSE}
+
+# LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(lme4)
+library(lmerTest)
+library(performance)
+library(car)
+library(ggpubr)
+library(SciViews)
+library(Rmisc)
+library(hrbrthemes)
+
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+
+```
+
+## Load data 
+
+```{r, load data}
+
+# F2s
+F2_length <- read.csv(file="Data/Physiology/Length/F2/cumulative_raw/F2_lengths_raw.csv",
+                          header=T,stringsAsFactors=FALSE, fileEncoding="latin1") 
+
+# unique dates for the dry weight data 
+unique(F2_length$Date)
+# View(F1_dryweights)
+
+F2_length_master <- F2_length %>% # master data file
+                    dplyr::mutate(pCO2 = as.factor(case_when(Treatment == "Low OA" ~ "500 μatm", # add column for pCO2
+                                                   Treatment == "Moderate OA" ~ "800 μatm",
+                                                   Treatment == "High OA" ~ "1200 μatm"))) %>% 
+                    dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm","1200 μatm")))# relevel for plotting!
+
+```
+
+# (i) summary of data 
+
+* by date pcO2 and tank replicate (for mean Se plots - related to statistics!)
+
+
+```{r dry weights, echo = FALSE}
+F2_length_master$Length_mm <- as.numeric(F2_length_master$Length_mm)
+
+# means by date and pCO2 - not by replicate tank!
+F2_length_master %>%  
+       summarySE(measurevar="Length_mm", groupvars=c("Age_DPF","pCO2")) %>% 
+       dplyr::arrange(Length_mm)
+
+F2_length_MEANS_bytank <-  F2_length_master %>%  
+                            summarySE(measurevar="Length_mm", groupvars=c("Age_DPF","pCO2","Replicate")) %>% 
+                            dplyr::arrange(Length_mm) 
+
+```
+
+
+# (ii) plot data 
+
+### Shell length data
+
+* raw data 
+
+```{r Figures - shell length}
+
+# histogram 
+
+F2_Length_Histograms <- F2_length_master %>%
+                          ggplot( aes(x=Length_mm, fill=pCO2)) +
+                            geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+                            scale_fill_manual(values=c("forestgreen","darkorange2","purple")) +
+                            theme_classic() +
+                            # theme_ipsum() +
+                            labs(fill="") + 
+                            labs(fill='pCO2 treatment') +
+                            scale_x_continuous(name ="Shell length (mm)")+
+                            facet_wrap(~Age_DPF, scales = "free_y")
+
+F2_Length_Density <- F2_length_master %>%
+                            ggplot(aes(Length_mm, colour = pCO2)) +
+                            # geom_histogram( color="#e9ecef", alpha=0.2, position = 'identity') +
+                            geom_density(show.legend = F) +
+                            scale_color_manual(values=c("forestgreen","darkorange2","purple")) +
+                            theme_classic() +
+                            # theme_ipsum() +
+                            labs(fill="") + 
+                            facet_wrap(~Age_DPF, scales = "free_y")
+
+
+F2_Length_scaled_density <- ggplot(data =F2_length_master,aes(x=Length_mm)) + 
+                      geom_density(aes(x = Length_mm, group=pCO2, fill=pCO2, ..scaled..), alpha = 0.3, adjust=1.5) + 
+                      theme_classic() +
+                      scale_fill_manual(values=c("forestgreen","darkorange2","purple")) +
+                      ggtitle("Length (mm)") +
+                      facet_wrap( ~ Age_DPF) 
+  
+# Mean SE by tank 
+
+F2_length_MEANS <-  F2_length_MEANS_bytank %>%  
+                            summarySE(measurevar="Length_mm", groupvars=c("Age_DPF","pCO2")) %>% 
+                            dplyr::arrange(Length_mm) 
+
+F2_Length_MeanSE <- F2_length_MEANS %>%
+                       ggplot(aes(x=(Age_DPF), 
+                                     y=Length_mm, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2",
+                                                      "purple"))+
+                          geom_errorbar(aes(ymin=Length_mm-se, 
+                                            ymax=Length_mm+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Shell lengths (mm) - mean+-SE") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position="none")+ 
+                          scale_y_continuous(name ="Shell length (mm)")+
+                          geom_line(stat = "identity", size=1.0)+
+                          # labs(color='pCO2 treatment') + # legend name
+                          theme(text = element_text(size=10))
+
+
+# arrange plots 
+
+
+# pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Survival_size/20210930_survival.pdf"))
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F2/F2_Length_histogram_meanSE.pdf"),width=10, height=5)
+ggarrange(F2_Length_Histograms, F2_Length_MeanSE, ncol = 2)
+dev.off()
+
+```
+
+
+#  statistics
+
+```{r stats}
+
+F2_length_MEANS
+
+
+# (1) First, run anova within date for all records (for looped!)
+ANOVA_Age_DPF      <- as.data.frame(unique(F2_length_MEANS_bytank$Age_DPF)) # call a list to loop in 
+
+AOVdf_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Age_DPF', 'Metric', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar', 'model', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif') # names for comuns in the for loop
+
+for (i in 1:nrow(ANOVA_Age_DPF)) {
+  
+  Age_loop     <- as.character(ANOVA_Age_DPF[i,])
+  data_loop     <- F2_length_MEANS_bytank %>% 
+    dplyr::filter(Age_DPF %in% Age_loop) %>% 
+    dplyr::select(Age_DPF, pCO2, Length_mm)
+
+    # high cholorphyll model
+
+    DF_loop$Age_DPF     <- Age_loop
+    DF_loop$Metric      <- colnames(data_loop[3])
+    
+    # run both modles
+    AOVmod              <- aov(lm(data_loop$Length_mm ~ as.factor(data_loop$pCO2)))
+    KWmod               <- kruskal.test(data_loop$Length_mm  ~ as.factor(data_loop$pCO2))
+    
+    # normality tests for the anova model - asign 
+    DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+    DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+      'YES'} else {'NO'}
+    DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+    DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+      'YES'} else {'NO'}
+    
+    if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+        DF_loop$model       <- 'one-way AOV; x ~ treatment'
+        DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+        DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+        DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+        DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+        DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+          'NO'} else {'YES'}
+
+      } else {
+        DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
+        DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
+        DF_loop$DF.denom    <- NA
+        DF_loop$F_val       <- NA
+        DF_loop$P_val       <- (KWmod)[[3]]
+        DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
+          'NO'} else {'YES'}
+      }
+    
+    # asign loop and cumulative output table
+    df          <- data.frame(DF_loop) # name dataframe for this single row
+    AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
+    print(AOVdf_total) # print to monitor progress
+}
+View(AOVdf_total) # view all the anova tests within data 
+View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
+
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F2/F2_Length_ANOVA_table.csv")
+
+```

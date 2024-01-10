@@ -52,17 +52,13 @@ README
 
 - Date      - self-explanatory
 
-- Fed_Unfed	- a food x OA expeimrent occured on dates 20220914, 20220930, 20221026, these two columns ONLY pertain to these dates, rest NA
-
-- Food	    - same as Fed_Unfed, but not the later is abbreviated
-
 - pH_parents - only applied for the full-reciprocal larval experiments where parent x offspring pCO2 (pH) was assessed (dates: 20230316, 20230407, 20230412, 20230421)
 
 - pH        - pH treatment, note this is simply the categorial value used to identify the treatment but the actual measured pH is not 8, 7.5 nor 7
 
 - Replicate	- tanks where the animals derived, often as letters such as A, B, C, D
 
-- Chamber_tank	- concatinated pH and Replicate for the tank ID (i.e. 7.5_A)
+- Chamber_tank	- concatenated pH and Replicate for the tank ID (i.e. 7.5_A)
 
 - Number	    - are there redundant samples by treatment + replicate for the measurements on that sampling day, for example, two individuals measured for 7.5 A in separate chambers, therefore the rows will be 1 and 2
 

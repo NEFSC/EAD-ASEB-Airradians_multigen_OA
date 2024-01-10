@@ -85,7 +85,9 @@ Biodeposition_adj    <- Biodeposition %>%
                           dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
                           dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
                           dplyr::rename(pH = treatment) %>% # rename to match 
-                          dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours)) %>% 
+                          dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg,
+                                           dry_filter_weight_mg,ash_filter_weight_mg,
+                                           inclubation_time_hours)) %>% 
                           dplyr::mutate(Date = case_when(Date == "03/02/2022" ~ '3/2/2022',
                                                          Date == "09/23/2022" ~ '9/23/2022',
                                                          Date == "10/27/2022" ~ '10/27/2022')) %>% 

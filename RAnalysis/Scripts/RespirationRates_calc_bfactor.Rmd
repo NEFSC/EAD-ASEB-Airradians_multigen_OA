@@ -994,9 +994,10 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT,
 
 ### summary:
 
--   Length b factor total = 1.71 (2.0 as of 5/24/2023 - added F3 spat) (1.85 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
--   Length b factor pCO2 moderate = 1.69 (2.0 as of 5/24/2023 - added F3 spat) (1.9 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
--   Length b factor pCO2 low = 1.74 (1.87 as of 5/24/2023 - added F3 spat) (1.77 as of 9/16/2023 - added lengths for 3/27/2023 F2s)
+-   Length b factor total = 1.85 
+-   Length b factor pCO2 moderate = 1.55 
+-   Length b factor pCO2 low = 2.12
+-   Length b factor pCO2 high = 3.41
 
 # F1s master file
 
@@ -1009,12 +1010,12 @@ bTDW = 0.62 # review the outlier-omitted b factor plot in previous chunk
 bLength = 1.85 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
-RR_master_OM$Dry_Tissue_weight <- as.numeric(RR_master_OM$Dry_Tissue_weight)
+RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
 
-meanTDW      <- mean((RR_master_OM %>% 
-                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.478945 g
+meanTDW      <- mean((RR_master_F1 %>% 
+                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
 
-meanLength   <- mean(RR_master_OM$Length_um/1000) # 15.75803 mm
+meanLength   <- mean(RR_master_F1$Length_um/1000) # 16.57877 mm
 
 #View(RR_formatted_F1s$TDW_um)
 
@@ -1092,7 +1093,7 @@ RR_formatted_F1smaster <- RR_master_F1 %>%
                                               resp_umol_hr_bFactorNormTDW.1g,
                                               resp_umol_hr_bFactorNormLength.MEAN))
 #View(RR_formatted_F1smaster)
-write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1_RR_calc_master.csv")
+write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_calc_master.csv")
 
 ```
 
@@ -1189,7 +1190,7 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                                               resp_umol_hr_bFactorNormTDW.1g,
                                               resp_umol_hr_bFactorNormLength.MEAN))
 #View(RR_formatted_F1smaster)
-write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2_RR_calc_master.csv")
+write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_calc_master.csv")
 ```
 
 
@@ -1275,6 +1276,6 @@ RR_formatted_F3smaster <- RR_master_F3 %>%
                                             resp_umol_hr_bFactorNormTDW.1g,
                                             resp_umol_hr_bFactorNormLength.MEAN))
 #View(RR_formatted_F1smaster)
-write.csv(RR_formatted_F3smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3_RR_calc_master.csv")
+write.csv(RR_formatted_F3smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F3/F3_RR_calc_master.csv")
 ```
 
