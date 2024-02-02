@@ -40,119 +40,9 @@ RR_formatted_F1s <- read.csv(file="Output/Respiration/F1/F1_RR_calc_master.csv")
 
 # formatted for plotting and stats 
 # length b factor norm
-F1_RR_Length_Meanbytank <- RR_formatted_F1smaster%>% 
+F1_RR_Length_Meanbytank <- RR_formatted_F1s%>% 
                             summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN", 
-                                      groupvars=c("Age", "pCO2", "Replicate"))
-# TDW b factor norm
-F1_RR_TDW_Meanbytank <- RR_formatted_F1smaster%>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormTDW.MEAN", 
-                                      groupvars=c("Age", "pCO2", "Replicate"))
-
-```
-
-```{r, plot data}
-
-F1s.BOXPLOT <- RR_formatted_F1s %>% 
-                  ggplot(aes(x = factor(Age), 
-                             y = resp_umol_hr_biovolcalc, #resp_umol_hr, 
-                             fill = pCO2)) +
-                         geom_boxplot(alpha = 0.5, # color hue
-                             width=0.6, # boxplot width
-                             outlier.size=0, # make outliers small
-                             position = position_dodge(preserve = "single")) + 
-                         geom_point(pch = 19, 
-                                    position = position_jitterdodge(0.01), 
-                                    size=1) +
-                         scale_fill_manual(values=c("forestgreen","orange")) +
-                         theme_classic() + 
-                         #ylim(0, 0.2) +
-                         ggtitle("Raw resp") +
-                         theme(legend.position="none",
-                               axis.title.y=element_text(size=7),
-                               axis.title.x=element_text(size=7),
-                               axis.text.x=element_text(size=7)) +
-                         stat_summary(fun.y=mean, 
-                                      geom = "errorbar", 
-                                      aes(ymax = ..y.., ymin = ..y..), 
-                                      width = 0.6, 
-                                      size=0.4, 
-                                      linetype = "dashed", 
-                                      position = position_dodge(preserve = "single"))
-
-F1s.BOXPLOT
-
-```
-
-
-## Plots by TISSUE DRY WEIGHT (allometric scalingexpnent applied - review "RespirationRates_calc_bfactor.Rmd")
-
-```{r, by mg TISSUE,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
-
- 
-# TISSUE ---------------------------------------------------------------------------- #
-# PLOT THE F2S DATA FOR  DRY WEIGHT CORRECTION
-
-F1s.BOXPLOT_TDW_bfactor <- RR_formatted_F1s %>% 
-                            ggplot(aes(x = factor(Age), 
-                                       y = resp_umol_hr_bFactorNormTDW.MEAN, 
-                                       fill = pCO2)) +
-                                   geom_boxplot(alpha = 0.5, # color hue
-                                       width=0.6, # boxplot width
-                                       outlier.size=0, # make outliers small
-                                       position = position_dodge(preserve = "single")) + 
-                                   geom_point(pch = 19, 
-                                              position = position_jitterdodge(0.01), 
-                                              size=1) +
-                                   scale_fill_manual(values=c("forestgreen","darkorange2")) +
-                                   theme_classic() + 
-                                   #ylim(0, 0.2) +
-                                   ggtitle("Resp * [ (meanTDW/TDW_meas)^b]") +
-                                   theme(legend.position="none",
-                                         axis.title.y=element_text(size=7),
-                                         axis.title.x=element_text(size=7),
-                                         axis.text.x=element_text(size=7)) +
-                                   stat_summary(fun.y=mean, 
-                                                geom = "errorbar", 
-                                                aes(ymax = ..y.., ymin = ..y..), 
-                                                width = 0.6, 
-                                                size=0.4, 
-                                                linetype = "dashed", 
-                                                position = position_dodge(preserve = "single")) #+
-
- 
-# convert meand by tank to summrizing means by treatment and age 
-F1_RR_TDW_Means <- F1_RR_TDW_Meanbytank %>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormTDW.MEAN", 
-                                      groupvars=c("Age", "pCO2"))
-
-
-F1_RR_TDW_MeanSE <-  F1_RR_TDW_Means %>%
-                                 ggplot(aes(x=(Age), 
-                                               y=resp_umol_hr_bFactorNormTDW.MEAN, 
-                                               color=as.factor(pCO2))) +
-                                    geom_point(position=position_dodge(.5))+ 
-                                    scale_color_manual(values=c("forestgreen",
-                                                                "darkorange2"))+
-                                    geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormTDW.MEAN-se, 
-                                                      ymax=resp_umol_hr_bFactorNormTDW.MEAN+se), width=.2,
-                                                  position=position_dodge(.5))+
-                                    ggtitle("RR - mean+-SE") +
-                                    theme_classic() +  
-                                    xlab("Age (dpf)") +
-                                    ylab("RR") +
-                                   #xlab("Age (d)") +
-                                    theme(panel.grid.major = element_blank(), 
-                                          panel.grid.minor = element_blank(),
-                                          legend.position="none")+ 
-                                    scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-                                    # labs(color='pCO2 treatment') + # legend name
-                                    theme(text = element_text(size=10))
-
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_TDW_bfactor.pdf"), width = 12, height = 10)
-print(ggarrange(F1s.BOXPLOT_TDW_bfactor,F1_RR_TDW_MeanSE, nrow = 2)) # print the model diagnostics 
-dev.off()
-
+                                      groupvars=c("Date", "Age", "pCO2", "Chamber_tank"))
 
 ```
 
@@ -164,7 +54,7 @@ dev.off()
  
 # LENGTH  ---------------------------------------------------------------------------- #
 
-F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1smaster %>% 
+F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1s %>% 
                                       ggplot(aes(x = factor(Age), 
                                                  y = resp_umol_hr_bFactorNormLength.MEAN, 
                                                  fill = pCO2)) +
@@ -177,7 +67,7 @@ F1s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F1smaster %>%
                                                         size=1) +
                                              scale_fill_manual(values=c("forestgreen","darkorange2")) +
                                              theme_classic() + 
-                                             ggtitle("Resp * [ ( meanLength / Length_meas)^b ]") +
+                                             ggtitle("RR b factor corrected (all data points)") +
                                              theme(legend.position="none",
                                                    axis.title.y=element_text(size=7),
                                                    axis.title.x=element_text(size=7),
@@ -199,7 +89,7 @@ F1_RR_Length_Means <- F1_RR_Length_Meanbytank %>%
 
 
 F1_RR_Length_MeanSE <-  F1_RR_Length_Means %>%
-                                 ggplot(aes(x=(Age), 
+                                 ggplot(aes(x=(as.factor(Age)), 
                                                y=resp_umol_hr_bFactorNormLength.MEAN, 
                                                color=as.factor(pCO2))) +
                                     geom_point(position=position_dodge(.5))+ 
@@ -208,7 +98,7 @@ F1_RR_Length_MeanSE <-  F1_RR_Length_Means %>%
                                     geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN-se, 
                                                       ymax=resp_umol_hr_bFactorNormLength.MEAN+se), width=.2,
                                                   position=position_dodge(.5))+
-                                    ggtitle("RR - mean+-SE") +
+                                    ggtitle("RR b factor corrected (mean+-SE)") +
                                     theme_classic() +  
                                     xlab("Age (dpf)") +
                                     ylab("RR") +
@@ -222,7 +112,7 @@ F1_RR_Length_MeanSE <-  F1_RR_Length_Means %>%
 
 
 # save
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_LENGTH_bfactor.pdf"), width = 8, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_LENGTH_bfactor.pdf"), width = 6, height = 8)
 print(ggarrange(F1s.BOXPLOT_Length_bfactor.MEAN, F1_RR_Length_MeanSE, nrow = 2)) # print the model diagnostics 
 dev.off()
 
@@ -238,7 +128,7 @@ dev.off()
 ``` {r, standardize & ANOVA stats,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
 # (1) First, run anova within date for all records (for looped!)
-ANOVA_Dates       <- as.data.frame(unique(RR_formatted_F1s$Date)) # call a list to loop in 
+ANOVA_Dates       <- as.data.frame(unique(F1_RR_Length_Meanbytank$Date)) # call a list to loop in 
 AOVdf_total       <- data.frame() # start dataframe, this will be the master output
 DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
 colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif') # names for comuns in the for loop
@@ -246,7 +136,7 @@ colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'ShapiroWilk', 'ResidNo
 for (i in 1:nrow(ANOVA_Dates)) {
 
   date_loop     <- as.character(ANOVA_Dates[i,])
-  data_loop     <- RR_formatted_F1s %>% 
+  data_loop     <- F1_RR_Length_Meanbytank %>% 
                           dplyr::filter(Date == date_loop) %>% 
                           dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN) %>% 
                           na.omit()
@@ -304,6 +194,18 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 ```
 
+
+# one sig effect on Age 218 (3/1/2022)
+```{r posthoc test 218 DPF }
+                    
+mod218 <- aov(lm(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data = (F1_RR_Length_Meanbytank %>% dplyr::filter(Age %in% 218)) ))
+summary(mod218)
+#             Df Sum Sq Mean Sq F value Pr(>F)  
+# pCO2         1  13.77  13.770   6.941 0.0196 *
+TukeyHSD(mod218)
+#                       diff       lwr      upr     p adj
+# 800 uatm-500 uatm 1.855416 0.3449731 3.365859 0.0196082
+```
 
 
 

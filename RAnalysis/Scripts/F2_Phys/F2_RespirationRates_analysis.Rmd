@@ -42,10 +42,15 @@ RR_formatted_F2s <- read.csv(file="Output/Respiration/F2/F2_RR_calc_master.csv")
 
 # formatted for plotting and stats 
 # length b factor norm
-F2_RR_Length_Meanbytank <- RR_formatted_F2s%>% 
+F2_RR_Length_Meanbytank     <- RR_formatted_F2s%>% 
                             summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN", 
-                                      groupvars=c("Age", "pCO2", "Replicate")) 
+                                      groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
+                            dplyr::arrange(sort(Age)) %>% 
+                            dplyr::filter(!Date %in% '9/22/2022')
 
+# NOTE: the spat on 9/22/2022 are F2s measured witht heSDR dish and do not have a replicate ID (neither replicate nor chamber tank)
+F2_RR_Length_Meanbytank_spat <- RR_formatted_F2s%>% 
+                                    dplyr::filter(Date %in% '9/22/2022')
 ```
 
 
@@ -72,12 +77,12 @@ F2s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F2s %>%
                                                                         "800 uatm"  = "darkorange2", 
                                                                         "1200 uatm" = "purple")) +
                                              theme_classic() + 
-                                             ggtitle("Resp * [ ( meanLength / Length_meas)^b ]") +
+                                             ggtitle("RR b factor corrected (all data points)") +
                                              theme(legend.position="none",
                                                    axis.title.y=element_text(size=10),
                                                    axis.title.x=element_text(size=10),
                                                    axis.text.x=element_text(size=10)) +
-                                             ylab("RR") +
+                                             ylab("RR uatm hr (b factor corrrected)") +
                                              scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
                                              stat_summary(fun.y=mean, 
                                                           geom = "errorbar", 
@@ -105,10 +110,10 @@ F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
                                     geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN-se, 
                                                       ymax=resp_umol_hr_bFactorNormLength.MEAN+se), width=.2,
                                                   position=position_dodge(.5))+
-                                    ggtitle("RR - mean+-SE") +
+                                    ggtitle("RR b factor corrected (mean+-SE)") +
                                     theme_classic() +  
                                     xlab("Age (dpf)") +
-                                    ylab("RR") +
+                                    ylab("RR uatm hr (b factor corrrected)") +
                                    #xlab("Age (d)") +
                                     theme(panel.grid.major = element_blank(), 
                                           panel.grid.minor = element_blank(),
@@ -119,7 +124,7 @@ F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
 
 
 # save
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor.pdf"), width = 8, height = 6)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor.pdf"), width = 6, height = 8)
 print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN, F2_RR_Length_MeanSE, nrow = 2)) # print the model diagnostics 
 dev.off()
 
@@ -135,7 +140,7 @@ dev.off()
 ``` {r, standardize & ANOVA stats,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
 # (1) First, run anova within date for all records (for looped!)
-ANOVA_Dates       <- as.data.frame(unique(RR_formatted_F2s$Date)) # call a list to loop in 
+ANOVA_Dates       <- as.data.frame(unique(F2_RR_Length_Meanbytank$Date)) # call a list to loop in 
 AOVdf_total       <- data.frame() # start dataframe, this will be the master output
 DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
 colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif') # names for comuns in the for loop
@@ -143,7 +148,7 @@ colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'ShapiroWilk', 'ResidNo
 for (i in 1:nrow(ANOVA_Dates)) {
 
   date_loop     <- as.character(ANOVA_Dates[i,])
-  data_loop     <- RR_formatted_F2s %>% 
+  data_loop     <- F2_RR_Length_Meanbytank %>% 
                           dplyr::filter(Date == date_loop) %>% 
                           dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN) %>% 
                           na.omit()
@@ -192,14 +197,39 @@ for (i in 1:nrow(ANOVA_Dates)) {
 }
 # View(AOVdf_total) # view all the anova tests within data 
 
-
+AOVdf_total <- AOVdf_total %>% dplyr::arrange(sort(Age))
 # WRITE CSV OF THE MASTER FILE
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Statistics.csv")
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
-                    
 
 
 ```
+# one sig effect on Age 167 (during the grow out >40 DPF)
+```{r posthoc test 167 DPF }
+                    
+mod167 <- aov(lm(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data = (F2_RR_Length_Meanbytank %>% dplyr::filter(Age %in% 167)) ))
+summary(mod167)
+            # Df Sum Sq Mean Sq F value  Pr(>F)
+# pCO2         2  27.12  13.561   8.204 0.00937 **
+TukeyHSD(mod167)
+#                         diff        lwr      upr     p adj
+# 800 uatm-500 uatm  0.6472559 -1.8909023 3.185414 0.7627482
+# 1200 uatm-500 uatm 3.4630915  0.9249334 6.001250 0.0104402
+# 1200 uatm-800 uatm 2.8158356  0.2776775 5.353994 0.0310590
+```
+* test the spat 9/22/2022 at 36 DPF
+```{r spat 36 DPF}
+
+mod36 <- aov(lm(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data =  F2_RR_Length_Meanbytank_spat))
+summary(mod36)
+shapiro.test(resid(mod36)) # 5.529e-06 - NOPE!
+leveneTest(mod36) # 0.4391 - YUP!
+
+KWmod36 <- kruskal.test(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data =  F2_RR_Length_Meanbytank_spat)
+# Kruskal-Wallis chi-squared = 0.49658, df = 1, p-value = 0.481 # NOPE!
+```
+
+
 
 
 
