@@ -1,0 +1,4 @@
+"Var1" "Freq"
+"1" "Hs_Low" 0.18
+"2" "Hs_Moderate" 0.176
+"3" "Ht" 0.18
