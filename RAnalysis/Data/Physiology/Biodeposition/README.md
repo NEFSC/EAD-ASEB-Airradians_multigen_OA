@@ -8,6 +8,18 @@ README
 
 * folders divided by generation **(F1, F2)**
 
+**NOTE**: measurements were done at different temperatures, as follows:
+
+- F1s
+	- 20220302: 16C
+	- 20220923: 20C
+	- 20221027: 12C
+
+- F2s
+	- 20230201: 16C
+	- 20230224: 16C
+	- 20230328: 16C
+
 ### (i) 'cumulative_raw' folder
 
 * contains the raw master file data and **only measured values**

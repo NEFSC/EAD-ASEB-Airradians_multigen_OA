@@ -37,7 +37,22 @@ nrow(Biodep_Master_F2) # 43 - no NAs
 ```
 
 
-```{r statistics}
+```{r statistics one way anovas}
+
+
+Biodep_Master_F2 <- Biodep_Master_F2 %>% 
+                        dplyr::mutate(Age = case_when(Date == "20230201" ~  190, 
+                                                       Date == "20230224" ~  213, 
+                                                       Date == "20230328" ~  245)) %>% 
+                        dplyr::mutate(pCO2 = case_when(treatment == 8 ~ "500 μatm", # add column for pCO2
+                                                       treatment == 7.5 ~ "800 μatm",
+                                                       treatment == 7 ~ "12000 μatm")) %>% # %>% #edit this!
+                        dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm")),
+                                      Temperature = case_when(Date == "20230201" ~  16,
+                                                              Date == "20230224" ~  16,
+                                                              Date == "20230328" ~  16))
+
+
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # STATISTICS::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -121,6 +136,109 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 
+```
+
+```{r two way anovas}
+
+library(rcompanion)
+library(FSA)
+
+# Absorption Efficiency
+AOV_AE <- lm(AE ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_AE)) # 6.484e-05
+SRH_AE <- scheirerRayHare(AE ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+#               Df  Sum Sq      H p.value
+# Age            2 13054.6 41.421 0.00000
+# treatment      2  1195.7  3.794 0.15004
+# Age:treatment  4   719.8  2.284 0.68368
+DT_AE <- dunnTest(AE ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_AE
+
+
+
+
+
+# Absorption Efficiency
+AOV_SE <- lm(SE ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_SE)) # 1.547e-07
+SRH_SE <- scheirerRayHare(SE ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+#               Df Sum Sq       H p.value
+# Age            2 9103.0 28.8832 0.00000
+# treatment      2  661.1  2.0977 0.35034
+# Age:treatment  4 2400.6  7.6169 0.10666
+DT_SE <- dunnTest(SE ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_SE
+
+
+
+# Absorption ERate
+AOV_AR <- lm(AR ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_AR)) # 0.001217
+SRH_AR <- scheirerRayHare(AR ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+#               Df  Sum Sq      H p.value
+# Age            2 14098.4 44.733 0.00000
+# treatment      2   775.4  2.460 0.29223
+# Age:treatment  4   655.3  2.079 0.72116
+DT_AR <- dunnTest(AR ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_AR
+
+
+
+
+# Clearance Rate (corrected)
+AOV_CR <- lm(CR_correct ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_CR)) # 0.01118
+SRH_CR <- scheirerRayHare(CR ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+#               Df Sum Sq       H p.value
+# Age            2 8939.6 28.3648 0.00000
+# treatment      2 2411.5  7.6515 0.02180
+# Age:treatment  4  218.5  0.6933 0.95216
+DT_CR <- dunnTest(CR ~ as.factor(treatment),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_CR
+DT_CR <- dunnTest(CR ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_CR
+
+
+
+
+
+# Rejection Rate (corrected)
+AOV_RR <- lm(RR_correct ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_RR)) # 0.04109
+SRH_RR <- scheirerRayHare(RR_correct ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+SRH_RR
+#               Df  Sum Sq       H  p.value
+# Age            2  4894.2 15.5290 0.000425
+# treatment      2  1028.5  3.2632 0.195613
+# Age:treatment  4  1640.2  5.2042 0.266977
+DT_RR <- dunnTest(RR_correct ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_RR
+
+# Organic Ingestion Rate
+AOV_OIR <- lm(OIR ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+shapiro.test(resid(AOV_OIR)) # 0.007734
+SRH_OIR <- scheirerRayHare(OIR ~ as.factor(Age)*as.factor(treatment),data = Biodep_Master_F2)
+SRH_OIR
+#               Df  Sum Sq      H p.value
+# Age            2 13441.4 42.649 0.00000
+# treatment      2   654.2  2.076 0.35422
+# Age:treatment  4   586.4  1.861 0.76138
+DT_OIR <- dunnTest(OIR ~ as.factor(Age),
+              data=Biodep_Master_F2,
+              method="bh") 
+DT_OIR
 ```
 
 

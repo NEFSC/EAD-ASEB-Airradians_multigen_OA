@@ -1,0 +1,33 @@
+---
+title: "F1_Broodstock_Popgen.Rmd"
+author: "Samuel Gurr"
+date: "2024-02-04"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EAD-ASEB-Airradians_Larvae_crossgen_OA/HPC_analysis") # Sam's
+```
+
+
+# load packages(
+```{r load packages we need}
+library(vcfR)
+library(hierfstat)
+library(pcadapt)
+
+```
+
+
+# load data
+
+```{r load data}
+
+bamfile <- ("./angsd/F1_Broodstock/F1_Broodstock_output.bam")
+famfile <- ("./angsd/F1_Broodstock/F1_Broodstock_output.fam")
+
+```
