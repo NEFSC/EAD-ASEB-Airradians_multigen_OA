@@ -13,6 +13,7 @@ library(car)
 library(kable)
 library(pander)
 library(ggpubr)
+library(Rmisc)
 # SET WORKING DIRECTORY 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 
@@ -147,10 +148,17 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 
 
 
+# Two way model for all data
 
-
-
-
+AllER_TwoWayAnova <- aov(lm(ExcretionRate_umol_mL_hr_TDWbfactor ~ Age*pCO2, data=F1_ER_MEANS))
+shapiro.test(resid(AllER_TwoWayAnova)) # 3.515e-05
+library(rcompanion)
+AllER_SRH <-  scheirerRayHare(ExcretionRate_umol_mL_hr_TDWbfactor ~ Age*pCO2, data=F1_ER_MEANS)
+AllER_SRH
+#           Df Sum Sq       H p.value
+# Age        4 9001.0 29.5115 0.00001
+# pCO2       1  349.9  1.1474 0.28410
+# Age:pCO2   4  804.8  2.6387 0.61998
 
 
 
