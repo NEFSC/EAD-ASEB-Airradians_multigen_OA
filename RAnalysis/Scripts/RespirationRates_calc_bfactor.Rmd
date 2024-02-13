@@ -60,14 +60,14 @@ resp.data           <- read.csv(file="Output/Respiration/RR_LoLin_raw.csv", head
 start.end_resp.data <- read.csv(file="Output/Respiration/RR_start_end_raw.csv", header=T, sep = "") #%>% 
                           #dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') # read the start and end simplified resp data
 
-resp.ref            <- read.csv(file="Data/Physiology/Respiration/Reference_resp_ID.csv", header=T) %>% 
+resp.ref            <- read.csv(file="Data/Physiology/Respiration/metadata/Reference_resp_ID.csv", header=T) %>% 
                            dplyr::filter(!Date %in% "9/14/2021" | !Filename %in% 'Run_1_raw.txt') 
 
 
 # data to correct for length, dry weight, etc. 
-lengths_juv_adults  <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size.csv", header=T)
+lengths_juv_adults  <- read.csv(file="Data/Physiology/Respiration/metadata/Reference_resp_size.csv", header=T)
 
-lengths_spat        <- read.csv(file="Data/Physiology/Respiration/Reference_resp_size_LARVAE.csv", header=T) %>% 
+lengths_spat        <- read.csv(file="Data/Physiology/Respiration/metadata/Reference_resp_size_LARVAE.csv", header=T) %>% 
                           dplyr::mutate(Length_um = Length * 1000) %>% # current length in mm
                           dplyr::select(!Length)
 # View(resp.data)
@@ -184,7 +184,7 @@ blanks_all_raw <- data.frame(merge(resp.data, resp.ref)) %>% # data.frame((merge
                   dplyr::select(c('Date', 'Run', 'Channel','Filename','pH','Lpc', 'Leq', 'Lz','filetype')) %>% # add 'Rate_mgO2_hour'hen the start and end is completed
                   dplyr::arrange(Date,pH, .by_group = TRUE)
 
-View(blanks_all_raw)
+# View(blanks_all_raw)
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -451,7 +451,7 @@ Resp.Master_OM <- Resp.Master[!is.na(Resp.Master$Length_um),] %>%
 
 # diagnostics..
 Resp.outliers <- Resp.Master %>% dplyr::filter(resp_blankStand < 0) # call negatives
-# print(Resp.outliers) # 24 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
+# print(Resp.outliers) # 20 samples have negative values when correcting for the blank, meaning the blank rate was GREATER than the sample resp value
 View(Resp.Master)
 
 ```
@@ -644,7 +644,7 @@ RR_master_OM            <- RR_master %>%
                                                TRUE ~ resp_umol_hr)) %>% 
                             filter(!is.na(resp_umol_hr)) # ommit cases when respiration is NA 
 
-nrow(RR_master_OM) # 313
+nrow(RR_master_OM) # 317
 
 ```
 # ALOMETRIC COEFFICIENT (b factor)
@@ -654,6 +654,9 @@ nrow(RR_master_OM) # 313
 ```{r b factor TISSUE DRY WEIGHT, echo = FALSE, message = FALSE, warning = FALSE, results='hide'}
 
 
+nrow(RR_master_OM %>% dplyr::filter(Dry_Tissue_weight >0)) # 140
+nrow(RR_master_OM %>% dplyr::filter(Length_um >0)) # 317
+nrow(RR_master_OM %>% dplyr::filter(resp_umol_hr_biovolcalc >0)) # 317
 # ABOUT: 
 
 # from Bayne text (page 360)
@@ -883,7 +886,7 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 
 ## by SHELL AND INDIVIDUAL LENGTH (only for biovolume calculated using length\^3)
 
--   why? - we want to compare resp data across time however we did not measure dry tissue nor biovolume in samll animals, thus to calculate resp using the sample methods across time, we used length\^3 correction for biovolume and will further use a bfactor for shell length in these data
+-   why? - we want to compare resp data across time however we did not measure dry tissue nor biovolume in small animals, thus to calculate resp using the sample methods across time, we used length\^3 correction for biovolume and will further use a bfactor for shell length in these data
 
 -   note: this is in contrast to resp values used for SFG, O:N, and any overlaid phys with ecretion and biodeposition becasue animals were large enough to have tissue dry weights and biovolumes
 

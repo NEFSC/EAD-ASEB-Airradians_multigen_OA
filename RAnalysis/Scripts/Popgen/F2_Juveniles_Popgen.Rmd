@@ -1,0 +1,316 @@
+---
+title: "F2_Juveniles_Popgen.Rmd"
+author: "Samuel Gurr"
+date: "2024-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis/") # Sam's
+knitr::opts_knit$set(root.dir = "D:/PopGen_Postdoc/F2_Juveniles/") # Sam's
+```
+
+#### load packages
+
+```{r load packages we need}
+library(vcfR)
+library(hierfstat)
+library(pcadapt)
+```
+
+#### load data
+
+#### Review Jon Puritz's tutorial here! <https://marineevoecolab.github.io/NACE_MAS_Genomics_Workshop/content/PCA.html>
+
+-   below I simply copied over this syntax and headers, notes changed to accomodate our findings
+
+-   First, we can start with a regular PCA. The first line of code below calculates the PCA with 5 PCs and the second line plots the amount of variance that each PC explains.
+
+```{r}
+# note that to read the bed file you need the bim and the fam in the same folder!
+# filename <- read.pcadapt("angsd/F1_Broodstock/F1_Broodstock_output.bed", type = "bed")
+filename <- read.pcadapt("F2_Juveniles_output.bed", type = "bed")
+
+# table cntiaing the metadata for F1Broodstok
+strata <- as.data.frame(
+          read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Data/Genomics/strata/F2_Juveniles_strata.csv", header = TRUE)
+          ) %>%  
+          dplyr::select(!X) %>% # omit unneecessary column
+          dplyr::mutate(Indiv_ID = as.character(gsub(".*F1-B(.+)-pH.*", "\\1", Individual)))
+
+# add a sample that is missing - a duplicate 
+# note: that it may be best to ommit this duplicate from the SNP calls altogether, 
+# view some sanity checks here before mocing forward and output rationale 
+# strata[nrow(strata)+1,] = c("adapter_trim.F1_B6_pH7.5DUP.bam","Moderate", "6")
+  
+  
+```
+
+-   F-statistics: a measure of genetic structure developed by Sewall Wright (1969, 1978). Related to statistical analysis of variance (ANOVA)
+
+    -   FST is the proportion of the total genetic variance contained in a subpopulation (the S subscript) relative to the total genetic variance (the T subscript). Values can range from 0 to 1. High FST implies a considerable degree of differentiation among populations.
+
+    -   FIS (inbreeding coefficient) is the proportion of the variance in the subpopulation contained in an individual. High FIS implies a considerable degree of inbreeding.
+
+    -   Related measures: q (theta) of Weir and Cockerham (1984) and GST of Nei (1973, 1978). [See Weir, 1996; Avise, Box 6.3, p. 206].
+
+# Screeplot
+
+-   About: <add here>
+-   what to look for?
+-   the 'elbow' of this plot infers the number of descriptive principle components
+
+```{r screeplot}
+res <- pcadapt(filename, K = 8)
+plot(res, option = "screeplot")
+# looks like 4 
+```
+
+```{r}
+
+treatment.names <- strata$Treatment
+
+plot(res, option = "scores", pop = treatment.names)
+
+```
+
+This might look normal, but you’ll notice that two of the populations are tightly grouped around PC1. We should check too make sure this pattern isn’t being driven by a linkage in the genome. To do this, we can look at the loading scores of the PCs. Loading scores show how much a particular SNP factors into a PC.
+
+```{r}
+par(mfrow = c(2, 2))
+for (i in 1:4)
+  plot(res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+```
+
+# Linkage disequilibrium
+
+-   Linkage Disequilibrium can affect ascertainment of population structure (Abdellaoui et al. 2013). Users analyzing dense data such as SNP Array data should account for LD in their PCAs and PCA-based genome-scans.
+
+-   PCAdapt has a built in feature that allows us to clump SNPs by LD, reducing the data to a more informative subset.
+
+```{r address the LD baby!}
+res_LD <- pcadapt(filename, K = 10, LD.clumping = list(size = 500, thr = 0.2))
+plot(res_LD, option = "screeplot")
+# PC3!
+```
+
+```{r}
+library(ggpubr)
+ggarrange(
+plot(res, option = "scores", pop = treatment.names),
+plot(res_LD, option = "scores", pop = treatment.names))
+
+```
+
+-   Interestingly, we see that compensating for LD, the four groups are more distinct, but not by treatment
+
+-   what other attributes could be responsible for this separation?
+
+    -   we had 4 replicates per treatment (A, B, C, D), however the buckets were randomly distributed at random and rotated. Perhaps there was a tank position during a critical stage (on the seawater table) that caused this separation? Unforuntatley we do not have replicate info for the broodstock, as these were pooled from each replicate and positions on the spawning table.
+
+    -   Look at the F2 Juveniles (here we have A-D information) to see if this arises also
+
+```{r}
+getwd()
+my_vcf <- read.vcfR("F2_Juveniles_output.vcf.gz")
+ld_filtered_vcf <- my_vcf[!is.na(res$loadings[,1]),]
+```
+
+-   Next, we will convert our vcfR file to a genlight input which can be used by the package adegenet. We will also use the strata and setPop function to enter population level information. Remember, we made the strata_df in the previous tutorial, but we will remake it here just in case.
+
+```{r}
+library(adegenet)
+mygl <- vcfR2genlight(ld_filtered_vcf,n.cores =2)
+
+strata_df <- data.frame(strata)
+
+strata(mygl) <- strata_df
+setPop(mygl) <- ~Treatment
+```
+
+-   Below, we use the PCA function of adegent to create a PCA.
+
+```{r}
+oyster.pca <- glPca(mygl, nf = 3)
+```
+
+-   Let’s look at how much variance each PC explains:
+
+```{r}
+barplot(100*oyster.pca$eig/sum(oyster.pca$eig),
+        col = heat.colors(50), 
+        main="PCA Variance Explained")
+title(ylab="Percent of variance\nexplained", 
+      line = 2)
+title(xlab="PC", 
+      line = 1)
+```
+
+-   We basically have TWO informative PCs here. Let’s plot the individuals on the first two PCs:
+
+```{r}
+myCol <- colorplot(oyster.pca$scores,oyster.pca$scores, 
+                   transp=TRUE, 
+                   cex=4)
+abline(h=0,
+       v=0, 
+       col="grey")
+add.scatter.eig(oyster.pca$eig[1:10],2,1,2, 
+                posi="bottomright", 
+                ratio=.16)
+```
+
+-   The plot above is combining information from the first 3 PCs to color dots, and using the first two for x,y coordinates. We can see possibly four groups across all PCs.
+
+-   We can also port this to ggplot and color by population:
+
+```{r}
+library(ggplot2)
+oyster.pca.df <- as.data.frame(oyster.pca$scores)
+oyster.pca.df$pop <- pop(mygl)
+cols <-c("#871a1a","#33A02C","#1F78B4")
+
+p <- ggplot(oyster.pca.df, aes(x=PC1, y=PC2, colour=pop)) 
+p <- p + geom_point(size=2)
+p <- p + stat_ellipse(level = 0.95, size = 1)
+p <- p + scale_color_manual(values = cols) 
+p <- p + geom_hline(yintercept = 0) 
+p <- p + geom_vline(xintercept = 0) 
+p <- p + theme_bw()
+
+p
+```
+
+# **DAPC**
+
+-   Discriminant analysis of Principal Components (DAPC), allows us to either infer groups or put in groups *a priori*. DAPC seeks to maximize between group variance while minimizing within group variance. I’ll show you how this works both ways below.
+
+### **Finding clusters**
+
+-   'Adegenet' has a built in method for inferring population groupings or clusters. It runs interactively, so this code block below won’t run on it’s own. You need to paste it into the Console.
+
+```{r}
+grp <- find.clusters(mygl, max.n.clust=10)
+# choose 40 for the number of OCs to retain
+```
+
+For the purpose of picking clusters, the more PCs the better. Pick any number greater than 40.
+
+We’d like to see an elbow here, where the lowest point would be the correct number. This doesn’t always work well for subtle structure. I’m going to pick 3 given the results above.
+
+```{r}
+grp <- find.clusters(mygl, max.n.clust=10, n.pca =100, n.clust =3)
+```
+
+We can make a simple table to see the assignments:
+
+```{r}
+table(pop(mygl), grp$grp)
+```
+
+
+<take some time to interpret what this means here!>
+
+## Discriminant Analysis
+
+This is another interactive function. Run in the console.
+
+```{r}
+oyster.dapc <- dapc(mygl, grp$grp)
+```
+
+**Now this is different than finding clusters. You can overload the analysis with two many PCs.** For this, you want to choose the lowest number that gets you > 60% of the variance. 
+  - I would choose 25 or 30.
+
+This is picking the number of discriminant functions. Because we put in four groups, there are only three.(check this if true with our data) Truly, only the first two are informative. Let’s pick 2.
+
+```{r}
+oyster.dapc <- dapc(mygl, n.pca = 25, n.da = 2, grp$grp)
+```
+
+Now, let’s plot the analysis
+
+```{r}
+scatter(oyster.dapc,col=cols,bg="white", solid=1)
+```
+
+We can also plot membership probabilities:
+
+```{r}
+compoplot(oyster.dapc, 
+          posi="bottom",
+          txt.leg=paste("Cluster", 1:3), 
+          lab="", 
+          ncol=4, 
+          xlab="individuals")
+```
+
+We can use ggplot to make this easier to read and put in the populations for each individual:
+
+```{r}
+library(tidyr)
+dapc.df <- as.data.frame(oyster.dapc$posterior)
+dapc.df$pop <- pop(mygl)
+dapc.df$indNames <- rownames(dapc.df)
+cols4 <-c("#871a1a","#33A02C","#1F78B4","#FDBF6F" )
+
+dapc.df <- pivot_longer(dapc.df, -c(pop, indNames))
+colnames(dapc.df) <- c("Original_Pop","Sample","Assigned_Pop","Posterior_membership_probability")
+
+p <- ggplot(dapc.df, aes(x=Sample, y=Posterior_membership_probability, fill=Assigned_Pop))
+p <- p + geom_bar(stat='identity') 
+p <- p + scale_fill_manual(values = cols4) 
+p <- p + facet_grid(~Original_Pop, scales = "free")
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+p <- p + ylab("Posterior membership probability")
+p
+```
+
+## DAPC with original populations
+
+Again, instead of inferring groups, we can use our original populations.
+
+```{r}
+oyster.dapc <- dapc(mygl, 
+                    n.pca = 25, 
+                    n.da = 2)
+scatter(oyster.dapc,
+        col = cols, 
+        cex = 2, 
+        legend = TRUE, 
+        clabel = F, 
+        posi.leg = "bottomleft", 
+        scree.pca = TRUE,
+        posi.pca = "topleft", 
+        cleg = 0.75, 
+        posi.da = "topright")
+```
+
+Let’s make this better with ggplot
+
+```{r}
+dapc.df <- as.data.frame(oyster.dapc$ind.coord)
+dapc.df$pop <- pop(mygl)
+dapc.df$indNames <- rownames(dapc.df)
+
+p <- ggplot(dapc.df, aes(x=LD1, 
+                         y=LD2, 
+                         colour=pop)) 
+p <- p + geom_point(size=2)
+p <- p + scale_color_manual(values = cols) 
+p <- p + geom_hline(yintercept = 0) 
+p <- p + geom_vline(xintercept = 0) 
+p <- p + theme_bw()+ xlab("DA 1") + ylab("DA 2")+ ggtitle("DAPC with populations as groups")
+
+p
+```
+
+**Works cited and acknowledgements**
+Code for this tutorial was adapted from the following sources:
+https://knausb.github.io/vcfR_documentation/
+https://grunwaldlab.github.io/Population_Genetics_in_R/gbs_analysis.html
+Documentation from the Adegenet R Package
