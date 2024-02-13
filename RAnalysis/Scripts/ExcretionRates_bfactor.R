@@ -196,7 +196,7 @@ Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
                       dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
                       dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  
                                       ExcretionRate_umol_mL_hr*
-                                      ( (1/(as.numeric(Dry_Tissue_weight)))^0.985) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
+                                      ( (1/(as.numeric(Dry_Tissue_weight)))^0.979) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
                       dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
                                                      pH == 7.5 ~ "800 μatm", 
                                                      pH == 7.0 ~ "1200 μatm"))

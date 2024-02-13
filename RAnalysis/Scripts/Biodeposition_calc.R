@@ -138,9 +138,44 @@ WaterSamples_blank     <- biodep2 %>%
   
   dplyr::filter(!(Date %in% '20230224' & treatment %in% 8 & water_sample_time %in% c('9:50','11:10'))) %>%  # omit sample with obvious filter errors (noted in the worksheet!)
   dplyr::filter(!(Date %in% '20230224' & treatment %in% 7.5 & water_sample_time %in% '11:10')) %>%  # omit sample with obvious filter errors (noted in the worksheet!)
-  
+  dplyr::filter(!(Date %in% '20230201' & treatment %in% 8 & water_sample_time %in% '9:45')) %>%  # omit sample with obvious error
+
   dplyr::group_by(Date,treatment)
  # View(WaterSamples_blank)
+
+
+
+Blank_plotting <- WaterSamples_blank %>% dplyr::select(!c(sample_type, water_sample_time)) %>% 
+                  tidyr::pivot_longer(!c(Date,treatment), 
+                                      names_to = "measurement", values_to = "value") %>% 
+                  summarySEwithin(measurevar="value", withinvars=c("Date", "treatment","measurement"), idvar="Date")
+
+Perc_TSM <- Blank_plotting %>%  
+  dplyr::filter(measurement %in% c('Perc_ORG', 'Perc_INORG')) %>% 
+  ggplot(aes(x=treatment, y=value/100, fill=measurement)) +
+  geom_bar(position=position_dodge(.9), colour="black", stat="identity") +
+  geom_errorbar(position=position_dodge(.9), width=.25, aes(ymin=value-se, ymax=value+se)) +
+  coord_cartesian(ylim=c(0,1)) +
+  scale_fill_manual(values=c("#CCCCCC","#FFFFFF")) +
+  # scale_y_continuous(breaks=seq(4:0.25)) +
+  theme_classic() +
+  ylab("Proportion") +
+  ggtitle("Biodeposition: TSM - Percent inorgnaic and organic material") +
+  geom_hline(yintercept=38) +
+  facet_wrap(~Date)
+
+Total_TSM <-Blank_plotting %>%  
+  dplyr::filter(measurement %in% 'TPM_mgL') %>% 
+  ggplot(aes(x=treatment, y=value, group=1)) +
+  geom_errorbar(width=.1, aes(ymin=value-se, ymax=value+se)) +
+  geom_point(shape=21, size=3, fill="white")  +
+  theme_classic() +
+  ylab("TPM_mgL") +
+  ggtitle("Biodeposition: Total particulate material") +
+  facet_wrap(~Date)
+
+ggarrange(Perc_TSM, Total_TSM, nrow=2)
+
 # slice(-1) # removes the first timestamp by group 
 # mean for these blanks here...
 WaterSamples_blank_AVE <- WaterSamples_blank %>% 
