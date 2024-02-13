@@ -22,7 +22,8 @@ unique(F2_ER_master$Date) # 20230131 20230223 20230327 - all three dataes - yay!
 # NOTE: view the bfactor norm R script, B factro using TDW for all data in this mutligen study!
 
 F2_ER_master <- F2_ER_master %>% 
-                    dplyr::mutate(Age = case_when(Date == "20230131" ~  169,
+                    dplyr::mutate(Age = case_when(Date == "20221116" ~  111,
+                                                  Date == "20230131" ~  169,
                                                   Date == "20230223" ~  192,
                                                   Date == "20230327" ~  224)) %>%  # %>% #edit this!
                     dplyr::mutate(pCO2 = factor(pCO2, levels = c('500 μatm','800 μatm','1200 μatm')))

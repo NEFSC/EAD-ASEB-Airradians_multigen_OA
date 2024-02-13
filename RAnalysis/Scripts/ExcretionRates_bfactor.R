@@ -44,7 +44,8 @@ nrow(Excretion_data) # 166
 Excretion_count <- as.data.frame(Excretion_data %>% 
                         dplyr::select(c(Date, pH, Replicate)) %>% 
                         dplyr::group_by(Date, pH, Replicate) %>% 
-                        summarise(n=n())) %>% dplyr::mutate(Date = as.factor(Date))
+                        summarise(n=n())) %>% 
+                        dplyr::mutate(Date = as.factor(Date))
 Excretion_count
 
 
@@ -80,11 +81,11 @@ setdiff(Size_count, Excretion_count) # nmo output means data are exactly the sam
 # EDIT AND MERG DATA  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 list(unique(Excretion_data$Date)) # 20220202 20220301 20211026 20220922 20221026 20221116 20230131 20230223 20230327- call these dates in the size data and only Loligo RR data (large animals measured excretion!)
+list(unique(Size_count$Date)) # 20211026 20220202 20220301 20220922 20221026 20221116 20230131 20230223 20230327- call these dates in the size data and only Loligo RR data (large animals measured excretion!)
 
 nrow(Excretion_data) # 166
+nrow(Size_data_filt) # 166
 
-unique(Size_data_2$Date)
-unique(Excretion_data$Date)
 
 # View(Size_data_2)
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -97,6 +98,7 @@ nrow(Excretion_data_OM) # 145 - with the dry tissue weights omiited
 # View(Excretion_data)
 # View(Size_data_2)
 # Excretion_data_OM$Dry_Tissue_weight
+# View(Excretion_data_OM)
 Excretion_data_OM <- Excretion_data_OM %>% # merge size and excretion data
                           dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
                           dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
@@ -123,7 +125,7 @@ ER_b.factor_PLOT_ALL <- Excretion_data_OM %>%
                         geom_smooth(method = lm, color = 'red') +
                         ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
 ER_b.factor_PLOT_ALL
-# b factor == 1.06 for TDW
+# b factor == 0.985 for TDW
 
 
 ER_b.factor_PLOT_pCO2 <-Excretion_data_OM %>% 
@@ -189,23 +191,23 @@ dev.off()
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED BASED ON B FACTOR 1.06 (ABOVE)::::::::::::::::::::::::::::::
-
+unique(Excretion_master$Date)
 Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
                       dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
                       dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  
                                       ExcretionRate_umol_mL_hr*
-                                      ( (1/(as.numeric(Dry_Tissue_weight)))^1.06) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
+                                      ( (1/(as.numeric(Dry_Tissue_weight)))^0.985) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
                       dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
                                                      pH == 7.5 ~ "800 μatm", 
                                                      pH == 7.0 ~ "1200 μatm"))
 
 
 F1_Excretion_master_bfactor<- Excretion_master %>% 
-                          dplyr::filter(!Date %in% c('20230131','20230223','20230327')) 
+                          dplyr::filter(!Date %in% c('20221116','20230131','20230223','20230327')) 
 nrow(F1_Excretion_master_bfactor) # 78
 F2_Excretion_master_bfactor <- Excretion_master %>% 
-                          dplyr::filter(Date %in% c('20230131','20230223','20230327')) 
-nrow(F2_Excretion_master_bfactor) # 63
+                          dplyr::filter(Date %in% c('20221116', '20230131','20230223','20230327')) 
+nrow(F2_Excretion_master_bfactor) # 82
 
 # WRITE CSV OF THE MASTER FILE
 write.csv(F1_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")

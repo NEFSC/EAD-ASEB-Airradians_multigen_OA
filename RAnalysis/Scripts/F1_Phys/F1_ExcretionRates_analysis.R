@@ -20,7 +20,7 @@ setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnal
 # LOAD DATA
 F1_ER_master <- read.csv(file="C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv", header=T)
 
-unique(F1_ER_master$Date) # 20211026 20220202 20220301 20220922 20221026 - all three dataes - yay! corrected for b factor 1.07
+unique(F1_ER_master$Date) # 20211026 20220202 20220301 20220922 20221026 20221116 - all three dataes - yay! corrected for b factor 1.07
 # NOTE: view the bfactor norm R script, B factro using TDW for all data in this mutligen study!
 
 F1_ER_master <- F1_ER_master %>% 
@@ -151,14 +151,15 @@ write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_
 # Two way model for all data
 
 AllER_TwoWayAnova <- aov(lm(ExcretionRate_umol_mL_hr_TDWbfactor ~ Age*pCO2, data=F1_ER_MEANS))
-shapiro.test(resid(AllER_TwoWayAnova)) # 3.515e-05
+shapiro.test(resid(AllER_TwoWayAnova)) # 2.373e-06
 library(rcompanion)
 AllER_SRH <-  scheirerRayHare(ExcretionRate_umol_mL_hr_TDWbfactor ~ Age*pCO2, data=F1_ER_MEANS)
 AllER_SRH
-#           Df Sum Sq       H p.value
-# Age        4 9001.0 29.5115 0.00001
-# pCO2       1  349.9  1.1474 0.28410
-# Age:pCO2   4  804.8  2.6387 0.61998
+#            Df Sum Sq       H p.value
+# Age        4 9506.6 31.1692 0.00000
+# pCO2       1  314.6  1.0314 0.30984
+# Age:pCO2   4  722.4  2.3685 0.66833
+# Residuals 50 7344.2 
 
 
 
@@ -169,12 +170,12 @@ F1_ER_MEANS_211026 <- F1_ER_MEANS %>% filter(Age %in% '20211026') # call data
 F1_ER_MEANS_0202   <- F1_ER_MEANS %>% filter(Age %in% '20220202') # call data 
 F1_ER_MEANS_0301   <- F1_ER_MEANS %>% filter(Age %in% '20220301') # call data 
 F1_ER_MEANS_0922   <- F1_ER_MEANS %>% filter(Age %in% '20220922') # call data 
-F1_ER_MEANS_221026 <- F1_ER_MEANS %>% filter(Age %in% '20221026') # call data 
+F1_ER_MEANS_221026 <- F1_ER_MEANS %>% filter(Date %in% '20221026') # call data 
 
 # 20211026 :::::::::::::::::::::::::::::::
 # LME mod -  data 
 library(pander)
-LMmod_211026 <- lm(mean_ER_TDWbfactor ~ pCO2, data=F1_ER_MEANS_211026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
+LMmod_211026 <- lm(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2, data=F1_ER_MEANS_211026) # cahmber tank = = random factor (ii.e. 8_C, 7.5_C, 8_A, etc.)
 shapiro.test(resid(LMmod_211026)) #  0.5065 normal
 leveneTest(LMmod_211026) # 0.05557 . - pass
 pander(anova(LMmod_211026), style='rmarkdown') # anova table of lmer
@@ -223,14 +224,11 @@ pander(KEmod_0922, style='rmarkdown') # anova table
 
 # 20221026 :::::::::::::::::::::::::::::::
 # LME mod -  data 
-LMmod_221026 <- lm(mean_ER_TDWbfactor ~ pCO2,data=F1_ER_MEANS_221026) # 
-shapiro.test(resid(LMmod_221026)) # 0.0006315 -  non- normal
-leveneTest(LMmod_221026) # 0.5705 - pass
-KEmod_221026 <- kruskal.test(mean_ER_TDWbfactor ~ pCO2,data=F1_ER_MEANS_221026) # 
-pander(KEmod_221026, style='rmarkdown') # anova table
-#   | Test statistic | df | P value |
-#   |:--------------:|:--:|:-------:|
-#   |     0.3265     | 1  | 0.5677  |
+LMmod_221026 <- lm(ExcretionRate_umol_mL_hr_TDWbfactor ~ pCO2,data=F1_ER_MEANS_221026) # 
+shapiro.test(resid(LMmod_221026)) # pass
+leveneTest(LMmod_221026) # - pass
+summary(LMmod_221026)
+
 
 
 
