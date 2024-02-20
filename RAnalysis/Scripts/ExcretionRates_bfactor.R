@@ -93,7 +93,7 @@ nrow(Size_data_filt) # 166
 
 Excretion_data_OM  <- merge(Excretion_data, Size_data_filt) %>% 
                           dplyr::filter(!Dry_Tissue_weight %in% '<add here>')
-nrow(Excretion_data_OM) # 145 - with the dry tissue weights omiited
+nrow(Excretion_data_OM) # 166 - with the dry tissue weights omiited
 # View(Excretion_data_OM)
 # View(Excretion_data)
 # View(Size_data_2)

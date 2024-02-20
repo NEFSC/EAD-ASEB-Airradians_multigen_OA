@@ -1,4 +1,4 @@
-Date,pH,Replicate,ExcretionRate_ug_mL_hr,ExcretionRate_umol_mL_hr,Number,Run
+Date,pH,Replicate,ExcretionRate_ug_hr,ExcretionRate_umol_hr,Number,Run
 20221116,7.5,A,4.128,0.295,2,1
 20221116,7.5,C,1.774,0.127,1,1
 20221116,7.5,A,4.003,0.286,1,1

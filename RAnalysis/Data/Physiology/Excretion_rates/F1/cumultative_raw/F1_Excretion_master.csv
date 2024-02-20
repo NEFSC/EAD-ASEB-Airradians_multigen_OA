@@ -1,4 +1,4 @@
-Date,pH,Replicate,ExcretionRate_ug_mL_hr,ExcretionRate_umol_mL_hr,Number,Run
+Date,pH,Replicate,ExcretionRate_ug_hr,ExcretionRate_umol_hr,Number,Run
 20220202,7.5,A,2.509199752,0.179228554,1,1
 20220202,7.5,B,3.205899747,0.228992839,1,1
 20220202,7.5,C,-1.462846443,-0.104489032,1,1
