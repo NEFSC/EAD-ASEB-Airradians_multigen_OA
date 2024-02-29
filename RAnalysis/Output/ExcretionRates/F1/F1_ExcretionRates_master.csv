@@ -1,4 +1,4 @@
-"","Date","pH","Replicate","Number","Run","ExcretionRate_ug_mL_hr","ExcretionRate_umol_mL_hr","Generation","Chamber_tank","Biovolume_g_in_sw","Length_um","Dry_Shell_weight","Dry_Tissue_weight","whole_Dry_weight","pCO2","log10_VER","log10_TDW","ExcretionRate_umol_mL_hr_TDWbfactor"
+"","Date","pH","Replicate","Number","Run","ExcretionRate_ug_hr","ExcretionRate_umol_hr","Generation","Chamber_tank","Biovolume_g_in_sw","Length_um","Dry_Shell_weight","Dry_Tissue_weight","whole_Dry_weight","pCO2","log10_VER","log10_TDW","ExcretionRate_umol_hr_TDWbfactor"
 "1",20211026,7.5,"A",1,1,0.456141465,0.032581533,"F1","7.5_A",0.2,8900,"0.0485",0.0043,0.0528,"800 μatm",-1.48702848547325,-2.36653154442041,6.75780874522666
 "2",20211026,7.5,"A",2,2,0.365329145,0.026094939,"F1","7.5_A",0.4,13490,"0.1371",0.0143,0.1514,"800 μatm",-1.58344371402195,-1.84466396253494,1.66909980076945
 "3",20211026,7.5,"B",1,1,0.017666053,0.001261861,"F1","7.5_B",0.1,7030,"0.0266",0.003,0.0296,"800 μatm",-2.89898848206313,-2.52287874528034,0.372314379270947

@@ -90,11 +90,12 @@ nrow(F2_ON_Master) # 82 aligned - exact with the master file
 # F1 Plots ::::::::::::::::::::::::::
 library(forcats)
 F1_ON_Master <- F1_ON_Master %>% 
-                  dplyr::mutate(O_N =(resp_umol_hr*2)/ # for umol of oxygen, curretnly as O2, convert to O 
-                                  ExcretionRate_umol_mL_hr) %>% 
+                  dplyr::mutate(O_N =(resp_umol_hr)/ # for umol of oxygen, curretnly as O2, convert to O 
+                                  ExcretionRate_umol_hr) %>% 
+                  dplyr::filter(!O_N >200) %>% # outlier omit
                   dplyr::mutate(pCO2 = factor(pCO2, levels=c("500 μatm", "800 μatm")))
 
-View(F1_ON_Master %>% dplyr::select(Date,pH, Replicate,resp_umol_hr, ExcretionRate_umol_mL_hr, O_N))
+# View(F1_ON_Master %>% dplyr::select(Date,pH, Replicate,resp_umol_hr, ExcretionRate_umol_hr, O_N))
 
 write.csv(F1_ON_Master,
           "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_ON_master.csv")
@@ -175,8 +176,8 @@ dev.off()
 # F2 Plots :::::::::::::::::::::::::
 
 F2_ON_Master <- F2_ON_Master %>% 
-                    dplyr::mutate(O_N =(resp_umol_hr*2)/ # for umol of oxygen, curretnly as O2, convert to O 
-                                    ExcretionRate_umol_mL_hr) %>% 
+                    dplyr::mutate(O_N =(resp_umol_hr)/ # for umol of oxygen, curretnly as O2, convert to O 
+                                    ExcretionRate_umol_hr) %>% 
                     dplyr::mutate(pCO2 = factor(pCO2, levels=c("500 μatm", "800 μatm", "1200 μatm")))
 
 write.csv(F2_ON_Master,
@@ -184,7 +185,7 @@ write.csv(F2_ON_Master,
 
 
 F2_ON_MasterMEANS <- F2_ON_Master %>% # mean by tank replicate 
-                      dplyr::filter(!O_N>500) %>% 
+                      dplyr::filter(!O_N>200) %>% 
                       dplyr::select(c(Date, pCO2,  Replicate, O_N)) %>% # one extreme outlier value!
                       Rmisc::summarySE(measurevar="O_N", 
                                 groupvars=c("Date", "pCO2",  "Replicate"))

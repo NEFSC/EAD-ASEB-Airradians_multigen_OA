@@ -59,11 +59,11 @@ getwd()
 
 ```{r}
 
-Biodeposition    <- read.csv("Output/Biodeposition/Biodeposition_master_F2.csv", header = T)
+Biodeposition    <- read.csv("Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
 
-RespirationRates <- read.csv(file="Output/Respiration/F2_RR_calc_master.csv", header=T)
+RespirationRates <- read.csv(file="Output/Respiration/F2/F2_RR_calc_master.csv", header=T)
 
-ExcretionRates   <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_master.csv", header=T) 
+ExcretionRates   <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_master.csv", header=T) %>% dplyr::filter(!Date %in% 20221116)
 ```
 
 ## Add minor adjustments to these files to assist merging
@@ -85,7 +85,8 @@ Biodeposition_adj    <- Biodeposition %>%
                           dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
                           dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
                           dplyr::rename(pH = treatment) %>% # rename to match 
-                          dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours)) %>% 
+                          dplyr::select(-c(tank_ID, animal_number, initial_filter_weight_mg, 
+                                           dry_filter_weight_mg,ash_filter_weight_mg, inclubation_time_hours)) %>% 
                           dplyr::mutate(Date = case_when(Date == "02/01/2023" ~ '1/31/2023',
                                                          Date == "02/24/2023" ~ '2/23/2023',
                                                          Date == "03/28/2023" ~ '3/27/2023')) %>% 
@@ -112,15 +113,15 @@ nrow(RespirationRates_adj) # 63
 
 # ER
 # note - we will bfctor and mean corret for TDW)
-bTDW    <- 1.07 # FR_bfactor script using ALL F1 and F2 data!
+bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F2 data!
 
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
                           dplyr::mutate(Date = case_when(Date == "01/31/2023" ~ '1/31/2023',
                                                          Date == "02/23/2023" ~ '2/23/2023',
                                                          Date == "03/27/2023" ~ '3/27/2023',)) %>% 
-                          dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_mL_hr/1000) %>% 
-                          dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_mL_hr) %>% 
+                          dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_hr/1000) %>% 
+                          dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_hr) %>% 
   
                           dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
                                           (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
@@ -359,19 +360,55 @@ dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
 
 
 F2_Masterfile_2.0$pCO2 <- factor(F2_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
-SFG_Pousse_F2          <- ggplot(data=F2_Masterfile_2.0, aes(x=pCO2, y=SFG, colour=pCO2)) +
+
+F2_SGF_Means_by_tank <- F2_Masterfile_2.0 %>% 
+                            summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2", "Replicate"))
+
+SFG_Pousse_F2          <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
                         scale_colour_manual(values=c("forestgreen","orange", "purple"))+
                         theme_classic() +  
                         geom_boxplot(fill="white", 
                                      outlier.colour=NA, 
                                      position=position_dodge(width=0.9)) +
                         geom_point(position=position_jitterdodge()) +
-                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                        theme(axis.text.x=element_blank(),axis.title.x=element_blank()) +
+                        theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
                         labs(title="F2 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
-                        facet_wrap(~Date)
+                        facet_wrap(~Age)
 
-pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F2_SFG.pdf")
-print(SFG_Pousse_F2)
+# convert meand by tank to summrizing means by treatment and age 
+
+F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
+                            summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2"))
+
+F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
+                                 ggplot(aes(x=(as.factor(Age)), 
+                                               y=SFG, 
+                                               color=as.factor(pCO2))) +
+                                    geom_point(position=position_dodge(.5))+ 
+                                    scale_color_manual(values=c("forestgreen",
+                                                                "darkorange2",
+                                                                "purple"))+
+                                    geom_errorbar(aes(ymin=SFG-se, 
+                                                      ymax=SFG+se), width=.2,
+                                                  position=position_dodge(.5)) +
+                                    ggtitle("SFG (mean+-SE)") +
+                                    theme_classic() +  
+                                    xlab("Age (dpf)") +
+                                    ylab("SFG") +
+                                   #xlab("Age (d)") +
+                                    theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                                    # scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                    # labs(color='pCO2 treatment') + # legend name
+                                    theme(text = element_text(size=10))
+
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F2_SFG.pdf", width = 6, height = 8)
+print(ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
 dev.off()
 ```

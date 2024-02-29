@@ -44,7 +44,7 @@ nrow(Excretion_data) # 166
 Excretion_count <- as.data.frame(Excretion_data %>% 
                         dplyr::select(c(Date, pH, Replicate)) %>% 
                         dplyr::group_by(Date, pH, Replicate) %>% 
-                        summarise(n=n())) %>% 
+                        dplyr::summarise(n=n())) %>% 
                         dplyr::mutate(Date = as.factor(Date))
 Excretion_count
 
@@ -68,7 +68,7 @@ nrow(Size_data_filt) # 166
 Size_count <- as.data.frame(Size_data_filt %>% 
                     dplyr::select(c(Date, pH, Replicate)) %>% 
                     dplyr::group_by(Date, pH, Replicate) %>% 
-                    summarise(n=n())) %>% dplyr::mutate(Date = as.factor(Date))
+                    dplyr::summarise(n=n())) %>% dplyr::mutate(Date = as.factor(Date))
 Size_count
 
 
@@ -100,15 +100,15 @@ nrow(Excretion_data_OM) # 166 - with the dry tissue weights omiited
 # Excretion_data_OM$Dry_Tissue_weight
 # View(Excretion_data_OM)
 Excretion_data_OM <- Excretion_data_OM %>% # merge size and excretion data
-                          dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
+                          dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
                           dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
                                                          pH == 7.5 ~ "800 μatm",
                                                          pH == 7 ~ "1200 μatm"))
 
 Excretion_data_OM$pCO2 <- fct_relevel(Excretion_data_OM$pCO2, c('500 μatm', '800 μatm', '1200 μatm'))
 
-Excretion_data_OM            <- Excretion_data_OM %>% filter(!is.na(Excretion_data_OM$ExcretionRate_umol_mL_hr)) 
-Excretion_data_OM$log10_VER  <- log10(as.numeric(Excretion_data_OM$ExcretionRate_umol_mL_hr)) # assign resp value
+Excretion_data_OM            <- Excretion_data_OM %>% filter(!is.na(Excretion_data_OM$ExcretionRate_umol_hr)) 
+Excretion_data_OM$log10_VER  <- log10(as.numeric(Excretion_data_OM$ExcretionRate_umol_hr)) # assign resp value
 Excretion_data_OM$log10_TDW  <- log10(as.numeric(Excretion_data_OM$Dry_Tissue_weight)) # assign length value 
 
 # run plot for b factor 
@@ -125,7 +125,7 @@ ER_b.factor_PLOT_ALL <- Excretion_data_OM %>%
                         geom_smooth(method = lm, color = 'red') +
                         ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
 ER_b.factor_PLOT_ALL
-# b factor == 0.985 for TDW
+# b factor == 0.979 for TDW
 
 
 ER_b.factor_PLOT_pCO2 <-Excretion_data_OM %>% 
@@ -193,9 +193,9 @@ dev.off()
 # NORMALIZED BASED ON B FACTOR 1.06 (ABOVE)::::::::::::::::::::::::::::::
 unique(Excretion_master$Date)
 Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
-                      dplyr::filter(!ExcretionRate_umol_mL_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
-                      dplyr::mutate(ExcretionRate_umol_mL_hr_TDWbfactor =  
-                                      ExcretionRate_umol_mL_hr*
+                      dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
+                      dplyr::mutate(ExcretionRate_umol_hr_TDWbfactor =  
+                                      ExcretionRate_umol_hr*
                                       ( (1/(as.numeric(Dry_Tissue_weight)))^0.979) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
                       dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
                                                      pH == 7.5 ~ "800 μatm", 
