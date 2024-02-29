@@ -68,9 +68,9 @@ F1_length_master %>%
        dplyr::arrange(Length_mm)
 
 F1_length_MEANS_bytank <-  F1_length_master %>%  
-                            summarySE(measurevar="Length_mm", groupvars=c("Age_DPF","pCO2","Replicate")) %>% 
-                            dplyr::arrange(Length_mm) 
+                            summarySE(measurevar="Length_mm", groupvars=c("Date","Age_DPF","pCO2","Replicate")) 
 
+write.csv(F1_length_MEANS_bytank, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_Mean_Length_by_tank.csv")
 ```
 
 
