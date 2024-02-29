@@ -654,7 +654,7 @@ nrow(RR_master_OM) # 317
 ```{r b factor TISSUE DRY WEIGHT, echo = FALSE, message = FALSE, warning = FALSE, results='hide'}
 
 
-nrow(RR_master_OM %>% dplyr::filter(Dry_Tissue_weight >0)) # 140
+nrow(RR_master_OM %>% dplyr::filter(Dry_Tissue_weight >0)) # 161
 nrow(RR_master_OM %>% dplyr::filter(Length_um >0)) # 317
 nrow(RR_master_OM %>% dplyr::filter(resp_umol_hr_biovolcalc >0)) # 317
 # ABOUT: 
@@ -738,7 +738,49 @@ MO2_b.factor_PLOT_OM <- RR_master_OM %>%
                                                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
                                                 label.x.npc = "left")
 
-MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>% 
+# by generation
+MO2_b.factorTDW_PLOT_Gen <- RR_master_OM %>% 
+                       dplyr::filter(!(log10_TDW > -0.5 & 
+                                         log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
+                       ggplot(aes(x=log10_TDW, y=log10_VO2)) +
+                                      geom_point() +
+                                      theme(panel.grid.major = element_blank(), 
+                                            panel.grid.minor = element_blank())+ 
+                                      scale_x_continuous(name ="log10_Length; in mm") +
+                                      scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                                      theme_classic() +
+                                      theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                      ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
+                                              (b.factor * log10_Length)") +
+                                      geom_smooth(method = lm, color = 'red') +
+                                      ggpmisc::stat_poly_eq(parse=T, 
+                                                            aes(label = paste(..eq.label.., ..rr.label.., 
+                                                                              sep = "~~~")),
+                                                            label.x.npc = "left") +
+                                      facet_wrap(~Gen)
+# by treatment
+MO2_b.factorTDW_PLOT_pCO2 <- RR_master_OM %>% 
+                       dplyr::filter(!(log10_TDW > -0.5 & 
+                                         log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
+                       ggplot(aes(x=log10_TDW, y=log10_VO2)) +
+                                      geom_point() +
+                                      theme(panel.grid.major = element_blank(), 
+                                            panel.grid.minor = element_blank())+ 
+                                      scale_x_continuous(name ="log10_Length; in mm") +
+                                      scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                                      theme_classic() +
+                                      theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                      ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
+                                              (b.factor * log10_Length)") +
+                                      geom_smooth(method = lm, color = 'red') +
+                                      ggpmisc::stat_poly_eq(parse=T, 
+                                                            aes(label = paste(..eq.label.., ..rr.label.., 
+                                                                              sep = "~~~")),
+                                                            label.x.npc = "left") +
+                                      facet_wrap(~pCO2)
+
+
+MO2_b.factorTDW_PLOT_pCO2_Gen <- RR_master_OM %>% 
                        dplyr::filter(!(log10_TDW > -0.5 & 
                                          log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
                        ggplot(aes(x=log10_TDW, y=log10_VO2, color = pCO2)) +
@@ -757,20 +799,37 @@ MO2_b.factor_PLOT_facetted_OM <- RR_master_OM %>%
                           facet_wrap(~pCO2*Gen)
 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_OM.pdf"), width = 8, height = 8)
-print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
+print(ggarrange(MO2_b.factor_PLOT_OM, 
+                MO2_b.factorTDW_PLOT_Gen,
+                MO2_b.factorTDW_PLOT_pCO2,
+                MO2_b.factorTDW_PLOT_pCO2_Gen, 
+                nrow = 4, ncol = 1)) # print the model diagnostics 
 dev.off()
-print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, ncol = 1)) # print the model diagnostics 
-
+print(ggarrange(MO2_b.factor_PLOT_OM, 
+                MO2_b.factorTDW_PLOT_Gen,
+                MO2_b.factorTDW_PLOT_pCO2,
+                MO2_b.factorTDW_PLOT_pCO2_Gen, 
+                nrow = 4, ncol = 1)) # print the model diagnostics 
 
 
 ```
 
 ### summary:
-
--   TDW b factor total = 0.62
--   TDW b factor pCO2 low = 0.639
--   TDW b factor pCO2 moderate = 0.628
--   TDW b factor pCO2 high = -0.165
+* all
+-   TDW b factor total = 0.704
+* Generation
+-  F1 TDW b factor  = 0.67
+-  F2 TDW b factor  = 0.771
+* treamtent
+-   Low pCO2 TDW b factor  = 0.675
+-   Moderate pCO2 TDW b factor  = 1.17
+-   High pCO2 TDW b factor  = 1.28
+*  treamtent x Generation
+-   Low pCO2 F1 TDW b factor  = 0.675
+-   Low pCO2 F2 TDW b factor  = 0.665
+-   Moderate pCO2 F1 TDW b factor  = 0.662
+-   Moderate pCO2 F2 TDW b factor  = 0.832
+-   High pCO2 F2 TDW b factor  = 0.829
 
 ## by TISSUE DRY WEIGHT (biovol calculated) ::::::::::
 
@@ -895,7 +954,7 @@ print(ggarrange(MO2_b.factor_PLOT_OM, MO2_b.factor_PLOT_facetted_OM, nrow = 2, n
 # FOR SHELL ENGTH WE WILL USE THE 'resp_umol_hr_biovolcalc' data to employ all resp data files across time! 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH LENGTH AND MO2 ::::::::::::::::::::::::::::::
-nrow(RR_master_OM) # 313
+nrow(RR_master_OM) # 317
 RR_master_OM$log10_VO2     <- log10(as.numeric(RR_master_OM$resp_umol_hr_biovolcalc)) # assign resp value
 RR_master_OM$log10_Length  <- log10(as.numeric(RR_master_OM$Length_um)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_Length)) # 1.8502 == b factor
@@ -997,10 +1056,15 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT,
 
 ### summary:
 
--   Length b factor total = 1.85 
--   Length b factor pCO2 moderate = 1.55 
--   Length b factor pCO2 low = 2.12
--   Length b factor pCO2 high = 3.41
+-   Length b factor total = 1.86 
+Generation
+-   Length b factor pCO2 F1 = 2.12
+-   Length b factor pCO2 F2 = 1.55 
+-   Length b factor pCO2 F3 = 3.52
+Treatment
+-   Length b factor pCO2 low = 0.83
+-   Length b factor pCO2 moderate = 1.79 
+-   Length b factor pCO2 high = 2.23
 
 # F1s master file
 
@@ -1009,8 +1073,8 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT,
 ```{r, RR_formatted_F1smaster}
 
 # call all bfactors (calc above!) - these are using ALL DATA 
-bTDW = 0.62 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.85 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk
+bLength = 1.86 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
@@ -1107,8 +1171,8 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 ```{r, RR_formatted_F2smaster}
 
 # call all bfactors (calc above!) - these are using ALL DATA 
-bTDW = 0.62 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.85 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk
+bLength = 1.86 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)
@@ -1204,8 +1268,8 @@ write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/
 ```{r, RR_formatted_F2smaster}
 
 # call all bfactors (calc above!) - these are using ALL DATA 
-bTDW = 0.62 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.85 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk
+bLength = 1.86 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
 
 meanLength <- mean(RR_master_F3$Length_um/1000) # 1.607371 mm
 
