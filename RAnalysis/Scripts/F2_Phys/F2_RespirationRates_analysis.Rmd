@@ -58,7 +58,7 @@ F2_RR_TDW_Meanbytank <- RR_formatted_F2s%>%
                             filter(!is.na(resp_umol_hr_bFactorNormTDW.MEAN))
 unique(F2_RR_TDW_Meanbytank$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"                       
 
-write.csv(F1_RR_TDW_Meanbytank, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_Mean_RRTDW_by_tank.csv")
+write.csv(F2_RR_TDW_Meanbytank, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRTDW_by_tank.csv")
 
 
 # NOTE: the spat on 9/22/2022 are F2s measured witht heSDR dish and do not have a replicate ID (neither replicate nor chamber tank)
