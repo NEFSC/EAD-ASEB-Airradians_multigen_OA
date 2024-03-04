@@ -132,6 +132,9 @@ Raw_all_data <-ggplot(F1_dryweights_calc.long,
                                 legend.position="none") +
                           facet_wrap(~Age*measurement, scales="free")
 
+pdf("Output/DryWeights/F1/all_raw/Raw_data_bytank.pdf", height=15, width =30)
+print(Raw_all_data)
+dev.off()
 
 F1_dryweights_calc.long.MEANS <- F1_dryweights_calc.long %>% 
                                     summarySE(measurevar="value", 
@@ -169,7 +172,9 @@ Raw_MeanSE <-ggplot(F1_dryweights_calc.long.MEANS,
                                 legend.position="none") +
                           facet_wrap(~measurement, scales = "free_y")
 
-
+pdf("Output/DryWeights/F1/all_raw/MeanSE_data.pdf", height=8, width =8)
+print(Raw_MeanSE)
+dev.off()
 
 Raw_MeanSE.reproductivestage <-ggplot(F1_dryweights_calc.long.MEANS %>% dplyr::filter(Age > 200),
                                  aes(x=factor(Age), 
@@ -200,6 +205,11 @@ Raw_MeanSE.reproductivestage <-ggplot(F1_dryweights_calc.long.MEANS %>% dplyr::f
                                 plot.title = element_text(size=12),
                                 legend.position="none") +
                           facet_wrap(~measurement, scales = "free_y")
+
+pdf("Output/DryWeights/F1/all_raw/MeanSE_data_reprodutive_stages.pdf", height=8, width =8)
+print(Raw_MeanSE.reproductivestage)
+dev.off()
+
 ```
 
 
@@ -324,9 +334,9 @@ Gonad_bfactor.MeanSE <-ggplot(F1_DryGonad.bfactor.long.MEANS,
                           facet_wrap(~measurement, scales = "free_y")
 
 
-
+pdf("Output/DryWeights/F1/length_scaling/Dry_Gonad_byLength.pdf", height=8, width =8)
 ggarrange(bfactorGonad.Length.all, bfactorGonad.Length.pCO2,Gonad_bfactor.MeanSE, nrow=3)
-
+dev.off()
 
 
 
@@ -454,11 +464,9 @@ Adductor_bfactor.MeanSE <-ggplot(F1_DryAdductor.bfactor.long.MEANS,
                           facet_wrap(~measurement, scales = "free_y")
 
 
-
+pdf("Output/DryWeights/F1/length_scaling/Dry_Adductor_byLength.pdf", height=8, width =8)
 ggarrange(bfactorAdductor.Length.all, bfactorAdductor.Length.pCO2,Adductor_bfactor.MeanSE, nrow=3)
-
-
-F1_DryAdductor.bfactor.long.MEANS
+dev.off()
 ```
 
 # Dry Somatic: b factor calc and plot
@@ -582,8 +590,9 @@ Somatic_bfactor.MeanSE <-ggplot(F1_DrySomatic.bfactor.long.MEANS,
                           facet_wrap(~measurement, scales = "free_y")
 
 
-
+pdf("Output/DryWeights/F1/length_scaling/Dry_Somatic_byLength.pdf", height=8, width =8)
 ggarrange(bfactorSomatic.Length.all, bfactorSomatic.Length.pCO2,Somatic_bfactor.MeanSE, nrow=3)
+dev.off()
 
 ```
 
@@ -708,8 +717,9 @@ Shell_bfactor.MeanSE <-ggplot(F1_DryShell.bfactor.long.MEANS,
                           facet_wrap(~measurement, scales = "free_y")
 
 
-
+pdf("Output/DryWeights/F1/length_scaling/Dry_Shell_byLength.pdf", height=8, width =8)
 ggarrange(bfactorShell.Length.all, bfactorShell.Length.pCO2,Shell_bfactor.MeanSE, nrow=3)
+dev.off()
 
 ```
 
