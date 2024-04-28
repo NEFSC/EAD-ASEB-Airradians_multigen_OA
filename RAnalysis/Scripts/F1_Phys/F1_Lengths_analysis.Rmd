@@ -150,6 +150,11 @@ pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/
 ggarrange(F1_Length_Histograms, F1_Length_MeanSE, ncol = 2)
 dev.off()
 
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_Length_meanSE.pdf"),width=8, height=4)
+print(F1_Length_MeanSE)
+dev.off()
+
 ```
 
 

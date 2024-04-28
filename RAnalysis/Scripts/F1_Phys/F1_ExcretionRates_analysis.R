@@ -45,31 +45,32 @@ F1_ER_master <- F1_ER_master %>%
 
 # now take the means by Date pCO2  and tank and remove the tank group - means and st error by date and pCO2
 F1_ER_MEANS <- F1_ER_master %>% 
-                    dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor >40) %>% # one extreme outlier value!
-                    summarySE(measurevar="ExcretionRate_umol_mL_hr_TDWbfactor", 
+                    dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
+                    summarySE(measurevar="ExcretionRate_umol_hr_TDWbfactor", 
                               groupvars=c("Date", "Age", "pCO2", "Replicate"))
 
 F1_ER_MEANS_plotting <- F1_ER_MEANS %>% 
-                          dplyr::filter(!ExcretionRate_umol_mL_hr_TDWbfactor >40) %>% # one extreme outlier value!
-                          summarySE(measurevar="ExcretionRate_umol_mL_hr_TDWbfactor", 
+                          dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
+                          summarySE(measurevar="ExcretionRate_umol_hr_TDWbfactor", 
                                     groupvars=c("Date", "Age", "pCO2"))
 
 
 F1_ER_plot <- F1_ER_MEANS_plotting %>% 
                   ggplot(aes(x=as.factor(Age), 
-                             y=ExcretionRate_umol_mL_hr_TDWbfactor, 
+                             y=ExcretionRate_umol_hr_TDWbfactor, 
                              color=as.factor(pCO2))) +
                   geom_point(position=position_dodge(.5))+ 
                   scale_color_manual(values=c("forestgreen",
                                               "darkorange2"))+
-                  geom_errorbar(aes(ymin=ExcretionRate_umol_mL_hr_TDWbfactor-se, 
-                                    ymax=ExcretionRate_umol_mL_hr_TDWbfactor+se), width=.2,
+                  geom_errorbar(aes(ymin=ExcretionRate_umol_hr_TDWbfactor-se, 
+                                    ymax=ExcretionRate_umol_hr_TDWbfactor+se), width=.2,
                                 position=position_dodge(.5))+
                   theme_classic() +  
                   xlab("Age (dpf)") + 
                   ggtitle("F1 Scallops: Excretion rate TDW b factor norm (umol NH4 hr)") +
                   theme_classic() +
-                  theme(panel.grid.major = element_blank(), 
+                  theme(legend.position="none",
+                        panel.grid.major = element_blank(), 
                         panel.grid.minor = element_blank())+ 
                   geom_line(stat = "identity", size=1.0)+
                   scale_y_continuous(name ="ER",expand = c(0, 0), limits = c(0, NA)) +

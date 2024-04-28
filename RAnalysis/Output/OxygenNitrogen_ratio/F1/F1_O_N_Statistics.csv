@@ -1,0 +1,6 @@
+"","Date","Age","Metric","model","ShapiroWilk","ResidNorm","Levenes","HomogVar","DF.num","DF.denom","F_val","P_val","SigDif"
+"1","20211026",92,"RR; LENGTH b factor normalized","one-way AOV; x ~ treatment",0.417942283774801,"YES",0.200761159768349,"YES",1,4,0.0176138585539348,0.900825669277591,"NO"
+"2","20220202",191,"RR; LENGTH b factor normalized","one-way AOV; x ~ treatment",0.976942816011914,"YES",0.694590095148752,"YES",1,14,1.02079163961385,0.329475372610607,"NO"
+"3","20220301",218,"RR; LENGTH b factor normalized","one-way AOV; x ~ treatment",0.139620280803082,"YES",0.314877469294324,"YES",1,10,0.113950756582431,0.742669069693686,"NO"
+"4","20220922",423,"RR; LENGTH b factor normalized","one-way AOV; x ~ treatment",0.0760889855618372,"YES",0.319814184508468,"YES",1,6,1.91557871518173,0.215627454880861,"NO"
+"5","20221026",457,"RR; LENGTH b factor normalized","one-way AOV; x ~ treatment",0.772337351448894,"YES",0.459232035924109,"YES",1,11,0.271227339738472,0.612831922581854,"NO"

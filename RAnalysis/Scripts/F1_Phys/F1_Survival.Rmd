@@ -68,18 +68,18 @@ F1_PlotMeanSE <-  ggplot(summ_F1, aes(x=Age, y=Survival, color=Treatment)) + geo
                                              ymax=Survival+se), width=.2,
                                         position=position_dodge(.1)) +
                           scale_color_manual(values=c("green4", "darkorange1"))+
-                          theme(legend.position="right", legend.direction="vertical", 
-                                legend.title = element_blank())+ theme_bw() + 
+                          theme_classic() + 
                           labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
                           ggtitle("F1 grow out survival (Mean +- SE)") + 
-                          theme(panel.grid.major = element_blank(), 
+                          theme(legend.position="none",
+                                panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
                                 panel.background = element_blank(), 
                                 axis.line = element_line(colour = "black"))
  
 F1_PlotMeanSE
 
-pdf("Output/Survival/F1/F1_Survival_meanSE.pdf", width=10, height=5)
+pdf("Output/Survival/F1/F1_Survival_meanSE.pdf", width=8, height=3)
 print(F1_PlotMeanSE)
 dev.off()
 
@@ -240,7 +240,7 @@ F1_Survplot_MEANS <- ggsurvplot(surv_obj.means,
                           )
 
 # output plot 
-pdf(paste0("Output/Survival/F1/F1_Survival_plot.pdf"),width=8, height=8)
+pdf(paste0("Output/Survival/F1/F1_Survival_plot.pdf"),width=8, height=3)
 print(F1_Survplot_MEANS)
 dev.off()
 ```
@@ -278,6 +278,12 @@ F1_KaplanMeier.means <- surv_obj.means %>%
                           # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
                           add_pvalue(location  = "annotation", x = 8.5)
 F1_KaplanMeier.means
+
+# output plot 
+pdf(paste0("Output/Survival/F1/F1_Survival_ggsurvfit.pdf"),width=8, height=4)
+print(F1_KaplanMeier.means)
+dev.off()
+
 ```
 
 ## Estimating x-time survival
@@ -394,8 +400,12 @@ summary(F1_coxph_test.means)
 #                      coef exp(coef) se(coef)     z Pr(>|z|)    
 # TreatmentModerate 0.26435   1.30259  0.05193 5.091 3.56e-07 ***
 # exp(coef is equivalent ot the hazard ratio
-ggforest(F1_coxph_test.means,
-         data = binary_surv_df_MEANS)
+HaxardRatio_plot <- ggforest(F1_coxph_test.means,
+                               data = binary_surv_df_MEANS)
+
+pdf(paste0("Output/Survival/F1/F1_Survival_hazardratio.pdf"),width=6, height=2)
+print(HaxardRatio_plot)
+dev.off()
 
 # Likelihood ratio test=106  on 1 df, p=< 2.2e-16
 # n= 47946, number of events= 6902
