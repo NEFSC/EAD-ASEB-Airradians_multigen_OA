@@ -1,0 +1,66 @@
+---
+title: "Parentage_apparent"
+author: "Sam Gurr"
+date: "2024-04-25"
+output: html_document
+---
+
+## Set the working directory
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA") # sets the working directo
+```
+
+## Load Libraries 
+```{r, load libraries}
+library(outliers)
+library(dplyr)
+library(stringi)
+library(tibble)
+```
+
+```{r call data, include=FALSE}
+F0_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/F0Broodstock_doMaf1_minMaf0.05_majorminor4_minind25_minD5x125_maxD20x500minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F0_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/ID') %>% 
+                    dplyr::mutate(V1 = sub('.*adapter_trim.', '', V1))
+```
+
+## Format F0_raw_geno compatible for apparent.R
+* column 1 = sample ID
+* column 2 = categorical relationship of samples as offspring, parents, etc. (review the apparent package)
+* columns 3 until the end = allele IDs with the genotype data as base/base
+
+```{r format input files}
+
+F0_format_geno <- F0_raw_geno %>% 
+                      dplyr::mutate(V1 = paste(V1,V2, sep ='_')) %>% 
+                      dplyr::select(!c(V2, V3, V4)) %>% 
+                      dplyr::rename(Gene.ID = V1)
+
+# sanity check that the IDs file has all we need and everything ran in angsd correctly! 
+(ncol(F0_format_geno) -1 ) == nrow(F0_IDs) # msut be TRUE!
+
+# input the IDs as columns 2 through the end of the format_geno
+colnames(F0_format_geno)[2:ncol(F0_format_geno)] = F0_IDs$V1
+
+# reformat all genotype calls from basebase to  base/base
+for (i in 2:ncol(F0_format_geno)) {
+  F0_format_geno[i] = sub("(.{1})(.*)", "\\1/\\2", F0_format_geno[,i])
+}
+
+
+# as matrix 
+rownames(F0_format_geno)<-F0_format_geno$Gene.ID # make Gene.Id into rownames
+F0_format_geno$Gene.ID<-NULL # omit Gene.ID - now you have a matrix with rownames as genes and  cols as sampleiD
+
+# tranpose and format rownames back to the first column as Sample.ID 
+F0_transposed_geno <- as.data.frame(t(F0_format_geno)) %>% 
+                        tibble::rownames_to_column("Sample.ID")
+
+F0_geno <- F0_transposed_geno
+```
+
+```{r apparent practice data}
+InputFile <- read.table(file="RAnalysis/Scripts/Popgen/apparent_TestData.txt",sep="\t",h=F)
+
+```
