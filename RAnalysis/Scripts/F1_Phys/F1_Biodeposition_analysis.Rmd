@@ -254,6 +254,33 @@ AOVdf_total %>% dplyr::filter(P_val < 0.05)
 # PLOTTING :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+
+# Filtration rate correct
+
+F1_FRcorrect_MEANS <- summarySE(Biodep_Master_F1, measurevar="FR_correct", 
+                              groupvars=c("Age", "pCO2", "Temperature"))
+
+F1_FRcorrect_Plot  <- F1_FRcorrect_MEANS %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=FR_correct, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5))+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2"))+
+                          geom_errorbar(aes(ymin=FR_correct-se, 
+                                            ymax=FR_correct+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Filtration rate (correct)") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Filtration rate (correct)")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10))
+
 # Selection Efficiency
 
 F1_SE_MEANS <- summarySE(Biodep_Master_F1, measurevar="SE", 

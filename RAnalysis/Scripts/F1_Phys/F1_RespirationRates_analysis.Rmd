@@ -126,7 +126,7 @@ F1_RR_Length_MeanSE <-  F1_RR_Length_Means %>%
 
 F1_RR_Length_MeanSE_sub <-  F1_RR_Length_Means %>% # matches the timepoints for ER measurements
                                  dplyr::filter(Age > 90) %>% #
-                                 ggplot(aes(x=(as.factor(Age)), 
+                                 ggplot(aes(x=(as.numeric(Age)), 
                                                y=resp_umol_hr_bFactorNormLength.MEAN, 
                                                color=as.factor(pCO2))) +
                                     geom_point(position=position_dodge(.5))+ 
@@ -143,6 +143,7 @@ F1_RR_Length_MeanSE_sub <-  F1_RR_Length_Means %>% # matches the timepoints for 
                                     theme(panel.grid.major = element_blank(), 
                                           panel.grid.minor = element_blank(),
                                           legend.position="none")+ 
+                                    scale_x_continuous(expand = c(0, 0), limits = c(0, NA)) 
                                     scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
                                     # labs(color='pCO2 treatment') + # legend name
                                     theme(text = element_text(size=10))
