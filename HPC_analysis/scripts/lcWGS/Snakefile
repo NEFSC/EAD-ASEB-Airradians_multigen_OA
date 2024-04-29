@@ -1,0 +1,790 @@
+# input your common thread(s) here
+
+# ALL: one rule to rule them all..
+# Important!: to run this entire make of snake, the input to 'all' should be equivalent to the **final** filename at the end of the pipe
+# Note: if you want to run a partial pipeline you can add an input for 'all' here that is equivalent to the output of a specific chunk (e.g. mapping)
+rule all:
+    # remember - 4 spaces via python syntax!
+    input:
+        # -remember - 8 spaces via pyton syntax! DO NOT LEAVE EMPTY LINES FOR INPUT OR OUTPUT       
+        # rawQC - check for upload succes via md5checksum 
+        "md5checksum/Nov2023/Nov2023_BAD_UPLOADS.txt",
+        # trim - currently by (i) adapter fasta and (ii) by quality score
+        "trim_QC/trim_complete",
+        # mutliQC - manually scp out this report to view
+        "trim_QC/multiQC_complete",
+        # map_SortSam -  QC-d reads to the reference genome (note: this is where we will change to the new genome!)
+        "hisat2/mapping_complete",
+        # bams_linked - link bam files to angsd/data by generation and life stage 
+        "angsd/data/bams_linked",
+        # merge_bams - self explanatory.. use samtools here to merge seq lanes by ID (R1 and R2 to a master bam)
+        "angsd/data/merge_complete",
+        # sortbams_removedups - use picard to SortSam by queryname and then remove duplicates - the output file here is used for SNP calling (finally!)
+        "angsd/data/sortbams_removedups"
+	    # generate_bamlists - angsd required a list of bam files to call, generate these lists here
+        #"angsd/data/bamlists_generated"
+	    # run angsd for F0 - based on base counts, no prior
+	    #"angsd/output/F0_angsd",
+        # run angsd 
+        #"angsd/output/All_angsd"
+# RAW QC: load the reads, initial symbolic directory, etc.
+rule rawQC:
+    #input:
+        # insert here
+    output:
+        # insert here
+        "md5checksum/Nov2023/Nov2023_BAD_UPLOADS.txt"
+        #"md5checksum_complete"    
+    shell:
+        """
+        echo 'start' $(date)
+        
+        # Symbolic links to raw data, md5sum & check
+        
+        ## notes: each raw upload folder under 'share' space has a subdir 'md5_files' with the .md5 reports from azenta 
+        
+        ## setup:
+        mkdir -p ./md5checksum  # start folder, if already exists it wont throw the error 'C. POWERS!' 
+        April2023='April2023' # string, equal to foldername containing raw data in 'share'
+        Oct2022='Oct2022' #  string, equal to foldername containing raw data in 'share'
+        July2023='July2023' # string, equal to foldername containing raw data in 'share' 
+        Nov2023='Nov2023'
+        # IDS='Oct2022 April2023 July2023 Nov2023' # loop strings
+        IDS='Nov2023' # had to quickly just redo the nov2023 data - omit this line and run the previous for the full pipeline
+
+        ## loop symbolic links from the 'share' directory to our current snakemake_pipeline folder for this project
+        
+        for m in ${{IDS}}; do # run first loop to add raw data to symbolic directories
+            mkdir -p ./md5checksum/${{m}} # make subfolders in md5checksum, avoid that error
+            cd ./md5checksum/${{m}} # go to the dir where you want to make symbolic link - this avoids the link from 'breaking'
+            ln -sf ../../../../../../share/nefsc/mcfarland_sequecenes/lcWGS_scallops_${{m}}/*.gz ./ # SYBMBOLIC LINKS ADDED
+            cd ../../ # go back two folders for simplicity - now all commands from the main snakemake_pipeline directory
+            grep -c '@' ./md5checksum/${{m}}/*.gz > ./md5checksum/${{m}}/${{m}}_rawread_count.txt # RAW READ COUNTS
+            cat ../../../../share/nefsc/mcfarland_sequecenes/lcWGS_scallops_${{m}}/md5_files/*md5 > ./md5checksum/${{m}}/${{m}}_reference.md5 # REFERENCE md5sum
+            cat ./md5checksum/${{m}}/${{m}}_reference.md5 | awk -F[./] '{{print $1 $3}}' > ./md5checksum/${{m}}/${{m}}_refsummary.txt # REFERENCE REFORMTTED md5sum
+            md5sum ./md5checksum/${{m}}/*.gz > ./md5checksum/${{m}}/${{m}}_check.md5 # CHECK md5sum
+            cat ./md5checksum/${{m}}/${{m}}_check.md5 | awk -F[../] '{{print $1 $5}}'  > ./md5checksum/${{m}}/${{m}}_checksummary.txt # CHECK REFORMTTED md5sum
+	    # comm -23 checks for differences between files, here we have the known and calulated (and sorted!) md5chcksum, ANY output to 'BAD_UPLOADS' means that file 
+            # was uploaded to the server with error/incomplete
+            comm -23 <(sort ./md5checksum/${{m}}/${{m}}_refsummary.txt  | uniq) <(sort ./md5checksum/${{m}}/${{m}}_checksummary.txt | uniq) > ./md5checksum/${{m}}/${{m}}_BAD_UPLOADS.txt;
+            done
+        
+        #touch md5checksum_complete
+        
+            
+        echo 'raw data symbolically linked & md5sum & read counts complete!' $(date)        
+        
+        """
+
+# TRIM
+rule trim:
+    input:
+        # insert here
+	"md5checksum/Nov2023/Nov2023_BAD_UPLOADS.txt"
+    output:
+	# insert here
+	#"trim_QC/July2023/July2023_trim_complete.txt"
+        "trim_QC/trim_complete"
+    shell:
+        """
+        echo 'start' $(date)
+		
+        # setup:
+	## load modules 
+	module load bio/fastp/0.23.2
+	module load bio/fastqc/0.11.9
+		
+	## start new dir for output files
+	mkdir -p ./trim_QC  # start folder, use -p if already exists it wont throw the error 'C. POWERS!'
+		
+		
+	## loop vars
+        April2023='April2023' # string, equal to foldername containing raw data 
+        Oct2022='Oct2022' #  string, equal to foldername containing raw data 
+        July2023='July2023' # string, equal to foldername containing raw data 
+        Nov2023='Nov2023'
+        IDS='Oct2022 April2023 July2023 Nov2023' # loop strings
+        #IDS='Nov2023' # just run these new data.. omit this line if running the full pipe
+
+	## adapter.fasta file  
+        echo -e ">Nextera_mate_pair1 \nAGATGTGTATAAGAGACAG \n>Nextera_mate_pair2 \nCTGTCTCTTATACACATCT \n>Nextera_transposase_1 \nTCGTCGGCAGCGTCAGATGTGTATAAGAGACAG \n>Nextera_transposase_2 \nGTCTCGTGGGCTCGGAGATGTGTATAAGAGACAG" > ./trim_QC/adapter.fasta
+
+
+	# run the loop:
+        for m in ${{IDS}}; do # run first loop to add raw data to symbolic directories
+            mkdir -p ./trim_QC/${{m}} # make subfolder
+	    array_m=($(ls ./md5checksum/${{m}}/*.fastq.gz));  # an array of sequences to trim
+            for i in ${{array_m[@]}}; do # inside for loop for each loop var
+	        filename=$(echo "${{i}}" | awk -F/ '{{print $NF}}') # filename ensures that the output name of the .gz file does not include the preceeding dir - solely filename.fasta.gz
+                fastp --in1 ${{i}} --out1 ./trim_QC/${{m}}/adapter_trim.${{filename}} --adapter_sequence=CTGTCTCTTATACACATCT --adapter_fasta ./trim_QC/adapter.fasta  
+	        fastqc  ./trim_QC/${{m}}/adapter_trim.${{filename}} --outdir ./trim_QC/${{m}}/ # call the output files from fastp in previous line and output fastqc in the same folder with adapter_trim filename head
+	        done;
+	    done
+	
+	#echo 'trim_complete' > ./trim_QC/trim_complete
+        touch trim_QC/trim_complete
+
+        echo 'end yay!' $(date)
+        
+        """
+
+# MultiQC report
+rule multiQC:
+    input:
+        # insert here
+        "trim_QC/trim_complete"
+    output:
+        # insert here
+        "trim_QC/multiQC_complete"
+    shell:
+        """
+        echo 'start' $(date)
+        
+        # setup 
+        ## vars
+        PYTHONENV=~/python_venv/bin # python environment
+        ## loop vars by seqence run
+        April2023='April2023' # string, equal to foldername containing raw data
+        Oct2022='Oct2022' #  string, equal to foldername containing raw data
+        July2023='July2023' # string, equal to foldername containing raw data
+        Nov2023='Nov2023'
+        IDS='Oct2022 April2023 July2023 Nov2023' # loop strings
+        #IDS='Nov2023' # just run these new data.. omit this line if running the full pipe
+        
+        # nav to the python env from the current snake lair (..directory)
+        source $PYTHONENV/activate # from the current directory, activates the bin of installed python packages, including multiqc
+        
+        # for loop mutliqc by sequence run 
+        for i in ${{IDS}}; do # loopty loop, note {{}} calls as a 'string'
+            mkdir -p ./trim_QC/${{i}}/mutliQC_report # make dir in each trim folder
+            multiqc ./trim_QC/${{i}}/  -o ./trim_QC/${{i}}/mutliQC_report; # compile MultiQC report from FastQC files - output .html in mutliQC_report dir
+            done
+        
+        # deactivate python 
+        #deactivate
+    
+        # output to tether together snakes
+        touch trim_QC/multiQC_complete 
+        #echo 'multiQC compelte' > ./trim_QC/multiQC_complete
+        
+        echo 'Cleaned MultiQC reports generated.' $(date)
+
+        """
+        
+# Mapping using HISAT2
+rule map_SortSam:
+    input:
+        # insert here
+        "trim_QC/multiQC_complete"
+    output:
+        # insert here
+        "hisat2/mapping_complete"
+    shell:
+        """
+        echo 'start' $(date) # checkpoint output   
+        
+        # setup
+        
+        ## load modules, requires hisat2 and samtools
+        module load bio/hisat2/2.2.1
+        module load bio/samtools/1.11
+        module load bio/picard/2.23.9
+        module load bio/gatk/4.2.0.0
+        
+        ## vars - note: base dir is ~/Airradians_lcWGS/snakemake_pipeline
+        REFDIR=~/refs # the reference folder
+        PYTHONENV=~/python_venv/bin # python environment
+        DATDIR=~/Airradians_lcWGS/snakemake_pipeline/trim_QC/ # directory of trimmed and filtered fastq.gz files
+        
+        ## loop vars by seqence run
+        April2023='April2023' # string, equal to foldername containing raw data
+        Oct2022='Oct2022' #  string, equal to foldername containing raw data
+        July2023='July2023' # string, equal to foldername containing raw data
+        Nov2023='Nov2023'
+        IDS='Oct2022 April2023 July2023 Nov2023' # loop strings
+        #IDS='Nov2023' # just run these new data.. omit this line if running the full pipe
+
+        ## make dirs 
+        mkdir -p hisat2
+        mkdir -p hisat2/Airradians_ref
+        
+        # index the ref genome for mapping - hashed out below becasue we already did this and repeated wth duplicate marking
+        source $PYTHONENV/activate  # activate python virtual envriomment to call python and run hisat2-build
+        hisat2-build -f $REFDIR/Argopecten_irradians_irradians_genome.fasta hisat2/Airradians_ref/Airradians_ref
+        deactivate # exit python virtual envrionment
+        
+        #echo "Referece genome indexed." $(date) # checkpoint output 
+
+        # for loop hisat2 map + samtools covertion to bam + marked duplcates by seq date and filename 
+        for i in ${{IDS}}; do # loopty loop, note {{}} calls as a 'string'
+            mkdir -p hisat2/${{i}}
+            mkdir -p hisat2/${{i}}/dup_metrics
+            ln -s $DATDIR/${{i}}/*.fastq.gz hisat2/${{i}} # symb dir from trim_QC to hisat2 by seq run
+            array=($(ls hisat2/${{i}}/*.fastq.gz)); # call the symbolically linked trim seqs - as array to align
+            for m in ${{array[@]}}; do
+                filename=$(echo "${{m}}" | awk -F/ '{{print $NF}}') # solely string 'filename.fasta.gz' no root dirs
+                hisat2 -p 8 --dta -x hisat2/Airradians_ref/Airradians_ref -U ${{m}} -S hisat2/${{i}}/${{filename}}.sam # input m, output sam file
+                samtools sort -@ 8 -o hisat2/${{i}}/${{filename}}.bam hisat2/${{i}}/${{filename}}.sam # convert sam to bam
+                echo "${{i}} bam-ified!" # boomshakalacka
+                rm hisat2/${{i}}/${{filename}}.sam # no longer need sam..
+                java -jar $PICARD SortSam I=hisat2/${{i}}/${{filename}}.bam O=hisat2/${{i}}/${{filename}}.sorted.bam SORT_ORDER=coordinate
+                rm hisat2/${{i}}/${{filename}}.bam # no longer need the unsorted bam file..
+                echo "${{i}} sort-ified!" # sorted using picard
+            done;
+        done
+        
+        echo 'Mapping complete' $(date) # checkpoint output 
+        
+        # output to tether together snakes
+        touch hisat2/mapping_complete
+        
+        """
+
+# Sort BAMs
+rule bams_linked:
+    input:
+        # insert here
+        "hisat2/mapping_complete"
+    output:
+        # insert here
+        "angsd/data/bams_linked"
+    shell:
+        """
+        # objective: start angsd dirs and make symbolic dirs for bams output from hisat2 
+        # sorted by generation and life stage (broodstock or juvenile) - in prep for SNP calling
+        # IMPORTNAT! at this step we can effectively truncate samples from downstream analysis
+        echo 'start' $(date) # checkpoint output 
+        
+        # setup 
+        ## vars
+        
+        ## make dirs 
+        mkdir -p angsd
+        mkdir -p angsd/data
+        mkdir -p angsd/data/F0_Broodstock
+        mkdir -p angsd/data/F1_Broodstock
+        mkdir -p angsd/data/F2_Broodstock
+        mkdir -p angsd/data/F1_Juveniles
+        mkdir -p angsd/data/F2_Juveniles
+        mkdir -p angsd/data/F3_Juveniles
+
+        # symbolic dirs by life stage and generation 
+        
+        ## F0_Broodstock
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/April2023/*trim.F0*sorted.bam ./angsd/data/F0_Broodstock/
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/July2023/*trim.F0*sorted.bam ./angsd/data/F0_Broodstock/ #  12, 22, and 26
+        
+        ## F1_Broodstock
+        # three files in April that had 0 data! omit these , duplicated in July 
+        #rm ./hisat2/April2023/adapter_trim.F1-B2-pH8* ./hisat2/April2023/adapter_trim.F1-B22-pH75* ./hisat2/April2023/adapter_trim.F1-B30-pH75* # SEEMS TEY WERE ALREADY OMITTED? 
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/April2023/*trim.F1-B*sorted.bam  ./angsd/data/F1_Broodstock/ 
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/July2023/*trim.F1-B*sorted.bam  ./angsd/data/F1_Broodstock/ #  2_ph8 + 30 and 22 ph 7.5
+
+        ## F2_Broodstock 
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/Nov2023/*trim.F2-B*sorted.bam  ./angsd/data/F2_Broodstock/         
+       
+        ## F1_Juveniles
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/Oct2022/*sorted.bam  ./angsd/data/F1_Juveniles/
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/April2023/*trim.F1-J*sorted.bam  ./angsd/data/F1_Juveniles/
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/July2023/*trim.F1-J*sorted.bam  ./angsd/data/F1_Juveniles/        
+
+        ## F2_Juveniles
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/April2023/*trim.F2-J*sorted.bam ./angsd/data/F2_Juveniles/
+        ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/July2023/*trim.F2-J*sorted.bam ./angsd/data/F2_Juveniles/
+
+        ## F3_Juveniles 
+        #ln -s ~/Airradians_lcWGS/snakemake_pipeline/hisat2/Nov2023/*trim.F3-J*sorted.bam  ./angsd/data/F3_Juveniles/
+
+        echo 'BAMS symbolic dirs in angsd/data' $(date) # checkpoint output 
+        
+        # output to tether together snakes
+        touch angsd/data/bams_linked
+                            
+        """
+
+# Merge BAMs
+rule merge_bams:
+    input:
+        # insert here
+        "angsd/data/bams_linked"
+    output:
+        # insert here
+        "angsd/data/merge_complete"
+    shell:
+        """
+        # Objective: use samtool to merge seq lanes within sample ID
+        echo 'start' $(date) # checkpoint output   
+        
+        # setup
+        
+        ## load modules, requires hisat2 and samtools
+        module load bio/samtools/1.11
+        module load bio/picard/2.23.9
+        
+        ## loop vars by generation and life stage - NOTE - one more lane of sequencing to finalize!
+        F0_Broodstock='F0_Broodstock' # string, equal to foldername containing symb linked bam files
+        F1_Broodstock='F1_Broodstock' #  string, equal to foldername containing symb linked bam files
+        F2_Broodstock='F2_Broodstock' #  string, equal to foldername containing symb linked bam files
+        F1_Juveniles='F1_Juveniles' # string, equal to foldername containing symb linked bam files
+        F2_Juveniles='F2_Juveniles' # string, equal to foldername containing symb linked bam files
+        F3_Juveniles='F3_Juveniles' # string, equal to foldername containing symb linked bam files
+        #IDS='F0_Broodstock F1_Broodstock F1_Juveniles F2_Juveniles F2_Broodstock F3_Juveniles' # loop strings
+        IDS='F0_Broodstock F1_Broodstock F1_Juveniles F2_Broodstock F2_Juveniles' # loop strings
+        #IDS='F2_Juveniles'
+        
+
+        # for loop mutliqc by sequence run 
+        for i in ${{IDS[@]}}; do # loopty loop, note {{}} calls as a 'string'
+            mkdir -p angsd/data/${{i}}/merged_bams;
+            # print the filename BEFORE '_R1...gz" and "_R2...gz" as string for next loop
+            ls angsd/data/${{i}}/*R1_001*.bam | awk -F  '[_./]' '{{print $5"_"$6"."$7}}' | sort | uniq > angsd/data/${{i}}/ID;
+            for m in `cat angsd/data/${{i}}/ID`; do
+            #for m in `cat angsd/data/${{i}}/ID_diffs`; do # I used grep to make an ID _diffs manually bcus the job quit unexpectedly 
+            samtools merge angsd/data/${{i}}/merged_bams/${{m}}\.bam angsd/data/${{i}}/${{m}}\_R1* angsd/data/${{i}}/${{m}}\_R2*;
+            done;
+            done
+	
+        echo 'end' $(date) # checkpoint output  
+        
+        touch angsd/data/merge_complete
+        
+        """
+
+# SamSort queryname and Picard to remove duplicates
+rule sortbams_removedups:
+    input:
+        # insert here
+        "angsd/data/merge_complete"
+    output:
+        # insert here
+        "angsd/data/sortbams_removedups"
+    shell:
+        """
+        # Objective: Using the merged reads int he previous chunks (sortted by coordinate), use picard SortSam by queryname 
+        # then picard MarkDuplicates and remove them - output removed dups bam files 
+        
+        echo 'start' $(date) # checkpoint output
+
+        # setup
+        ## load modules, requires hisat2 and samtools
+        module load bio/samtools/1.11
+         module load bio/picard/2.23.9
+
+        ## loop vars by generation and life stage - NOTE - one more lane of sequencing to finalize!
+        F0_Broodstock='F0_Broodstock' # string, equal to foldername containing symb linked bam files
+        F1_Broodstock='F1_Broodstock' #  string, equal to foldername containing symb linked bam files
+        F2_Broodstock='F2_Broodstock' #  string, equal to foldername containing symb linked bam files
+        F1_Juveniles='F1_Juveniles' # string, equal to foldername containing symb linked bam files
+        F2_Juveniles='F2_Juveniles' # string, equal to foldername containing symb linked bam files
+        F3_Juveniles='F3_Juveniles' # string, equal to foldername containing symb linked bam files
+        #IDS='F0_Broodstock F1_Broodstock F1_Juveniles F2_Juveniles F2_Broodstock F3_Juveniles' # loop strings
+        #IDS='F0_Broodstock' # loop strings
+        IDS='F1_Broodstock F1_Juveniles F2_Broodstock'
+
+
+        # for loop mutliqc by sequence run
+        for i in ${{IDS[@]}}; do # loopty loop, note {{}} calls as a 'string'
+            # print the filename BEFORE '_R1...gz" and "_R2...gz" as string for next loop
+            ls angsd/data/${{i}}/merged_bams/*.bam | awk -F  '[_./]' '{{print $7"_"$8"."$9}}' | sort | uniq > angsd/data/${{i}}/merged_bams/ID;
+            mkdir -p angsd/data/${{i}}/merged_bams/coord_dups_removed
+            mkdir -p angsd/data/${{i}}/merged_bams/query_dups_removed
+            mkdir -p angsd/data/${{i}}/merged_bams/coord_dups_removed/stats
+            mkdir -p angsd/data/${{i}}/merged_bams/query_dups_removed/stats # make directory to input the summary text files from marking duplicates and removing them
+            for filename in `cat angsd/data/${{i}}/merged_bams/ID`; do
+                # sort by coord
+                java -jar $PICARD SortSam I=angsd/data/${{i}}/merged_bams/${{filename}}.bam O=angsd/data/${{i}}/merged_bams/${{filename}}_coordsorted.bam SORT_ORDER=coordinate
+                # sort by queryname
+                java -jar $PICARD SortSam I=angsd/data/${{i}}/merged_bams/${{filename}}.bam O=angsd/data/${{i}}/merged_bams/${{filename}}_querysorted.bam SORT_ORDER=queryname
+                # delete the original merge file
+                #rm angsd/data/${{i}}/merged_bams/${{filename}}.bam
+                # call and omit duplicates - coordinate sorted
+                java -jar $PICARD MarkDuplicates I=angsd/data/${{i}}/merged_bams/${{filename}}_coordsorted.bam O=angsd/data/${{i}}/merged_bams/coord_dups_removed/${{filename}}.bam M=angsd/data/${{i}}/merged_bams/coord_dups_removed/stats/${{filename}}.txt  ASSUME_SORT_ORDER=coordinate REMOVE_DUPLICATES=true
+                # call and omit duplicates - queryname sorted, then re sort by coord and delete the previous
+                java -jar $PICARD MarkDuplicates I=angsd/data/${{i}}/merged_bams/${{filename}}_querysorted.bam O=angsd/data/${{i}}/merged_bams/query_dups_removed/${{filename}}_querydupsrem.bam M=angsd/data/${{i}}/merged_bams/query_dups_removed/stats/${{filename}}.txt ASSUME_SORT_ORDER=queryname REMOVE_DUPLICATES=true
+                java -jar $PICARD SortSam I=angsd/data/${{i}}/merged_bams/query_dups_removed/${{filename}}_querydupsrem.bam O=angsd/data/${{i}}/merged_bams/query_dups_removed/${{filename}}.bam SORT_ORDER=coordinate
+                rm angsd/data/${{i}}/merged_bams/query_dups_removed/${{filename}}_querydupsrem.bam
+                # delete the sorted files w/o removed duplicates             
+                rm angsd/data/${{i}}/merged_bams/${{filename}}_coordsorted.bam # remove the coord sorted bam file - now we have left is 'fina' with removed duplicates! 
+                rm angsd/data/${{i}}/merged_bams/${{filename}}_querysorted.bam # remove the query sorted bam file - now all we have left is 'final' with removed duplicates!
+                done;
+            done
+
+
+        echo 'end' $(date) # checkpoint output
+
+        touch angsd/data/sortbams_removedups
+        """
+
+# Generate txt list bam files to call SNPs
+rule generate_bamlists: 
+    input: 
+        "angsd/data/sortbams_removedups"
+    output:
+        "angsd/data/bamlists_generated"
+    shell:
+        """
+        # Objective: generate  
+        echo 'start' $(date) #checkpoint output
+
+        ## dir shortcuts
+        DATDIR=~/Airradians_lcWGS/snakemake_pipeline/angsd/data # Path to generation and life stage bam files
+
+        # FOR LOOPS
+        IDS=('F0_Broodstock' 'F1_Broodstock' 'F1_Juveniles' 'F2_Juveniles' 'F2_Broodstock' 'F3_Juveniles') # loop strings
+        #IDS=('F0_Broodstock' 'F1_Broodstock' 'F1_Juveniles' 'F2_Juveniles' 'F2_Broodstock') # loop strings
+        #IDS=('F2_Broodstock')
+         
+        ## (1) for loop i - call bam lists (merged and dup removed!) for all data and within pCO2 treatment, store in the data folder
+        for i in ${{IDS[@]}}; do  # update to include F2 brood and F3 juv once we have them
+            LOOPDIR=~$DATDIR/${{i}}/merged_bams/duplicates_removed
+            if [ "${{i}}" == "F1_Broodstock" ]; then
+                ls $LOOPDIR/*.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/merged_bamlist.txt
+                awk '!/DUP/' $LOOPDIR/merged_bamlist.txt > $LOOPDIR/merged_bamlist2.txt # omit duplicate in list, name 2
+                rm $LOOPDIR/merged_bamlist.txt # remove the previous list
+                mv $LOOPDIR/merged_bamlist2.txt $DATDIR/${{i}}/merged_bams/merged_bamlist.txt # rename 2 to original
+                ls $LOOPDIR/*pH8.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/LOWpCO2_bamlist.txt
+                ls $LOOPDIR/*pH75.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/MODpCO2_bamlist.txt
+            elif [ "${{i}}" == "F1_Juveniles" ]; then
+                ls $LOOPDIR/*.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/merged_bamlist.txt
+                awk '!/dup/' $LOOPDIR/merged_bamlist.txt > $LOOPDIR/merged_bamlist2.txt # omit duplicate in list, name 2
+                rm $LOOPDIR/merged_bamlist.txt # remove the previous list
+                mv $LOOPDIR/merged_bamlist2.txt $LOOPDIR/merged_bamlist.txt # rename 2 to original
+                #ls $LOOPDIR/*pH8.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/LOWpCO2merged_bamlist.txt
+                ls $LOOPDIR/*pH8.bam $LOOPDIR/*trim.1*.bam $LOOPDIR/*trim.3.bam $LOOPDIR/*trim.4.bam $LOOPDIR/*trim.5.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/LOWpCO2_bamlist.txt
+                ls $LOOPDIR/*pH75.bam $LOOPDIR/*trim.2*.bam $LOOPDIR/*trim.3*.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/MODpCO2_bamlist.txt
+                awk '!/adapter_trim.3.bam|dup/' $LOOPDIR/MODpCO2_bamlist.txt > $LOOPDIR/MODpCO2_bamlist2.txt # omit 3 as a pH8, and follow same step to omit the dup sample
+                rm $LOOPDIR/MODpCO2_bamlist.txt
+                mv $LOOPDIR/MODpCO2_bamlist2.txt $LOOPDIR/MODpCO2_bamlist.txt
+            elif [ "${{i}}" == "F2_Juveniles" ] || [ "${{i}}" == "F2_Broodstock" ] || [ "${{i}}" == "F3_Juveniles" ]; then
+                ls $LOOPDIR/*.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/merged_bamlist.txt
+                ls $LOOPDIR/*pH8.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/LOWpCO2merged_bamlist.txt
+                ls $LOOPDIR/*pH75.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/MODpCO2merged_bamlist.txt
+                ls $LOOPDIR/*pH7.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/HIGHpCO2merged_bamlist.txt
+            else # just F0_Broodstock since there were no cohort / treatment
+                ls $LOOPDIR/*.bam | awk -F '[/]' '{{print $10}}' | sort | uniq > $LOOPDIR/merged_bamlist.txt
+            fi;
+        done
+
+        # remove duplicate sequence files from the merged bams dirs - there are two
+        # F1_Broodstock as adapter_trim.F1-B6-pH75DUP.bam and  F1_Juveniles as adapter_trim.353dup.bam
+
+        # new directory to call all merged bams( as a symbolic link) and a master merged.bam list for the one popgen run to rule them all..!
+        # Important! if you want to rerun the all angsd call, you need to omit these symbolic links or else the script wont run
+        #mkdir -p $DATDIR/all_merged_bams # make dir - then call all symbolic links for merged bam file
+        #ln -s $DATDIR/F0_Broodstock/merged_bams/*.bam ./angsd/data/all_merged_bams
+        #ln -s $DATDIR/F1_Broodstock/merged_bams/*.bam ./angsd/data/all_merged_bams
+        #ln -s $DATDIR/F2_Broodstock/merged_bams/*.bam ./angsd/data/all_merged_bams
+        #ln -s $DATDIR/F1_Juveniles/merged_bams/*.bam ./angsd/data/all_merged_bams
+        #ln -s $DATDIR/F3_Juveniles/merged_bams/*.bam ./angsd/data/all_merged_bams
+        #rm $DATDIR/all_merged_bams/*DUP*  $DATDIR/all_merged_bams/*dup* # omit the duplicate files sent as sanity check
+        #ls $DATDIR/all_merged_bams/*.bam | awk -F '[/]' '{{print $9}}' | sort | uniq > $DATDIR/all_merged_bams/merged_bamlist.txt
+
+        echo 'end' $(date) # checkpoint output
+
+        touch angsd/data/bamlists_generated
+	
+        """
+
+# Run angsd on F0 Broodstock allele freq based on counts
+rule angsd_F0:
+    input: 
+        "angsd/data/bamlists_generated"
+    output:
+        "angsd/output/F0_angsd"
+    shell:
+        """
+        # About: use doMaf=8 to call allele frequencies without use of the reference and on base on base counts
+        # Set-up
+
+        # output dir
+        mkdir -p angsd/output
+        mkdir -p angsd/output/F0_Broodstock
+
+        ## load module
+        module load bio/angsd/0.933
+        module load bio/samtools/1.15.1
+
+        ## dir shortcuts
+        DATDIR=~/Airradians_lcWGS/snakemake_pipeline/angsd/data/F0_Broodstock # Path to generation and life stage bam files
+        OUTDIR=~/Airradians_lcWGS/snakemake_pipeline/angsd/output/F0_Broodstock # Path to the base directory where output files will be written
+        REFDIR=~/refs # Path to reference genome
+
+        # angsd parameters
+        #DOMAF=8 # frequency based on directly base counts - does not rely on genotypy probabilities or liklihoods (no reference necessary)
+        DOMAJORMINOR=1 # 1 is for either seq data like bam files or genotpe liklihood data where the maj minor allele is inferred from liklihoods, max liklihood approach 2 is from counts, most freq observed alleles
+        # 4 is forcing the major allele according to the reference states defined in ref - the minor allele will be inferred based on the genotype liklihood
+        DOMAF=1 # 1 assumed known major and minor allele 2 assumed known major and unknown minor allele
+        DOGENO=1 # 1 write major and minor allele 2 print the called genotype and count of minor 4 print the called genotype
+        DOPOST=1 # 1 estimate the posterior genotype probability based on the allele frequency as a prior 2 estimat eth posterier genotpe prob assuming a uniform prior (if domajorminor == 4)
+        GENOLIKE=1 # SAMtools
+        DOGLF=2 # beagle genotype liklihood format
+        DOCOUNTS=1 # provide freq of bases - output as 'pos.gz'
+        DODEPTH=1 # default 0 output distribution of seq depths sites aove maxDepth will be binnes out files in depthSample and depthGlobal
+        MAXDEPTH=1000 # default 100
+        DUMPCOUNTS=2 # 1 is the total seq depth for site as .pos.gz, 2 is the seq deth per sample as .pos.gz and .counts.gz; look up allele coutns in angsd for more info to diagnose depth cutoffs
+        MINQ=30 # Minimum quality filter
+        MINMAPQ=30 # Minmm mapping quality
+        MINMAF=0.05 # Minimum minor allele frequency filter
+        # C -50 is flag to adjust for excessive mismatches as recomennded when BWA was used for alignment 
+        # -uniqueOnly; removed reads that have multiple best hits 0 default, 1 remove
+        # -remove_bads = reads flagged as bad
+        # -only_proper_pairs = read that did not have a mate pair   
+
+        # make directory in output and call all necessary data to run angsd
+        cd $DATDIR/merged_bams
+        nIND=$(wc -l $DATDIR/merged_bams/merged_bamlist.txt | awk '{{print $1}}') # call and count lines of the bamlist with delimiter id
+        minIND=$(echo "(${{nIND}} * 0.9)" | bc) # min individual is 90% of the total count
+        minINDRd=$(printf "%.0f" ${{minIND}}) # round that 
+      
+        # set min and max depth for minuum of 5X and max of 20X coerage per loci to acoid potential bias arising from seq errors and recommendations in O'Leary (etal 2018)
+        MINDP=$(echo "(${{minINDRd}} * 5)" | bc) # min coverage of 5X accoutning for the minimum num of individuals for genotype calls as 90% and assuming per indiv per loci
+        MAXDP=$(echo "(${{minINDRd}} * 20)" | bc) # max coverage of 20X accounting for the minimum num of individual for genotype calls as 90% and assuming per indiv per loci 
+  
+        # output file start
+        OUTBASE='F0Broodstock_doMaf'$DOMAF'_minMaf'$MINMAF'_majorminor'$DOMAJORMINOR'_minind'$minINDRd'_minD'$MINDP'_maxD'$MAXDP'_minq'$MINQ'_minmapQ'$MINMAPQ # Build base name of output files
+        # run angsd for all samples
+        angsd -b $DATDIR/merged_bams/merged_bamlist.txt \
+            -ref $REFDIR/Argopecten_irradians_irradians_genome.fasta \
+            -GL $GENOLIKE \
+            -doGlf $DOGLF \
+            -doMaf $DOMAF \
+            -doMajorMinor $DOMAJORMINOR \
+            -dogeno $DOGENO \
+            -doPOST $DOPOST \
+            -doCounts $DOCOUNTS \
+            -dumpCounts $DUMPCOUNTS \
+            -doDepth $DODEPTH \
+            -maxDepth $MAXDEPTH \
+            -setMinDepth $MINDP \
+            -setMaxDepth $MAXDP \
+            -doIBS 1 \
+            -makematrix 1 \
+            -doCov 1 \
+            -minInd $minINDRd \
+            -dobcf 1 \
+            --ignore-RG 0 \
+            -minQ $MINQ \
+            -minMapQ $MINMAPQ \
+            -minMaf $MINMAF \
+            -SNP_pval 1e-6 \
+            -P -20 \
+            -remove_bads 1 \
+            -only_proper_pairs 1 \
+            -uniqueOnly 1 \
+            -C 50 \
+            -out $OUTDIR/$OUTBASE \
+            >& $OUTDIR/$OUTBASE'.log';
+
+        echo 'end' $(date) # checkpoint output
+
+        touch angsd/output/F0_angsd
+        """
+# Run angsd
+rule angsd_run:
+    input:
+        "angsd/output/F0_angsd"
+    output:
+        "angsd/output/All_angsd"
+    shell:
+        """
+        # Set-up
+        
+        # output dir
+        mkdir -p angsd/output
+        mkdir -p angsd/output/all
+
+        ## load module
+        module load bio/angsd/0.933
+        module load bio/samtools/1.15.1
+        
+        IDS=('F1_Broodstock' 'F1_Juveniles' 'F2_Juveniles' 'F2_Broodstock' 'F3_Juveniles') # loop strings
+        #IDLIST='F1_Broodstock F1_Juveniles F2_Juveniles F2_Broodstock F3_Juveniles' # loop strings
+
+        ## loop vars by treatment (for loop #2)
+        TREATMENT_ALL=('LOWpCO2' 'MODpCO2' 'HIGHpCO2') # a list of the common str on file names and outputs in the for loop below
+        #TREATMENT_ALL=($TREATLIST_ALL) # as an array - we can call specific strings in the for loops
+        
+        TREATMENT_SUB=('LOWpCO2' 'MODpCO2')
+        #TREATMENT_SUB=($TREATLIST_SUB)
+
+        ## dir shortcuts
+        DATDIR=~/Airradians_lcWGS/snakemake_pipeline/angsd/data # Path to generation and life stage bam files
+        OUTDIR=~/Airradians_lcWGS/snakemake_pipeline/angsd/output/all # Path to the base directory where output files will be written
+        REFDIR=~/refs # Path to reference genome
+        
+        # angsd parameters
+        #DOMAF=8 # frequency based on directly base counts - does not rely on genotypy probabilities or liklihoods (no reference necessary)
+        DOMAJORMINOR=1 # 1 is for either seq data like bam files or genotpe liklihood data where the maj minor allele is inferred from liklihoods, max liklihood approach 2 is from counts, most freq $
+        # 4 is forcing the major allele according to the reference states defined in ref - the minor allele will be inferred based on the genotype liklihood
+        DOMAF=1 # 1 assumed known major and minor allele 2 assumed known major and unknown minor allele
+        DOGENO=1 # 1 write major and minor allele 2 print the called genotype and count of minor 4 print the called genotype
+        DOPOST=1 # 1 estimate the posterior genotype probability based on the allele frequency as a prior 2 estimat eth posterier genotpe prob assuming a uniform prior (if domajorminor == 4)
+        GENOLIKE=1 # SAMtools
+        DOGLF=2 # beagle genotype liklihood format
+        DOCOUNTS=1 # provide freq of bases - output as 'pos.gz'
+        DODEPTH=1 # default 0 output distribution of seq depths sites aove maxDepth will be binnes out files in depthSample and depthGlobal
+        MAXDEPTH=1000 # default 100
+        DUMPCOUNTS=2 # 1 is the total seq depth for site as .pos.gz, 2 is the seq deth per sample as .pos.gz and .counts.gz; look up allele coutns in angsd for more info to diagnose depth cutoffs
+        MINQ=30 # Minimum quality filter
+        MINMAPQ=30 # Minmm mapping quality
+        MINMAF=0.05 # Minimum minor allele frequency filter
+        # C -50 is flag to adjust for excessive mismatches as recomennded when BWA was used for alignment
+        # -uniqueOnly; removed reads that have multiple best hits 0 default, 1 remove
+        # -remove_bads = reads flagged as bad
+        # -only_proper_pairs = read that did not have a mate pair
+        
+        # ANGSD for all data
+		
+        # make directory in output and call all necessary data to run angsd
+        cd $DATDIR/all_merged_bams/
+        nIND_all=$(wc -l $DATDIR/all_merged_bams/merged_bamlist.txt | awk '{{print $1}}') # call and count lines of the bamlist with delimiter id
+        minIND_all=$(echo "(${{nIND_all}} * 0.9)" | bc) # min individual is 90% of the total count
+        minINDRd_all=$(printf "%.0f" ${{minIND_all}}) # round that
+        # set min and max depth for minuum of 5X and max of 20X coerage per loci to acoid potential bias arising from seq errors and recommendations in O'Leary (etal 2018)
+        MINDP_all=$(echo "(${{minINDRd_all}} * 5)" | bc) # min coverage of 5X accoutning for the minimum num of individuals for genotype calls as 90% and assuming per indiv per loci
+        MAXDP_all=$(echo "(${{minINDRd_all}} * 20)" | bc) # max coverage of 20X accounting for the minimum num of individual for genotype calls as 90% and assuming per indiv per loci
+        # outbase
+        OUTBASE='AllSamples_doMaf'$DOMAF'_minMaf'$MINMAF'_majorminor'$DOMAJORMINOR'_minind'$minINDRd_all'_minD'$MINDP_all'_maxD'$MAXDP_all'_minq'$MINQ'_minmapQ'$MINMAPQ # Build base name of output files
+        # run angsd for all samples
+        angsd -b $DATDIR/all_merged_bams/merged_bamlist.txt \
+            -ref $REFDIR/Argopecten_irradians_irradians_genome.fasta \
+            -GL $GENOLIKE \
+            -doGlf $DOGLF \
+            -doMaf $DOMAF \
+            -doMajorMinor $DOMAJORMINOR \
+            -dogeno $DOGENO \
+            -doPOST $DOPOST \
+            -doCounts $DOCOUNTS \
+            -dumpCounts $DUMPCOUNTS \
+            -doDepth $DODEPTH \
+            -maxDepth $MAXDEPTH \
+            -setMinDepth $MINDP_all \
+            -setMaxDepth $MAXDP_all \
+            -doIBS 1 \
+            -makematrix 1 \
+            -doCov 1 \
+            -minInd $minINDRd_all \
+            -dobcf 1 \
+            --ignore-RG 0 \
+            -minQ $MINQ \
+            -minMapQ $MINMAPQ \
+            -minMaf $MINMAF \
+            -SNP_pval 1e-6 \
+            -P -20 \
+            -remove_bads 1 \
+            -only_proper_pairs 1 \
+            -uniqueOnly 1 \
+            -C 50 \
+            -out $OUTDIR/$OUTBASE \
+            >& $OUTDIR/$OUTBASE'.log'
+
+        # ANGSD for data within generation (F1 - F2 - F3, broodstock and juveniles separately)
+        # for loop - run ansd for the total bam list within time/generation (i.e. all F1 Broodstock, F2_Juveniles, etc.)
+	# objective to input a strata / metadta to identify treatments associated with ids downstream..
+        
+        #for i in ${{IDS[@]:0:5}}; # From f1 to f2 and so on..
+        #do 
+        #    mkdir -p $OUTDIR/${{i}} # make director for ansd output files
+            # nav to dir
+        #    cd $DATDIR/${{i}}/merged_bams/
+            # cal number of indiv    
+        #    nIND=$(wc -l $DATDIR/${{i}}/merged_bams/merged_bamlist.txt | awk '{{print $1}}') # call and count lines of the bamlist with delimiter id
+        #    minIND=$(echo "(${{nIND}} * 0.9)" | bc) # min individual is 90% of the total count
+        #    minINDRd=$(printf "%.0f" ${{minIND}}) # round that
+            # set min and max depth for minuum of 5X and max of 20X coerage per loci to acoid potential bias arising from seq errors and recommendations in O'Leary (etal 2018)
+        #    MINDP=$(echo "(${{minINDRd}} * 5)" | bc) # min coverage of 5X accoutning for the minimum num of individuals for genotype calls as 90% and assuming per indiv per loci
+        #    MAXDP=$(echo "(${{minINDRd}} * 20)" | bc) # max coverage of 20X accounting for the minimum num of individual for genotype calls as 90% and assuming per indiv per loci
+            # call unique outbase
+        #    OUTBASE=${{i}}'_mindp'$MINDP'_maxdp'$MAXDP'_minind'$minINDRd'_minq'$MINQ'_minmapQ'$MINMAPQ # Build base name of output files
+            # run angsd
+        #    angsd -b $DATDIR/${{i}}/merged_bams/merged_bamlist.txt \
+        #        -ref $REFDIR/Argopecten_irradians_irradians_genome.fasta \
+        #        -GL $GENOLIKE \
+        #        -doGlf $DOGLF \
+        #        -doMaf $DOMAF \
+        #        -doMajorMinor $DOMAJORMINOR \
+        #        -dogeno $DOGENO \
+        #        -doPOST $DOPOST \
+        #        -doCounts $DOCOUNTS \
+        #        -dumpCounts $DUMPCOUNTS \
+        #        -doDepth $DODEPTH \
+        #        -maxDepth $MAXDEPTH \
+        #        -setMinDepth $MINDP \
+        #        -setMaxDepth $MAXDP \
+        #        -doIBS 1 \
+        #        -makematrix 1 \
+        #        -doCov 1 \
+        #        -minInd $minINDRd \
+        #        -dobcf 1 \
+        #        --ignore-RG 0 \
+        #        -minQ $MINQ \
+        #        -minMapQ $MINMAPQ \
+        #        -minMaf $MINMAF \
+        #        -SNP_pval 1e-6 \
+        #        -P -20 \
+        #        -remove_bads 1 \
+        #        -only_proper_pairs 1 \
+        #        -uniqueOnly 1 \
+        #        -C 50 \
+        #        -out $OUTDIR/${{i}}/$OUTBASE \
+        #        >& $OUTDIR/${{i}}/$OUTBASE'.log'
+
+
+        #done
+
+        ## (3) for loop - run angsd for SNP calls within treatment
+        # insert if statment bcus F0 uses 'merged_bamlist.txt' whereas the rest are by treatment 
+        #for i in ${{IDS[@]:1:5}}; do
+        #    mkdir -p $OUTDIR/${{i}}/within_treatment # make directory for angsd output files
+        #    cd $DATDIR/${{i}}/merged_bams/
+        #        if [ "${{i}}" == "F2_Juveniles" ] || [ "${{i}}" == "F2_Broodstock" ] || [ "${{i}}" == "F3_Juveniles" ]; then # generation and life stages when there are three pCO2 treatments
+        #            for x in ${{TREATMENT_ALL[@]}}; do # run angsd separately for each treatment-based bam list (m), grouped by generation/lifestage (i)
+        #                # NOTE:  a mistake here, we names teh LOW MOD and HIGH bamlist as i.e. LOWpCO2merged_bamlist.txt, need to make a change below, we wont run successfully past F1s
+        #                nIND=$(wc -l $DATDIR/${{i}}/merged_bams/${{x}}merged_bamlist.txt | awk '{{print $1}}') # call the bamlist with delimiter id
+        #                minIND=$(echo "(${{nIND}} * 0.9)" | bc) # min individual is 90% of the total count
+        #                minINDRd=$(printf "%.0f" ${{minIND}}) # round that
+        #                # call unique outbase
+        #                OUTBASE=${{i}}${{x}}'_mindp'$MINDP'_maxdp'$MAXDP'_minind'$minINDRd'_minq'$MINQ'_minmapQ'$MINMAPQ # Build base name of output files
+        #                ## Call SNPs
+        #                angsd -b $DATDIR/${{i}}/merged_bams/${{x}}merged_bamlist.txt \
+        #                    -ref $REFDIR/Argopecten_irradians_irradians_genome.fasta \
+        #                    -out $OUTDIR/${{i}}/within_treatment/$OUTBASE \
+        #                    -GL 1 -doGlf 2 -doMaf 1 -doMajorMinor 1 -doCounts 1 -doDepth 1 -maxDepth 10000 -dumpCounts 1 -doIBS 1 -makematrix 1 -doCov 1 \
+        #                    -setMinDepth $MINDP -setMaxDepth $MAXDP \
+        #                    -minInd $minINDRd \
+        #                    -dobcf 1 -dopost 1 --ignore-RG 0 -dogeno 1 \
+        #                    -minQ $MINQ -minMapQ $MINMAPQ -minMaf $MINMAF \
+        #                    -SNP_pval 1e-6 \
+        #                    -P -8 \
+        #                    -remove_bads 1 -only_proper_pairs 1 -C 50 \
+        #                    >& $OUTDIR/${{i}}/within_treatment/$OUTBASE'.log';
+        #            done; # for loop x in the elif statement - LOWpCO2, MODpCO2 and HIGHpCO2
+        #        else # all other cases where there are only 2 treatments - loop m 
+        #            for m in ${{TREATMENT_SUB[@]}}; do # run angsd separately for each treatment - ONLY LOWpCO2 and MODpCO2 
+        #                nIND=$(wc -l $DATDIR/${{i}}/merged_bams/${{m}}_bamlist.txt | awk '{{print $1}}') # call the bamlist with delimiter id
+        #                minIND=$(echo "(${{nIND}} * 0.9)" | bc) # min individual is 90% of the total count 
+        #                minINDRd=$(printf "%.0f" ${{minIND}}) # round that
+	#                # call unique outbase 
+        #                OUTBASE=${{i}}${{m}}'_mindp'$MINDP'_maxdp'$MAXDP'_minind'$minINDRd'_minq'$MINQ'_minmapQ'$MINMAPQ # Build base name of output files
+        #                ## Call SNPs
+        #                angsd -b $DATDIR/${{i}}/merged_bams/${{m}}_bamlist.txt \
+        #                    -ref $REFDIR/Argopecten_irradians_irradians_genome.fasta \
+        #                    -out $OUTDIR/${{i}}/within_treatment/$OUTBASE \
+        #                    -GL 1 -doGlf 2 -doMaf 1 -doMajorMinor 1 -doCounts 1 -doDepth 1 -maxDepth 10000 -dumpCounts 1 -doIBS 1 -makematrix 1 -doCov 1 \
+        #                    -setMinDepth $MINDP -setMaxDepth $MAXDP \
+        #                    -minInd $minINDRd \
+        #                    -dobcf 1 -dopost 1 --ignore-RG 0 -dogeno 1 \
+        #                    -minQ $MINQ -minMapQ $MINMAPQ -minMaf $MINMAF \
+        #                    -SNP_pval 1e-6 \
+        #                    -P -8 \
+        #                    -remove_bads 1 -only_proper_pairs 1 -C 50 \
+        #                    >& $OUTDIR/${{i}}/within_treatment/$OUTBASE'.log';
+        #            done; # for loop m - in the else statement - LOWpCO2 and MODpCO2 
+        #        fi; # if else statement to run angsd based on bam list requirements 
+        #done # for loop i by generation and list stage
+        
+        echo 'end' $(date) # checkpoint output  
+        
+        touch angsd/output/All_angsd
+		
+        """
