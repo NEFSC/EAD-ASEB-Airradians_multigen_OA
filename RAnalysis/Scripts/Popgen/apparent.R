@@ -1,4 +1,4 @@
-apparent = function (InputFile, MaxIdent=0.10, alpha=0.01, nloci=300, self=TRUE, plot=TRUE, Dyad=FALSE) {
+apparent = function (InputFile, MaxIdent=0.10, alpha=0.01, nloci=100, self=TRUE, plot=FALSE, Dyad=FALSE) {
   
   ################################################################################################
   # Parse the tab-delimited input file and convert genotypic states to numeric genotypic classes, 
@@ -179,7 +179,7 @@ apparent = function (InputFile, MaxIdent=0.10, alpha=0.01, nloci=300, self=TRUE,
   # Output 1 - All triads
   Out1 <- data.frame(Parent1List,Parent2List,ObsProgList,TypeList,SNPsNumber,GD)
   colnames(Out1) <- c("Parent1","Parent2","Offspring","Cross.Type","SNPs","GD")
-  
+  View(Out1)
   #########################################################################
   # Parsing and reporting the significatives of the Triad analysis.
   # Finding the triad GAP and testing its significance and calculates the 
@@ -199,6 +199,12 @@ apparent = function (InputFile, MaxIdent=0.10, alpha=0.01, nloci=300, self=TRUE,
   MinGDGeno <- vector(mode="numeric",length=0)
   MaxGDGeno <- vector(mode="numeric",length=0)
   MeanSNPsGeno <- vector(mode="numeric",length=0)
+  
+  
+  Out1$Parent1  <-gsub("`","",as.character(Out1$Parent1))
+  Out1$Parent2  <-gsub("`","",as.character(Out1$Parent2))
+  Out1$Offspring  <-gsub("`","",as.character(Out1$Offspring))
+  
   for (i in 1:nrow(GK)) {
     genoOut <- Out1[which(Out1$Parent1 == GK$genos[i]),]
     Geno <- append(Geno,as.character(GK$genos[i]))
