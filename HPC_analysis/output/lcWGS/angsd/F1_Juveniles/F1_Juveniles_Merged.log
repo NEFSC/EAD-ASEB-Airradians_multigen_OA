@@ -1,0 +1,30 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --out F1_Juveniles_Merged
+  --vcf F1Juveniles_Merged.vcf.gz
+
+Hostname: sedna.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/output/F1_Juveniles/query_dups
+Start time: Wed May  1 09:43:25 2024
+
+Random number seed: 1714581805
+95103 MB RAM detected; reserving 47551 MB for main workspace.
+Allocated 35663 MB successfully, after larger attempt(s) failed.
+--vcf: F1_Juveniles_Merged-temporary.bed + F1_Juveniles_Merged-temporary.bim +
+F1_Juveniles_Merged-temporary.fam written.
+62579 variants loaded from .bim file.
+79 people (0 males, 0 females, 79 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to F1_Juveniles_Merged.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 79 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.58848.
+62579 variants and 79 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to F1_Juveniles_Merged.bed + F1_Juveniles_Merged.bim +
+F1_Juveniles_Merged.fam ... done.
+
+End time: Wed May  1 09:43:26 2024
