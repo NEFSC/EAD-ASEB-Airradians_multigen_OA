@@ -185,7 +185,7 @@ library(plyr)
 Join_F0_F1JpH8 <- inner_join(F0_format_geno, F1J_pH8_format_geno)
 # salitty check for the number of SNPs shared - must be TRUE!
 nrow(Join_F0_F1JpH8) == length(intersect(F0_format_geno$Gene.ID, F1J_pH8_format_geno$Gene.ID)) # == TRUE
-paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH8)) # "Total number of SNPs = 52801"
+paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH8)) # "Total number of SNPs = 17129"
 paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH8)/nrow(F1J_pH8_format_geno))*100 ) # 32.4 % shared!
 
 
@@ -255,7 +255,7 @@ F1Juv_pH75_parentage_df[is.na(F1Juv_pH75_parentage_df)] = "-/-" # this takes a w
 
 
 ```{r run apparent}
-apparentOUT <- apparent(F1Juv_pH8_parentage_df[,c(1:1000)], MaxIdent=0.10, alpha=0.01, nloci=100, self=TRUE, plot=FALSE, Dyad=FALSE)
+apparentOUT <- apparent(F1Juv_pH8_parentage_df[,c(1:ncol(F1Juv_pH8_parentage_df))], MaxIdent=0.10, alpha=0.01, nloci=100, self=TRUE, plot=FALSE, Dyad=FALSE)
 
 
 
