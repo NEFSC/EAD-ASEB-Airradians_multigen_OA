@@ -20,6 +20,8 @@ library(dplyr)
 library(stringi)
 library(tibble)
 library(stringr)
+library(BEDASSLE)
+?BEDASSLE
 ```
 
 ```{r call data, include=FALSE}
@@ -37,7 +39,7 @@ F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_8/I
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
 # F1 Juveniles pH 75
-F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind40_minD5x200_maxD20x800minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')  
 F1J_pH75_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/IDs.txt') %>% 
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
@@ -50,6 +52,113 @@ key_F1J_pH75 <- rbind(F0_parentage,  (F1J_pH75_IDs %>% dplyr::mutate(key = 'Off'
 key_F1J_pH8  <- rbind(F0_parentage,  (F1J_pH8_IDs %>% dplyr::mutate(key = 'Off') %>% dplyr::rename(Sample.ID = V1)) )
 
 
+```
+
+
+```{r doGene convert genotype}
+
+converter = function (InputFile) {
+
+  OutputFile  <- InputFile # keep your input instead of overwritting
+  
+  for (x in 1:nrow(OutputFile)) {
+    
+    MajorAllele <- OutputFile[x, 3]
+    MinorAllele <- OutputFile[x, 4]
+    
+    
+    for (y in 5:ncol(OutputFile)) {
+      
+      if (OutputFile[x,y] == paste0(MajorAllele,MajorAllele)) { # homozygous major
+        
+        OutputFile[x,y] = 0 # homozygous major
+        
+      } else if (OutputFile[x,y] == paste0(MajorAllele,MinorAllele) |
+                 OutputFile[x,y] == paste0(MinorAllele,MajorAllele)) { # heterozygous minor 
+        
+        OutputFile[x,y] = 1 # heterozygous minor 
+        
+      } else if (OutputFile[x,y] == paste0(MinorAllele,MinorAllele)) { # homozygous minor 
+       
+         OutputFile[x,y] = 2 # homozygous minor 
+      
+      } else { # NA, -1 via doGeno in angsd
+        
+         OutputFile[x,y] = -1
+         
+      }
+        OutputFile[x,y] = as.numeric(OutputFile[x,y])
+    } # y cols each individual starting at column 5 via angsd -doGeno = 4 output
+    
+  } # x rows each SNP chromosome and position
+  
+  Output <- list(OutputFile)
+  return (Output)
+  
+} # close function
+
+converter(F1J_pH75_raw_geno)
+
+View(OutputFile)
+
+
+# convert all genotypes to numeric
+cols <- (colnames(OutputFile[,5:ncol(OutputFile)]))
+OutputFile[cols] <- sapply(OutputFile[cols], as.numeric)
+
+
+OutputFile_formatted <- OutputFile %>% 
+                      dplyr::mutate(V1 = paste(V1,V2, sep ='_')) %>% 
+                      dplyr::select(!c(V2, V3, V4)) %>% 
+                      dplyr::rename(Gene.ID = V1)
+
+# input the IDs as columns 2 through the end of the format_geno
+colnames(OutputFile_formatted)[2:ncol(OutputFile_formatted)] = F1J_pH75_IDs$V1
+# as matrix 
+OutputFile_formatted.asmatrix <- OutputFile_formatted
+rownames(OutputFile_formatted.asmatrix)<-OutputFile_formatted.asmatrix$Gene.ID # make Gene.Id into rownames
+OutputFile_formatted.asmatrix$Gene.ID<-NULL # omit Gene.ID - 
+# tranpose and format rownames back to the first column as Sample.ID 
+OutputFile_transposed <- as.data.frame(t(OutputFile_formatted.asmatrix)) %>% 
+                        tibble::rownames_to_column("Sample.ID")
+
+nnorm <- function(x) x/sum(x)
+getSFS<-function(x) table(factor(rowSums(x[,-c(1:4)]),levels=1:20))
+
+table(factor(rowSums(OutputFile[,-c(1:4)]),levels=1:20))
+x <- (rowSums(OutputFile[,-c(1:4)]))
+y <- paste0(OutputFile[,1], OutputFile[,2])
+data.frame(ncol=length(y))
+
+m <- as.data.frame(matrix(0, ncol = length(y), nrow = 1))
+colnames(m) = y
+m[1,] <- x
+m <- as.list(m)
+
+getSFS(OutputFile)
+?getSFS
+
+#With the HGDP dataset
+	data(HGDP.bedassle.data)
+str(HGDP.bedassle.data)
+str(HGDP.bedassle.data$allele.counts)
+#Calculate pairwise Fst between all population pairs
+	hgdp.pairwise.Fst <- calculate.all.pairwise.Fst(
+		HGDP.bedassle.data$allele.counts,
+		HGDP.bedassle.data$sample.sizes
+	)	
+
+#Plot pairwise Fst against geographic distance
+	plot(HGDP.bedassle.data$GeoDistance,
+		hgdp.pairwise.Fst,
+		pch=19,
+		col=HGDP.bedassle.data$EcoDistance+1,
+		ylab="pairwise Fst",
+		xlab="geographic distance",
+		main="isolation by distance")
+			legend(x="bottomright",pch=19,col=c(1,2),
+				legend=c("same side of Himalayas",
+						"opposite sides of Himalayas"))
 ```
 
 ## Format F0_raw_geno compatible for apparent.R
@@ -160,6 +269,21 @@ F1J_pH75_geno <- F1J_pH75_transposed_geno
 # how many SNPs?
 numbSNPs_F1JpH75 <- (ncol(F1J_pH75_geno) - 1)
 paste0("Total number of SNPs = ", numbSNPs_F1JpH75) # "Total number of SNPs = 52801"
+
+(unique(F1J_pH75_geno[2]))
+
+
+#plot the results
+nnorm <- function(x) x/sum(x)
+getSFS<-function(x) table(factor(rowSums(read.table(x)[,-c(1:4)]),levels=1:20))
+YRI=getSFS('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')
+
+getSFS(OutputFile)
+
+
+table(factor(rowSums(OutputFile[,-c(1:4)]),levels=1:20))
+read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')[,-c(1:4)]
+
 ```
 
 ## Investigate overlap of SNPs between F0 Broodstock and F1 Juveniles (for fun!)
@@ -180,7 +304,9 @@ and what percent of resulting SNPs in offspring derive from parentages, use inne
 ```{r}
 library(plyr)
 
-# F1 Juveniles pH 8 
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+### F0 and F1 overlap! ::::::::::::::::::::::::::::::::::::::::
+# F1 Juveniles pH 8 and F0 Broodstock 
 # use inner_join by Gene.ID 
 Join_F0_F1JpH8 <- inner_join(F0_format_geno, F1J_pH8_format_geno)
 # salitty check for the number of SNPs shared - must be TRUE!
@@ -189,7 +315,7 @@ paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH8)) #
 paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH8)/nrow(F1J_pH8_format_geno))*100 ) # 32.4 % shared!
 
 
-# F1 Juveniles pH 75
+# F1 Juveniles pH 75 and F0 Broodstock 
 # use inner_join by Gene.ID 
 Join_F0_F1JpH75 <- inner_join(F0_format_geno, F1J_pH75_format_geno)
 # salitty check for the number of SNPs shared - must be TRUE!
@@ -198,8 +324,24 @@ paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH75)) 
 paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH75)/nrow(F1J_pH75_format_geno))*100 ) # 26.4 % shared!
 
 
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+### F1 Treatment overlap ::::::::::::::::::::::::::::::::::::::
+# use inner_join by Gene.ID 
+Join_F1pH8_F1JpH75 <- inner_join(F1J_pH8_format_geno, F1J_pH75_format_geno)
+# salitty check for the number of SNPs shared - must be TRUE!
+nrow(Join_F1pH8_F1JpH75) == length(intersect(F1J_pH8_format_geno$Gene.ID, F1J_pH75_format_geno$Gene.ID)) # == TRUE
+paste0("Total number of shared SNPs between F1 pH8 and pH75 = ", nrow(Join_F1pH8_F1JpH75)) # "Total number of SNPs = 12988"
+paste0("Percent F1 Juv shared between treatments = ", (nrow(Join_F1pH8_F1JpH75)/nrow(F1J_pH75_format_geno))*100 ) # 57.0 % shared!
 ```
 
+
+
+### Fst
+
+```{r}
+data(HGDP.bedassle.data)
+
+```
 ## Parentage datasets 
 
 * format as matric to prepare the merge, include the key (loaded in the start!)
@@ -224,6 +366,18 @@ F1Juv_pH8_parentage <- Join_F0_F1JpH8
 rownames(F1Juv_pH8_parentage) <- F1Juv_pH8_parentage$Gene.ID # make Gene.Id into rownames
 F1Juv_pH8_parentage$Gene.ID   <- NULL
 
+FJ_pH8_offpsring_match <- as.data.frame(colnames(F1J_pH8_format_geno)[2:ncol(F1J_pH8_format_geno)])
+
+
+
+rownames(Join_F1pH8_F1JpH75) <- Join_F1pH8_F1JpH75$Gene.ID # make Gene.Id into rownames
+Join_F1pH8_F1JpH75$Gene.ID   <- NULL
+x <- as.data.frame(t(Join_F1pH8_F1JpH75))[c(10,56),]
+
+Join_F1pH8_F1JpH75$
+sample(nrow(HGDP.bedassle.data$allele.counts),1)
+
+as.data.frame(HGDP.bedassle.data)
 FJ_pH8_offpsring_match <- as.data.frame(colnames(F1J_pH8_format_geno)[2:ncol(F1J_pH8_format_geno)])
 
 

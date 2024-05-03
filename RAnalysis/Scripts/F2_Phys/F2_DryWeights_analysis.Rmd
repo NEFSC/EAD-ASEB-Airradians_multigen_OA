@@ -40,6 +40,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 # F2s
 F2_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F2/cumulative_raw/F2_dry_weights_raw_2.csv",
                           header=T,stringsAsFactors=FALSE, fileEncoding="latin1") 
+F2_dryweights <- F2_dryweights[!is.na(F2_dryweights$Tank_Replicate),]      # seven indivuals did not have tnak ID on the bag (Gabby P. review google doc!" and are omitted
 
 # unique dates for the dry weight data 
 unique(F2_dryweights$Date_sampled)
@@ -49,11 +50,13 @@ F2_dryweights <- F2_dryweights[!is.na(F2_dryweights$pH),] %>% # master data file
                     dplyr::mutate(pCO2 = as.factor(case_when(pH == 8 ~ "500 μatm", # add column for pCO2
                                                    pH == 7.5 ~ "800 μatm",
                                                    pH == 7 ~ "1200 μatm"))) %>% 
-                    dplyr::mutate(Age = case_when(Date_sampled == "11/16/2022" ~  93,
-                                                  Date_sampled == "1/27/2023" ~  165,
-                                                  Date_sampled == "2/27/2023" ~  196,
-                                                  Date_sampled == "3/23/2023" ~  220,
-                                                  Date_sampled == "3/28/2023" ~  225)) %>% # %>% #edit this!
+                    dplyr::mutate(Age = case_when(Date_sampled == "11/16/2022" ~  93, # A- D for each treatment 
+                                                  Date_sampled == "1/27/2023" ~  165, # A- D for each treatment 
+                                                  #NOTE: A-G started on 2/3/2023 unlike F1s, this was note A - E and B to F, 
+                                                  # the bins are separate reps, G disappears from the chemistry data at 2/28/2023
+                                                  Date_sampled == "2/27/2023" ~  196, # A-G 
+                                                  Date_sampled == "3/23/2023" ~  220, # A-F 
+                                                  Date_sampled == "3/28/2023" ~  225)) %>%  # A-F 
                     dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm","1200 μatm")))# relevel for plotting!
 
 ```
@@ -112,13 +115,13 @@ write.csv(F2_dryweights_calc.long.MEANS, "Output/DryWeights/F2/F2_N_per_Replicat
 # if you want the actual N for each replicate along with the variation within replicate!
 
 F2_dryweights_calc.long.MEANS_master <- F2_dryweights_calc.long.MEANS %>%  # noew convert and resummarize by tank
-                        dplyr::mutate(Tank_Replicate = case_when(
-                                      Tank_Replicate == 'E' ~ 'A', #convert E to A
-                                      Tank_Replicate == 'F' ~ 'B', #convert F to B
-                                      Tank_Replicate == 'G' ~ 'C', #convert G to C
-                                      Tank_Replicate == 'H' ~ 'D', #convert H to D
-                                      .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
-                                    )) %>% 
+                        # dplyr::mutate(Tank_Replicate = case_when(
+                        #               Tank_Replicate == 'E' ~ 'A', #convert E to A
+                        #               Tank_Replicate == 'F' ~ 'B', #convert F to B
+                        #               Tank_Replicate == 'G' ~ 'C', #convert G to C
+                        #               Tank_Replicate == 'H' ~ 'D', #convert H to D
+                        #               .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
+                        #             )) %>% 
                         summarySE(measurevar="value", 
                                   groupvars=c("Age","pCO2", "Tank_Replicate", "measurement")) %>% # summarize again
                         dplyr::arrange(as.numeric(Age), measurement, pCO2, Tank_Replicate) %>% 
@@ -135,7 +138,7 @@ Raw_all_data <-ggplot(F2_dryweights_long,
                                      y=value, 
                                      colour=factor(pCO2)),
                                       stat="identity") +
-                           scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
                                              values=c("forestgreen","darkorange2", "purple")) +
                            geom_point(aes(colour = pCO2), 
                                             position = position_dodge2(width = 0.5)) + 
@@ -274,6 +277,7 @@ LogDryGonadvShell <- F2_dryweights_long %>%
                           ) %>% 
                           # dplyr::select(-row) %>% 
                           dplyr::group_by(Age, pCO2, Tank_Replicate) %>%    
+                          dplyr::filter(!Dry_Gonad_weight_g < 0) %>% 
                           dplyr::mutate(log10_Gonad   = log10(Dry_Gonad_weight_g),
                                         log10_Length = log10(Shell_length_mm)) %>% 
                           na.omit() %>% # we only have gonad for later life stage - omit rows without it
@@ -327,19 +331,20 @@ bfactorGonad.Length.all <- LogDryGonadvShell %>%
 
 # call dataset - omit data without gonad weights
 F2_DryGonad <- F2_dryweights %>% 
+    dplyr::filter(!Dry_Gonad_weight_g < 0) %>% 
     dplyr::select(Age, pCO2, Tank_Replicate, Dry_Gonad_weight_g, Shell_length_mm) %>% 
     na.omit()
 # call the mean gonad dry weight
-meanLength.all <- mean(as.numeric(F2_DryGonad$Shell_length_mm))# 34.35643
-seLength.all   <- sd(F2_DryGonad$Shell_length_mm)/sqrt(length((F2_DryGonad$Shell_length_mm))) # 0.4086302
+meanLength.all <- mean(as.numeric(F2_DryGonad$Shell_length_mm))# 34.44198
+seLength.all   <- sd(F2_DryGonad$Shell_length_mm)/sqrt(length((F2_DryGonad$Shell_length_mm))) # 0.4063575
 # age range of animals 
 print(paste0('youngest = ', min(F2_DryGonad$Age), '; oldest = ', max(F2_DryGonad$Age)))
 
 #assign bfactors
 bLength.all  <- 9.96 # 
-bLength.low  <- 9.39 #  
-bLength.mod  <- 9.46 #  
-bLength.high <- 10.1 #  
+bLength.low  <- 9.28 #  
+bLength.mod  <- 9.52 #  
+bLength.high <- 10.2 #  
 
 # standardize gonad dry weight using bfactors
 ## follow the equation for scaling weights to length inbivalves 
@@ -377,13 +382,13 @@ F2_DryGonad.bfactor.long.MEANS <- F2_DryGonad.bfactor.long %>%
                                     dplyr::arrange(as.numeric(Age))
 # mmeans master - median for E-H as A-D!
 F2_DryGonad.bfactor.long.MEANS_master <- F2_DryGonad.bfactor.long.MEANS %>%  # noew convert and resummarize by tank
-                        dplyr::mutate(Tank_Replicate = case_when(
-                                      Tank_Replicate == 'E' ~ 'A', #convert E to A
-                                      Tank_Replicate == 'F' ~ 'B', #convert F to B
-                                      Tank_Replicate == 'G' ~ 'C', #convert G to C
-                                      Tank_Replicate == 'H' ~ 'D', #convert H to D
-                                      .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
-                                    )) %>% 
+                        # dplyr::mutate(Tank_Replicate = case_when(
+                        #               Tank_Replicate == 'E' ~ 'A', #convert E to A
+                        #               Tank_Replicate == 'F' ~ 'B', #convert F to B
+                        #               Tank_Replicate == 'G' ~ 'C', #convert G to C
+                        #               Tank_Replicate == 'H' ~ 'D', #convert H to D
+                        #               .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
+                        #             )) %>% 
                         summarySE(measurevar="value", 
                                   groupvars=c("Age","pCO2", "Tank_Replicate", "measurement")) %>% # summarize again
                         dplyr::arrange(as.numeric(Age), measurement, pCO2, Tank_Replicate)
@@ -423,10 +428,11 @@ Gonad_bfactor.MeanSE <-ggplot(F2_DryGonad.bfactor.long.MEANS_master,
 pdf("Output/DryWeights/F2/length_scaling/Dry_Gonad_byLength.pdf", height=8, width =8)
 ggarrange(bfactorGonad.Length.all, bfactorGonad.Length.pCO2,Gonad_bfactor.MeanSE, nrow=3)
 dev.off()
-
+# View(F2_DryGonad.bfactor.long.MEANS_master)
 
 Gonad_final_plot <- F2_DryGonad.bfactor.long.MEANS_master %>% 
                           dplyr::filter(measurement %in% 'Gonad_bFactorLength.all') %>% 
+                          dplyr::filter((!value > 20)) %>% 
                           ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
                            scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
                                            values=c("forestgreen","darkorange2", "purple")) +
@@ -463,8 +469,8 @@ Stats_GonadMEAN_raw$About <- paste0("Gonad: raw, NO BFACTOR + mean data")
 ```{r Mean Gonad Stats bfactor all - length standardized}
 
 F2_DryGonad.bfactor.MEAN <- F2_DryGonad.bfactor.long.MEANS_master %>% 
-                                dplyr::filter(measurement %in% 'Gonad_bFactorLength.all') # %>% 
-                                #dplyr::filter(!value < 0)
+                                dplyr::filter(measurement %in% 'Gonad_bFactorLength.all') %>% 
+                                dplyr::filter(!value > 25)
 F2_DryGonad.bfactor.MEAN$DPvar    <- F2_DryGonad.bfactor.MEAN$value
 F2_DryGonad.bfactor.MEAN$INDvar   <- F2_DryGonad.bfactor.MEAN$pCO2
 F2_DryGonad.bfactor.MEAN$GROUPvar <- F2_DryGonad.bfactor.MEAN$Age
@@ -478,7 +484,8 @@ Stats_GonadMEAN_bfactor.all$About <- paste0("Gonad: one bfactor + mean data")
 
 # means by replicate tank within treamtent and day/age
 F2_DryGonad.bfactor.MEAN <- F2_DryGonad.bfactor.long.MEANS_master %>% 
-                                dplyr::filter(measurement %in% 'Gonad_bFactorLength.pCO2')
+                                dplyr::filter(measurement %in% 'Gonad_bFactorLength.pCO2') %>% 
+                                dplyr::filter(!value > 25)
 F2_DryGonad.bfactor.MEAN$DPvar    <- F2_DryGonad.bfactor.MEAN$value
 F2_DryGonad.bfactor.MEAN$INDvar   <- F2_DryGonad.bfactor.MEAN$pCO2
 F2_DryGonad.bfactor.MEAN$GROUPvar <- F2_DryGonad.bfactor.MEAN$Age
@@ -553,15 +560,15 @@ F2_DryAdductor <- F2_dryweights %>%
     dplyr::select(Age, pCO2, Tank_Replicate, Dry_Muscle_weight_g, Shell_length_mm) %>% 
     na.omit()
 # call the mean adductor dry weight
-meanLength.all <- mean(F2_DryAdductor$Shell_length_mm) # 34.35643
-seLength.all   <- sd(F2_DryAdductor$Shell_length_mm)/sqrt(length((F2_DryAdductor$Shell_length_mm))) # 0.4086302
+meanLength.all <- mean(F2_DryAdductor$Shell_length_mm) # 34.23718
+seLength.all   <- sd(F2_DryAdductor$Shell_length_mm)/sqrt(length((F2_DryAdductor$Shell_length_mm))) # 0.4108748
 # age range of animals 
 print(paste0('youngest = ', min(F2_DryAdductor$Age), '; oldest = ', max(F2_DryAdductor$Age)))
 #assign bfactors
-bLength.all <- 4.21#
-bLength.low <- 4.47#
-bLength.mod <- 3.96#3
-bLength.high <- 4.11#
+bLength.all <- 4.16#
+bLength.low <- 4.42#
+bLength.mod <- 3.8#3
+bLength.high <- 4.15#
 
 # standardize adductor dry weight using bfactors
 F2_DryAdductor.bfactor <- F2_DryAdductor %>% 
@@ -594,13 +601,13 @@ F2_DryAdductor.bfactor.long.MEANS <- F2_DryAdductor.bfactor.long %>%
                                     dplyr::arrange(as.numeric(Age))
 # mmeans master - median for E-H as A-D!
 F2_DryAdductor.bfactor.long.MEANS_master <- F2_DryAdductor.bfactor.long.MEANS %>%  # noew convert and resummarize by tank
-                        dplyr::mutate(Tank_Replicate = case_when(
-                                      Tank_Replicate == 'E' ~ 'A', #convert E to A
-                                      Tank_Replicate == 'F' ~ 'B', #convert F to B
-                                      Tank_Replicate == 'G' ~ 'C', #convert G to C
-                                      Tank_Replicate == 'H' ~ 'D', #convert H to D
-                                      .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
-                                    )) %>% 
+                        # dplyr::mutate(Tank_Replicate = case_when(
+                        #               Tank_Replicate == 'E' ~ 'A', #convert E to A
+                        #               Tank_Replicate == 'F' ~ 'B', #convert F to B
+                        #               Tank_Replicate == 'G' ~ 'C', #convert G to C
+                        #               Tank_Replicate == 'H' ~ 'D', #convert H to D
+                        #               .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
+                        #             )) %>% 
                         summarySE(measurevar="value", 
                                   groupvars=c("Age","pCO2", "Tank_Replicate", "measurement")) %>% # summarize again
                         dplyr::arrange(as.numeric(Age), measurement, pCO2, Tank_Replicate)
@@ -690,19 +697,6 @@ Stats_AdductorMEAN_bfactor.all <- as.data.frame(runstats(F2_DryAdductor.bfactor.
 # About column
 Stats_AdductorMEAN_bfactor.all$About <- paste0("Adductor: one bfactor + mean data")
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
