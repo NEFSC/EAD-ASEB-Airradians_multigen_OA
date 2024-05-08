@@ -27,7 +27,8 @@ library(car)
 library(ggpubr)
 library(SciViews)
 library(Rmisc)
-
+library(ggpmisc)
+library(tidyr)
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
 
@@ -38,7 +39,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 ```{r, load data}
 
 # F1s
-F1_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F1/cumulative_raw/F1_dry_weights_raw.csv",
+F1_dryweights <- read.csv(file="Data/Physiology/Dry_weights/F1/cumulative_raw/F1_dry_weights_raw_2.csv",
                           header=T,stringsAsFactors=FALSE, 
                           fileEncoding="latin1") 
 
@@ -63,7 +64,26 @@ F1_dryweights <- F1_dryweights[!is.na(F1_dryweights$pH),] %>% # master data file
                                                   Date_sampled == "5/26/2022" ~ 304,
                                                   Date_sampled == "6/29/2022" ~ 338))
 
-View(F1_dryweights)
+# View(F1_dryweights)
+
+
+# View(F1_dryweights %>% dplyr::select(Date_sampled, Dry_Gonad_weight_g,pH,Tank_Replicate) %>% group_by(Date_sampled,pH,Tank_Replicate) %>% dplyr::summarise(n=n()))
+```
+
+# Calculations of Gonad and Somatic metrics
+
+```{r calculated values }
+colnames(F1_dryweights)
+F1_dryweights_calc <- F1_dryweights %>% 
+                          dplyr::mutate(
+                            # AGSI = (Gonad organic weight / total ash free dry weight) / 100;  organic weight = (dry weight - ash weight)
+                            AGSI = ((Dry_Gonad_weight_g-Ash_Inorganic_Gonad_Tissue_g)/Tissue_AFDW_g) *100,
+                            # AMSI = the same as AGSI but with adductor muscle
+                            AMSI = ((Dry_Adductor_Tissue_g-Ash_Inorganic_.Adductor_Tissue_g)/Tissue_AFDW_g) *100,
+                            # AMSSI = the same as AGSI but with BOTH muscle and somatic
+                            AMSSI = ( ((Dry_Adductor_Tissue_g-Ash_Inorganic_.Adductor_Tissue_g)+
+                                         (Dry_Somatic_Tissue_g-Ash_Inorganic_.Somatic_Tissue_g))/Tissue_AFDW_g) *100)
+# View(F1_dryweights_calc)
 ```
 
 
@@ -84,7 +104,6 @@ originale replicate tank
 ```{r Steps 1-3 to acheive master means data}
 
 # first, lets reshape to assist in calculating all the means in LONG format
-library(tidyr)
 
 F1_dryweights_calc$Shell_length_mm <- as.numeric(F1_dryweights_calc$Shell_length_mm)
 
@@ -137,21 +156,7 @@ F1_dryweights_calc.long.MEANS_master <- F1_dryweights_calc.long.MEANS %>%  # noe
 
 ```
 
-# Calculations of Gonad and Somatic metrics
 
-```{r calculated values }
-colnames(F1_dryweights)
-F1_dryweights_calc <- F1_dryweights %>% 
-                          dplyr::mutate(
-                            # AGSI = (Gonad organic weight / total ash free dry weight) / 100;  organic weight = (dry weight - ash weight)
-                            AGSI = ((Dry_Gonad_weight_g-Ash_Inorganic_Gonad_Tissue_g)/Tissue_AFDW_g) *100,
-                            # AMSI = the same as AGSI but with adductor muscle
-                            AMSI = ((Dry_Adductor_Tissue_g-Ash_Inorganic_.Adductor_Tissue_g)/Tissue_AFDW_g) *100,
-                            # AMSSI = the same as AGSI but with BOTH muscle and somatic
-                            AMSSI = ( ((Dry_Adductor_Tissue_g-Ash_Inorganic_.Adductor_Tissue_g)+
-                                         (Dry_Somatic_Tissue_g-Ash_Inorganic_.Somatic_Tissue_g))/Tissue_AFDW_g) *100)
-# View(F1_dryweights_calc)
-```
 
 
 
@@ -256,6 +261,299 @@ dev.off()
 
 ```
 
+
+
+# Proportion Gonad to Total tissue weight 
+
+* here we do no require a bfactor becuase we are already scalling to the individual!
+
+### Build poroprtion dataset 
+```{r Poroportion calculate}
+
+
+Proportion_master <- F1_dryweights_calc.long %>% 
+                             #F2_dryweights_calc.long.MEANS_master %>% 
+                             dplyr::filter(measurement %in% c('Dry_Gonad_weight_g', 
+                                                              'Dry_Somatic_Tissue_g', 
+                                                              'Dry_Adductor_Tissue_g',
+                                                              'Total_Dry_Tissue_g')) %>%
+                            tidyr::pivot_wider(
+                                                names_from = measurement,
+                                                values_from = value
+                            ) %>% 
+                            na.omit() %>% # omit cases where we do not have gonad weight (there are a few!)
+                            dplyr::mutate(Proportion_Gonad    = Dry_Gonad_weight_g/Total_Dry_Tissue_g,
+                                          Proportion_Adductor = Dry_Adductor_Tissue_g/Total_Dry_Tissue_g,
+                                          Proportion_Somatic  = Dry_Somatic_Tissue_g/Total_Dry_Tissue_g,
+                                          Sanity_check_prop_total = (Proportion_Gonad +  Proportion_Adductor + Proportion_Somatic)) 
+
+```
+
+### Plot porportion dataset
+```{r Propotion stacked bar plot}
+
+Proportion_master_long <- Proportion_master[,c(1:2,9:11)] %>%  
+                              tidyr::pivot_longer(cols = c(3:5), names_to='prop_metric', values_to='value') 
+
+
+
+#convert metric to ordered factor
+Proportion_master_long_ordered             <- Proportion_master_long[order(Proportion_master_long$prop_metric ),]
+Proportion_master_long_ordered$prop_metric <- factor(Proportion_master_long_ordered$prop_metric, 
+                                                     levels = rev(c(rep("Proportion_Somatic",1), 
+                                                                    rep("Proportion_Adductor",1), 
+                                                                    rep("Proportion_Gonad",1))))
+
+Proportion_master_long_MEANS <- Proportion_master_long_ordered %>%
+                                    dplyr::mutate(prop_metric = 
+                                                    forcats::fct_relevel(prop_metric,
+                                                                         "Proportion_Somatic",
+                                                                         "Proportion_Gonad",
+                                                                         "Proportion_Adductor")) %>% 
+                                    group_by(Age, pCO2, prop_metric) %>% 
+                                    dplyr::summarise(mean = mean(value), sd =sd(value)) %>% 
+                                    mutate(y_pos = cumsum(mean)) 
+
+
+Proportion_master_long_MEANS$prop_metric <- factor(Proportion_master_long_MEANS$prop_metric, 
+                                                     levels = rev(c(rep("Proportion_Somatic",1), 
+                                                                    rep("Proportion_Gonad",1), 
+                                                                    rep("Proportion_Adductor",1))))
+
+# stacked proportion plot
+pd <- position_dodge2(width = 0.2)
+Proportion_master_long_MEANS$prop_metric <- as.character(Proportion_master_long_MEANS$prop_metric)
+
+
+Proportion_StackedBarplot <- Proportion_master_long_MEANS %>% 
+  ggplot(aes(x = as.factor(Age), 
+             y = mean, 
+             fill = prop_metric)) + 
+  geom_bar(stat = "identity", width=0.7) + 
+  scale_fill_manual(values = c("grey80","grey40", "grey20")) +
+  #scale_fill_manual(values = c("#0072B2", "#D55E00")) + # colorblindness palette blue and orange
+  geom_errorbar(aes(ymax = y_pos + sd, ymin=y_pos - sd), stat = "identity", width = 0.1, alpha = 0.7, position = pd) + 
+  facet_wrap(~pCO2) + 
+  scale_alpha_manual(values=c(seq(0.3,1, length.out = 3))) + 
+  theme_bw() + 
+  scale_y_continuous(breaks = seq(from = 0, to = 100, by = 10)) + 
+  ylim(0,1.1)+
+  ylab("Dry Tissue Proportions (%)") 
+Proportion_StackedBarplot
+
+
+pdf("Output/DryWeights/F1/Proportion_DryWeight_StakedBarplot.pdf", height=4, width =6)
+print(Proportion_StackedBarplot)
+dev.off()
+
+```
+
+```{r Proportion mean SE plot}
+
+Proportion_Gonad_plot <- Proportion_master %>% 
+                          # dplyr::filter((!value > 20)) %>% 
+                          ggplot(aes(x=factor(Age), y=Proportion_Gonad, colour=factor(pCO2)),stat="identity") +
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                           values=c("forestgreen","darkorange2", "purple")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Proportion Gonad to Total Tissue", x ="Age (dpf)", y = "Dry gonad (proportion)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+
+Proportion_Adductor_plot <- Proportion_master %>% 
+                          # dplyr::filter((!value > 20)) %>% 
+                          ggplot(aes(x=factor(Age), y=Proportion_Adductor, colour=factor(pCO2)),stat="identity") +
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                           values=c("forestgreen","darkorange2", "purple")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Proportion Adductor to Total Tissue", x ="Age (dpf)", y = "Dry Adductor (proportion)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+
+Proportion_Somatic_plot <- Proportion_master %>% 
+                          # dplyr::filter((!value > 20)) %>% 
+                          ggplot(aes(x=factor(Age), y=Proportion_Somatic, colour=factor(pCO2)),stat="identity") +
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                           values=c("forestgreen","darkorange2", "purple")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Proportion Somatic to Total Tissue", x ="Age (dpf)", y = "Dry Somatic (proportion)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+
+# Lets look at shell length for good measure.. Remember to omit lines that did not have gonad! 
+Shell_Length_plot <- F2_dryweights_long %>% 
+                            dplyr::filter(measurement %in% c('Dry_Gonad_weight_g', 'Shell_length_mm')) %>%
+                            tidyr::pivot_wider(
+                                                names_from = measurement,
+                                                values_from = value
+                            ) %>% 
+                            na.omit() %>% # omit cases where we do not have gonad weight (there are a few!)
+                            ggplot(aes(x=factor(Age), y=Shell_length_mm, colour=factor(pCO2)),stat="identity") +
+                            scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                           values=c("forestgreen","darkorange2", "purple")) +
+                            stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                            stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                            labs(title="Shell length", x ="Age (dpf)", y = "shell length (mm)") +
+                            theme_classic() +
+                            theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+
+
+# pdf("Output/DryWeights/F2/length_scaling/Dry_Gonad_byLength.pdf", height=8, width =8)
+# ggarrange(bfactorGonad.Length.all, bfactorGonad.Length.pCO2,Gonad_bfactor.MeanSE, nrow=3)
+# dev.off()
+
+pdf("Output/DryWeights/F1/Proportion_DryWeight_MeanSE.pdf", height=6, width =8)
+ggarrange(Proportion_Gonad_plot, Proportion_Adductor_plot , Proportion_Somatic_plot,Shell_Length_plot, nrow = 2, ncol = 2)
+dev.off()
+
+
+```
+
+### Statistics on proportion data
+```{r Proportion stats}
+
+
+# Gonad (to total tissue)
+F2_Proportion_Gonad_MEANS <- Proportion_master %>% 
+                                    dplyr::select(Age,pCO2, Tank_Replicate,
+                                                  Proportion_Gonad) %>% 
+                                    summarySE(measurevar="Proportion_Gonad", 
+                                               groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
+                                    dplyr::arrange(as.numeric(Age))
+
+F2_Proportion_Gonad_MEANS$DPvar    <- F2_Proportion_Gonad_MEANS$Proportion_Gonad
+F2_Proportion_Gonad_MEANS$INDvar   <- F2_Proportion_Gonad_MEANS$pCO2
+F2_Proportion_Gonad_MEANS$GROUPvar <- F2_Proportion_Gonad_MEANS$Age
+
+ProportionGonad_stats <- as.data.frame(runstats(F2_Proportion_Gonad_MEANS)) # sig effect on Age 196 and 220
+# No significant differences
+
+
+
+# Adductpr (to total tissue)
+F2_Proportion_Adductor_MEANS <- Proportion_master %>% 
+                                    dplyr::select(Age,pCO2, Tank_Replicate,
+                                                  Proportion_Adductor) %>% 
+                                    summarySE(measurevar="Proportion_Adductor", 
+                                               groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
+                                    dplyr::arrange(as.numeric(Age))
+
+F2_Proportion_Adductor_MEANS$DPvar    <- F2_Proportion_Adductor_MEANS$Proportion_Adductor
+F2_Proportion_Adductor_MEANS$INDvar   <- F2_Proportion_Adductor_MEANS$pCO2
+F2_Proportion_Adductor_MEANS$GROUPvar <- F2_Proportion_Adductor_MEANS$Age
+
+ProportionAdductor_stats <- as.data.frame(runstats(F2_Proportion_Adductor_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
+# No significnat differences
+
+
+
+# Adductpr (to total tissue)
+F2_Proportion_Somatic_MEANS <- Proportion_master %>% 
+                                    dplyr::select(Age,pCO2, Tank_Replicate,
+                                                  Proportion_Somatic) %>% 
+                                    summarySE(measurevar="Proportion_Somatic", 
+                                               groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
+                                    dplyr::arrange(as.numeric(Age))
+
+F2_Proportion_Somatic_MEANS$DPvar    <- F2_Proportion_Somatic_MEANS$Proportion_Somatic
+F2_Proportion_Somatic_MEANS$INDvar   <- F2_Proportion_Somatic_MEANS$pCO2
+F2_Proportion_Somatic_MEANS$GROUPvar <- F2_Proportion_Somatic_MEANS$Age
+
+ProportionSomatic_stats <- as.data.frame(runstats(F2_Proportion_Somatic_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
+# No significnat differences
+
+
+```
+
+
+
+# Tissue Index
+
+**About**: Use the Gonadal tissue index from: 
+BonardeUi JC, Himmelman JH (1995) Examination of assumptions critical to body component indices: application to the giant scallop, Placopecten magellanicus. Can J Fish aquat Sciences 52(i1): 
+
+*"In brief, Gonadal mass index (a) = (measured gonadal massX(shell height-b). The coefficient "b" is the common slope determined from the relation of gonadal mass to shell height (log transformed). The gonadal mass index (a) for each scallop is then transformed to the mean shell height of scallops collected  using the equation, gonad = a x (standard shell heightb), b being the pooled slope. This size was near the mean shell height of scallops collected"*
+
+**EQ**
+1) Gonadal mass index (a) = (measured gonadal mass) X (measured shell height -b)
+
+2) Transformed gonadal mass index (a`) = (a) X (standard shell height b)
+
+## Scaling exponent (b) 
+
+* A few important aspects of this data contrbute to our rationale in the chosen b factor for this paper, however we will report all calculated b factors in a supplementary table 
+
+* More samples were analyzed at the start of maturation (post winter) when the animals have smaller shell height than were measured later near spawning, therefore when we run 
+log log regressions of shell height to dry weight we have a larger slope using all data points (more in smaller individuals causing a steeper slope) than when we take the mean within replicate 
+so that data is not distributed disproportionately to smaller individuals. When we correct for these different scaling exponents, we get data that does not resemble the raw patterns 
+when using all data - earlier dates (smaller animals) having high values. In summary we MUST take the mean of replicates to avoid disproportionally weighing scaling toward the smaller animals (early timepoints)
+that were sample more heavily 
+
+* During our dry weight measurements (post-winter) we found that shell growth/height differed between elevated and low pCO2 treamtent, therefore we must parse scaling exponents by treatment! 
+
+* **In summary:** Use the mean data by replicate, and employ pCO2 treatment-specific b factors. Howeverm report all three (all, pCO2 moderate, pCO2 low). Also run regression analysis to see if 
+the b factor regression are stiatistically different
+
+
+## Standard shell height 
+
+* Shell size standard of year 1 scallop: 
+  - Epp, J., Bricelj, V. M., & Malouf, R. E. (1988). Seasonal partitioning and utilization of energy reserves in two age classes of the bay scallop Argopecten irradians irradians (Lamarck). Journal of
+  Experimental Marine Biology and Ecology, 121(2), 113-136.
+  - Used a size standard of 40 mm and 45 mm - review their Figure 3
+
+
+  - Bricelj, V. M., Epp, J., & Malouf, R. E. (1987). Comparative physiology of young and old cohorts of bay scallop Argopecten irradians irradians (Lamarck): mortality, growth, and oxygen consumption. Journal of
+  Experimental Marine Biology and Ecology, 112(2), 73-91.
+  - standardized to 1 g tissue dry weight, this occured for year 1 scallops when ~42-43 mm shell height
+
+* **In summary** use a shell size of 40 mm 
+
+
+## Statistics function 'runstats'
 ```{r Statistic function}
 
 
@@ -322,6 +620,24 @@ return(outputfilename)
 ```
 
 
+```{r standard shell size exploration}
+plot(F1_dryweights_calc$Shell_length_mm, F1_dryweights_calc$Total_Dry_Tissue_g) + abline(h=1, col="blue") + abline(v=40, col="blue")
+
+F1_dryweights_calc %>% 
+  tidyr::drop_na(Dry_Gonad_weight_g) %>% 
+  dplyr::filter(!(Total_Dry_Tissue_g < 0.125 & Shell_length_mm > 25)) %>% 
+  ggplot(aes(Shell_length_mm,Total_Dry_Tissue_g, group = pH))+ 
+    xlim(0,50)+
+    ylim(0,1.2)+
+    geom_point()+
+    geom_smooth(method = "lm", se=FALSE, aes(group=1, colour ="loess"),size=0.8) + geom_hline(yintercept=1, color="blue", size=1) + 
+  geom_vline(xintercept=40, color="blue", size=1)
+  
+
+
+```
+
+
 # Dry Gonad: b factor calc and plot
 ```{r Gonad b factor calc and plot}
 # b factor for gonad? 
@@ -338,26 +654,9 @@ LogDryGonadvShell <- F1_dryweights_calc.long.MEANS_master %>%
                                         log10_Length = log10(Shell_length_mm)) %>% 
                           na.omit() %>% # we only have gonad for later life stage - omit rows without it
                           dplyr::filter(!log10_Gonad %in% '-Inf') # ommit instances when gonad weight == 0
+# View(LogDryGonadvShell)
 
-bfactorGonad.Length.pCO2 <- LogDryGonadvShell %>% ggplot(aes(x=log10_Length, y=log10_Gonad, color = pCO2)) +
-                          geom_point() +
-                          theme(panel.grid.major = element_blank(), 
-                                      panel.grid.minor = element_blank())+ 
-                             scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
-                                             values=c("forestgreen","darkorange2")) +
-                             scale_x_continuous(name ="log10_Length; in mm") +
-                             scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                             theme_classic() +
-                             theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                             ggtitle("Gonad scaling: log10_Gonad = log10_a + 
-                                      (b.factor * log10_Length)") +
-                             geom_smooth(method = lm, color = 'red') +
-                             ggpmisc::stat_poly_eq(parse=T, 
-                                                   aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                   sep = "~~~")),
-                                                      label.x.npc = "left") +
-                             facet_wrap(~pCO2)
-library(ggpmisc)
+# nrow(LogDryGonadvShell)
 bfactorGonad.Length.pCO2 <- LogDryGonadvShell %>% ggplot(aes(x=log10_Length, y=log10_Gonad, color = pCO2)) +
                           geom_point() +
                           ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
@@ -367,7 +666,7 @@ bfactorGonad.Length.pCO2 <- LogDryGonadvShell %>% ggplot(aes(x=log10_Length, y=l
                              scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
                                              values=c("forestgreen","darkorange2")) +
                              scale_x_continuous(name ="log10_Length; in mm") +
-                             scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                             scale_y_continuous(name ="log10_Gonad; RR in umol L-1 hr-1)") +
                              theme_classic() +
                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
                              ggtitle("Gonad scaling: log10_Gonad = log10_a + 
@@ -388,31 +687,53 @@ bfactorGonad.Length.all <- LogDryGonadvShell %>% ggplot(aes(x=log10_Length, y=lo
                           theme(panel.grid.major = element_blank(), 
                                       panel.grid.minor = element_blank())+ 
                              scale_x_continuous(name ="log10_Length; in mm") +
-                             scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                             scale_y_continuous(name ="log10_Gonad; RR in umol L-1 hr-1)") +
                              theme_classic() +
                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
                              ggtitle("Gonad scaling: log10_Gonad = log10_a + 
-                                      (b.factor * log10_Length)") # +
-                             # geom_smooth(method = lm, color = 'red') +
-                             # ggpmisc::stat_poly_eq(parse=T, 
-                             #                       aes(label = paste(..eq.label.., ..rr.label.., 
-                             #                                       sep = "~~~")),
-                             #                          label.x.npc = "left") 
+                                      (b.factor * log10_Length)") 
+
+
+
+
+library(lsmeans)
+m.interaction <- lm(log10_Length ~ log10_Gonad*pCO2, data = LogDryGonadvShell)
+anova(m.interaction)
+#                   Df Sum Sq Mean Sq F value   Pr(>F)    
+# log10_Length       1 3.7135  3.7135 83.7209 6.31e-11 ***
+# pCO2               1 0.1028  0.1028  2.3169   0.1367    
+# log10_Length:pCO2  1 0.0354  0.0354  0.7985   0.3775    
+# Residuals         36 1.5968  0.0444
+
+# Obtain slopes
+m.interaction$coefficients
+m.lst <- lstrends(m.interaction, "pCO2", var="log10_Gonad")
+# pCO2     log10_Gonad.trend     SE df lower.CL upper.CL
+#  500 μatm             0.195 0.0353 36    0.123    0.267
+#  800 μatm             0.230 0.0311 36    0.167    0.293
+
+# Compare slopes
+pairs(m.lst)
+# contrast            estimate     SE df t.ratio p.value
+#  500 μatm - 800 μatm  -0.0352 0.0471 36  -0.747  0.4600
 
 # call dataset - omit data without gonad weights
 F1_DryGonad <- F1_dryweights_calc %>% 
     dplyr::select(Age, pCO2, Tank_Replicate, Dry_Gonad_weight_g, Shell_length_mm) %>% 
     na.omit()
 # call the mean gonad dry weight
-meanLength.all <- mean(as.numeric(F1_DryGonad$Shell_length_mm))# 27.22554
+meanLength.all <- mean(as.numeric((F1_DryGonad %>% dplyr::filter(!Dry_Gonad_weight_g  == 0))$Shell_length_mm))# 27.22554
 seLength.all   <- sd(F1_DryGonad$Shell_length_mm)/sqrt(length((F1_DryGonad$Shell_length_mm))) # 0.3582235
+
+StandardShellSize = 40
+
 # age range of animals 
 print(paste0('youngest = ', min(F1_DryGonad$Age), '; oldest = ', max(F1_DryGonad$Age)))
 
 #assign bfactors
-bLength.all <- 4.61 # 6.89 - will all data
-bLength.low <- 4.98 # 6.99 - with all data
-bLength.mod <- 4.15 # 6.57 - with all data
+bLength.all <-  4.62 #mean data by rep tank # 6.89 - will all data
+bLength.low <-  4.98 #mean data by rep tank # 6.99 - with all data
+bLength.mod <-  4.29 #mean data by rep tank # 6.57 - with all data
 
 
 # standardize gonad dry weight using bfactors
@@ -422,14 +743,15 @@ bLength.mod <- 4.15 # 6.57 - with all data
 ### /note: stnadard height is the mean of all individuals measured
 F1_DryGonad.bfactor <- F1_DryGonad %>% 
                           dplyr::mutate(
+                            # Gonad_bFactorLength.all_EQ = ( (Dry_Gonad_weight_g / (Shell_length_mm^bLength.all) )*100 ),
                            Gonad_bFactorLength.all  =  ( (Dry_Gonad_weight_g * (Shell_length_mm^-bLength.all)) * # == a,  mass index Bonardelli and Himmelman 1995 
-                                                                    (meanLength.all^bLength.all) )*100, # multiplied by the mean length as the standard raised to the b factor
+                                                                    (StandardShellSize^bLength.all) )*100, # multiplied by the mean length as the standard raised to the b factor
                            Gonad_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
                                                                   ( (Dry_Gonad_weight_g * (Shell_length_mm^-bLength.low)) * # == a,  mass index Bonardelli and Himmelman 1995
-                                                                      (meanLength.all^bLength.low) )*100, # multiplied by the mean length as the standard raised to the b factor
+                                                                      (StandardShellSize^bLength.low) )*100, # multiplied by the mean length as the standard raised to the b factor
                                                                  pCO2 == '800 μatm' ~ 
                                                                   ( (Dry_Gonad_weight_g * (Shell_length_mm^-bLength.mod))* # == a,  mass index Bonardelli and Himmelman 1995
-                                                                      (meanLength.all^bLength.mod) )*100 # multiplied by the mean length as the standard raised to the b factor
+                                                                      (StandardShellSize^bLength.mod) )*100 # multiplied by the mean length as the standard raised to the b factor
                            ) # case when for pCO2 
                           ) # mutate
 # pivot longer and plot 
@@ -495,7 +817,48 @@ ggarrange(bfactorGonad.Length.all, bfactorGonad.Length.pCO2,Gonad_bfactor.MeanSE
 dev.off()
 
 
-Gonad_final_plot <- F1_DryGonad.bfactor.long.MEANS_master %>% 
+Gonad_raw_plot <- F1_DryGonad.bfactor.long.MEANS_master %>% 
+                          dplyr::filter(measurement %in% 'Dry_Gonad_weight_g') %>% 
+                          ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
+                                                        values=c("forestgreen","darkorange2")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Gonad: raw weight (g)", x ="Age (dpf)", y = "Dry gonad (mg no scaling)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+
+Gonad_scaling_pCO2 <- F1_DryGonad.bfactor.long.MEANS_master %>% 
+                          dplyr::filter(measurement %in% 'Gonad_bFactorLength.pCO2') %>% 
+                          ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
+                           scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
+                                                        values=c("forestgreen","darkorange2")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Gonad: Length b factor pCO2 specific", x ="Age (dpf)", y = "Dry gonad (mg Lengthbfactor_pCO2)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+
+Gonad_scaling_all <- F1_DryGonad.bfactor.long.MEANS_master %>% 
                           dplyr::filter(measurement %in% 'Gonad_bFactorLength.all') %>% 
                           ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
                            scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
@@ -514,6 +877,8 @@ Gonad_final_plot <- F1_DryGonad.bfactor.long.MEANS_master %>%
                                 axis.text=element_text(size=8),
                                 plot.title = element_text(size=12),
                                 legend.position="none")
+
+ggarrange(Gonad_scaling_pCO2, Gonad_scaling_all)
 ```
 
 # Dry Gonad stats
@@ -635,25 +1000,27 @@ F1_DryAdductor <- F1_dryweights_calc %>%
 # call the mean adductor dry weight
 meanLength.all <- mean(F1_DryAdductor$Shell_length_mm) # 27.44867
 seLength.all   <- sd(F1_DryAdductor$Shell_length_mm)/sqrt(length((F1_DryAdductor$Shell_length_mm))) # 0.5550621
+
+StandardShellSize = 40
 # age range of animals 
 print(paste0('youngest = ', min(F1_DryAdductor$Age), '; oldest = ', max(F1_DryAdductor$Age)))
 #assign bfactors
-bLength.all <- 3.16#3.04 using all data
+bLength.all <- 3.19#3.04 using all data
 bLength.low <- 3.25#3.02 using all data
-bLength.mod <- 3.01#3.09 using all data
+bLength.mod <- 3.07#3.09 using all data
 
 
 # standardize adductor dry weight using bfactors
 F1_DryAdductor.bfactor <- F1_DryAdductor %>% 
                           dplyr::mutate(
                            Adductor_bFactorLength.all  =  ( (Dry_Adductor_Tissue_g * (Shell_length_mm^-bLength.all))* # a
-                                                                    (meanLength.all^bLength.all) ) * 100,
+                                                                    (StandardShellSize^bLength.all) ) * 100,
                            Adductor_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
                                                                    ( (Dry_Adductor_Tissue_g * (Shell_length_mm^-bLength.low))* # a
-                                                                      (meanLength.all^bLength.low) ) * 100,
+                                                                      (StandardShellSize^bLength.low) ) * 100,
                                                                  pCO2 == '800 μatm' ~ 
                                                                    ( (Dry_Adductor_Tissue_g * (Shell_length_mm^-bLength.mod))* # a
-                                                                      (meanLength.all^bLength.mod) ) * 100
+                                                                      (StandardShellSize^bLength.mod) ) * 100
                            ) # case when for pCO2 
                           ) # mutate
 # pivot longer and plot 
@@ -719,7 +1086,7 @@ dev.off()
 
 
 Adductor_final_plot <- F1_DryAdductor.bfactor.long.MEANS_master %>% 
-                          dplyr::filter(measurement %in% 'Adductor_bFactorLength.all') %>% 
+                          dplyr::filter(measurement %in% 'Adductor_bFactorLength.pCO2') %>% 
                           ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
                            scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
                                                         values=c("forestgreen","darkorange2")) +
@@ -729,7 +1096,7 @@ Adductor_final_plot <- F1_DryAdductor.bfactor.long.MEANS_master %>%
                                         fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
                                         geom = 'errorbar', width = 0.25, size = 1,
                                         position = position_dodge2(width = 0.5)) + 
-                          labs(title="Adductor: Length b factor all", x ="Age (dpf)", y = "Dry adductor (mg Lengthbfactor_all)") +
+                          labs(title="Adductor: Length b factor pCO2", x ="Age (dpf)", y = "Dry adductor (mg bFactorLength.pCO2)") +
                           theme_classic() +
                           theme(panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
@@ -857,23 +1224,25 @@ F1_DrySomatic <- F1_dryweights_calc %>%
 # call the mean Somatic dry weight
 meanLength.all <- mean(F1_DrySomatic$Shell_length_mm) # 27.44867
 seLength.all   <- sd(F1_DrySomatic$Shell_length_mm)/sqrt(length((F1_DrySomatic$Shell_length_mm))) # 0.5550621
+
+StandardShellSize = 40
 # age range of animals 
 print(paste0('youngest = ', min(F1_DrySomatic$Age), '; oldest = ', max(F1_DrySomatic$Age)))
 #assign bfactors
-bLength.all <- 3.23 #2.96 
+bLength.all <- 3.25 #2.96 
 bLength.low <- 3.27 #2.97
-bLength.mod <- 3.19 #2.97
+bLength.mod <- 3.23 #2.97
 # standardize Somatic dry weight using bfactors
 F1_DrySomatic.bfactor <- F1_DrySomatic %>% 
                           dplyr::mutate(
                            Somatic_bFactorLength.all  =  ( (Dry_Somatic_Tissue_g * (Shell_length_mm^-bLength.all))* # a
-                                                                    (meanLength.all^bLength.all) ) * 100,
+                                                                    (StandardShellSize^bLength.all) ) * 100,
                            Somatic_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
                                                                    ( (Dry_Somatic_Tissue_g * (Shell_length_mm^-bLength.low))* # a
-                                                                      (meanLength.all^bLength.low) ) * 100,
+                                                                      (StandardShellSize^bLength.low) ) * 100,
                                                                  pCO2 == '800 μatm' ~ 
                                                                    ( (Dry_Somatic_Tissue_g * (Shell_length_mm^-bLength.mod))* # a
-                                                                      (meanLength.all^bLength.mod) ) * 100
+                                                                      (StandardShellSize^bLength.mod) ) * 100
                            ) # case when for pCO2 
                           ) # mutate
 # pivot longer and plot 
@@ -939,7 +1308,7 @@ dev.off()
 
 
 Somatic_final_plot <- F1_DrySomatic.bfactor.long.MEANS_master %>% 
-                          dplyr::filter(measurement %in% 'Somatic_bFactorLength.all') %>% 
+                          dplyr::filter(measurement %in% 'Somatic_bFactorLength.pCO2') %>% 
                           ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
                            scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
                                                         values=c("forestgreen","darkorange2")) +
@@ -949,7 +1318,7 @@ Somatic_final_plot <- F1_DrySomatic.bfactor.long.MEANS_master %>%
                                         fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
                                         geom = 'errorbar', width = 0.25, size = 1,
                                         position = position_dodge2(width = 0.5)) + 
-                          labs(title="Somatic: Length b factor all", x ="Age (dpf)", y = "Dry Somatic (mg Lengthbfactor_all)") +
+                          labs(title="Somatic: Length b factor pCO2", x ="Age (dpf)", y = "Dry Somatic (mg Lengthbfactor_pCO2)") +
                           theme_classic() +
                           theme(panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
@@ -1077,8 +1446,13 @@ F1_DryShell <- F1_dryweights_calc %>%
 # call the mean Shell dry weight
 meanLength.all <- mean(F1_DryShell$Shell_length_mm) # 21.93231
 seLength.all   <- sd(F1_DryShell$Shell_length_mm)/sqrt(length((F1_DryShell$Shell_length_mm))) # 0.3850383
+
+StandardShellSize = 40
+
 # age range of animals 
 print(paste0('youngest = ', min(F1_DryShell$Age), '; oldest = ', max(F1_DryShell$Age)))
+
+
 #assign bfactors
 bLength.all <- 2.92 #3.11 
 bLength.low <- 2.91#3.13
@@ -1087,13 +1461,13 @@ bLength.mod <- 2.92#3.10
 F1_DryShell.bfactor <- F1_DryShell %>% 
                           dplyr::mutate(
                            Shell_bFactorLength.all  =  ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.all))* # a
-                                                                    (meanLength.all^bLength.all) ) * 100,
+                                                                    (StandardShellSize^bLength.all) ) * 100,
                            Shell_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
                                                                    ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.low))* # a
-                                                                      (meanLength.all^bLength.low) ) * 100,
+                                                                      (StandardShellSize^bLength.low) ) * 100,
                                                                  pCO2 == '800 μatm' ~ 
                                                                    ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.mod))* # a
-                                                                      (meanLength.all^bLength.mod) ) * 100
+                                                                      (StandardShellSize^bLength.mod) ) * 100
                            ) # case when for pCO2 
                           ) # mutate
 # pivot longer and plot 
@@ -1326,6 +1700,9 @@ F1_DryTissue <- F1_dryweights_calc %>%
 # call the mean Shell dry weight
 meanLength.all <- mean(F1_DryTissue$Shell_length_mm) # 21.93231
 seLength.all   <- sd(F1_DryTissue$Shell_length_mm)/sqrt(length((F1_DryTissue$Shell_length_mm))) # 0.3850383
+
+StandardShellSize = 40
+
 # age range of animals 
 print(paste0('youngest = ', min(F1_DryTissue$Age), '; oldest = ', max(F1_DryTissue$Age)))
 #assign bfactors
@@ -1336,13 +1713,13 @@ bLength.mod <- 3.18#3.44
 F1_DryTissue.bfactor <- F1_DryTissue %>% 
                           dplyr::mutate(
                            Tissue_bFactorLength.all  =  ( (Total_Dry_Tissue_g * (Shell_length_mm^-bLength.all))* # a
-                                                                    (meanLength.all^bLength.all) ) * 100,
+                                                                    (StandardShellSize^bLength.all) ) * 100,
                            Tissue_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
                                                                    ( (Total_Dry_Tissue_g * (Shell_length_mm^-bLength.low))* # a
-                                                                      (meanLength.all^bLength.low) ) * 100,
+                                                                      (StandardShellSize^bLength.low) ) * 100,
                                                                  pCO2 == '800 μatm' ~ 
                                                                    ( (Total_Dry_Tissue_g * (Shell_length_mm^-bLength.mod))* # a
-                                                                      (meanLength.all^bLength.mod) ) * 100
+                                                                      (StandardShellSize^bLength.mod) ) * 100
                            ) # case when for pCO2 
                           ) # mutate
 # pivot longer and plot 
