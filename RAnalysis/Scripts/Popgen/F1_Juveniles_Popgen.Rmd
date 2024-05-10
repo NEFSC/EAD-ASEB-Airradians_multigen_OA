@@ -21,6 +21,8 @@ knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositor
 library(vcfR)
 library(hierfstat)
 library(pcadapt)
+library(adegenet)
+library(pegas)
 ```
 
 #### load data
@@ -36,11 +38,11 @@ library(pcadapt)
 filename <- read.pcadapt("output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_Merged.bed", type = "bed")
 
 # table cntiaing the metadata for F1Broodstok
-strata <- as.data.frame(
-          read.csv("../RAnalysis/Data/Genomics/strata/F1_Juveniles_strata.csv", header = TRUE)
-          ) %>%  
-          dplyr::select(!X) %>% # omit unneecessary column
-          dplyr::mutate(Indiv_ID = gsub('.*-([0-9]+).*','\\1',Individual))
+strata_df <- as.data.frame(
+              read.csv("../RAnalysis/Data/Genomics/strata/F1_Juveniles_strata.csv", header = TRUE)
+              ) %>%  
+              dplyr::select(!X) %>% # omit unneecessary column
+              dplyr::mutate(Indiv_ID = gsub('.*-([0-9]+).*','\\1',Individual))
 
 # add a sample that is missing - a duplicate 
 # note: that it may be best to ommit this duplicate from the SNP calls altogether, 
@@ -72,7 +74,7 @@ plot(res, option = "screeplot")
 
 ```{r}
 
-treatment.names <- strata$Treatment
+treatment.names <- strata_df$Treatment
 
 plot(res, option = "scores", pop = treatment.names)
 
@@ -128,13 +130,91 @@ ld_filtered_vcf_LD <- my_vcf[!is.na(res_LD$loadings[,1]),]
 
 ```{r}
 library(adegenet)
-mygl <- vcfR2genlight(ld_filtered_vcf_LD,n.cores =2)
-
-strata_df <- data.frame(strata)
-
+library(hierfstat)
+mygl <- vcfR2genlight(ld_filtered_vcf_LD,n.cores =8)
 strata(mygl) <- strata_df
 setPop(mygl) <- ~Treatment
+
+#  glPca (adegenet): implements PCA for genome-wide SNP data stored as genlight
+# objects; see dedicated tutorial (genomics).
+
+myglPCA <- glPca(mygl)
 ```
+
+
+```{r Fst}
+library(adegenet)
+# create genind object from vcf file - use the LD object 
+ld_genind <- vcfR2genind(ld_filtered_vcf_LD)
+# assign metadata to these loci 
+strata(ld_genind) <- strata_df
+setPop(ld_genind) <- ~Treatment
+
+# pairwise Fst
+## wrapper for pegas pacakage
+Fst(as.loci(ld_genind))
+?Fst
+## wrapper for heirfstat
+mat.fst <- genet.dist(ld_genind) # (hierfstat): implements pairwise FST , which is also a Euclidean distance between populations.
+mat.fst
+is.euclid(mat.fst)
+
+
+
+# PCS analysis 
+X <- tab(ld_genind, freq = TRUE, NA.method = "mean")
+class(X) # "matrix" "array"
+dim(X) # 79 42782
+pca1 <- dudi.pca(X, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pca1$eig[1:50], main = "PCA eigenvalues", col = heat.colors(50))
+s.class(pca1$li, pop(ld_genind))
+title("PCA of F1 Juvenile dataset\naxes 1-2")
+add.scatter.eig(pca1$eig[1:20], 3,1,2)
+
+```
+
+Inbreeding 
+refers to an excess of homozygosity in a given individual due to the mating of
+genetically related parents. This excess of homozygosity is due to the fact that there are
+non-negligible chances of inheriting two identical alleles from a recent common ancestor.
+Inbreeding can be associated to a loss of fitness leading to ”inbreeding depression”. Typically,
+loss of fitness is caused by recessive deleterious alleles which have usually low frequency in
+the population, but for which inbred individuals are more likely to be homozygotes.
+
+```{r inbreeding}
+
+# use sepop to separate pops and explore inbreeding
+
+F1_Low <- seppop(ld_genind)$Low
+
+F1_Mod <- seppop(ld_genind)$Moderate
+
+# compute the mean inbreeding for each individual, and plot the resulting distribution
+F1_Low_temp <- inbreeding(F1_Low, N=100)
+F1_Mod_temp <- inbreeding(F1_Mod, N=100)
+
+# temp is a list of values sampled from the likelihood distribution of each individual; means
+# values are obtained for all individuals using sapply
+
+F1_Low_Fbar <- sapply(F1_Low_temp, mean)
+hist(F1_Low_Fbar, col="firebrick", main="Average inbreeding in F1 Low")
+
+
+# We can see that all  individuals  have higher inbreeding (>0.4).
+# We can recompute inbreeding for them, asking for the likelihood function to be  returned
+
+which(F1_Low_Fbar>0.4) # all of them
+F1_Low_F <- inbreeding(F1_Low, res.type="function")[which(F1_Low_Fbar>0.4)]
+
+plot(F1_Low_F$adapter_trim.201_querydupscoord.bam, 
+     main=paste("Inbreeding of individual",
+                names(F1_Low_F)),
+     xlab="Inbreeding (F)", 
+     ylab="Probability density")
+
+
+```
+
 
 -   Below, we use the PCA function of adegent to create a PCA.
 

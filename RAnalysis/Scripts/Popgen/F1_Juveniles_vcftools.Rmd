@@ -1,0 +1,255 @@
+---
+title: "F1_Juveniles_vcftools.Rmd"
+author: "Samuel Gurr"
+date: "2024-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F1_Juveniles/vcftools_output") # Sam's
+
+```
+
+#### load packages
+
+```{r load packages we need}
+library(tidyverse)
+```
+
+#### load data
+
+#### Output and R script following this turorial here
+<https://speciationgenomics.github.io/filtering_vcfs/>
+
+*used vcftools to generate several output files.* These were offloaded from SEDNA to the 
+github repo to generate figures and diagnose the data!
+
+* Allele frequency
+
+* Depth 
+
+* Missingness
+
+* Inbred Coefficient
+
+```{r}
+getwd()
+
+var_qual <- read_delim("SiteQuality.lqual", delim = "\t",
+           col_names = c("chr", "pos", "qual"), skip = 1)
+
+
+var_depth <- read_delim("MeanDepthSite.ldepth.mean", delim = "\t",
+           col_names = c("chr", "pos", "mean_depth", "var_depth"), skip = 1)
+
+var_miss <- read_delim("MissingData.imiss", delim = "\t",
+                       col_names = c("chr", "pos", "nchr", "nfiltered", "nmiss", "fmiss"), skip = 1)
+
+var_freq <- read_delim("AlleleFreq.frq", delim = "\t",
+                       col_names = c("chr", "pos", "nalleles", "nchr", "a1", "a2"), skip = 1)
+
+
+ind_het <- read_delim("InbredCoeff.het", delim = "\t",
+           col_names = c("ind","ho", "he", "nsites", "f"), skip = 1)
+
+
+```
+
+## Variant Quality
+
+* results - all data is 29? Why?
+
+
+```{r view variant quality}
+a <- ggplot(var_qual, aes(qual)) + geom_density(fill = "dodgerblue1", colour = "black", alpha = 0.3)
+a + theme_light()
+
+```
+## Variant Mean Depth 
+
+8 results, good median and mean of ~20 
+* some very low depth and a maximum of 80, though not sufficient to show on the figure 
+* 10x to 40x min and max depth filter to use downstream 
+
+```{r view the variant mean depth}
+
+a <- ggplot(var_depth, aes(mean_depth)) + geom_density(fill = "dodgerblue1", colour = "black", alpha = 0.3)
+a + theme_light()
+
+summary(var_depth$mean_depth)
+  # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  # 0.00   15.13   20.00   20.96   25.63   85.00 
+# In most cased variants have a depth of 20x and there are few outliers (85 Max, BUT A MIN OF 0!)
+
+a + theme_light() + xlim(0, 100)
+# This gives us a better idea of the distribution and we can set our minimum coverage at the 5 and 95% quantiles (10% cutoff)  - 10x is a good rule of thumb as a minimum cutoff for read depth althrough we wanted to be conservative we go go with 15% 
+# important here we have a good max cutoff - our outliers show some regions have high coverage (not in figure but in the table) reflecting mapping/assembly errors and repetitive regions. We want to exclude these they will bias our analysis - set our min depth to 10x and our max depth to 40x
+```
+
+
+## Variant Missingness
+
+*Objective*: Look at the proportion of missigness at each variant. How many individual *lack* a genotype 
+at a call site - plot with ggplot2
+
+**note** I do think this applies to us as we already filtered out individuals using angsd?
+* our miss file does not have a fmiss column, perhaps this is an error?
+
+```{r view variant missigness}
+a <- ggplot(var_miss, aes(nmiss)) + geom_density(fill = "dodgerblue1", colour = "black", alpha = 0.3)
+a + theme_light()
+```
+
+
+## Minor Allele Frequency
+
+*Objective*: Per variant analysis distribution of allele frequencies  this will help 
+inform  our minor alle frequency MAF thresholds
+
+
+```{r MAFs}
+# find minor allele frequency
+var_freq$maf <- var_freq %>% select(a1, a2) %>% apply(1, function(z) min(z))
+
+# Here we used apply on our allele frequencies to return the lowest allele frequency at each variant. We then added these to our dataframe as the variable maf. Next we will plot the distribution.
+
+a <- ggplot(var_freq, aes(maf)) + geom_density(fill = "dodgerblue1", colour = "black", alpha = 0.3)
+a + theme_light()
+
+ # it is clear that a large number of variants have low frequency alleles. We can also look at the distribution in more detail:
+
+summary(var_freq$maf)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.02703 0.06757 0.11392 0.16287 0.21622 0.50000 
+
+# The upper bound of the distribution is 0.5, which makes sense because if MAF was more than this, it wouldn’t be the MAF! How do we interpret MAF? It is an important measure because low MAF alleles may only occur in one or two individuals. It is possible that some of these low frequency alleles are in fact unreliable base calls - i.e. a source of error.
+
+# With 16 individuals, there are 28 alleles for a given site. Therefore MAF = 0.04 is equivalent to a variant occurring as one allele in a single individual (i.e. 28 * 0.04 = 1.12). Alternatively, a MAF of 0.1 would mean that any allele would need to occur at least twice (i.e. 28 * 0.1 = 2.8).
+
+
+```
+
+
+## Heterozygosity and inbreeding coefficient per individual
+
+**note** that we should expect high negative values (inbred) because this experment essentially is.. 
+we spawned few animals so we should expect inbreeding here
+
+```{r heterozygosite and inbreeding coeff}
+a <- ggplot(ind_het, aes(f)) + geom_histogram(fill = "dodgerblue1", colour = "black", alpha = 0.3)
+a + theme_light()
+
+# 
+# We have reduced heterozygosity in the poplation (negative values) as a result of indiiduas wof related ancestry 
+# mating. Inbreeding accelerates the loss of genetic diversity and resuced heterozygosity of genes ina population - ltimately leading to complete homozygosity
+# 
+# How does this happen? Inbreeding reuslted in replicates of a single alle (shared by both parents) coming together thorgh mating and reuslting in progeny with homozygous alleles - identifcal by descent 
+
+# heterozygosity - presence of two different alleles  - could be a compound homozygote with two diff mutated alleles
+# homozygosity - presents of two identical alleles of a particular gene by an individual
+```
+
+## What happens now?
+
+Vcftools was run with the command gzvcf to filter the vcf between 2 - 50 depth, 
+I then rand plink on BOTH the prior data and this new filtered dataset 
+
+I ran the plink to for LD decay using the command --indep-pariwise 50 10 0.1 
+
+* 50 det window of 50 kb 
+* 10 window ste size 
+* 0.1 is the correlation coefficient threshold of linkage we are willing to tolerate, pruning any variables with an r^2 > 0.1
+
+```{r load non- and filtered vcf plink LD decay stats}
+
+# non filtered (merged vcfs from angsd)
+nonfilt_pca <- read_table2("../plink/F1Juveniles_Merged.eigenvec", col_names = FALSE)
+nonfilt_eigenval <- scan("../plink/F1Juveniles_Merged.eigenval")
+
+
+# filtered (addition dpeth filter using vcftools)
+filt_pca <- read_table2("../plink/F1Juveniles_Merged_Filtered.eigenvec", col_names = FALSE)
+filt_eigenval <- scan("../plink/F1Juveniles_Merged_Filtered.eigenval")
+
+```
+
+
+```{r clean the data}
+
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# non filtered  :::::::::::::::::::::::::::::::::::::::::::::::::::
+# sort out the pca data remove nuisance column
+nonfilt_pca <- nonfilt_pca[,-1]
+names(nonfilt_pca)[1] <- "ind" # set names
+names(nonfilt_pca)[2:ncol(nonfilt_pca)] <- paste0("PC", 1:(ncol(nonfilt_pca)-1))
+
+spp <- rep(NA, length(nonfilt_pca$ind)) # sort out the individual pops (here as treatments!)
+spp[grep("pH8|trim.1|trim.3_|trim.4_|trim.5_|trim.20|trim.25", nonfilt_pca$ind)] <- "Low"
+spp[grep("pH75|trim.35|trim.30", nonfilt_pca$ind)] <- "Moderate"
+
+Group <- paste0(spp) # combine - if you want to plot each in different colours
+
+pca_nonfilt_formatted <- as.tibble(data.frame(nonfilt_pca, spp, Group)) # remake data.frame
+
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# filtered ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# sort out the pca data remove nuisance column
+filt_pca <- filt_pca[,-1]
+names(filt_pca)[1] <- "ind" # set names
+names(filt_pca)[2:ncol(filt_pca)] <- paste0("PC", 1:(ncol(filt_pca)-1))
+
+spp <- rep(NA, length(filt_pca$ind)) # sort out the individual pops (here as treatments!)
+spp[grep("pH8|trim.1|trim.3_|trim.4_|trim.5_|trim.20|trim.25", filt_pca$ind)] <- "Low"
+spp[grep("pH75|trim.35|trim.30", filt_pca$ind)] <- "Moderate"
+
+Group <- paste0(spp) # combine - if you want to plot each in different colours
+
+pca_filt_formatted <- as.tibble(data.frame(filt_pca, spp, Group)) # remake data.frame
+
+```
+
+```{r plotting the data}
+
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# non filtered  :::::::::::::::::::::::::::::::::::::::::::::::::::
+nonfilt_pve <- data.frame(PC = 1:length(nonfilt_eigenval), pve = nonfilt_eigenval/sum(nonfilt_eigenval)*100) # first convert to percentage variance explained
+a <- ggplot(nonfilt_pve, aes(PC, pve)) + geom_bar(stat = "identity")
+a + ylab("Percentage variance explained") + theme_light()
+
+# Cumulatively, they explain 100% of the variance but PC1, PC2 and possible PC3 together explain about 30% of the variance. We could calculate this with the cumsum function, like so:
+  
+cumsum(nonfilt_pve$pve) # PC1 - PC3 - 8.553657  15.177936  21.588959
+
+# plot pca
+b <- ggplot(nonfilt_pca, aes(PC1, PC2, col = Group, shape = Group)) + geom_point(size = 3)
+b <- b + scale_colour_manual(values = c("forestgreen", "darkorange"))
+b <- b + coord_equal() + theme_light()
+b + xlab(paste0("PC1 (", signif(nonfilt_pve$pve[1], 3), "%)")) + 
+  ylab(paste0("PC2 (", signif(nonfilt_pve$pve[2], 3), "%)"))
+
+
+
+# :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# filtered ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+filt_pve <- data.frame(PC = 1:length(filt_eigenval), pve = filt_eigenval/sum(filt_eigenval)*100) # first convert to percentage variance explained
+a <- ggplot(filt_pve, aes(PC, pve)) + geom_bar(stat = "identity")
+a + ylab("Percentage variance explained") + theme_light()
+
+# Cumulatively, they explain 100% of the variance but PC1, PC2 and possible PC3 together explain about 30% of the variance. We could calculate this with the cumsum function, like so:
+
+cumsum(filt_pve$pve) # PC1 - PC3 - 8.816181  16.680841  22.941032
+
+# plot pca
+b <- ggplot(filt_pca, aes(PC1, PC2, col = Group, shape = Group)) + geom_point(size = 3)
+b <- b + scale_colour_manual(values = c("forestgreen", "darkorange"))
+b <- b + coord_equal() + theme_light()
+b + xlab(paste0("PC1 (", signif(filt_pve$pve[1], 3), "%)")) + 
+  ylab(paste0("PC2 (", signif(filt_pve$pve[2], 3), "%)"))
+
+filt_pca %>% dplyr::filter(PC2 > 0.2)
+```
