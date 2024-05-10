@@ -1,0 +1,39 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --extract plink/F1Juveniles_Merged_Filtered.prune.in
+  --make-bed
+  --out plink/F1Juveniles_Merged_Filtered
+  --pca
+  --set-missing-var-ids @:#
+  --vcf vcftools_Merged_vcf/F1Juveniles_Merged_filtered.vcf.gz
+
+Hostname: node10.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/output/F1_Juveniles/query_dups
+Start time: Fri May  3 12:03:53 2024
+
+Random number seed: 1714763033
+95104 MB RAM detected; reserving 47552 MB for main workspace.
+--vcf: plink/F1Juveniles_Merged_Filtered-temporary.bed +
+plink/F1Juveniles_Merged_Filtered-temporary.bim +
+plink/F1Juveniles_Merged_Filtered-temporary.fam written.
+35223 variants loaded from .bim file.
+35223 missing IDs set.
+79 people (0 males, 0 females, 79 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to plink/F1Juveniles_Merged_Filtered.nosex .
+--extract: 22670 variants remaining.
+Using up to 19 threads (change this with --threads).
+Before main variant filters, 79 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.616505.
+22670 variants and 79 people pass filters and QC.
+Note: No phenotypes present.
+Relationship matrix calculation complete.
+--pca: Results saved to plink/F1Juveniles_Merged_Filtered.eigenval and
+plink/F1Juveniles_Merged_Filtered.eigenvec .
+--make-bed to plink/F1Juveniles_Merged_Filtered.bed +
+plink/F1Juveniles_Merged_Filtered.bim + plink/F1Juveniles_Merged_Filtered.fam
+... done.
+
+End time: Fri May  3 12:03:53 2024

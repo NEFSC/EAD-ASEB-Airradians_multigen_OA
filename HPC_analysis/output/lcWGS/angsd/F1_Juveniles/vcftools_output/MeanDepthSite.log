@@ -1,0 +1,17 @@
+
+VCFtools - 0.1.16
+(C) Adam Auton and Anthony Marcketta 2009
+
+Parameters as interpreted:
+	--gzvcf F1Juveniles_Merged.vcf.gz
+	--out ./Merged_vcf_Stats//MeanDepthSite
+	--site-mean-depth
+
+Using zlib version: 1.2.11
+Warning: Expected at least 2 parts in INFO entry: ID=I16,Number=16,Type=Float,Description="Auxiliary tag used for calling, see description of bcf_callret1_t in bam2bcf.h">
+Warning: Expected at least 2 parts in FORMAT entry: ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-fwd, ref-reverse, alt-fwd and alt-reverse bases">
+Warning: Expected at least 2 parts in FORMAT entry: ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-fwd, ref-reverse, alt-fwd and alt-reverse bases">
+After filtering, kept 79 out of 79 Individuals
+Outputting Depth for Each Site
+After filtering, kept 62579 out of a possible 62579 Sites
+Run Time = 2.00 seconds
