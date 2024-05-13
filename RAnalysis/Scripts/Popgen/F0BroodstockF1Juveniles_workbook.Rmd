@@ -48,17 +48,25 @@ library(LDlinkR)
   - intersect: contains only SNPs *shared* amoung **all** *input vscf files* using ```bcftools isec -n=<#input>```
   
   
-```{r load vcf file}
+```{r load vcf and bed files}
+
+path = "output/lcWGS/angsd/Merge_Intercept/F0Broodstock_F1Juveniles/"
 
 # ALL F1 JUVENILES FROM LOW AND MODERATE pCO2
-F0B_F1JALL_intersect.vcf     <- read.vcfR("C:/Users/samuel.gurr/Documents/F0F1_intersect.vcf.gz") # 6,048 variants
-F0B_F1JALL_merged.vcf        <- read.vcfR("C:/Users/samuel.gurr/Documents/F0Brood_F1Juv_merged.vcf.gz") # 81,325 variants
+F0B_F1JALL_intersect.vcf     <- read.vcfR(paste0(path,"F0F1_intersect.vcf.gz")) # 6,048 variants
+F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
+
+F0B_F1JALL_merged.vcf        <- read.vcfR(paste0(path,"F0_F1Juveniles_merged_all.vcf.gz")) # 81,325 variants
+F0B_F1JALL_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_all.bed"), type = "bed") # 81325 variants
 
 # SEPARATE merge and intersect based on F1 JUVENILES pCO2
 ## LOW (pH8)
-F0B_F1JLOW_merged.vcf        <- read.vcfR("C:/Users/samuel.gurr/Documents/F0BroodF1JuvenilespH8.vcf.gz") # 73573 variants
+F0B_F1JLOW_merged.vcf        <- read.vcfR(paste0(path,"F0_F1JuvenilespH8_merged.vcf.gz")) # 73573 variants
+F0B_F1JLOW_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH8.bed"), type = "bed") # 73573 variants
+
 ## MODOERATE (pH 75)
-F0B_F1JMODERATE_merged.vcf   <- read.vcfR("C:/Users/samuel.gurr/Documents/F0BroodF1JuvenilespH75.vcf.gz") # 77953 variants
+F0B_F1JMODERATE_merged.vcf   <- read.vcfR(paste0(path,"F0_F1JuvenilespH75_merged.vcf.gz")) # 52544  variants
+F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
 
 ```
 
@@ -78,7 +86,8 @@ F0BroodF1Juveniles_strata   <- read.csv("C:/Users/samuel.gurr/Documents/strata.c
                                                                      .default = "F1"),
                                       Treatment       = dplyr::case_when(grepl("F0", Individual) ~ "none",
                                       grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
-                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low"))
+                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
+                                dplyr::mutate(Gen_Treatment = paste0(Gen,'_',Treatment))
 
 
 # subsets  mmmkay?
@@ -89,96 +98,59 @@ F0F1_strata_pH8            <- F0F1_strata %>% dplyr::filter(!Treatment %in% 'Mod
 
 
 
-* load .bed files (from plink)
-
-  - these are used to calucalate linkage disequilibruim! 
-
-```{r}
-
-F1F2_pH8_bed <- read.pcadapt("C:/Users/samuel.gurr/Documents/plink/F1F2_pH8.bed", type = "bed")
-F1F2_pH75_bed <- read.pcadapt("C:/Users/samuel.gurr/Documents/plink/F1F2_pH75.bed", type = "bed")
-
-```
-
-#### load vcf files
-
-* F1 and F2 Juveniles from pH 75 and pH 8 merged vcf from angsd
-
-```{r}
-
-F1F2_pH8_vcf <- read.vcfR("C:/Users/samuel.gurr/Documents/F1F2_pH8_Merged.vcf.gz")
-F1F2_pH75_vcf <- read.vcfR("C:/Users/samuel.gurr/Documents/F1F2_pH75_Merged.vcf.gz")
-
-```
-
-
-### load strata anf format 
-
-```{r}
-# table cntiaing the metadata for F1Broodstok
-F1_Juv_strata_df <- as.data.frame(
-              read.csv("../RAnalysis/Data/Genomics/strata/F1_Juveniles_strata.csv", header = TRUE)
-              ) %>%  
-              dplyr::select(!X) %>% 
-              dplyr::mutate(Gen = "F1")
-
-F2_Juv_strata_df <- as.data.frame(
-              read.csv("../RAnalysis/Data/Genomics/strata/F2_Juveniles_strata.csv", header = TRUE)
-              ) %>%  
-              # dplyr::filter(! Treatment %in% 'High') %>% 
-              dplyr::select(!X) %>% 
-              dplyr::mutate(Gen = "F2")
-
-F3_Juv_strata_df <- as.data.frame(
-              read.csv("../RAnalysis/Data/Genomics/strata/F3_Juveniles_strata.csv", header = TRUE)
-              ) %>%  
-              # dplyr::filter(! Treatment %in% 'High') %>% 
-              dplyr::select(!X) %>% 
-              dplyr::mutate(Gen = "F3")
-
-F1_F2_strata_df        <- rbind(F1_Juv_strata_df, F2_Juv_strata_df)
-AllJuveniles_strata_df <- rbind(F1_Juv_strata_df, F2_Juv_strata_df, F3_Juv_strata_df)
-
-F1_F2_pH8_strata_df <- F1_F2_strata_df %>%  dplyr::filter(Treatment %in% 'Low')
-
-
-F1_F2_pH75_strata_df <- F1_F2_strata_df %>%  dplyr::filter(Treatment %in% 'Moderate')
-
-# add a sample that is missing - a duplicate 
-# note: that it may be best to ommit this duplicate from the SNP calls altogether, 
-# view some sanity checks here before mocing forward and output rationale 
-# strata[nrow(strata)+1,] = c("adapter_trim.F1_B6_pH7.5DUP.bam","Moderate", "6")
-
-F0Broodstock <- as.data.frame(read.csv("../RAnalysis/Data/Genomics/strata/F0_Broodstock_strata.csv", header = TRUE))
-F1Broodstock <- as.data.frame(read.csv("../RAnalysis/Data/Genomics/strata/F1_Broodstock_strata.csv", header = TRUE))
-F2Broodstock <- as.data.frame(read.csv("../RAnalysis/Data/Genomics/strata/F2_Broodstock_strata.csv", header = TRUE))
-
-```
-
-
 # Screeplot of bed file
 
 -   what to look for?   the 'elbow' of this plot infers the number of descriptive principle components
 
 ```{r screeplot}
 
-pH8_res <- pcadapt(F1F2_pH8_bed, K = 8)
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_merged.bed
+F0B_F1JuvAll_merge.res <- pcadapt(F0B_F1JALL_merged.bed, K = 8)
+plot(F0B_F1JuvAll_merge.res, option = "screeplot") # looks like 2
 
-pH75_res <- pcadapt(F1F2_pH75_bed, K = 8)
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_intersect.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
 
+## * F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JuvAll_intersect.res      <- pcadapt(F0B_F1JALL_intersect.bed, K = 8)
+plot(F0B_F1JuvAll_intersect.res, option = "screeplot") # looks like 2
 
-plot(pH8_res, option = "screeplot") # looks like 3
+## * F0 Broodstock w/ F1 Juveniles LOW
+F0B_F1JuvLOW_merge.res      <- pcadapt(F0B_F1JLOW_merged.bed, K = 8)
+plot(F0B_F1JuvLOW_merge.res, option = "screeplot") # looks like 2
 
-plot(pH75_res, option = "screeplot") # looks like 3
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+F0B_F1JuvMODERATE_merge.res <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 8)
+plot(F0B_F1JuvMODERATE_merge.res, option = "screeplot") # looks like 3
+
 ```
 
 # Look at the group variable 
 - look a this! WTF?!?
 
 ```{r}
-plot(pH8_res, option = "scores", pop = F1_F2_pH8_strata_df$Gen)
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_merge.res
+plot(F0B_F1JuvAll_merge.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
 
-plot(pH75_res, option = "scores", pop = F1_F2_pH75_strata_df$Gen)
+
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_intersect.res, F0B_F1JuvLOW_intersect.res, F0B_F1JMODERATE_merged.res
+
+## * F0 Broodstock w/ F1 Juveniles ALL
+plot(F0B_F1JuvAll_intersect.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen)
+plot(F0B_F1JuvAll_intersect.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+
+
+## * F0 Broodstock w/ F1 Juveniles LOW
+plot(F0B_F1JuvLOW_merge.res, option = "scores", pop = F0F1_strata_pH8$Gen)
+
+
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+plot(F0B_F1JuvMODERATE_merge.res, option = "scores", pop = F0F1_strata_pH75$Gen)
+
+
 ```
 
 This might look normal, but you’ll notice that two of the populations are tightly grouped around PC1. We should check too make sure this pattern isn’t being driven by a linkage in the genome. To do this, we can look at the loading scores of the PCs. Loading scores show how much a particular SNP factors into a PC.
@@ -212,10 +184,39 @@ library(ggpubr)
 # LD_clumping: 
 #   Default is NULL and doesn't use any SNP thinning. If you want to use SNP thinning, provide a named list with parameters $size and $thr which corresponds respectively to the window radius and the squared correlation threshold. A good default value would be list(size = 500, thr = 0.1)
   
-# pH 8
-pH8_res_LD <- pcadapt(F1F2_pH8_bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
-plot(pH8_res_LD, option = "screeplot") # looks like 2 PCAs
-plot(pH8_res_LD, option = "scores", pop = F1_F2_pH8_strata_df$Gen) # F2 is wonky AF
+
+
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_merge.bed
+F0B_F1JALL_merged_LD <- pcadapt(F0B_F1JALL_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+plot(F0B_F1JALL_merged_LD, option = "screeplot") # looks like 2 PCAs
+plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # F2 is wonky AF
+plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # F2 is wonky AF
+
+
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_intersect.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
+
+## * F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JALL_intersect_LD <- pcadapt(F0B_F1JALL_intersect.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+plot(F0B_F1JALL_intersect_LD, option = "screeplot") # looks like 2 PCAs
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # 
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # 
+
+## * F0 Broodstock w/ F1 Juveniles LOW
+F0B_F1JLOW_merge_LD <- pcadapt(F0B_F1JLOW_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+plot(F0B_F1JLOW_merge_LD, option = "screeplot") # looks like 2.5? PCAs
+plot(F0B_F1JLOW_merge_LD, option = "scores", pop = F0F1_strata_pH8$Gen) #
+
+
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+F0B_F1JMODERATE_merge_LD <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+plot(F0B_F1JMODERATE_merge_LD, option = "screeplot") # looks like 2.5? PCAs
+plot(F0B_F1JMODERATE_merge_LD, option = "scores", pop = F0F1_strata_pH75$Gen) #
+
+
+
+
 par(mfrow = c(2, 2))
 for (i in 1:4) {
   plot(pH8_res_LD$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
@@ -227,19 +228,6 @@ plot(pH8_res, option = "scores", pop = F1_F2_pH8_strata_df$Gen),
 plot(pH8_res_LD, option = "scores", pop = F1_F2_pH8_strata_df$Gen))
 
 
-# pH 75
-?pcadapt
-pH75_res_LD <- pcadapt(F1F2_pH75_bed, K = 10, min.ma= 0.01, LD.clumping = list(size = 100, thr = 0.18))
-plot(pH75_res_LD, option = "screeplot") # looks like 2 PCAs
-plot(pH75_res_LD, option = "scores", pop = F1_F2_pH75_strata_df$Gen) # F2 is wonky AF
-par(mfrow = c(2, 2))
-for (i in 1:4) {
-  plot(pH75_res_LD$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
-}
-
-ggarrange(
-plot(pH75_res, option = "scores", pop = F1_F2_pH75_strata_df$Gen),
-plot(pH75_res_LD, option = "scores", pop = F1_F2_pH75_strata_df$Gen))
 
 ```
 
@@ -258,13 +246,106 @@ plot(pH75_res_LD, option = "scores", pop = F1_F2_pH75_strata_df$Gen))
 ```{r}
 # create genind object from vcf file - use the LD object 
 
+# INTERSECT DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_intersect.vcf
+F0B_F1JALL_intersect.genind       <- vcfR2genind(F0B_F1JALL_intersect.vcf)
+F0B_F1JALL_intersect.vcf_FILTERED <- F0B_F1JALL_intersect.vcf[!is.na(F0B_F1JALL_intersect_LD$loadings[,1]),]
+F0B_F1JALL_intersect.genind_LD    <- vcfR2genind(F0B_F1JALL_intersect.vcf_FILTERED)
+
+
+strata(F0B_F1JALL_intersect.genind) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_intersect.genind) <- ~Gen_Treatment
+
+strata(F0B_F1JALL_intersect.genind_LD) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_intersect.genind_LD) <- ~Gen_Treatment
+
+
+F0B_F1JALL_intersect_tab    <- tab(F0B_F1JALL_intersect.genind, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_intersect_pca1   <- dudi.pca(F0B_F1JALL_intersect_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_intersect_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_intersect_pca1$li, pop(F0B_F1JALL_intersect.genind))
+
+
+F0B_F1JALL_intersect.genind_LD_tab  <- tab(F0B_F1JALL_intersect.genind_LD, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_intersect.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_intersect.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_intersect.genind_LD_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_intersect.genind_LD_pca1$li, pop(F0B_F1JALL_intersect.genind_LD))
+
+
+
+# MERGED DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_merged.vcf, F0B_F1JLOW_merged.vcf, F0B_F1JMODERATE_merged.vcf
+
+## * F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JALL_merged.genind       <- vcfR2genind(F0B_F1JALL_merged.vcf) # 81,325
+F0B_F1JALL_merged.vcf_FILTERED <- F0B_F1JALL_merged.vcf[!is.na(F0B_F1JALL_merged_LD$loadings[,1]),]
+F0B_F1JALL_merged.genind_LD    <- vcfR2genind(F0B_F1JALL_merged.vcf_FILTERED) # 18,405 
+
+
+strata(F0B_F1JALL_merged.genind) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_merged.genind) <- ~Gen_Treatment
+
+strata(F0B_F1JALL_merged.genind_LD) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_merged.genind_LD) <- ~Gen_Treatment
+
+
+F0B_F1JALL_merged_tab    <- tab(F0B_F1JALL_merged.genind, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_merged_pca1   <- dudi.pca(F0B_F1JALL_merged_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_merged_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_merged_pca1$li, pop(F0B_F1JALL_merged.genind))
+
+
+F0B_F1JALL_merged.genind_LD_tab  <- tab(F0B_F1JALL_merged.genind_LD, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_merged.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_merged.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_merged.genind_LD_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_merged.genind_LD_pca1$li, pop(F0B_F1JALL_merged.genind_LD))
+
+
+
+
+
+
+
+
+
+
+
+
+## * F0 Broodstock w/ F1 Juveniles LOW
+F0B_F1JLOW_merged.genind         <- vcfR2genind(F0B_F1JLOW_merged.vcf)
+
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+F0B_F1JMODERATE_merged.genind    <- vcfR2genind(F0B_F1JMODERATE_merged.vcf)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 pH8_genind               <- vcfR2genind(F1F2_pH8_vcf)
 F1F2_pH8_vcf_ld_filtered <- F1F2_pH8_vcf[!is.na(pH8_res_LD$loadings[,1]),]
 pH8_genind_ld_filtered   <- vcfR2genind(F1F2_pH8_vcf_ld_filtered)
 
 pH75_genind               <- vcfR2genind(F1F2_pH75_vcf)
 F1F2_pH75_vcf_ld_filtered <- F1F2_pH75_vcf[!is.na(pH75_res_LD$loadings[,1]),]
-pH75_genind_ld_filtered    <- vcfR2genind(F1F2_pH75_vcf_ld_filtered)
+pH75_genind_ld_filtered   <- vcfR2genind(F1F2_pH75_vcf_ld_filtered)
 
 # assign metadata to these loci 
 
