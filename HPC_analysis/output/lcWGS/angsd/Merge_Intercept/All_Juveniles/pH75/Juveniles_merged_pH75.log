@@ -1,0 +1,30 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --out Juveniles_merged_pH75
+  --vcf Juveniles_pH75_merged.vcf.gz
+
+Hostname: node01.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/analysis/2_AllJuveniles/pH75
+Start time: Mon May 13 12:00:02 2024
+
+Random number seed: 1715626802
+95104 MB RAM detected; reserving 47552 MB for main workspace.
+--vcf: Juveniles_merged_pH75-temporary.bed +
+Juveniles_merged_pH75-temporary.bim + Juveniles_merged_pH75-temporary.fam
+written.
+54315 variants loaded from .bim file.
+133 people (0 males, 0 females, 133 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to Juveniles_merged_pH75.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 133 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.431486.
+54315 variants and 133 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to Juveniles_merged_pH75.bed + Juveniles_merged_pH75.bim +
+Juveniles_merged_pH75.fam ... done.
+
+End time: Mon May 13 12:00:03 2024
