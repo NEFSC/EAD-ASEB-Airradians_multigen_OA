@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
@@ -21,8 +21,8 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
-library(pegas)
-library(LDlinkR)
+# library(pegas)
+# library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
 # library(updog) # need a Seqinfo object  Airradians not registered in package
 # library(VariantAnnotation) # need a Seqinfo object  Airradians not registered in package
@@ -79,7 +79,8 @@ F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
   - can call subsets of this strata for the files with just F0brood and pH75 and F0 brood and pH , okay? okay.
   
 ```{r load and format strata as metadata}
-F0BroodF1Juveniles_strata   <- read.csv("C:/Users/samuel.gurr/Documents/strata.csv", sep =',', header=FALSE) %>% 
+
+F0BroodF1Juveniles_strata   <- read.csv("output/lcWGS/angsd/IDs/F0BroodstockF1Juveniles.csv", sep =',', header=FALSE) %>% 
                                 dplyr::rename(Individual = V1) %>% 
                                 dplyr::mutate(Individual = gsub('*./','',Individual),
                                       Gen = dplyr::case_when(grepl("F0", Individual) ~ "F0",
@@ -87,13 +88,14 @@ F0BroodF1Juveniles_strata   <- read.csv("C:/Users/samuel.gurr/Documents/strata.c
                                       Treatment       = dplyr::case_when(grepl("F0", Individual) ~ "none",
                                       grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
                                       grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
-                                dplyr::mutate(Gen_Treatment = paste0(Gen,'_',Treatment))
+                                dplyr::mutate(Gen_Treatment = dplyr::case_when(Gen == "F0" ~ "F0",
+                                                                        Gen == "F1" ~ paste0(Gen,'_',Treatment)))
 
 
 # subsets  mmmkay?
 
-F0F1_strata_pH75           <- F0F1_strata %>% dplyr::filter(!Treatment %in% 'Low') # keep modrate, pH 75
-F0F1_strata_pH8            <- F0F1_strata %>% dplyr::filter(!Treatment %in% 'Moderate') # keep modrate, pH 75
+F0F1_strata_pH75           <- F0BroodF1Juveniles_strata %>% dplyr::filter(!Treatment %in% 'Low') # keep modrate, pH 75
+F0F1_strata_pH8            <- F0BroodF1Juveniles_strata %>% dplyr::filter(!Treatment %in% 'Moderate') # keep modrate, pH 75
 ```
 
 
@@ -102,50 +104,202 @@ F0F1_strata_pH8            <- F0F1_strata %>% dplyr::filter(!Treatment %in% 'Mod
 
 -   what to look for?   the 'elbow' of this plot infers the number of descriptive principle components
 
+-  assign the K value and rerun as '.res'
+
+- Manhattan plot - regions involved in adaptation OR low recombination (high Linkage disequilibrium) affecting ascertainment of population structure,
+when working with whole genome data we need to perform SNP thinning to acocutn for LD
+
+  - What does LD look like on a Manhatttan plot? A regoin on the x axis SNPs with the same Y value (-log10 pvalues), appears 
+  as a bar (many) or pair of points close/touching on the same Y-axis plane
+
+
 ```{r screeplot}
 
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_merged.bed
-F0B_F1JuvAll_merge.res <- pcadapt(F0B_F1JALL_merged.bed, K = 8)
-plot(F0B_F1JuvAll_merge.res, option = "screeplot") # looks like 2
-
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_intersect.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
+## data: F0B_F1JALL_intersect.bed
 
 ## * F0 Broodstock w/ F1 Juveniles ALL
-F0B_F1JuvAll_intersect.res      <- pcadapt(F0B_F1JALL_intersect.bed, K = 8)
-plot(F0B_F1JuvAll_intersect.res, option = "screeplot") # looks like 2
+F0B_F1JuvAll_intersect.diagnostic      <- pcadapt(F0B_F1JALL_intersect.bed, K = 20)
+plot(F0B_F1JuvAll_intersect.diagnostic, option = "screeplot") # looks like 8
+F0B_F1JuvAll_intersect.res             <- pcadapt(F0B_F1JALL_intersect.bed, K = 8) # assign
+plot(F0B_F1JuvAll_intersect.res, option = "manhattan")
+
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_merged.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
+F0B_F1JuvAll_merge.diagnostic          <- pcadapt(F0B_F1JALL_merged.bed, K = 20)
+plot(F0B_F1JuvAll_merge.diagnostic, option = "screeplot") # looks like 5
+F0B_F1JuvAll_merge.res                 <- pcadapt(F0B_F1JALL_merged.bed, K = 5) # assign
+plot(F0B_F1JuvAll_merge.res, option = "manhattan")
+
 
 ## * F0 Broodstock w/ F1 Juveniles LOW
-F0B_F1JuvLOW_merge.res      <- pcadapt(F0B_F1JLOW_merged.bed, K = 8)
-plot(F0B_F1JuvLOW_merge.res, option = "screeplot") # looks like 2
+F0B_F1JuvLOW_merge.diagnostic          <- pcadapt(F0B_F1JLOW_merged.bed, K = 20)
+plot(F0B_F1JuvLOW_merge.diagnostic, option = "screeplot") # looks like 5
+F0B_F1JuvLOW_merge.res                 <- pcadapt(F0B_F1JLOW_merged.bed, K = 5) # assign
+plot(F0B_F1JuvLOW_merge.res, option = "manhattan")
+
 
 ## * F0 Broodstock w/ F1 Juveniles MODERATE
-F0B_F1JuvMODERATE_merge.res <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 8)
+F0B_F1JMODERATE_merged.diagnostic     <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20)
 plot(F0B_F1JuvMODERATE_merge.res, option = "screeplot") # looks like 3
 
 ```
 
-# Look at the group variable 
-- look a this! WTF?!?
+
+### Is there LD in my data, and is it problematic? (Evaluating loadings)
+
+* To evaluate if LD might be an issue for your dataset... display the loadings (contributions of each SNP to the PC)
+  
+  - what do i look for? If the loadings are clustered in a single or several genomic regions.
+
+```{r is there LD}
+
+par(mfrow = c(2, 2))
+for (i in 1:4) 
+  plot(F0B_F1JuvAll_intersect.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+
+
+
+par(mfrow = c(2, 2))
+for (i in 1:4) 
+  plot(F0B_F1JuvAll_merge.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+
+```
+
+### Linkage disequilibrium thinning using ```pcadapt```
+
+- ```size``` = window size (default 200 SNPs), window radius of which SNPs are lumped 
+
+- ```thr``` = r^2 threshold (default 0.1, correlation threshold 
+
+
+* Lets write a function to **optimize** ```LD.cliumping```
+
+```{r clump4me}
+
+clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
+  
+        # For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+        outputfilename      <- data.frame()  # start dataframe 
+        loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
+        colnames(loop.table)<-c('output_PC1', 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
+        LD.window_loop      <- seq(50,1000, by=50) # run the loop for CPM from 1 - 10 (counts per million) 
+        LD.window_loop      <- data.frame(LD.window_loop)
+        
+        
+        for (i in 1:nrow(LD.window_loop)) {
+          
+          LD.window <- LD.window_loop[i,1]
+          res       <- pcadapt(input = data, 
+                         K = LD.K, 
+                         LD.clumping = list(size = LD.window, 
+                                            thr = LD.thr),
+                         min.maf= LD.minMaf)  
+        
+          loop.table$input_MinMaf    = minMaf
+          loop.table$input_Window    = LD.window
+          loop.table$input_Threshold = LD.thr
+          loop.table$input_NumPCAs   = LD.K
+          loop.table$output_PC1      = abs(mean(res$scores[,1]))
+        
+            
+          # df             <- data.frame(loop.table) # name dataframe for this singl e row
+          outputfilename <- rbind(outputfilename,loop.table) #bind to a cumulative list dataframe
+          #print(df_total) # print to monitor progress
+        }
+        
+        return(outputfilename)
+}
+
+X <- as.data.frame(clump4me(data            = F0B_F1JALL_merged.bed,
+                             LD.thr         = 0.1, # r squares
+                             LD.K           = 4, # number of PCAs
+                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
+                             outputfilename = F0B_F1JALL_intersect_LD))
+
+
+plot(output_PC1~input_Window , data=X)
+
+```
+
+```{r think SNPs and compute PCs}
+
+
+F0B_F1JuvAll_intersect.LDdiagnostics <- pcadapt(F0B_F1JALL_intersect.bed, 
+                                                K = 20, LD.clumping = list(size = 400, thr = 0.1),
+                                                min.maf= 0.05)
+plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
+F0B_F1JuvAll_intersect.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
+                                        K = 5, 
+                                        LD.clumping = list(size = 400, thr = 0.1))
+par(mfrow = c(1, 2))
+for (i in 1:2)
+  plot(F0B_F1JuvAll_intersect.LDres$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+plot(F0B_F1JuvAll_intersect.LDres)
+
+
+
+
+
+F0B_F1JuvAll_merged.LDdiagnostics <- pcadapt(F0B_F1JALL_merged.bed, K = 20, 
+                                             LD.clumping = list(size = 500, thr = 0.1),
+                                             min.maf= 0.05)
+plot(F0B_F1JuvAll_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 3 after SNP thinning 
+F0B_F1JuvAll_merged.LDres <- pcadapt(F0B_F1JALL_merged.bed, 
+                                        K = 4, 
+                                        LD.clumping = list(size = 500, thr = 0.1),
+                                        min.maf=0.05)
+par(mfrow = c(1, 2))
+for (i in 1:2)
+  plot(F0B_F1JuvAll_merged.LDres$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+plot(F0B_F1JuvAll_merged.LDres)
+
+
+
+
+
+
+
+F0B_F1JLOW_merged.LDdiagnostics <- pcadapt(F0B_F1JLOW_merged.bed, K = 20, 
+                                             LD.clumping = list(size = 250, thr = 0.1),
+                                             min.maf= 0.05)
+plot(F0B_F1JLOW_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 3 after SNP thinning 
+F0B_F1JLOW_merged.LDres <- pcadapt(F0B_F1JLOW_merged.bed, 
+                                        K = 4, 
+                                        LD.clumping = list(size = 250, thr = 0.1),
+                                        min.maf=0.05)
+par(mfrow = c(1, 2))
+for (i in 1:2)
+  plot(F0B_F1JLOW_merged.LDres$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+plot(F0B_F1JLOW_merged.LDres)
+
+
+```
+
+
 
 ```{r}
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_merge.res
-plot(F0B_F1JuvAll_merge.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
-
 
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_intersect.res, F0B_F1JuvLOW_intersect.res, F0B_F1JMODERATE_merged.res
+## data: F0B_F1JuvAll_intersect.res
 
 ## * F0 Broodstock w/ F1 Juveniles ALL
-plot(F0B_F1JuvAll_intersect.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen)
-plot(F0B_F1JuvAll_intersect.res, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen)
+plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+plot(F0B_F1JuvAll_intersect.LDres , option = "manhattan")
 
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_merged.LDres , F0B_F1JuvLOW_merge.res F0B_F1JMODERATE_merged.res
+plot(F0B_F1JuvAll_merged.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+plot(F0B_F1JuvAll_merged.LDres, option = "scores", i = 2, j = 3, pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+plot(F0B_F1JuvAll_merged.LDres , option = "manhattan")
 
 ## * F0 Broodstock w/ F1 Juveniles LOW
-plot(F0B_F1JuvLOW_merge.res, option = "scores", pop = F0F1_strata_pH8$Gen)
-
+plot(F0B_F1JLOW_merged.LDres, option = "scores", pop = F0F1_strata_pH8$Gen)
+plot(F0B_F1JLOW_merged.LDres, option = "scores", i = 3, j = 4, pop = F0F1_strata_pH8$Gen)
+plot(F0B_F1JLOW_merged.LDres , option = "manhattan")
 
 ## * F0 Broodstock w/ F1 Juveniles MODERATE
 plot(F0B_F1JuvMODERATE_merge.res, option = "scores", pop = F0F1_strata_pH75$Gen)
@@ -186,26 +340,26 @@ library(ggpubr)
   
 
 
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_intersect.bed,
+
+F0B_F1JALL_intersect_LD <- pcadapt(F0B_F1JALL_intersect.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
+plot(F0B_F1JALL_intersect_LD, option = "screeplot") # looks like 2 PCAs
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # 
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # 
+
+
 # MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_merge.bed
-F0B_F1JALL_merged_LD <- pcadapt(F0B_F1JALL_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+## data: F0B_F1JuvAll_merge.bed, F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JALL_merged_LD <- pcadapt(F0B_F1JALL_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
 plot(F0B_F1JALL_merged_LD, option = "screeplot") # looks like 2 PCAs
 plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # F2 is wonky AF
 plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # F2 is wonky AF
 
 
-# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_intersect.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
-
-## * F0 Broodstock w/ F1 Juveniles ALL
-F0B_F1JALL_intersect_LD <- pcadapt(F0B_F1JALL_intersect.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
-plot(F0B_F1JALL_intersect_LD, option = "screeplot") # looks like 2 PCAs
-plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # 
-plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # 
-
 ## * F0 Broodstock w/ F1 Juveniles LOW
-F0B_F1JLOW_merge_LD <- pcadapt(F0B_F1JLOW_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
-plot(F0B_F1JLOW_merge_LD, option = "screeplot") # looks like 2.5? PCAs
+F0B_F1JLOW_merge_LD <- pcadapt(F0B_F1JLOW_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
+plot(F0B_F1JLOW_merge_LD, option = "screeplot") # looks like 6
 plot(F0B_F1JLOW_merge_LD, option = "scores", pop = F0F1_strata_pH8$Gen) #
 
 
@@ -217,18 +371,27 @@ plot(F0B_F1JMODERATE_merge_LD, option = "scores", pop = F0F1_strata_pH75$Gen) #
 
 
 
-par(mfrow = c(2, 2))
-for (i in 1:4) {
-  plot(pH8_res_LD$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
-}
+# cxompare some plots to see!
+library(ggpubr)
+
+ggarrange(
+  
+      (plot(F0B_F1JuvAll_merge.res, option = "scores", 
+            pop = F0BroodF1Juveniles_strata$Gen_Treatment)),
+      
+      (plot(F0B_F1JALL_merged_LD, option = "scores", 
+            pop = F0BroodF1Juveniles_strata$Gen_Treatment))
+        )
 
 
 ggarrange(
-plot(pH8_res, option = "scores", pop = F1_F2_pH8_strata_df$Gen),
-plot(pH8_res_LD, option = "scores", pop = F1_F2_pH8_strata_df$Gen))
-
-
-
+  
+      (plot(F0B_F1JuvLOW_merge.res, option = "scores", 
+            pop = F0F1_strata_pH8$Gen)),
+      
+      (plot(F0B_F1JLOW_merge_LD, option = "scores", 
+            pop = F0F1_strata_pH8$Gen))
+        )
 ```
 
 
