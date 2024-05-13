@@ -1,0 +1,31 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --out plink_bed/F0_F1Juveniles_merged_all
+  --vcf F0_F1Juveniles_merged_all.vcf.gz
+
+Hostname: node11.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/analysis/4_F0Broodstock_F1Juveniles/merged
+Start time: Fri May 10 10:35:37 2024
+
+Random number seed: 1715362537
+95104 MB RAM detected; reserving 47552 MB for main workspace.
+--vcf: plink_bed/F0_F1Juveniles_merged_all-temporary.bed +
+plink_bed/F0_F1Juveniles_merged_all-temporary.bim +
+plink_bed/F0_F1Juveniles_merged_all-temporary.fam written.
+81325 variants loaded from .bim file.
+105 people (0 males, 0 females, 105 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to plink_bed/F0_F1Juveniles_merged_all.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 105 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.45601.
+81325 variants and 105 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to plink_bed/F0_F1Juveniles_merged_all.bed +
+plink_bed/F0_F1Juveniles_merged_all.bim +
+plink_bed/F0_F1Juveniles_merged_all.fam ... done.
+
+End time: Fri May 10 10:35:38 2024
