@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
 knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
@@ -66,7 +66,7 @@ F0B_F1JLOW_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
 
 ## MODOERATE (pH 75)
 F0B_F1JMODERATE_merged.vcf   <- read.vcfR(paste0(path,"F0_F1JuvenilespH75_merged.vcf.gz")) # 52544  variants
-F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
+  F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
 
 ```
 
