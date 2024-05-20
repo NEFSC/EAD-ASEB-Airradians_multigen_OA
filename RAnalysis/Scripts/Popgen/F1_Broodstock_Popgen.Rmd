@@ -15,6 +15,9 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 #### load packages
 
 ```{r load packages we need}
+library(dartR)
+library(SNPrelate)
+library(ParentOffspring)
 library(vcfR)
 library(hierfstat)
 library(pcadapt)

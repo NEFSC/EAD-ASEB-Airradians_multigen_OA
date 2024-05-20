@@ -1,5 +1,5 @@
 ---
-title: "F0_F1_Popgen"
+title: "All_Juveniles_Popgen"
 author: "Samuel Gurr"
 date: "2024-02-04"
 output: html_document
@@ -17,6 +17,8 @@ knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositor
 #### load packages
 
 ```{r load packages we need}
+
+library(qqman)
 library(vcfR)
 library(hierfstat)
 library(pcadapt)
@@ -50,23 +52,15 @@ library(adegenet)
   
 ```{r load vcf and bed files}
 
-path = "output/lcWGS/angsd/Merge_Intercept/F0Broodstock_F1Juveniles/"
+path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
 
-# ALL F1 JUVENILES FROM LOW AND MODERATE pCO2
-F0B_F1JALL_intersect.vcf     <- read.vcfR(paste0(path,"F0F1_intersect.vcf.gz")) # 6,048 variants
-F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
 
-F0B_F1JALL_merged.vcf        <- read.vcfR(paste0(path,"F0_F1Juveniles_merged_all.vcf.gz")) # 81,325 variants
-F0B_F1JALL_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_all.bed"), type = "bed") # 81325 variants
+pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 6,048 variants
+pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)
+pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 6,048 variants
 
-# SEPARATE merge and intersect based on F1 JUVENILES pCO2
-## LOW (pH8)
-F0B_F1JLOW_merged.vcf        <- read.vcfR(paste0(path,"F0_F1JuvenilespH8_merged.vcf.gz")) # 73573 variants
-F0B_F1JLOW_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH8.bed"), type = "bed") # 73573 variants
-
-## MODOERATE (pH 75)
-F0B_F1JMODERATE_merged.vcf   <- read.vcfR(paste0(path,"F0_F1JuvenilespH75_merged.vcf.gz")) # 52544  variants
-F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
+pH75.vcf     <- read.vcfR(paste0(path,"pH75/Juveniles_pH75_merged.vcf.gz")) # 6,0475 variants
+pH75.bed     <- read.pcadapt(paste0(path,"pH75/Juveniles_merged_pH75.bed"), type = "bed") # 6,0475 variants
 
 ```
 
@@ -80,22 +74,28 @@ F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
   
 ```{r load and format strata as metadata}
 
-F0BroodF1Juveniles_strata   <- read.csv("output/lcWGS/angsd/IDs/F0BroodstockF1Juveniles.csv", sep =',', header=FALSE) %>% 
+path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
+
+pH8_strata   <- read.csv(paste0(path,"pH8/IDs.csv"), sep =',', header=FALSE) %>% 
                                 dplyr::rename(Individual = V1) %>% 
                                 dplyr::mutate(Individual = gsub('*./','',Individual),
-                                      Gen = dplyr::case_when(grepl("F0", Individual) ~ "F0",
-                                                                     .default = "F1"),
-                                      Treatment       = dplyr::case_when(grepl("F0", Individual) ~ "none",
-                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
-                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
-                                dplyr::mutate(Gen_Treatment = dplyr::case_when(Gen == "F0" ~ "F0",
-                                                                        Gen == "F1" ~ paste0(Gen,'_',Treatment)))
+                                      Gen = dplyr::case_when(grepl("F1", Individual) ~ "F1", # in SOME cases, juvenile F1s have 'F1' in the name
+                                                             grepl("F2", Individual) ~ "F2", # in all cases, juvenile F2s have 'F2' in the name
+                                                             grepl("F3", Individual) ~ "F3", # in all cases, juvenile F3s have 'F3' in the name
+                                                                     .default = "F1"), # all other cases when not given, these are F1s
+                                      Treatment       = "Low")
 
 
-# subsets  mmmkay?
+pH75_strata   <- read.csv(paste0(path,"pH75/IDs.csv"), sep =',', header=FALSE) %>% 
+                                dplyr::rename(Individual = V1) %>% 
+                                dplyr::mutate(Individual = gsub('*./','',Individual),
+                                      Gen = dplyr::case_when(grepl("F1", Individual) ~ "F1", # in SOME cases, juvenile F1s have 'F1' in the name
+                                                             grepl("F2", Individual) ~ "F2", # in all cases, juvenile F2s have 'F2' in the name
+                                                             grepl("F3", Individual) ~ "F3", # in all cases, juvenile F3s have 'F3' in the name
+                                                                     .default = "F1"), # all other cases when not given, these are F1s
+                                      Treatment       = "Moderate")
 
-F0F1_strata_pH75           <- F0BroodF1Juveniles_strata %>% dplyr::filter(!Treatment %in% 'Low') # keep modrate, pH 75
-F0F1_strata_pH8            <- F0BroodF1Juveniles_strata %>% dplyr::filter(!Treatment %in% 'Moderate') # keep modrate, pH 75
+
 ```
 
 
@@ -113,35 +113,23 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
   as a bar (many) or pair of points close/touching on the same Y-axis plane
 
 
-```{r screeplot}
+```{r NO LD - screeplot diagnostic and plot PCA}
 
-# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_intersect.bed
-
-## * F0 Broodstock w/ F1 Juveniles ALL
-F0B_F1JuvAll_intersect.diagnostic      <- pcadapt(F0B_F1JALL_intersect.bed, K = 20)
-plot(F0B_F1JuvAll_intersect.diagnostic, option = "screeplot") # looks like 8
-F0B_F1JuvAll_intersect.res             <- pcadapt(F0B_F1JALL_intersect.bed, K = 8) # assign
-plot(F0B_F1JuvAll_intersect.res, option = "manhattan")
-
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_merged.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
-F0B_F1JuvAll_merge.diagnostic          <- pcadapt(F0B_F1JALL_merged.bed, K = 20)
-plot(F0B_F1JuvAll_merge.diagnostic, option = "screeplot") # looks like 5
-F0B_F1JuvAll_merge.res                 <- pcadapt(F0B_F1JALL_merged.bed, K = 5) # assign
-plot(F0B_F1JuvAll_merge.res, option = "manhattan")
+## pH8
+pH8.diagnostic      <- pcadapt(pH8.bed, K = 20)
+plot(pH8.diagnostic, option = "screeplot") # looks like 4 - elbow!
+pH8.res             <- pcadapt(pH8.bed, K = 4) # assign PCA 
+plot(pH8.res, option = "manhattan") # manhattan plot 
+plot(pH8.res, option = "scores", pop = pH8_strata$Gen) # PCA
 
 
-## * F0 Broodstock w/ F1 Juveniles LOW
-F0B_F1JuvLOW_merge.diagnostic          <- pcadapt(F0B_F1JLOW_merged.bed, K = 20)
-plot(F0B_F1JuvLOW_merge.diagnostic, option = "screeplot") # looks like 5
-F0B_F1JuvLOW_merge.res                 <- pcadapt(F0B_F1JLOW_merged.bed, K = 5) # assign
-plot(F0B_F1JuvLOW_merge.res, option = "manhattan")
+## pH75
+pH75.diagnostic      <- pcadapt(pH75.bed, K = 20)
+plot(pH75.diagnostic, option = "screeplot") # looks like 4 - elbow!
+pH75.res             <- pcadapt(pH75.bed, K = 4) # assign PCA 
+plot(pH75.res, option = "manhattan") # manhattan plot 
+plot(pH75.res, option = "scores", pop = pH75_strata$Gen) # PCA
 
-
-## * F0 Broodstock w/ F1 Juveniles MODERATE
-F0B_F1JMODERATE_merged.diagnostic     <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20)
-plot(F0B_F1JMODERATE_merged.diagnostic, option = "screeplot") # looks like 3
 
 ```
 
@@ -154,16 +142,17 @@ plot(F0B_F1JMODERATE_merged.diagnostic, option = "screeplot") # looks like 3
 
 ```{r is there LD}
 
+
+## pH 8
 par(mfrow = c(2, 2))
 for (i in 1:4) 
-  plot(F0B_F1JuvAll_intersect.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+  plot(pH8.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
 
 
-
-
+## pH 75
 par(mfrow = c(2, 2))
 for (i in 1:4) 
-  plot(F0B_F1JuvAll_merge.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+  plot(pH75.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
 
 
 ```
@@ -202,7 +191,7 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
           loop.table$input_Window    = LD.window
           loop.table$input_Threshold = LD.thr
           loop.table$input_NumPCAs   = LD.K
-          loop.table$output_PC1      = abs(mean(res$scores[,1]))
+          loop.table$output_PC1      = abs(mean(res$scores[,1])) +abs(mean(res$scores[,2]))
         
             
           # df             <- data.frame(loop.table) # name dataframe for this singl e row
@@ -219,114 +208,147 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 
 ```{r run clump4me choose settings and run}
 
-
-
-# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# *  run the bam file - sliding window 50 -1000 at settings
-test <- as.data.frame(clump4me(data         = F0B_F1JALL_intersect.bed,
-                             LD.thr         = 0.1, # r squares
+## pH 8
+test <- as.data.frame(clump4me(data         = pH8.bed,
+                             LD.thr         = 0.2, # r squares
                              LD.K           = 4, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F0B_F1JALL_intersect_LD))
-plot(output_PC1~input_Window , data=test) # window of 250
-F0B_F1JuvAll_intersect.LDdiagnostics <- pcadapt(F0B_F1JALL_intersect.bed, 
-                                                K = 20, LD.clumping = list(size = 250, thr = 0.1),
-                                                min.maf= 0.05)
-plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 5 after SNP thinning 
-F0B_F1JuvAll_intersect.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
-                                        K = 5, 
-                                        LD.clumping = list(size = 250, thr = 0.1), 
-                                        min.maf= 0.05)
+                             outputfilename = pH8))
+plot(output_PC1~input_Window , data=test) # window of 150?
+pH8.LDdiagnostics <- pcadapt(pH8.bed, 
+                            K = 20, 
+                            LD.clumping = list(size = 150, thr = 0.2), # based clump4me result
+                            min.maf= 0.05)
+plot(pH8.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
+pH8.LDres <- pcadapt(pH8.bed, 
+                     K = 4, # based on screeplot above
+                     LD.clumping = list(size = 150, thr = 0.2),  # based clump4me result
+                     min.maf= 0.05)
 
 
 
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# all
-# *  run the bam file - sliding window 50 -1000 at settings
-test <- as.data.frame(clump4me(data         = F0B_F1JALL_merged.bed,
-                             LD.thr         = 0.1, # r squares
+
+## pH 75
+test <- as.data.frame(clump4me(data         = pH75.bed,
+                             LD.thr         = 0.2, # r squares
                              LD.K           = 4, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F0B_F1JALL_merged))
-plot(output_PC1~input_Window , data=test) # window of 500
-F0B_F1JuvAll_merged.LDdiagnostics <- pcadapt(F0B_F1JALL_merged.bed, K = 20, 
-                                             LD.clumping = list(size = 500, thr = 0.1),
-                                             min.maf= 0.05)
-plot(F0B_F1JuvAll_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 4 after SNP thinning 
-F0B_F1JuvAll_merged.LDres <- pcadapt(F0B_F1JALL_merged.bed, 
-                                        K = 4, 
-                                        LD.clumping = list(size = 500, thr = 0.1),
-                                        min.maf=0.05)
-
-
-
-
-# pH 8 - LOW
-# *  run the bam file - sliding window 50 -1000 at settings
-test <- as.data.frame(clump4me(data         = F0B_F1JLOW_merged.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F0B_F1JLOW_merged))
-plot(output_PC1~input_Window , data=test) # window of 950
-F0B_F1JLOW_merged.LDdiagnostics <- pcadapt(F0B_F1JLOW_merged.bed, K = 20, 
-                                             LD.clumping = list(size = 950, thr = 0.1),
-                                             min.maf= 0.05)
-plot(F0B_F1JLOW_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
-F0B_F1JLOW_merged.LDres <- pcadapt(F0B_F1JLOW_merged.bed, 
-                                        K = 2, 
-                                        LD.clumping = list(size = 950, thr = 0.1),
-                                        min.maf=0.05)
-
-
-# pH 75 - MODERATE
-# *  run the bam file - sliding window 50 -1000 at settings
-test <- as.data.frame(clump4me(data         = F0B_F1JMODERATE_merged.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F0B_F1JMODERATE_merged))
-plot(output_PC1~input_Window , data=test) # window of 300
-F0B_F1JMODERATE_merged.LDdiagnostics <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20, 
-                                             LD.clumping = list(size = 300, thr = 0.1),
-                                             min.maf= 0.05)
-plot(F0B_F1JMODERATE_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 4 after SNP thinning 
-F0B_F1JMODERATE_merged.LDres <- pcadapt(F0B_F1JMODERATE_merged.bed, 
-                                        K = 4, 
-                                        LD.clumping = list(size = 300, thr = 0.1),
-                                        min.maf=0.05)
+                             outputfilename = pH75))
+plot(output_PC1~input_Window , data=test) # window of 500?
+pH75.LDdiagnostics <- pcadapt(pH75.bed, 
+                            K = 20, 
+                            LD.clumping = list(size = 150, thr = 0.2), # based clump4me result
+                            min.maf= 0.05)
+plot(pH75.LDdiagnostics, option = "screeplot") # Lets try and use K = 3 after SNP thinning 
+pH75.LDres <- pcadapt(pH75.bed, 
+                     K = 6, # based on screeplot above
+                     LD.clumping = list(size = 150, thr = 0.2),  # based clump4me result
+                     min.maf= 0.05)
 ```
 
 
 
 ```{r}
 library(ggpubr)
-# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-par(mfrow = c(1, 2))
-for (i in 1:2)
-  plot(F0B_F1JuvAll_intersect.LDres$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
 
-plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen)
-plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
-plot(F0B_F1JuvAll_intersect.LDres , option = "manhattan")
+## pH 8
+ggarrange( (plot(pH8.res, option = "scores", pop = pH8_strata$Gen)),
+           (plot(pH8.res , option = "manhattan")),
+         nrow = 2) # theres a possible taret regions btwn 10000 - 12000 (row numbers)
 
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-## all
-ggarrange( (plot(F0B_F1JuvAll_merged.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)),
-           (plot(F0B_F1JuvAll_merged.LDres , option = "manhattan")),
+ggarrange( (plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen)),
+           (plot(pH8.LDres , option = "manhattan")),
          nrow = 2)
 
-## pH 8 LOW
-ggarrange( (plot(F0B_F1JLOW_merged.LDres, option = "scores", pop = F0F1_strata_pH8$Gen)),
-           (plot(F0B_F1JLOW_merged.LDres , option = "manhattan")),
+
+
+## pH 75
+ggarrange( (plot(pH75.res, option = "scores", pop = pH75_strata$Gen)),
+           (plot(pH75.res , option = "manhattan")),
+         nrow = 2)
+plot(pH75.res, option = "qqplot")
+hist(pH75.res$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "orange")
+plot(pH75.res, option = "stat.distribution")
+
+plot(pH75.res, option = "manhattan")
+
+ggarrange( (plot(pH75.LDres, option = "scores", pop = pH75_strata$Gen)),
+           (plot(pH75.LDres , option = "manhattan")),
          nrow = 2)
 
-## pH 75 MODERATE
-ggarrange( (plot(F0B_F1JMODERATE_merged.LDres, option = "scores", pop = F0F1_strata_pH75$Gen)),
-           (plot(F0B_F1JMODERATE_merged.LDres , option = "manhattan")),
-         nrow = 2)
+
+plot(pH75.LDres, option = "qqplot")
+hist(pH75.LDres$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "orange")
+plot(pH75.LDres, option = "stat.distribution")
+
+plot(pH75.LDres, option = "manhattan")
+
+```
+
+
+```{r qqman manhattan plots}
+
+
+pH8Results_qqman            <- as.data.frame(matrix(nrow=nrow(pH8.vcf_tidy$fix), ncol=4)) 
+colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
+pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH8.vcf_tidy$fix$CHROM, '_',pH8.vcf_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH8.vcf_tidy$fix$CHROM)),
+                                      BP  = pH8.vcf_tidy$fix$POS,
+                                      P   = pH8.LDres$pvalues
+                                    ) %>% na.omit()
+pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P) > -log(0.001))
+
+
+
+manhattan( (pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P))),
+            annotatePval = 0.001)
+
+
+library(tidyr)
+library(dplyr)
+don <- pH8Results_qqman %>% 
+  
+  # Compute chromosome size
+  group_by(CHR) %>% 
+  summarise(chr_len=max(BP)) %>% 
+  
+  # Calculate cumulative position of each chromosome
+  mutate(tot=cumsum(chr_len)-chr_len) %>%
+  select(-chr_len) %>%
+  
+  # Add this info to the initial dataset
+  left_join(pH8Results_qqman, ., by=c("CHR"="CHR")) %>%
+  
+  # Add a cumulative position of each SNP
+  arrange(CHR, BP) %>%
+  mutate( BPcum=BP+tot)
+
+axisdf = don %>%
+  group_by(CHR) %>%
+  summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+
+ggplot(don, aes(x=BPcum, y=-log10(P))) +
+    
+    # Show all points
+    geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=1.3) +
+    scale_color_manual(values = rep(c("grey", "skyblue"), length(unique(don$CHR)) )) +
+    
+    # custom X axis:
+    scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
+    scale_y_continuous(expand = c(0, 0) ) +     # remove space between plot area and x axis
+  
+    # Custom the theme:
+    theme_bw() +
+    theme( 
+      legend.position="none",
+      panel.border = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
+
+
 
 
 ```
@@ -363,59 +385,15 @@ library(ggpubr)
 #   Default is NULL and doesn't use any SNP thinning. If you want to use SNP thinning, provide a named list with parameters $size and $thr which corresponds respectively to the window radius and the squared correlation threshold. A good default value would be list(size = 500, thr = 0.1)
   
 
+## pH 8
+plot(pH8.LDres, option = "screeplot") # looks like 2 PCAs
+plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen) # 
 
-# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_intersect.bed,
-
-F0B_F1JALL_intersect_LD <- pcadapt(F0B_F1JALL_intersect.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
-plot(F0B_F1JALL_intersect_LD, option = "screeplot") # looks like 2 PCAs
-plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # 
-plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # 
-
-
-# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JuvAll_merge.bed, F0 Broodstock w/ F1 Juveniles ALL
-F0B_F1JALL_merged_LD <- pcadapt(F0B_F1JALL_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
-plot(F0B_F1JALL_merged_LD, option = "screeplot") # looks like 2 PCAs
-plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # F2 is wonky AF
-plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # F2 is wonky AF
+## pH 75
+plot(pH75.LDres, option = "screeplot") # looks like 2 PCAs
+plot(pH75.LDres, option = "scores", pop = pH75_strata$Gen) # 
 
 
-## * F0 Broodstock w/ F1 Juveniles LOW
-F0B_F1JLOW_merge_LD <- pcadapt(F0B_F1JLOW_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
-plot(F0B_F1JLOW_merge_LD, option = "screeplot") # looks like 6
-plot(F0B_F1JLOW_merge_LD, option = "scores", pop = F0F1_strata_pH8$Gen) #
-
-
-## * F0 Broodstock w/ F1 Juveniles MODERATE
-F0B_F1JMODERATE_merge_LD <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
-plot(F0B_F1JMODERATE_merge_LD, option = "screeplot") # looks like 2.5? PCAs
-plot(F0B_F1JMODERATE_merge_LD, option = "scores", pop = F0F1_strata_pH75$Gen) #
-
-
-
-
-# cxompare some plots to see!
-library(ggpubr)
-
-ggarrange(
-  
-      (plot(F0B_F1JuvAll_merge.res, option = "scores", 
-            pop = F0BroodF1Juveniles_strata$Gen_Treatment)),
-      
-      (plot(F0B_F1JALL_merged_LD, option = "scores", 
-            pop = F0BroodF1Juveniles_strata$Gen_Treatment))
-        )
-
-
-ggarrange(
-  
-      (plot(F0B_F1JuvLOW_merge.res, option = "scores", 
-            pop = F0F1_strata_pH8$Gen)),
-      
-      (plot(F0B_F1JLOW_merge_LD, option = "scores", 
-            pop = F0F1_strata_pH8$Gen))
-        )
 ```
 
 
@@ -433,154 +411,61 @@ ggarrange(
 ```{r}
 # create genind object from vcf file - use the LD object 
 
-# INTERSECT DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_intersect.vcf
-F0B_F1JALL_intersect.genind       <- vcfR2genind(F0B_F1JALL_intersect.vcf)
-F0B_F1JALL_intersect.vcf_FILTERED <- F0B_F1JALL_intersect.vcf[!is.na(F0B_F1JALL_intersect_LD$loadings[,1]),]
-F0B_F1JALL_intersect.genind_LD    <- vcfR2genind(F0B_F1JALL_intersect.vcf_FILTERED)
+# pH8
+pH8.genind         <- vcfR2genind(pH8.vcf)
+pH8.vcf_LDfiltered <- pH8.vcf[!is.na(pH8.LDres$loadings[,1]),]
+pH8.genind_LD      <- vcfR2genind(pH8.vcf_LDfiltered)
 
 
-strata(F0B_F1JALL_intersect.genind) <- F0BroodF1Juveniles_strata
-setPop(F0B_F1JALL_intersect.genind) <- ~Gen_Treatment
+strata(pH8.genind) <- pH8_strata
+setPop(pH8.genind) <- ~Gen
 
-strata(F0B_F1JALL_intersect.genind_LD) <- F0BroodF1Juveniles_strata
-setPop(F0B_F1JALL_intersect.genind_LD) <- ~Gen_Treatment
+strata(pH8.genind_LD) <- pH8_strata
+setPop(pH8.genind_LD) <- ~Gen
 
 
-F0B_F1JALL_intersect_tab    <- tab(F0B_F1JALL_intersect.genind, freq = TRUE, NA.method = "mean")
-F0B_F1JALL_intersect_pca1   <- dudi.pca(F0B_F1JALL_intersect_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(F0B_F1JALL_intersect_pca1$eig[1:25], 
+pH8_tab        <- tab(pH8.genind, freq = TRUE, NA.method = "mean")
+pH8_tab_pca1   <- dudi.pca(pH8_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH8_tab_pca1$eig[1:25], 
         main = "PCA eigenvalues", 
         col = heat.colors(25))
-s.class(F0B_F1JALL_intersect_pca1$li, pop(F0B_F1JALL_intersect.genind))
+s.class(pH8_tab_pca1$li, pop(pH8.genind))
 
 
-F0B_F1JALL_intersect.genind_LD_tab  <- tab(F0B_F1JALL_intersect.genind_LD, freq = TRUE, NA.method = "mean")
-F0B_F1JALL_intersect.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_intersect.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(F0B_F1JALL_intersect.genind_LD_pca1$eig[1:25], 
+pH8_LD_tab        <- tab(pH8.genind_LD, freq = TRUE, NA.method = "mean")
+pH8_LD_tab_pca1   <- dudi.pca(pH8_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH8_LD_tab_pca1$eig[1:25], 
         main = "PCA eigenvalues", 
         col = heat.colors(25))
-s.class(F0B_F1JALL_intersect.genind_LD_pca1$li, pop(F0B_F1JALL_intersect.genind_LD))
+s.class(pH8_LD_tab_pca1$li, pop(pH8.genind_LD))
 
 
 
-# MERGED DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
-## data: F0B_F1JALL_merged.vcf, F0B_F1JLOW_merged.vcf, F0B_F1JMODERATE_merged.vcf
+# pH75
+pH75.genind         <- vcfR2genind(pH75.vcf)
+pH75.vcf_LDfiltered <- pH75.vcf[!is.na(pH75.LDres$loadings[,1]),]
+pH75.genind_LD      <- vcfR2genind(pH75.vcf_LDfiltered)
 
-## * F0 Broodstock w/ F1 Juveniles ALL
-F0B_F1JALL_merged.genind       <- vcfR2genind(F0B_F1JALL_merged.vcf) # 81,325
-F0B_F1JALL_merged.vcf_FILTERED <- F0B_F1JALL_merged.vcf[!is.na(F0B_F1JALL_merged_LD$loadings[,1]),]
-F0B_F1JALL_merged.genind_LD    <- vcfR2genind(F0B_F1JALL_merged.vcf_FILTERED) # 18,405 
+strata(pH75.genind) <- pH75_strata
+setPop(pH75.genind) <- ~Gen
 
+strata(pH75.genind_LD) <- pH75_strata
+setPop(pH75.genind_LD) <- ~Gen
 
-strata(F0B_F1JALL_merged.genind) <- F0BroodF1Juveniles_strata
-setPop(F0B_F1JALL_merged.genind) <- ~Gen_Treatment
-
-strata(F0B_F1JALL_merged.genind_LD) <- F0BroodF1Juveniles_strata
-setPop(F0B_F1JALL_merged.genind_LD) <- ~Gen_Treatment
-
-
-F0B_F1JALL_merged_tab    <- tab(F0B_F1JALL_merged.genind, freq = TRUE, NA.method = "mean")
-F0B_F1JALL_merged_pca1   <- dudi.pca(F0B_F1JALL_merged_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(F0B_F1JALL_merged_pca1$eig[1:25], 
+pH75_tab        <- tab(pH75.genind, freq = TRUE, NA.method = "mean")
+pH75_tab_pca1   <- dudi.pca(pH75_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH75_tab_pca1$eig[1:25], 
         main = "PCA eigenvalues", 
         col = heat.colors(25))
-s.class(F0B_F1JALL_merged_pca1$li, pop(F0B_F1JALL_merged.genind))
+s.class(pH75_tab_pca1$li, pop(pH75.genind))
 
-
-F0B_F1JALL_merged.genind_LD_tab  <- tab(F0B_F1JALL_merged.genind_LD, freq = TRUE, NA.method = "mean")
-F0B_F1JALL_merged.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_merged.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(F0B_F1JALL_merged.genind_LD_pca1$eig[1:25], 
+?dudi.pca
+pH75_LD_tab        <- tab(pH75.genind_LD, freq = TRUE, NA.method = "mean")
+pH75_LD_tab_pca1   <- dudi.pca(pH75_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH75_LD_tab_pca1$eig[1:25], 
         main = "PCA eigenvalues", 
         col = heat.colors(25))
-s.class(F0B_F1JALL_merged.genind_LD_pca1$li, pop(F0B_F1JALL_merged.genind_LD))
-
-
-
-
-
-
-
-
-
-
-
-
-## * F0 Broodstock w/ F1 Juveniles LOW
-F0B_F1JLOW_merged.genind         <- vcfR2genind(F0B_F1JLOW_merged.vcf)
-
-## * F0 Broodstock w/ F1 Juveniles MODERATE
-F0B_F1JMODERATE_merged.genind    <- vcfR2genind(F0B_F1JMODERATE_merged.vcf)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pH8_genind               <- vcfR2genind(F1F2_pH8_vcf)
-F1F2_pH8_vcf_ld_filtered <- F1F2_pH8_vcf[!is.na(pH8_res_LD$loadings[,1]),]
-pH8_genind_ld_filtered   <- vcfR2genind(F1F2_pH8_vcf_ld_filtered)
-
-pH75_genind               <- vcfR2genind(F1F2_pH75_vcf)
-F1F2_pH75_vcf_ld_filtered <- F1F2_pH75_vcf[!is.na(pH75_res_LD$loadings[,1]),]
-pH75_genind_ld_filtered   <- vcfR2genind(F1F2_pH75_vcf_ld_filtered)
-
-# assign metadata to these loci 
-
-strata(pH8_genind) <- F1_F2_pH8_strata_df
-setPop(pH8_genind) <- ~Gen
-
-strata(pH8_genind_ld_filtered) <- F1_F2_pH8_strata_df
-setPop(pH8_genind_ld_filtered) <- ~Gen
-
-
-
-
-strata(pH75_genind) <- F1_F2_pH75_strata_df
-setPop(pH75_genind) <- ~Gen
-
-strata(pH75_genind_ld_filtered) <- F1_F2_pH75_strata_df
-setPop(pH75_genind_ld_filtered) <- ~Gen
-
-# PCA analysis 
-pH8_tab          <- tab(pH8_genind, freq = TRUE, NA.method = "mean")
-pH8_pca1         <- dudi.pca(pH8_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(pH8_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
-s.class(pH8_pca1$li, pop(pH8_genind))
-
-
-pH8_tab_ld_filt  <- tab(pH8_genind_ld_filtered, freq = TRUE, NA.method = "mean")
-pH8_ld_filt_pca1 <- dudi.pca(pH8_tab_ld_filt, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(pH8_ld_filt_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
-s.class(pH8_ld_filt_pca1$li, pop(pH8_genind_ld_filtered))
-title("PCA of dataset\naxes 1-2")
-add.scatter.eig(pH8_ld_filt_pca1$eig[1:20], 3,1,2)
-
-
-
-
-# PCA analysis 
-pH75_tab          <- tab(pH75_genind, freq = TRUE, NA.method = "mean")
-pH75_pca1         <- dudi.pca(pH75_tab, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(pH75_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
-s.class(pH75_pca1$li, pop(pH75_genind))
-
-
-pH75_tab_ld_filt  <- tab(pH75_genind_ld_filtered, freq = TRUE, NA.method = "mean")
-pH75_ld_filt_pca1 <- dudi.pca(pH75_tab_ld_filt, scale = FALSE, scannf = FALSE, nf = 3)
-barplot(pH75_ld_filt_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
-s.class(pH75_ld_filt_pca1$li, pop(pH75_genind_ld_filtered))
-title("PCA of dataset\naxes 1-2")
-add.scatter.eig(pH75_ld_filt_pca1$eig[1:20], 3,1,2)
+s.class(pH75_LD_tab_pca1$li, pop(pH75.genind_LD))
 
 
 ```
@@ -735,11 +620,9 @@ F1F2_Juveniles_genlight <- vcfR2genlight(F1F2_Juveniles_vcf, n.cores = 4)
 ```{r}
 # pairwise Fst
 ## wrapper for pegas pacakage
-F1F1_pH8_perloci.fst     <- Fst(as.loci(F0F1_pH8_Intersect_genid, pop=pop))
-F1F1_pH75_perloci.fst    <- Fst(as.loci(F0F1_pH75_Intersect_genid, pop=pop))
-
-F1F1_pH8_perloci.fst_NA  <- F1F1_pH8_perloci.fst %>% na.omit()
-F1F1_pH75_perloci.fst_NA <- F1F1_pH75_perloci.fst %>% na.omit()
+library(pegas)
+pH8.genind_LD.fst     <- Fst(as.loci(pH8.genind_LD, pop=Gen))
+pH8.genind_LD_NA <- F1F1_pH75_perloci.fst %>% na.omit()
 
 ## wrapper for heirfstat
 mat.fst <- genet.dist(F1F2_Juveniles_genid) # (hierfstat): implements pairwise FST , which is also a Euclidean distance between populations.
@@ -750,33 +633,15 @@ is.euclid(mat.fst)
 
 # Fst using genet.dist
 # “Dch” By default, Cavalli-Sforza and Edwards Chord distance (eqn 6 in the reference) is returned. This distance is used as default since Takezaki & Nei (1996) found that it was the best to retrieve the relation among samples
-F1_intersect.fst      <- genet.dist(F1_Juveniles_Intersect_genid) # default is “Dch”
-F1_intersect.fstNei87 <- genet.dist(F1_Juveniles_Intersect_genid, method = "Nei87")
+pH8.genind_LD.fst      <- genet.dist(pH8.genind_LD) # default is “Dch”
+pH8.genind_LD.mat.fst  <- Fst(as.loci(pH8.genind_LD, pop=Gen))
 
 
-
-F1F2_intersect.fst      <- genet.dist(F1F2_Juveniles_Intersect_genid) # default is “Dch”
-F1F2_intersect.fstNei87 <- genet.dist(F1F2_Juveniles_Intersect_genid, method = "Nei87")
-
-
-
-F3_intersect.fst      <- genet.dist(F3_Juveniles_Intersect_genid) # default is “Dch”
-F3_intersect.fstNei87 <- genet.dist(F3_Juveniles_Intersect_genid, method = "Nei87")
-
-
-
-AllJuveniles_intersect.fst      <- genet.dist(AllJuveniles_Intersect_genid) # default is “Dch”
-F3_intersect.fstNei87 <- genet.dist(AllJuveniles_Intersect_genid, method = "Nei87")
-
-
-
-F0F1_Merged.fst      <- genet.dist(F0F1_Merged_genid) # default is “Dch”
-F3_intersect.fstNei87 <- genet.dist(AllJuveniles_Intersect_genid, method = "Nei87")
-
-
-F0F1_Intersect.fst      <- genet.dist(F0F1_Intersect_genid) # default is “Dch”
-
-
+pH75.genind_LD.fst     <- genet.dist(pH75.genind_LD) # default is “Dch”
+pH75.genind_LD.mat.fst <-  Fst(as.loci(pH75.genind_LD, pop=Gen))
+?Fst
+as.data.frame(pH75.genind_LD.mat.fst) %>% dplyr::filter(Fst > .1) %>% dplyr::arrange()
+max(pH75.genind_LD.mat.fst)
 ```
 
 
