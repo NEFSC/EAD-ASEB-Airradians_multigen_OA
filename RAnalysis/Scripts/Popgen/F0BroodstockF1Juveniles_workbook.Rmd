@@ -66,7 +66,7 @@ F0B_F1JLOW_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
 
 ## MODOERATE (pH 75)
 F0B_F1JMODERATE_merged.vcf   <- read.vcfR(paste0(path,"F0_F1JuvenilespH75_merged.vcf.gz")) # 52544  variants
-  F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
+F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH75.bed"), type = "bed") # 52544 variants
 
 ```
 
@@ -211,15 +211,10 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
         }
         
         return(outputfilename)
-}
-
-
-
+}``
 ```
 
 ```{r run clump4me choose settings and run}
-
-
 
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 

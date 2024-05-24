@@ -21,7 +21,7 @@ library(stringi)
 library(tibble)
 library(stringr)
 library(BEDASSLE)
-?BEDASSLE
+# ?BEDASSLE
 ```
 
 ```{r call data, include=FALSE}
@@ -34,13 +34,13 @@ F0_parentage <- read.csv('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/parentag
                     dplyr::mutate(Sample.ID = sub('.*adapter_trim.', '', Sample.ID))
 
 # F1 Juveniles pH 8 
-F1J_pH8_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_8/F1Juveniles_pH8_doMaf1_minMaf0.05_majorminor4_minind35_minD5x175_maxD20x700minDind5_maxDind150_minq30_minmapQ.geno.gz')  
-F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_8/IDs.txt') %>% 
+F1J_pH8_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/F1Juveniles_pH8_doMaf1_minMaf0.05_majorminor4_minind35_minD5x175_maxD20x700minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/IDs.txt') %>% 
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
 # F1 Juveniles pH 75
-F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')  
-F1J_pH75_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/IDs.txt') %>% 
+F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F1J_pH75_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_75/IDs.txt') %>% 
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
 
@@ -97,9 +97,14 @@ converter = function (InputFile) {
   
 } # close function
 
+```
+
+
+
+```{r run converter Juveniles Mod pCO2}
 converter(F1J_pH75_raw_geno)
 
-View(OutputFile)
+# View(OutputFile)
 
 
 # convert all genotypes to numeric
@@ -198,7 +203,7 @@ F0_geno <- F0_transposed_geno
 
 # how many SNPs?
 numbSNPs_F0 <- (ncol(F0_geno) - 1)
-paste0("Total number of SNPs = ", numbSNPs_F0) # "Total number of SNPs = 52801"```
+paste0("Total number of SNPs = ", numbSNPs_F0) # "Total number of SNPs = 37901"```
 ```
 
 
@@ -268,9 +273,8 @@ F1J_pH75_geno <- F1J_pH75_transposed_geno
 
 # how many SNPs?
 numbSNPs_F1JpH75 <- (ncol(F1J_pH75_geno) - 1)
-paste0("Total number of SNPs = ", numbSNPs_F1JpH75) # "Total number of SNPs = 52801"
+paste0("Total number of SNPs = ", numbSNPs_F1JpH75) # "Total number of SNPs = 22766"
 
-(unique(F1J_pH75_geno[2]))
 
 
 #plot the results
@@ -320,8 +324,8 @@ paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH8)/nrow(F1J_p
 Join_F0_F1JpH75 <- inner_join(F0_format_geno, F1J_pH75_format_geno)
 # salitty check for the number of SNPs shared - must be TRUE!
 nrow(Join_F0_F1JpH75) == length(intersect(F0_format_geno$Gene.ID, F1J_pH75_format_geno$Gene.ID)) # == TRUE
-paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH75)) # "Total number of SNPs = 24"
-paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH75)/nrow(F1J_pH75_format_geno))*100 ) # 26.4 % shared!
+paste0("Total number of shared SNPs with F1 Juv pH8 = ", nrow(Join_F0_F1JpH75)) # "Total number of SNPs = 8123"
+paste0("Percent F1 Juv shared with parents = ", (nrow(Join_F0_F1JpH75)/nrow(F1J_pH75_format_geno))*100 ) # 35.7 % shared!
 
 
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -474,9 +478,44 @@ apparentOUT <- apparent(F1Juv_pH8_parentage_df[,c(1:ncol(F1Juv_pH8_parentage_df)
       stop("Please, check the format of the key column (Column 2) in your input file. Acceptable keys for each genotype are Mo, Fa, Off, Pa and All.")
     }
   }
+View(F1Juv_pH75_parentage_df)
   
+apparentOUT <- apparent(F1Juv_pH75_parentage_df[1:2000], MaxIdent=0.10, alpha=0.05, nloci=100, self=TRUE, plot=TRUE, Dyad=FALSE)
+
+apparentOUT <- apparent(
+                        (F1Juv_pH75_parentage_df[1:2000] %>% 
+                           dplyr::mutate(key = 'All') %>% 
+                           dplyr::filter(!genos %in% c('F1-J256-pH75', 'F1-J354-pH75'))), 
+                        MaxIdent=0.10, alpha=0.05, nloci=100, self=TRUE, plot=TRUE, Dyad=FALSE)
+
+apparentOUT$Triad_all
+apparentOUT
+apparentOUT$Triad_sig
+apparentOUT$Triad_summary_pop
+apparentOUT$Triad_summary_geno
+unique(apparentOUT$Triad_all$Offspring)
+unique(apparentOUT$Triad_sig$Offspring)
+
+apparent_editted <- apparentOUT$Triad_all %>% 
+  dplyr::filter(!Cross.Type %in% 'self') %>% 
+  dplyr::filter(!grepl("F0-B",Offspring),
+                grepl("F0-B",Parent1),
+                grepl("F0-B",Parent2))
+
+x_final <- data.frame()
   
-apparentOUT <- apparent(F1Juv_pH75_parentage_df, MaxIdent=0.10, alpha=0.01, nloci=10, self=TRUE, plot=FALSE, Dyad=FALSE)
+for (i in 1:nrow(loop_offspring)) {
+  
+  x <- apparent_editted %>% 
+    filter(Offspring %in% loop_offspring[i,]) %>% 
+    arrange((GD)) %>% 
+    slice(1) 
+  
+  x_final <- rbind(x, x_final)
+
+}
+
+View(x_final)
 ```
 
 
@@ -484,4 +523,8 @@ apparentOUT <- apparent(F1Juv_pH75_parentage_df, MaxIdent=0.10, alpha=0.01, nloc
 ```{r apparent practice data}
 InputFile <- read.table(file="RAnalysis/Scripts/Popgen/apparent_TestData.txt",sep="\t",h=F)
 
+
+apparentOUT <- apparent(InputFile, MaxIdent=0.10, alpha=0.05, nloci=100, self=TRUE, plot=TRUE, Dyad=FALSE)
+
+apparentOUT
 ```
