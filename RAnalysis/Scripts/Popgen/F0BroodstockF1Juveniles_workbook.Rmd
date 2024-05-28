@@ -214,16 +214,16 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
         }
         
         return(outputfilename)
-}
-
-
-
+}``
 ```
 
 ```{r run clump4me choose settings and run}
 
+<<<<<<< HEAD
 library(ggpubr)
 
+=======
+>>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # *  run the bam file - sliding window 50 -1000 at settings
