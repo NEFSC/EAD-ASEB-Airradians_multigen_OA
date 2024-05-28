@@ -20,27 +20,27 @@ library(dplyr)
 library(stringi)
 library(tibble)
 library(stringr)
-library(BEDASSLE)
-?BEDASSLE
+# library(BEDASSLE)
+# ?BEDASSLE
 ```
 
 ```{r call data, include=FALSE}
-
+path = "/HPC_analysis/output/lcWGS/angsd/"
 # F0 Broodstock
 F0_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/F0Broodstock_doMaf1_minMaf0.05_majorminor4_minind25_minD5x125_maxD20x500minDind5_maxDind150_minq30_minmapQ.geno.gz')  
 F0_IDs       <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/ID') %>% 
                     dplyr::mutate(V1 = sub('.*adapter_trim.', '', V1))
 F0_parentage <- read.csv('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/parentage.csv') %>% 
                     dplyr::mutate(Sample.ID = sub('.*adapter_trim.', '', Sample.ID))
-
+getwd()
 # F1 Juveniles pH 8 
-F1J_pH8_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_8/F1Juveniles_pH8_doMaf1_minMaf0.05_majorminor4_minind35_minD5x175_maxD20x700minDind5_maxDind150_minq30_minmapQ.geno.gz')  
-F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_8/IDs.txt') %>% 
+F1J_pH8_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/F1Juveniles_pH8_doMaf1_minMaf0.05_majorminor4_minind35_minD5x175_maxD20x700minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/IDs.txt') %>% 
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
 # F1 Juveniles pH 75
-F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')  
-F1J_pH75_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles_75/IDs.txt') %>% 
+F1J_pH75_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_75/F1Juveniles_pH75_doMaf1_minMaf0.05_majorminor4_minind38_minD5x190_maxD20x760minDind5_maxDind150_minq30_minmapQ.geno.gz')  
+F1J_pH75_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_75/IDs.txt') %>% 
                     dplyr::mutate(V1 = str_match(V1, "trim.\\s*(.*?)\\s*_query")[,2])
 
 
@@ -97,6 +97,10 @@ converter = function (InputFile) {
   
 } # close function
 
+```
+
+
+```{r run the converter}
 converter(F1J_pH75_raw_geno)
 
 View(OutputFile)

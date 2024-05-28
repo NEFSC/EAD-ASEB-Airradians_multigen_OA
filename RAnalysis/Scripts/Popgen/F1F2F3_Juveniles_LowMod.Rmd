@@ -23,6 +23,7 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
+library(rPlant)
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -55,12 +56,20 @@ library(adegenet)
 path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
 
 
-pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 6,048 variants
+pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78283 variants
 pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)
-pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 6,048 variants
+pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 78283 variants
 
-pH75.vcf     <- read.vcfR(paste0(path,"pH75/Juveniles_pH75_merged.vcf.gz")) # 6,0475 variants
-pH75.bed     <- read.pcadapt(paste0(path,"pH75/Juveniles_merged_pH75.bed"), type = "bed") # 6,0475 variants
+pH75.vcf      <- read.vcfR(paste0(path,"pH75/Juveniles_pH75_merged.vcf.gz")) # 54315 variants
+pH75.vcf_tidy <- vcfR2tidy(pH75.vcf)
+pH75.bed      <- read.pcadapt(paste0(path,"pH75/Juveniles_merged_pH75.bed"), type = "bed") # 54315 variants
+
+path2 = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
+
+F1F3.vcf      <- read.vcfR(paste0(path2,"F1F3_LOWvMOD_merge.vcf.gz")) # 96703 variants
+F1F3.vcf_tidy <- vcfR2tidy(F1F3.vcf)
+F1F3.bed      <- read.pcadapt(paste0(path2,"F1F3_LOWvMOD.bed"), type = "bed") # 96703 variants
+
 
 ```
 
@@ -96,6 +105,19 @@ pH75_strata   <- read.csv(paste0(path,"pH75/IDs.csv"), sep =',', header=FALSE) %
                                       Treatment       = "Moderate")
 
 
+
+path2 = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
+
+F1F3_strata   <- read.csv(paste0(path2,"IDs.csv"), sep =',', header=FALSE) %>% 
+                               dplyr::rename(Individual = V1) %>% 
+                                dplyr::mutate(Individual = gsub('*./','',Individual),
+                                      Gen = dplyr::case_when(grepl("F3", Individual) ~ "F3",
+                                                                     .default = "F1"), # some cases when F1 is not in am file
+                                      Treatment       = dplyr::case_when(
+                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
+                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
+                                dplyr::mutate(Gen_Treatment = paste0(Gen,'_',Treatment))
+
 ```
 
 
@@ -114,21 +136,37 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
 
 
 ```{r NO LD - screeplot diagnostic and plot PCA}
-
+library(ggpubr)
+getwd()
 ## pH8
 pH8.diagnostic      <- pcadapt(pH8.bed, K = 20)
 plot(pH8.diagnostic, option = "screeplot") # looks like 4 - elbow!
 pH8.res             <- pcadapt(pH8.bed, K = 4) # assign PCA 
-plot(pH8.res, option = "manhattan") # manhattan plot 
-plot(pH8.res, option = "scores", pop = pH8_strata$Gen) # PCA
+pdf("../RAnalysis/Output/Popgen/Juvenile_LowpCO2_ManPCA.pdf",width = 10, height = 8)
+ggarrange( (plot(pH8.diagnostic, option = "screeplot")),
+           (plot(pH8.res, option = "manhattan")), # manhattan plot 
+           (plot(pH8.res, option = "scores", pop = pH8_strata$Gen)), # PCA
+          nrow=3)
+dev.off()
 
 
 ## pH75
 pH75.diagnostic      <- pcadapt(pH75.bed, K = 20)
 plot(pH75.diagnostic, option = "screeplot") # looks like 4 - elbow!
 pH75.res             <- pcadapt(pH75.bed, K = 4) # assign PCA 
-plot(pH75.res, option = "manhattan") # manhattan plot 
-plot(pH75.res, option = "scores", pop = pH75_strata$Gen) # PCA
+pdf("../RAnalysis/Output/Popgen/Juvenile_ModeratepCO2_ManPCA.pdf",width = 10, height = 8)
+ggarrange( (plot(pH75.diagnostic, option = "screeplot")),
+           (plot(pH75.res, option = "manhattan")), # manhattan plot 
+           (plot(pH75.res, option = "scores", pop = pH75_strata$Gen)), # PCA
+          nrow=3)
+dev.off()
+
+
+
+## F1 v F3 low v Mod
+F1F3.diagnostic      <- pcadapt(F1F3.bed, K = 20)
+plot(F1F3.diagnostic, option = "screeplot") # looks like 4 - elbow!
+F1F3.res             <- pcadapt(F1F3.bed, K = 4) # assign PCA 
 
 
 ```
@@ -210,87 +248,194 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 
 ## pH 8
 test <- as.data.frame(clump4me(data         = pH8.bed,
-                             LD.thr         = 0.2, # r squares
+                             LD.thr         = 0.1, # r squares
                              LD.K           = 4, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = pH8))
 plot(output_PC1~input_Window , data=test) # window of 150?
 pH8.LDdiagnostics <- pcadapt(pH8.bed, 
                             K = 20, 
-                            LD.clumping = list(size = 150, thr = 0.2), # based clump4me result
+                            LD.clumping = list(size = 250, thr = 0.1), # based clump4me result
                             min.maf= 0.05)
 plot(pH8.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
 pH8.LDres <- pcadapt(pH8.bed, 
-                     K = 4, # based on screeplot above
-                     LD.clumping = list(size = 150, thr = 0.2),  # based clump4me result
+                     K = 2, # based on screeplot above
+                     LD.clumping = list(size = 150, thr = 0.1),  # based clump4me result
                      min.maf= 0.05)
-
-
+ 
 
 
 ## pH 75
 test <- as.data.frame(clump4me(data         = pH75.bed,
-                             LD.thr         = 0.2, # r squares
+                             LD.thr         = 0.1, # r squares
                              LD.K           = 4, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = pH75))
-plot(output_PC1~input_Window , data=test) # window of 500?
+plot(output_PC1~input_Window , data=test) # window of 100?
 pH75.LDdiagnostics <- pcadapt(pH75.bed, 
                             K = 20, 
-                            LD.clumping = list(size = 150, thr = 0.2), # based clump4me result
+                            LD.clumping = list(size = 100, thr = 0.1), # based clump4me result
                             min.maf= 0.05)
-plot(pH75.LDdiagnostics, option = "screeplot") # Lets try and use K = 3 after SNP thinning 
+plot(pH75.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
 pH75.LDres <- pcadapt(pH75.bed, 
+                     K = 2, # based on screeplot above
+                     LD.clumping = list(size = 100, thr = 0.1),  # based clump4me result
+                     min.maf= 0.05)
+
+
+
+## F1 v F3 low v Mod
+test <- as.data.frame(clump4me(data         = F1F3.bed,
+                             LD.thr         = 0.1, # r squares
+                             LD.K           = 4, # number of PCAs
+                             LD.minMaf      = 0.05, # minimum allele freq threshold (5% - =0.05, etc)
+                             outputfilename = F1F3))
+plot(output_PC1~input_Window , data=test) # window of 1000?
+F1F3.LDdiagnostics <- pcadapt(F1F3.bed, 
+                            K = 20, 
+                            LD.clumping = list(size = 1000, thr = 0.1), # based clump4me result
+                            min.maf= 0.05)
+plot(F1F3.LDdiagnostics, option = "screeplot") # Lets try and use K = 6 after SNP thinning 
+F1F3.LDres <- pcadapt(F1F3.bed, 
                      K = 6, # based on screeplot above
-                     LD.clumping = list(size = 150, thr = 0.2),  # based clump4me result
+                     LD.clumping = list(size = 100, thr = 0.1),  # based clump4me result
                      min.maf= 0.05)
 ```
 
 
 
-```{r}
+```{r output the results with and without LD}
 library(ggpubr)
 
 ## pH 8
-ggarrange( (plot(pH8.res, option = "scores", pop = pH8_strata$Gen)),
-           (plot(pH8.res , option = "manhattan")),
-         nrow = 2) # theres a possible taret regions btwn 10000 - 12000 (row numbers)
 
-ggarrange( (plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen)),
-           (plot(pH8.LDres , option = "manhattan")),
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/Juvenile_LowpCO2_res.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(pH8.diagnostic, option = "screeplot")),
+          (plot(pH8.res, option = "qqplot")),
+          (plot(pH8.res, option = "stat.distribution")),
+          (plot(pH8.res, option = "scores", pop = pH8_strata$Gen)),
+          nrow=2,
+          ncol=2)),
+  (plot(pH8.res , option = "manhattan")),
          nrow = 2)
+dev.off()
 
+
+
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/Juvenile_LowpCO2_LDres.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(pH8.LDdiagnostics, option = "screeplot")),
+          (plot(pH8.LDres, option = "qqplot")),
+          (plot(pH8.LDres, option = "stat.distribution")),
+          (plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen)),
+          nrow=2,
+          ncol=2)),
+  (plot(pH8.LDres , option = "manhattan")),
+         nrow = 2)
+dev.off()
 
 
 ## pH 75
-ggarrange( (plot(pH75.res, option = "scores", pop = pH75_strata$Gen)),
-           (plot(pH75.res , option = "manhattan")),
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/Juvenile_ModeratepCO2_res.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(pH75.diagnostic, option = "screeplot")),
+          (plot(pH75.res, option = "qqplot")),
+          (plot(pH75.res, option = "stat.distribution")),
+          (plot(pH75.res, option = "scores", pop = pH75_strata$Gen)),
+          nrow=2,
+          ncol=2)),
+  (plot(pH75.res , option = "manhattan")),
          nrow = 2)
-plot(pH75.res, option = "qqplot")
-hist(pH75.res$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "orange")
-plot(pH75.res, option = "stat.distribution")
+dev.off()
 
-plot(pH75.res, option = "manhattan")
 
-ggarrange( (plot(pH75.LDres, option = "scores", pop = pH75_strata$Gen)),
-           (plot(pH75.LDres , option = "manhattan")),
+
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/Juvenile_ModeratepCO2_LDres.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(pH75.LDdiagnostics, option = "screeplot")),
+          (plot(pH75.LDres, option = "qqplot")),
+          (plot(pH75.LDres, option = "stat.distribution")),
+          (plot(pH75.LDres, option = "scores", pop = pH75_strata$Gen)),
+          nrow=2,
+          ncol=2)),
+  (plot(pH75.LDres , option = "manhattan")),
          nrow = 2)
+dev.off()
 
 
-plot(pH75.LDres, option = "qqplot")
-hist(pH75.LDres$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "orange")
-plot(pH75.LDres, option = "stat.distribution")
 
-plot(pH75.LDres, option = "manhattan")
+
+## F1 v F3 low v Mod
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/F1F3_LowvMod_res.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(F1F3.diagnostic, option = "screeplot")),
+          (plot(F1F3.res, option = "qqplot")),
+          (plot(F1F3.res, option = "stat.distribution")),
+          (plot(F1F3.res, option = "scores", pop = F1F3_strata$Gen_Treatment)),
+          nrow=2,
+          ncol=2)),
+  (plot(F1F3.res , option = "manhattan")),
+         nrow = 2)
+dev.off()
+
+
+
+pdf("../RAnalysis/Output/Popgen/All_Juveniles/F1F3_LowvMod_LDres.pdf",width = 10, height = 8)
+ggarrange( 
+  (ggarrange(
+          (plot(F1F3.LDdiagnostics, option = "screeplot")),
+          (plot(F1F3.LDres, option = "qqplot")),
+          (plot(F1F3.LDres, option = "stat.distribution")),
+          (plot(F1F3.LDres, option = "scores", pop = F1F3_strata$Gen_Treatment)),
+          nrow=2,
+          ncol=2)),
+  (plot(F1F3.LDres , option = "manhattan")),
+         nrow = 2)
+dev.off()
 
 ```
 
 
-```{r qqman manhattan plots}
+### Use the LD loadings to reduce the cvf file 
+
+* ObjectiveL convert the large vcf to a smaller vcf , run the vcf tidy to create tidy object 
+
+  - why? we need this for qqman! 
+  
+
+```{r LD loadings reduce vcf files}
+
+pH8.vcf_LDfiltered  <- pH8.vcf[!is.na(pH8.LDres$loadings[,1]),] # 78,283 DOWN TO 21,555 variants
+pH75.vcf_LDfiltered <- pH75.vcf[!is.na(pH75.LDres$loadings[,1]),] # 54,315 DOWN TO 18,203 variants!
+
+```
 
 
-pH8Results_qqman            <- as.data.frame(matrix(nrow=nrow(pH8.vcf_tidy$fix), ncol=4)) 
-colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
+```{r convert LDfiltered vcf to vcf_tidy}
+
+pH8.vcf_LD_tidy <- vcfR2tidy(pH8.vcf_LDfiltered)
+pH75.vcf_LD_tidy <- vcfR2tidy(pH75.vcf_LDfiltered)
+
+```
+## Manhattan using qqman (tidyr vcf objects!)
+
+  * Objective: run the qqmanmanhattan plots on both res docs (with and without LD filtration!)
+
+  * datasets: pH8.vcf_tidy, pH75.vcf_tidy, pH8.vcf_LD_tidy, pH75.vcf_LD_tidy
+  
+```{r qqman manhattan plots pH8 Low pCO2}
+library(tidyr)
+
+
+# low pCO2 (pH8) 
+pH8Results_qqman            <- as.data.frame(matrix(nrow=length(pH8.vcf_tidy$fix$CHROM), ncol=4)) 
+colnames(pH8Results_qqman) <- c('SNP','CHR', 'BP', 'P')
 pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>% 
                                     dplyr::mutate(
                                       SNP = paste0(pH8.vcf_tidy$fix$CHROM, '_',pH8.vcf_tidy$fix$POS),
@@ -298,10 +443,6 @@ pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>%
                                       BP  = pH8.vcf_tidy$fix$POS,
                                       P   = pH8.LDres$pvalues
                                     ) %>% na.omit()
-pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P) > -log(0.001))
-
-
-
 manhattan( (pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P))),
             annotatePval = 0.001)
 
@@ -349,9 +490,150 @@ ggplot(don, aes(x=BPcum, y=-log10(P))) +
     )
 
 
+pH8Results_LD_qqman            <- as.data.frame(matrix(nrow=length(pH8.vcf_LD_tidy$fix$CHROM), ncol=4)) 
+colnames(pH8Results_LD_qqman)  <- c('SNP','CHR', 'BP', 'P')
+pH8pvals_LD <- as.data.frame(pH8.LDres$pvalues) # call the p values of the res as dataframe
+pH8Results_LD_qqman            <- pH8Results_LD_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH8.vcf_LD_tidy$fix$CHROM, '_',pH8.vcf_LD_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH8.vcf_LD_tidy$fix$CHROM)),
+                                      BP  = pH8.vcf_LD_tidy$fix$POS,
+                                      P   = as.numeric(pH8pvals_LD[!is.na(pH8.LDres$loadings[,1]),]) # truncate the same, omit those with no loadings
+                                    ) %>% na.omit()
 
+manhattan( (pH8Results_LD_qqman %>% dplyr::filter(CHR < 400 & -log10(P) > 10)),
+            annotatePval = 0.001)
+
+manhattan( (pH8Results_LD_qqman %>% dplyr::filter(CHR < 400)),
+            annotatePval = 0.001)
+```
+
+```{r qqman manhattan plots pH75 Moderate pCO2}
+library(tidyr)
+
+
+# low pCO2 (pH75) 
+pH75Results_qqman            <- as.data.frame(matrix(nrow=length(pH75.vcf_tidy$fix$CHROM), ncol=4)) 
+colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
+pH75Results_qqman            <- pH75Results_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH75.vcf_tidy$fix$CHROM, '_',pH75.vcf_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH75.vcf_tidy$fix$CHROM)),
+                                      BP  = pH75.vcf_tidy$fix$POS,
+                                      P   = pH75.LDres$pvalues
+                                    ) %>% na.omit()
+manhattan( (pH75Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH75Results_qqman$P))),
+            annotatePval = 0.001)
+
+
+library(tidyr)
+library(dplyr)
+don <- pH75Results_qqman %>% 
+  
+  # Compute chromosome size
+  group_by(CHR) %>% 
+  summarise(chr_len=max(BP)) %>% 
+  
+  # Calculate cumulative position of each chromosome
+  mutate(tot=cumsum(chr_len)-chr_len) %>%
+  select(-chr_len) %>%
+  
+  # Add this info to the initial dataset
+  left_join(pH75Results_qqman, ., by=c("CHR"="CHR")) %>%
+  
+  # Add a cumulative position of each SNP
+  arrange(CHR, BP) %>%
+  mutate( BPcum=BP+tot)
+
+axisdf = don %>%
+  group_by(CHR) %>%
+  summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+
+ggplot(don, aes(x=BPcum, y=-log10(P))) +
+    
+    # Show all points
+    geom_point( aes(color=as.factor(CHR)), alpha=0.75, size=1.3) +
+    scale_color_manual(values = rep(c("grey", "skyblue"), length(unique(don$CHR)) )) +
+    
+    # custom X axis:
+    scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
+    scale_y_continuous(expand = c(0, 0) ) +     # remove space between plot area and x axis
+  
+    # Custom the theme:
+    theme_bw() +
+    theme( 
+      legend.position="none",
+      panel.border = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
+
+
+
+
+
+
+
+pH75Results_LD_qqman            <- as.data.frame(matrix(nrow=length(pH75.vcf_LD_tidy$fix$CHROM), ncol=4)) 
+colnames(pH75Results_LD_qqman)  <- c('SNP','CHR', 'BP', 'P')
+pH75pvals_LD <- as.data.frame(pH75.LDres$pvalues) # call the p values of the res as dataframe
+pH75Results_LD_qqman            <- pH75Results_LD_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH75.vcf_LD_tidy$fix$CHROM, '_',pH75.vcf_LD_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH75.vcf_LD_tidy$fix$CHROM)),
+                                      BP  = pH75.vcf_LD_tidy$fix$POS,
+                                      P   = as.numeric(pH75pvals_LD[!is.na(pH75.LDres$loadings[,1]),]) # truncate the same, omit those with no loadings
+                                    ) %>% na.omit()
+
+manhattan( (pH75Results_LD_qqman %>% dplyr::filter(CHR > 40000)),
+            annotatePval = 0.001)
+
+
+
+
+
+don <- pH75Results_LD_qqman %>% 
+  
+  # Compute chromosome size
+  group_by(CHR) %>% 
+  summarise(chr_len=max(BP)) %>% 
+  
+  # Calculate cumulative position of each chromosome
+  mutate(tot=cumsum(chr_len)-chr_len) %>%
+  select(-chr_len) %>%
+  
+  # Add this info to the initial dataset
+  left_join(pH75Results_LD_qqman, ., by=c("CHR"="CHR")) %>%
+  
+  # Add a cumulative position of each SNP
+  arrange(CHR, BP) %>%
+  mutate( BPcum=BP+tot)
+
+axisdf = don %>%
+  group_by(CHR) %>%
+  summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+
+ggplot(don, aes(x=BPcum, y=-log10(P))) +
+    
+    # Show all points
+    geom_point( aes(color=as.factor(CHR)), alpha=0.75, size=1.3) +
+    scale_color_manual(values = rep(c("grey", "skyblue"), length(unique(don$CHR)) )) +
+    
+    # custom X axis:
+    scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
+    scale_y_continuous(expand = c(0, 0) ) +     # remove space between plot area and x axis
+  
+    # Custom the theme:
+    theme_bw() +
+    theme( 
+      legend.position="none",
+      panel.border = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
 
 ```
+
 
 This might look normal, but you’ll notice that two of the populations are tightly grouped around PC1. We should check too make sure this pattern isn’t being driven by a linkage in the genome. To do this, we can look at the loading scores of the PCs. Loading scores show how much a particular SNP factors into a PC.
 
@@ -468,6 +750,62 @@ barplot(pH75_LD_tab_pca1$eig[1:25],
 s.class(pH75_LD_tab_pca1$li, pop(pH75.genind_LD))
 
 
+
+
+
+
+
+
+# F1F3
+F1F3.genind         <- vcfR2genind(F1F3.vcf)
+F1F3.vcf_LDfiltered <- F1F3.vcf[!is.na(F1F3.LDres$loadings[,1]),]
+F1F3.genind_LD      <- vcfR2genind(F1F3.vcf_LDfiltered)
+
+strata(F1F3.genind) <- F1F3_strata
+setPop(F1F3.genind) <- ~Gen_Treatment
+
+strata(F1F3.genind_LD) <- F1F3_strata
+setPop(F1F3.genind_LD) <- ~Gen_Treatment
+
+F1F3_tab        <- tab(F1F3.genind, freq = TRUE, NA.method = "mean")
+F1F3_tab_pca1   <- dudi.pca(F1F3_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F1F3_tab_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F1F3_tab_pca1$li, pop(F1F3.genind))
+
+F1F3_LD_tab        <- tab(F1F3.genind_LD, freq = TRUE, NA.method = "mean")
+F1F3_LD_tab_pca1   <- dudi.pca(F1F3_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F1F3_LD_tab_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F1F3_LD_tab_pca1$li, pop(F1F3.genind_LD))
+
+
+groups <- as.factor(F1F3.genind_LD$strata$Gen_Treatment)
+s.class(F1F3_LD_tab_pca1$li,
+        fac = groups,  # color by groups
+        col = c("orange",  "skyblue","brown",  "turquoise"),
+        # labels = NULL,
+        # add.plot = TRUE,         # Add onto the scatter plot
+        cstar = 0,               # Remove stars
+        cellipse = 0             # Remove ellipses
+        )
+# DAPC using function dapc transforms data using PCA and runs discriminant analysis on the retained 
+# principle compoenents running on the inferred $grp groups'
+# run the cluster filters onthe intersect data for F1 pH75 and 8
+grp_F1F3   <- find.clusters(F1F3.genind_LD, max.n.clust=40)
+F1F3_dapc1 <- dapc(F1F3.genind_LD, grp_F1F3$grp)
+scatter.dapc(F1F3_dapc1, grp=F1F3.genind_LD$pop)
+scatter(F1F3_dapc1, posi.da="topleft", bg="white",
+        grp=F1F3.genind_LD$pop,
+        pch=17:22, cstar=0,  scree.pca=TRUE,
+        posi.pca="bottomleft")
+
+scatter.dapc(F1F3_dapc1,1,1, 
+        grp=F1F3.genind_LD$pop,
+        bg="white", scree.da=FALSE, legend=TRUE, solid=.4,
+        txt.leg=paste("Cluster",1:4))
 ```
 
 
