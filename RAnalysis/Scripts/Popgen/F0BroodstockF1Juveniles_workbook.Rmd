@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
 knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+# knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
@@ -21,6 +21,10 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
+library(pegas)
+library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy # use interactive shiny script to covert to colony
+# library(stackr) # devtools::install_github("thierrygosselin/stackr")
+
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -50,10 +54,16 @@ library(adegenet)
   
 ```{r load vcf and bed files}
 
+
 path = "output/lcWGS/angsd/Merge_Intercept/F0Broodstock_F1Juveniles/"
 
 # ALL F1 JUVENILES FROM LOW AND MODERATE pCO2
 F0B_F1JALL_intersect.vcf     <- read.vcfR(paste0(path,"F0F1_intersect.vcf.gz")) # 6,048 variants
+F0B_F1JALL_intersect.vcf     <- read.vcf(paste0(path,"F0F1_intersect.vcf.gz"), from = NULL, to = NULL, which.loci = NULL, quiet = FALSE)
+write.vcf(F0B_F1JALL_intersect.vcf, paste0(path,"F0F1_intersect.vcf"), CHROM = NULL, POS = NULL, quiet = FALSE)
+vcf2ploidy_app()
+
+
 F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
 
 F0B_F1JALL_merged.vcf        <- read.vcfR(paste0(path,"F0_F1Juveniles_merged_all.vcf.gz")) # 81,325 variants

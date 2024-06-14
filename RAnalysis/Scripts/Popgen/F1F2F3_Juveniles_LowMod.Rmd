@@ -17,11 +17,15 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 #### load packages
 
 ```{r load packages we need}
+
 library(qqman)
 library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
+library(remotes)
+library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy
+
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -50,9 +54,7 @@ library(adegenet)
   
   
 ```{r load vcf and bed files}
-
 path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
-
 
 pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78,283 variants
 pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)

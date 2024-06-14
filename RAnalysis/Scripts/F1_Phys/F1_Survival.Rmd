@@ -94,8 +94,12 @@ surv_F1 <- F1_survival %>%
               dplyr::mutate(Count = 
                               as.numeric(gsub(",","",Count))) %>% # remove the commas from these numbers- id as character if not removed!
               dplyr::rename(Count_alive = Count) %>% # rename to avoid confusion
-              dplyr::mutate(Count_dead = case_when(Survival == 1 ~ 0, 
-                                                   Survival < 1 ~ (1-as.numeric(Survival))*as.numeric(Count_alive))) # proportion is that of alive
+              dplyr::mutate(Count_total = case_when(Survival == 0 ~ 0,
+                                               Survival >0 ~
+                                                 (1/as.numeric(Survival))*
+                                                 as.numeric(Count_alive)),# proportion is that of alive
+                           Count_dead = Count_total - Count_alive)
+
 
 binary_surv_df     <- data.frame()
 
@@ -398,8 +402,7 @@ F1_coxph_test_table <- coxph(Surv(Age, Count_dead) ~ Treatment+(1|Replicate), da
 F1_coxph_test.means    <- coxph(formula = Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS)
 summary(F1_coxph_test.means)
 #                      coef exp(coef) se(coef)     z Pr(>|z|)    
-# TreatmentModerate 0.26435   1.30259  0.05193 5.091 3.56e-07 ***
-# exp(coef is equivalent ot the hazard ratio
+# TreatmentModerate 0.13669   1.14647  0.03066 4.459 8.25e-06 ***
 HaxardRatio_plot <- ggforest(F1_coxph_test.means,
                                data = binary_surv_df_MEANS)
 
