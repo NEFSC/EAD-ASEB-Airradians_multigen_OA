@@ -21,9 +21,13 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
+<<<<<<< HEAD
 library(pegas)
 library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy # use interactive shiny script to covert to colony
 # library(stackr) # devtools::install_github("thierrygosselin/stackr")
+=======
+library(qqman)
+>>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 
 # library(pegas)
 # library(LDlinkR)
@@ -130,29 +134,30 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
 
 ## * F0 Broodstock w/ F1 Juveniles ALL
 F0B_F1JuvAll_intersect.diagnostic      <- pcadapt(F0B_F1JALL_intersect.bed, K = 20)
-plot(F0B_F1JuvAll_intersect.diagnostic, option = "screeplot") # looks like 8
-F0B_F1JuvAll_intersect.res             <- pcadapt(F0B_F1JALL_intersect.bed, K = 8) # assign
+plot(F0B_F1JuvAll_intersect.diagnostic, option = "screeplot") # looks like 7
+F0B_F1JuvAll_intersect.res             <- pcadapt(F0B_F1JALL_intersect.bed, K = 7) # assign
 plot(F0B_F1JuvAll_intersect.res, option = "manhattan")
 
 # MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ## data: F0B_F1JALL_merged.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
 F0B_F1JuvAll_merge.diagnostic          <- pcadapt(F0B_F1JALL_merged.bed, K = 20)
-plot(F0B_F1JuvAll_merge.diagnostic, option = "screeplot") # looks like 5
-F0B_F1JuvAll_merge.res                 <- pcadapt(F0B_F1JALL_merged.bed, K = 5) # assign
+plot(F0B_F1JuvAll_merge.diagnostic, option = "screeplot") # looks like 6
+F0B_F1JuvAll_merge.res                 <- pcadapt(F0B_F1JALL_merged.bed, K = 6) # assign
 plot(F0B_F1JuvAll_merge.res, option = "manhattan")
 
 
 ## * F0 Broodstock w/ F1 Juveniles LOW
 F0B_F1JuvLOW_merge.diagnostic          <- pcadapt(F0B_F1JLOW_merged.bed, K = 20)
-plot(F0B_F1JuvLOW_merge.diagnostic, option = "screeplot") # looks like 5
-F0B_F1JuvLOW_merge.res                 <- pcadapt(F0B_F1JLOW_merged.bed, K = 5) # assign
+plot(F0B_F1JuvLOW_merge.diagnostic, option = "screeplot") # looks like 6
+F0B_F1JuvLOW_merge.res                 <- pcadapt(F0B_F1JLOW_merged.bed, K = 6) # assign
 plot(F0B_F1JuvLOW_merge.res, option = "manhattan")
 
 
 ## * F0 Broodstock w/ F1 Juveniles MODERATE
 F0B_F1JMODERATE_merged.diagnostic     <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20)
 plot(F0B_F1JMODERATE_merged.diagnostic, option = "screeplot") # looks like 3
-
+F0B_F1JuvMODERATE_merge.res           <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 3) # assign
+plot(F0B_F1JuvMODERATE_merge.res, option = "manhattan")
 ```
 
 
@@ -226,6 +231,11 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 
 ```{r run clump4me choose settings and run}
 
+<<<<<<< HEAD
+library(ggpubr)
+
+=======
+>>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # *  run the bam file - sliding window 50 -1000 at settings
@@ -238,12 +248,13 @@ plot(output_PC1~input_Window , data=test) # window of 250
 F0B_F1JuvAll_intersect.LDdiagnostics <- pcadapt(F0B_F1JALL_intersect.bed, 
                                                 K = 20, LD.clumping = list(size = 250, thr = 0.1),
                                                 min.maf= 0.05)
-plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 5 after SNP thinning 
+plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
 F0B_F1JuvAll_intersect.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
-                                        K = 5, 
+                                        K = 7, 
                                         LD.clumping = list(size = 250, thr = 0.1), 
                                         min.maf= 0.05)
-
+ggarrange( (plot(F0B_F1JuvAll_intersect.res, option = "manhattan")),
+           (plot(F0B_F1JuvAll_intersect.LDres, option = "manhattan")),nrow=2)
 
 
 # MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -263,6 +274,8 @@ F0B_F1JuvAll_merged.LDres <- pcadapt(F0B_F1JALL_merged.bed,
                                         K = 4, 
                                         LD.clumping = list(size = 500, thr = 0.1),
                                         min.maf=0.05)
+ggarrange( (plot(F0B_F1JuvAll_merge.res, option = "manhattan")),
+           (plot(F0B_F1JuvAll_merged.LDres, option = "manhattan")),nrow=2)
 
 
 
@@ -293,17 +306,85 @@ test <- as.data.frame(clump4me(data         = F0B_F1JMODERATE_merged.bed,
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = F0B_F1JMODERATE_merged))
 plot(output_PC1~input_Window , data=test) # window of 300
-F0B_F1JMODERATE_merged.LDdiagnostics <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20, 
+F0B_F1JuvMODERATE_merged.LDdiagnostics <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 20, 
                                              LD.clumping = list(size = 300, thr = 0.1),
                                              min.maf= 0.05)
-plot(F0B_F1JMODERATE_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 4 after SNP thinning 
-F0B_F1JMODERATE_merged.LDres <- pcadapt(F0B_F1JMODERATE_merged.bed, 
-                                        K = 4, 
+plot(F0B_F1JuvMODERATE_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 4 after SNP thinning 
+F0B_F1JuvMODERATE_merged.LDres <- pcadapt(F0B_F1JMODERATE_merged.bed, 
+                                        K = 6, 
                                         LD.clumping = list(size = 300, thr = 0.1),
                                         min.maf=0.05)
+ggarrange( (plot(F0B_F1JuvMODERATE_merge.res, option = "manhattan")),
+           (plot(F0B_F1JuvMODERATE_merged.LDres, option = "manhattan")),nrow=2)
 ```
 
 
+```{r F0B_F1JuvMODERATE qqman manhattan plots}
+
+
+pH8Results_qqman            <- as.data.frame(matrix(nrow=nrow(pH8.vcf_tidy$fix), ncol=4)) 
+colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
+pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH8.vcf_tidy$fix$CHROM, '_',pH8.vcf_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH8.vcf_tidy$fix$CHROM)),
+                                      BP  = pH8.vcf_tidy$fix$POS,
+                                      P   = pH8.LDres$pvalues
+                                    ) %>% na.omit()
+pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P) > -log(0.001))
+
+
+
+manhattan( (pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P))),
+            annotatePval = 0.001)
+
+
+library(tidyr)
+library(dplyr)
+don <- pH8Results_qqman %>% 
+  
+  # Compute chromosome size
+  group_by(CHR) %>% 
+  summarise(chr_len=max(BP)) %>% 
+  
+  # Calculate cumulative position of each chromosome
+  mutate(tot=cumsum(chr_len)-chr_len) %>%
+  select(-chr_len) %>%
+  
+  # Add this info to the initial dataset
+  left_join(pH8Results_qqman, ., by=c("CHR"="CHR")) %>%
+  
+  # Add a cumulative position of each SNP
+  arrange(CHR, BP) %>%
+  mutate( BPcum=BP+tot)
+
+axisdf = don %>%
+  group_by(CHR) %>%
+  summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+
+ggplot(don, aes(x=BPcum, y=-log10(P))) +
+    
+    # Show all points
+    geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=1.3) +
+    scale_color_manual(values = rep(c("grey", "skyblue"), length(unique(don$CHR)) )) +
+    
+    # custom X axis:
+    scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
+    scale_y_continuous(expand = c(0, 0) ) +     # remove space between plot area and x axis
+  
+    # Custom the theme:
+    theme_bw() +
+    theme( 
+      legend.position="none",
+      panel.border = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
+
+
+
+
+```
 
 ```{r}
 library(ggpubr)

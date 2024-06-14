@@ -20,19 +20,23 @@ library(dplyr)
 library(stringi)
 library(tibble)
 library(stringr)
+<<<<<<< HEAD
+# library(BEDASSLE)
+=======
 library(BEDASSLE)
+>>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 # ?BEDASSLE
 ```
 
 ```{r call data, include=FALSE}
-
+path = "/HPC_analysis/output/lcWGS/angsd/"
 # F0 Broodstock
 F0_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/F0Broodstock_doMaf1_minMaf0.05_majorminor4_minind25_minD5x125_maxD20x500minDind5_maxDind150_minq30_minmapQ.geno.gz')  
 F0_IDs       <- read.table('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/ID') %>% 
                     dplyr::mutate(V1 = sub('.*adapter_trim.', '', V1))
 F0_parentage <- read.csv('HPC_analysis/output/lcWGS/angsd/F0_Broodstock/parentage.csv') %>% 
                     dplyr::mutate(Sample.ID = sub('.*adapter_trim.', '', Sample.ID))
-
+getwd()
 # F1 Juveniles pH 8 
 F1J_pH8_raw_geno <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/F1Juveniles_pH8_doMaf1_minMaf0.05_majorminor4_minind35_minD5x175_maxD20x700minDind5_maxDind150_minq30_minmapQ.geno.gz')  
 F1J_pH8_IDs      <- read.table('HPC_analysis/output/lcWGS/angsd/F1_Juveniles/F1_Juveniles_8/IDs.txt') %>% 
@@ -100,8 +104,12 @@ converter = function (InputFile) {
 ```
 
 
+<<<<<<< HEAD
+```{r run the converter}
+=======
 
 ```{r run converter Juveniles Mod pCO2}
+>>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 converter(F1J_pH75_raw_geno)
 
 # View(OutputFile)
