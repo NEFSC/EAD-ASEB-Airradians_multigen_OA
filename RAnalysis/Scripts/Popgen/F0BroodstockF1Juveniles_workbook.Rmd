@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
 knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
@@ -54,14 +54,19 @@ library(qqman)
 
 path = "output/lcWGS/angsd/Merge_Intercept/F0Broodstock_F1Juveniles/"
 
-# ALL F1 JUVENILES FROM LOW AND MODERATE pCO2
+# INTERSECT: ALL f0 broodstock and f1 juveniles from Low and Moderate OA
 F0B_F1JALL_intersect.vcf     <- read.vcfR(paste0(path,"F0F1_intersect.vcf.gz")) # 6,048 variants
 F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
+
+F0B_F1JALL_intersect_longcontigs.vcf     <- read.vcfR(paste0(path,"F0F1_intersect_longcontigs.vcf.gz")) # 6,048 variants
+F0B_F1JALL_intersect_longcontigs.bed     <- read.pcadapt(paste0(path,"F0F1_intersect_longcontig.bed"), type = "bed") # 6,048 variants
+
+# MERGED: ALL f0 broodstock and f1 juveniles from Low and Moderate OA
 
 F0B_F1JALL_merged.vcf        <- read.vcfR(paste0(path,"F0_F1Juveniles_merged_all.vcf.gz")) # 81,325 variants
 F0B_F1JALL_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_all.bed"), type = "bed") # 81325 variants
 
-# SEPARATE merge and intersect based on F1 JUVENILES pCO2
+# SEPARATE merge 0f F0 Broodstock and F1 JUVENILES of different pCO2
 ## LOW (pH8)
 F0B_F1JLOW_merged.vcf        <- read.vcfR(paste0(path,"F0_F1JuvenilespH8_merged.vcf.gz")) # 73573 variants
 F0B_F1JLOW_merged.bed        <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_pH8.bed"), type = "bed") # 73573 variants
@@ -115,16 +120,31 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
   as a bar (many) or pair of points close/touching on the same Y-axis plane
 
 
-```{r screeplot}
+```{r screeplot, Intersect F0 broodstock F1 juveniles}
 
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ## data: F0B_F1JALL_intersect.bed
 
-## * F0 Broodstock w/ F1 Juveniles ALL
+## F0 brood with all F1 juvneiles
 F0B_F1JuvAll_intersect.diagnostic      <- pcadapt(F0B_F1JALL_intersect.bed, K = 20)
 plot(F0B_F1JuvAll_intersect.diagnostic, option = "screeplot") # looks like 7
 F0B_F1JuvAll_intersect.res             <- pcadapt(F0B_F1JALL_intersect.bed, K = 7) # assign
 plot(F0B_F1JuvAll_intersect.res, option = "manhattan")
+
+## F0 brood with all F1 juvneiles , LONG CONTIGS ONLY
+F0B_F1JuvAll_intersect_longcontigs.diagnostic      <- pcadapt(F0B_F1JALL_intersect_longcontigs.bed, K = 20)
+plot(F0B_F1JuvAll_intersect_longcontigs.diagnostic, option = "screeplot") # looks like 7
+F0B_F1JuvAll_intersect_longcontigs.res             <- pcadapt(F0B_F1JALL_intersect_longcontigs.bed, K = 7) # assign
+plot(F0B_F1JuvAll_intersect_longcontigs.res, option = "manhattan")
+
+# look at both 
+ggarrange(
+  plot(F0B_F1JuvAll_intersect.res, option = "manhattan"),
+  plot(F0B_F1JuvAll_intersect_longcontigs.res, option = "manhattan"), nrow = 2
+)
+```
+
+```{r screeplot, Merge F0 broodstock F1 juveniles}
 
 # MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ## data: F0B_F1JALL_merged.bed, F0B_F1JLOW_merged.bed, F0B_F1JMODERATE_merged.bed
@@ -214,16 +234,13 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
         }
         
         return(outputfilename)
-}``
+}
 ```
 
 ```{r run clump4me choose settings and run}
 
-<<<<<<< HEAD
 library(ggpubr)
 
-=======
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 # INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # *  run the bam file - sliding window 50 -1000 at settings
