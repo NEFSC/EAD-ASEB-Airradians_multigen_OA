@@ -23,13 +23,9 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
-<<<<<<< HEAD
 library(remotes)
 library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy
-
-=======
 library(rPlant)
->>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -60,10 +56,6 @@ library(rPlant)
 ```{r load vcf and bed files}
 path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
 
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
 pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78283 variants
 pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)
 pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 78283 variants
@@ -78,15 +70,12 @@ F1F3.vcf      <- read.vcfR(paste0(path2,"F1F3_LOWvMOD_merge.vcf.gz")) # 96703 va
 F1F3.vcf_tidy <- vcfR2tidy(F1F3.vcf)
 F1F3.bed      <- read.pcadapt(paste0(path2,"F1F3_LOWvMOD.bed"), type = "bed") # 96703 variants
 
-=======
->>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78,283 variants
 pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)
 pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 78,283 variants
 
 pH75.vcf     <- read.vcfR(paste0(path,"pH75/Juveniles_pH75_merged.vcf.gz")) # 54,315 variants
 pH75.bed     <- read.pcadapt(paste0(path,"pH75/Juveniles_merged_pH75.bed"), type = "bed") # 54,315 variants
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 
 ```
 
@@ -153,16 +142,10 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
 
 
 ```{r NO LD - screeplot diagnostic and plot PCA}
-<<<<<<< HEAD
 library(ggpubr)
-getwd()
-=======
 
 path = "../RAnalysis/Output/PopGen/"
 
-
-library(ggpubr)
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 ## pH8
 pH8.diagnostic      <- pcadapt(pH8.bed, K = 20)
 plot(pH8.diagnostic, option = "screeplot") # looks like 4 - elbow!
@@ -250,7 +233,7 @@ for (i in 1:4)
 
 clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
   
-        # For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+        # For loop ::::::::::: #
         outputfilename      <- data.frame()  # start dataframe 
         loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
         colnames(loop.table)<-c('output_PC1', 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
@@ -286,103 +269,6 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 
 ```
 
-```{r run clump4me choose settings and run}
-
-## pH 8
-test <- as.data.frame(clump4me(data         = pH8.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = pH8))
-plot(output_PC1~input_Window, data=test) # window of 450?
-pH8.LDdiagnostics <- pcadapt(pH8.bed, 
-                            K = 20, 
-<<<<<<< HEAD
-                            LD.clumping = list(size = 250, thr = 0.1), # based clump4me result
-=======
-                            LD.clumping = list(size = 450, thr = 0.1), # based clump4me result
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
-                            min.maf= 0.05)
-plot(pH8.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
-pH8.LDres <- pcadapt(pH8.bed, 
-                     K = 2, # based on screeplot above
-<<<<<<< HEAD
-                     LD.clumping = list(size = 150, thr = 0.1),  # based clump4me result
-                     min.maf= 0.05)
- 
-=======
-                     LD.clumping = list(size = 450, thr = 0.1),  # based clump4me result
-                     min.maf= 0.05)
-plot(pH8.LDres, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
-plot(pH8.LDres, option = "manhattan")
-plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen)
-
-
-pdf(paste0(path,"AllJuv_pH8_interceptLDFILT.pdf"),width=8, height = 6)
-ggarrange(
-  plot(pH8.LDdiagnostics, option = "screeplot"),
-  plot(pH8.LDres, option = "screeplot"),
-  plot(pH8.LDres, option = "manhattan"),
-  plot(pH8.LDres, option = "scores", pop = pH8_strata$Gen),
-  nrow = 2, ncol = 2
-)
-dev.off()
-
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
-
-
-## pH 75
-test <- as.data.frame(clump4me(data         = pH75.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = pH75))
-plot(output_PC1~input_Window , data=test) # window of 100?
-pH75.LDdiagnostics <- pcadapt(pH75.bed, 
-                            K = 20, 
-                            LD.clumping = list(size = 100, thr = 0.1), # based clump4me result
-                            min.maf= 0.05)
-<<<<<<< HEAD
-plot(pH75.LDdiagnostics, option = "screeplot") # Lets try and use K = 2 after SNP thinning 
-pH75.LDres <- pcadapt(pH75.bed, 
-                     K = 2, # based on screeplot above
-                     LD.clumping = list(size = 100, thr = 0.1),  # based clump4me result
-                     min.maf= 0.05)
-
-
-
-## F1 v F3 low v Mod
-test <- as.data.frame(clump4me(data         = F1F3.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minimum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F1F3))
-plot(output_PC1~input_Window , data=test) # window of 1000?
-F1F3.LDdiagnostics <- pcadapt(F1F3.bed, 
-                            K = 20, 
-                            LD.clumping = list(size = 1000, thr = 0.1), # based clump4me result
-                            min.maf= 0.05)
-plot(F1F3.LDdiagnostics, option = "screeplot") # Lets try and use K = 6 after SNP thinning 
-F1F3.LDres <- pcadapt(F1F3.bed, 
-                     K = 6, # based on screeplot above
-=======
-plot(pH75.LDdiagnostics, option = "screeplot") # Lets try and use K = 8 after SNP thinning 
-pH75.LDres <- pcadapt(pH75.bed, 
-                     K = 8, # based on screeplot above
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
-                     LD.clumping = list(size = 100, thr = 0.1),  # based clump4me result
-                     min.maf= 0.05)
-
-pdf(paste0(path,"AllJuv_pH75_interceptLDFILT.pdf"),width=8, height = 6)
-ggarrange(
-  plot(pH75.LDdiagnostics, option = "screeplot"),
-  plot(pH75.LDres, option = "screeplot"),
-  plot(pH75.LDres, option = "manhattan"),
-  plot(pH75.LDres, option = "scores", pop = pH75_strata$Gen),
-  nrow = 2, ncol = 2
-)
-dev.off()
-```
 
 
 
