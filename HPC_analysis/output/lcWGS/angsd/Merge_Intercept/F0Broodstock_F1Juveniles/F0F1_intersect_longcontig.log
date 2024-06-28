@@ -1,0 +1,32 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --out plink_bed/F0F1_intersect_longcontig
+  --vcf F0F1_intersect_longcontigs.vcf.gz
+
+Hostname: node01.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/analysis/4_F0Broodstock_F1Juveniles/intersect/compress_merge/contig_filtered
+Start time: Wed Jun 26 10:07:07 2024
+
+Random number seed: 1719421627
+95104 MB RAM detected; reserving 47552 MB for main workspace.
+Allocated 35664 MB successfully, after larger attempt(s) failed.
+--vcf: plink_bed/F0F1_intersect_longcontig-temporary.bed +
+plink_bed/F0F1_intersect_longcontig-temporary.bim +
+plink_bed/F0F1_intersect_longcontig-temporary.fam written.
+2920 variants loaded from .bim file.
+105 people (0 males, 0 females, 105 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to plink_bed/F0F1_intersect_longcontig.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 105 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is exactly 1.
+2920 variants and 105 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to plink_bed/F0F1_intersect_longcontig.bed +
+plink_bed/F0F1_intersect_longcontig.bim +
+plink_bed/F0F1_intersect_longcontig.fam ... done.
+
+End time: Wed Jun 26 10:07:07 2024

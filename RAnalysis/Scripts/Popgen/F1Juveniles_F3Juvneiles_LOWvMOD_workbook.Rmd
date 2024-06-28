@@ -1,0 +1,1116 @@
+---
+title: "F0_F1_Popgen"
+author: "Samuel Gurr"
+date: "2024-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+
+```
+
+#### load packages
+
+```{r load packages we need}
+library(vcfR)
+library(hierfstat)
+library(pcadapt)
+library(adegenet)
+library(qqman)
+
+# library(pegas)
+# library(LDlinkR)
+# library(ldsep) # need a Seqinfo object  Airradians not registered in package
+# library(updog) # need a Seqinfo object  Airradians not registered in package
+# library(VariantAnnotation) # need a Seqinfo object  Airradians not registered in package
+```
+
+
+## load files
+
+* vcf.gz files 
+
+  - merged: contains all SNPs, using ```bcftools merge``` those that overlap between files and those that did not 
+    *NOTE*: merge contains those that intersect and those that did not, however note that when there are >2 input files
+    the intersection can be partial 
+    
+    
+  - intersect: contains only SNPs *shared* amoung **all** *input vscf files* using ```bcftools isec -n=<#input>```
+  
+  
+```{r load vcf and bed files}
+
+path = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
+
+# INTERSECT: ALL f1 and f3 juveniles from Low and Moderate OA
+
+# MERGED: ALL f1 and f3 juveniles from Low and Moderate OA
+
+F1F3_merged.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge.vcf.gz")) # 96,703 variants
+F1F3_merged.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD.bed"), type = "bed") # 96,703 variants
+
+# MERGED: ALL f1 and f3 juveniles from Low and Moderate OA, LONG CONTIGS ONLY
+
+F1F3_merged_longcontigs.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge_longcontigs.vcf.gz")) # 48,120 variants
+F1F3_merged_longcontigs.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_merge_longcontig.bed"), type = "bed") # 48,120 variants
+
+```
+
+* strata - metadata
+
+  - note, this must be in the same order at which files were analyzed with angsd , these are the columns in the vcf file 
+  you can get this information using ```bcftools query -l``` call, thats what I did to output the strata.csv file, this raw 
+  file is then changes to a dataframe below with custom calls based on the raw input bam names.. tedious yet one and done!
+  
+  - can call subsets of this strata for the files with just F0brood and pH75 and F0 brood and pH , okay? okay.
+  
+```{r load and format strata as metadata}
+
+F1F3Juveniles_low.mod_strata <- read.csv("output/lcWGS/angsd/IDs/F1F3_Juveniles_LOWvMOD_strata.csv", sep =',', header=FALSE) %>% 
+                                dplyr::rename(Individual = V1) %>% 
+                                dplyr::mutate(Individual = gsub('*./','',Individual),
+                                      Gen = dplyr::case_when(grepl("F3", Individual) ~ "F3",
+                                                                     .default = "F1"),
+                                      Treatment       = dplyr::case_when(
+                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
+                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
+                                dplyr::mutate(Gen_Treatment = paste0(Gen,'_',Treatment))
+
+```
+
+
+
+# Screeplot of bed file
+
+-   what to look for?   the 'elbow' of this plot infers the number of descriptive principle components
+
+-  assign the K value and rerun as '.res'
+
+- Manhattan plot - regions involved in adaptation OR low recombination (high Linkage disequilibrium) affecting ascertainment of population structure,
+when working with whole genome data we need to perform SNP thinning to acocutn for LD
+
+  - What does LD look like on a Manhatttan plot? A regoin on the x axis SNPs with the same Y value (-log10 pvalues), appears 
+  as a bar (many) or pair of points close/touching on the same Y-axis plane
+
+
+```{r screeplot, Intersect F0 broodstock F1 juveniles}
+
+# MERGE DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+## F1 and F3 Juveniles, all data
+## data: F1F3_merged.bed
+F1F3_merged.diagnostic      <- pcadapt(F1F3_merged.bed, K = 20)
+plot(F1F3_merged.diagnostic, option = "screeplot") # looks like 7
+F1F3_merged.res             <- pcadapt(F1F3_merged.bed, K = 5) # assign
+plot(F1F3_merged.res, option = "manhattan")
+
+## F1 and F3 Juveniles, all data
+## data: F1F3_merged_longcontigs.bed
+F1F3_merged_longcontigs.diagnostic      <- pcadapt(F1F3_merged_longcontigs.bed, K = 20)
+plot(F1F3_merged_longcontigs.diagnostic, option = "screeplot") # looks like 7
+F1F3_merged_longcontigs.res             <- pcadapt(F1F3_merged_longcontigs.bed, K = 5) # assign
+plot(F1F3_merged_longcontigs.res, option = "manhattan")
+
+## look at both 
+ggarrange(
+  plot(F1F3_merged.res, option = "manhattan"),
+  plot(F1F3_merged_longcontigs.res, option = "manhattan"), nrow = 2
+)
+```
+
+### Is there LD in my data, and is it problematic? (Evaluating loadings)
+
+* To evaluate if LD might be an issue for your dataset... display the loadings (contributions of each SNP to the PC)
+  
+  - what do i look for? If the loadings are clustered in a single or several genomic regions.
+
+```{r is there LD}
+
+par(mfrow = c(2, 2))
+for (i in 1:4) 
+  plot(F1F3_merged.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+
+
+
+par(mfrow = c(2, 2))
+for (i in 1:4) 
+  plot(F1F3_merged_longcontigs.res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+
+```
+
+### Linkage disequilibrium thinning using ```pcadapt```
+
+- ```size``` = window size (default 200 SNPs), window radius of which SNPs are lumped 
+
+- ```thr``` = r^2 threshold (default 0.1, correlation threshold 
+
+
+* Lets write a function to **optimize** ```LD.cliumping```
+
+```{r clump4me}
+
+clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
+  
+        # For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+        outputfilename      <- data.frame()  # start dataframe 
+        loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
+        colnames(loop.table)<-c('output_PC1', 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
+        LD.window_loop      <- seq(50,1000, by=50) # run the loop for CPM from 1 - 10 (counts per million) 
+        LD.window_loop      <- data.frame(LD.window_loop)
+        
+        
+        for (i in 1:nrow(LD.window_loop)) {
+          
+          LD.window <- LD.window_loop[i,1]
+          res       <- pcadapt(input = data, 
+                         K = LD.K, 
+                         LD.clumping = list(size = LD.window, 
+                                            thr = LD.thr),
+                         min.maf= LD.minMaf)  
+        
+          loop.table$input_MinMaf    = LD.minMaf
+          loop.table$input_Window    = LD.window
+          loop.table$input_Threshold = LD.thr
+          loop.table$input_NumPCAs   = LD.K
+          loop.table$output_PC1      = abs(mean(res$scores[,1]))
+        
+            
+          # df             <- data.frame(loop.table) # name dataframe for this singl e row
+          outputfilename <- rbind(outputfilename,loop.table) #bind to a cumulative list dataframe
+          #print(df_total) # print to monitor progress
+        }
+        
+        return(outputfilename)
+}
+```
+
+```{r run clump4me choose settings and run}
+
+library(ggpubr)
+
+# MERGE DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# all data
+test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
+                             LD.thr         = 0.1, # r squares
+                             LD.K           = 4, # number of PCAs
+                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
+                             outputfilename = F1F3_merged_LD))
+plot(output_PC1~input_Window , data=test) # window of 250
+F1F3_merged.LDdiagnostics <- pcadapt(F1F3_merged.bed, 
+                                                K = 20, LD.clumping = list(size = 850, thr = 0.1),
+                                                min.maf= 0.05)
+plot(F1F3_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
+F1F3_merged.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
+                                        K = 8, 
+                                        LD.clumping = list(size = 850, thr = 0.1), 
+                                        min.maf= 0.05)
+ggarrange( (plot(F1F3_merged.res, option = "manhattan")),
+           (plot(F1F3_merged.LDres, option = "manhattan")),nrow=2)
+
+# long contigs
+test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
+                             LD.thr         = 0.1, # r squares
+                             LD.K           = 4, # number of PCAs
+                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
+                             outputfilename = F1F3_merged_LD))
+plot(output_PC1~input_Window , data=test) # window of 250
+F0B_F1JuvAll_intersect.LDdiagnostics <- pcadapt(F0B_F1JALL_intersect.bed, 
+                                                K = 20, LD.clumping = list(size = 250, thr = 0.1),
+                                                min.maf= 0.05)
+plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
+F0B_F1JuvAll_intersect.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
+                                        K = 7, 
+                                        LD.clumping = list(size = 250, thr = 0.1), 
+                                        min.maf= 0.05)
+ggarrange( (plot(F0B_F1JuvAll_intersect.res, option = "manhattan")),
+           (plot(F0B_F1JuvAll_intersect.LDres, option = "manhattan")),nrow=2)
+
+
+
+```
+
+
+```{r F0B_F1JuvMODERATE qqman manhattan plots}
+
+
+pH8Results_qqman            <- as.data.frame(matrix(nrow=nrow(pH8.vcf_tidy$fix), ncol=4)) 
+colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
+pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>% 
+                                    dplyr::mutate(
+                                      SNP = paste0(pH8.vcf_tidy$fix$CHROM, '_',pH8.vcf_tidy$fix$POS),
+                                      CHR = as.numeric(extract_numeric(pH8.vcf_tidy$fix$CHROM)),
+                                      BP  = pH8.vcf_tidy$fix$POS,
+                                      P   = pH8.LDres$pvalues
+                                    ) %>% na.omit()
+pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P) > -log(0.001))
+
+
+
+manhattan( (pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P))),
+            annotatePval = 0.001)
+
+
+library(tidyr)
+library(dplyr)
+don <- pH8Results_qqman %>% 
+  
+  # Compute chromosome size
+  group_by(CHR) %>% 
+  summarise(chr_len=max(BP)) %>% 
+  
+  # Calculate cumulative position of each chromosome
+  mutate(tot=cumsum(chr_len)-chr_len) %>%
+  select(-chr_len) %>%
+  
+  # Add this info to the initial dataset
+  left_join(pH8Results_qqman, ., by=c("CHR"="CHR")) %>%
+  
+  # Add a cumulative position of each SNP
+  arrange(CHR, BP) %>%
+  mutate( BPcum=BP+tot)
+
+axisdf = don %>%
+  group_by(CHR) %>%
+  summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
+
+ggplot(don, aes(x=BPcum, y=-log10(P))) +
+    
+    # Show all points
+    geom_point( aes(color=as.factor(CHR)), alpha=0.8, size=1.3) +
+    scale_color_manual(values = rep(c("grey", "skyblue"), length(unique(don$CHR)) )) +
+    
+    # custom X axis:
+    scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
+    scale_y_continuous(expand = c(0, 0) ) +     # remove space between plot area and x axis
+  
+    # Custom the theme:
+    theme_bw() +
+    theme( 
+      legend.position="none",
+      panel.border = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    )
+
+
+
+
+```
+
+```{r}
+library(ggpubr)
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+par(mfrow = c(1, 2))
+for (i in 1:2)
+  plot(F0B_F1JuvAll_intersect.LDres$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+
+plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen)
+plot(F0B_F1JuvAll_intersect.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)
+plot(F0B_F1JuvAll_intersect.LDres , option = "manhattan")
+
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+## all
+ggarrange( (plot(F0B_F1JuvAll_merged.LDres, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment)),
+           (plot(F0B_F1JuvAll_merged.LDres , option = "manhattan")),
+         nrow = 2)
+
+## pH 8 LOW
+ggarrange( (plot(F0B_F1JLOW_merged.LDres, option = "scores", pop = F0F1_strata_pH8$Gen)),
+           (plot(F0B_F1JLOW_merged.LDres , option = "manhattan")),
+         nrow = 2)
+
+## pH 75 MODERATE
+ggarrange( (plot(F0B_F1JMODERATE_merged.LDres, option = "scores", pop = F0F1_strata_pH75$Gen)),
+           (plot(F0B_F1JMODERATE_merged.LDres , option = "manhattan")),
+         nrow = 2)
+
+
+```
+
+This might look normal, but you’ll notice that two of the populations are tightly grouped around PC1. We should check too make sure this pattern isn’t being driven by a linkage in the genome. To do this, we can look at the loading scores of the PCs. Loading scores show how much a particular SNP factors into a PC.
+
+```{r View PCAs 1 through 4}
+
+# pH 8
+par(mfrow = c(2, 2))
+for (i in 1:4) {
+  plot(pH8_res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+}
+
+
+# pH 75 - this one looks wierd..
+par(mfrow = c(2, 2))
+for (i in 1:4) {
+  plot(pH75_res$loadings[, i], pch = 19, cex = .3, ylab = paste0("Loadings PC", i))
+}
+```
+
+# Linkage disequilibrium
+
+-   Linkage Disequilibrium can affect ascertainment of population structure (Abdellaoui et al. 2013). Users analyzing dense data such as SNP Array data should account for LD in their PCAs and PCA-based genome-scans.
+
+-   PCAdapt has a built in feature that allows us to clump SNPs by LD, reducing the data to a more informative subset.
+
+```{r address the LD baby!}
+library(ggpubr)
+
+
+# LD_clumping: 
+#   Default is NULL and doesn't use any SNP thinning. If you want to use SNP thinning, provide a named list with parameters $size and $thr which corresponds respectively to the window radius and the squared correlation threshold. A good default value would be list(size = 500, thr = 0.1)
+  
+
+
+# INTERSECT DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_intersect.bed,
+
+F0B_F1JALL_intersect_LD <- pcadapt(F0B_F1JALL_intersect.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
+plot(F0B_F1JALL_intersect_LD, option = "screeplot") # looks like 2 PCAs
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # 
+plot(F0B_F1JALL_intersect_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # 
+
+
+# MERGED DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JuvAll_merge.bed, F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JALL_merged_LD <- pcadapt(F0B_F1JALL_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
+plot(F0B_F1JALL_merged_LD, option = "screeplot") # looks like 2 PCAs
+plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen) # F2 is wonky AF
+plot(F0B_F1JALL_merged_LD, option = "scores", pop = F0BroodF1Juveniles_strata$Gen_Treatment) # F2 is wonky AF
+
+
+## * F0 Broodstock w/ F1 Juveniles LOW
+F0B_F1JLOW_merge_LD <- pcadapt(F0B_F1JLOW_merged.bed, K = 10, LD.clumping = list(size = 500, thr = 0.1))
+plot(F0B_F1JLOW_merge_LD, option = "screeplot") # looks like 6
+plot(F0B_F1JLOW_merge_LD, option = "scores", pop = F0F1_strata_pH8$Gen) #
+
+
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+F0B_F1JMODERATE_merge_LD <- pcadapt(F0B_F1JMODERATE_merged.bed, K = 10, LD.clumping = list(size = 1000, thr = 0.2))
+plot(F0B_F1JMODERATE_merge_LD, option = "screeplot") # looks like 2.5? PCAs
+plot(F0B_F1JMODERATE_merge_LD, option = "scores", pop = F0F1_strata_pH75$Gen) #
+
+
+
+
+# cxompare some plots to see!
+library(ggpubr)
+
+ggarrange(
+  
+      (plot(F0B_F1JuvAll_merge.res, option = "scores", 
+            pop = F0BroodF1Juveniles_strata$Gen_Treatment)),
+      
+      (plot(F0B_F1JALL_merged_LD, option = "scores", 
+            pop = F0BroodF1Juveniles_strata$Gen_Treatment))
+        )
+
+
+ggarrange(
+  
+      (plot(F0B_F1JuvLOW_merge.res, option = "scores", 
+            pop = F0F1_strata_pH8$Gen)),
+      
+      (plot(F0B_F1JLOW_merge_LD, option = "scores", 
+            pop = F0F1_strata_pH8$Gen))
+        )
+```
+
+
+-   Interestingly, we see that compensating for LD, the four groups are more distinct, but not by treatment
+
+-   what other attributes could be responsible for this separation?
+
+    -   we had 4 replicates per treatment (A, B, C, D), however the buckets were randomly distributed at random and rotated. Perhaps there was a tank position during a critical stage (on the seawater table) that caused this separation? Unforuntatley we do not have replicate info for the broodstock, as these were pooled from each replicate and positions on the spawning table.
+
+    -   Look at the F2 Juveniles (here we have A-D information) to see if this arises also
+
+
+## Build genid objects
+
+```{r}
+# create genind object from vcf file - use the LD object 
+
+# INTERSECT DATA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_intersect.vcf
+F0B_F1JALL_intersect.genind       <- vcfR2genind(F0B_F1JALL_intersect.vcf)
+F0B_F1JALL_intersect.vcf_FILTERED <- F0B_F1JALL_intersect.vcf[!is.na(F0B_F1JALL_intersect_LD$loadings[,1]),]
+F0B_F1JALL_intersect.genind_LD    <- vcfR2genind(F0B_F1JALL_intersect.vcf_FILTERED)
+
+
+strata(F0B_F1JALL_intersect.genind) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_intersect.genind) <- ~Gen_Treatment
+
+strata(F0B_F1JALL_intersect.genind_LD) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_intersect.genind_LD) <- ~Gen_Treatment
+
+
+F0B_F1JALL_intersect_tab    <- tab(F0B_F1JALL_intersect.genind, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_intersect_pca1   <- dudi.pca(F0B_F1JALL_intersect_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_intersect_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_intersect_pca1$li, pop(F0B_F1JALL_intersect.genind))
+
+
+F0B_F1JALL_intersect.genind_LD_tab  <- tab(F0B_F1JALL_intersect.genind_LD, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_intersect.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_intersect.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_intersect.genind_LD_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_intersect.genind_LD_pca1$li, pop(F0B_F1JALL_intersect.genind_LD))
+
+
+
+# MERGED DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## data: F0B_F1JALL_merged.vcf, F0B_F1JLOW_merged.vcf, F0B_F1JMODERATE_merged.vcf
+
+## * F0 Broodstock w/ F1 Juveniles ALL
+F0B_F1JALL_merged.genind       <- vcfR2genind(F0B_F1JALL_merged.vcf) # 81,325
+F0B_F1JALL_merged.vcf_FILTERED <- F0B_F1JALL_merged.vcf[!is.na(F0B_F1JALL_merged_LD$loadings[,1]),]
+F0B_F1JALL_merged.genind_LD    <- vcfR2genind(F0B_F1JALL_merged.vcf_FILTERED) # 18,405 
+
+
+strata(F0B_F1JALL_merged.genind) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_merged.genind) <- ~Gen_Treatment
+
+strata(F0B_F1JALL_merged.genind_LD) <- F0BroodF1Juveniles_strata
+setPop(F0B_F1JALL_merged.genind_LD) <- ~Gen_Treatment
+
+
+F0B_F1JALL_merged_tab    <- tab(F0B_F1JALL_merged.genind, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_merged_pca1   <- dudi.pca(F0B_F1JALL_merged_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_merged_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_merged_pca1$li, pop(F0B_F1JALL_merged.genind))
+
+
+F0B_F1JALL_merged.genind_LD_tab  <- tab(F0B_F1JALL_merged.genind_LD, freq = TRUE, NA.method = "mean")
+F0B_F1JALL_merged.genind_LD_pca1 <- dudi.pca(F0B_F1JALL_merged.genind_LD_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(F0B_F1JALL_merged.genind_LD_pca1$eig[1:25], 
+        main = "PCA eigenvalues", 
+        col = heat.colors(25))
+s.class(F0B_F1JALL_merged.genind_LD_pca1$li, pop(F0B_F1JALL_merged.genind_LD))
+
+
+
+
+
+
+
+
+
+
+
+
+## * F0 Broodstock w/ F1 Juveniles LOW
+F0B_F1JLOW_merged.genind         <- vcfR2genind(F0B_F1JLOW_merged.vcf)
+
+## * F0 Broodstock w/ F1 Juveniles MODERATE
+F0B_F1JMODERATE_merged.genind    <- vcfR2genind(F0B_F1JMODERATE_merged.vcf)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pH8_genind               <- vcfR2genind(F1F2_pH8_vcf)
+F1F2_pH8_vcf_ld_filtered <- F1F2_pH8_vcf[!is.na(pH8_res_LD$loadings[,1]),]
+pH8_genind_ld_filtered   <- vcfR2genind(F1F2_pH8_vcf_ld_filtered)
+
+pH75_genind               <- vcfR2genind(F1F2_pH75_vcf)
+F1F2_pH75_vcf_ld_filtered <- F1F2_pH75_vcf[!is.na(pH75_res_LD$loadings[,1]),]
+pH75_genind_ld_filtered   <- vcfR2genind(F1F2_pH75_vcf_ld_filtered)
+
+# assign metadata to these loci 
+
+strata(pH8_genind) <- F1_F2_pH8_strata_df
+setPop(pH8_genind) <- ~Gen
+
+strata(pH8_genind_ld_filtered) <- F1_F2_pH8_strata_df
+setPop(pH8_genind_ld_filtered) <- ~Gen
+
+
+
+
+strata(pH75_genind) <- F1_F2_pH75_strata_df
+setPop(pH75_genind) <- ~Gen
+
+strata(pH75_genind_ld_filtered) <- F1_F2_pH75_strata_df
+setPop(pH75_genind_ld_filtered) <- ~Gen
+
+# PCA analysis 
+pH8_tab          <- tab(pH8_genind, freq = TRUE, NA.method = "mean")
+pH8_pca1         <- dudi.pca(pH8_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH8_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
+s.class(pH8_pca1$li, pop(pH8_genind))
+
+
+pH8_tab_ld_filt  <- tab(pH8_genind_ld_filtered, freq = TRUE, NA.method = "mean")
+pH8_ld_filt_pca1 <- dudi.pca(pH8_tab_ld_filt, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH8_ld_filt_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
+s.class(pH8_ld_filt_pca1$li, pop(pH8_genind_ld_filtered))
+title("PCA of dataset\naxes 1-2")
+add.scatter.eig(pH8_ld_filt_pca1$eig[1:20], 3,1,2)
+
+
+
+
+# PCA analysis 
+pH75_tab          <- tab(pH75_genind, freq = TRUE, NA.method = "mean")
+pH75_pca1         <- dudi.pca(pH75_tab, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH75_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
+s.class(pH75_pca1$li, pop(pH75_genind))
+
+
+pH75_tab_ld_filt  <- tab(pH75_genind_ld_filtered, freq = TRUE, NA.method = "mean")
+pH75_ld_filt_pca1 <- dudi.pca(pH75_tab_ld_filt, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pH75_ld_filt_pca1$eig[1:25], main = "PCA eigenvalues", col = heat.colors(25))
+s.class(pH75_ld_filt_pca1$li, pop(pH75_genind_ld_filtered))
+title("PCA of dataset\naxes 1-2")
+add.scatter.eig(pH75_ld_filt_pca1$eig[1:20], 3,1,2)
+
+
+```
+
+
+
+```{r load strata}
+F1_Juv_strata_df # we will us this for the intersected juvenile data above
+F1_F2_strata_df # for the merged data  we already laoded and fomatted this! THIS IS NOT NORMALIZED AND IS MERGED FOR ALL ALLELES!
+F3_Juv_strata_df # 147 rows!
+```
+
+## build genind
+* use adegent - genind class is a dataframe compatible iwth adegent based on usual genetic markers
+
+```{r genid build}
+F1F2_Juveniles_genid <- vcfR2genind(F1F2_Juveniles_vcf)
+F1_F2_strata_df$pop <- paste0(F1_F2_strata_df$Gen, F1_F2_strata_df$Treatment)
+strata(F1F2_Juveniles_genid) <- F1_F2_strata_df
+setPop(F1F2_Juveniles_genid) <- ~pop
+
+
+
+# F1 Low and moderate interect genes only 
+F1_Juveniles_Intersect_genid <- vcfR2genind(F1_Juveniles_Intersect_vcf)
+F1_Juv_strata_df$pop <- paste0(F1_Juv_strata_df$Gen, F1_Juv_strata_df$Treatment)
+strata(F1_Juveniles_Intersect_genid) <- F1_Juv_strata_df
+setPop(F1_Juveniles_Intersect_genid) <- ~pop
+
+
+
+
+
+# F1 and F2 low nad moderate interect genes only 
+F1F2_Juveniles_Intersect_genid <- vcfR2genind(F1F2_Juveniles_Intersect_vcf)
+F1_F2_strata_df$pop <- paste0(F1_F2_strata_df$Gen, F1_F2_strata_df$Treatment)
+strata(F1F2_Juveniles_Intersect_genid) <- F1_F2_strata_df
+setPop(F1F2_Juveniles_Intersect_genid) <- ~pop
+
+
+# F3 (low mod and high)  interect genes only 
+F3_Juveniles_Intersect_genid <- vcfR2genind(F3_Juveniles_Intersect_vcf)
+F3_Juv_strata_df$pop <- paste0(F3_Juv_strata_df$Gen, F3_Juv_strata_df$Treatment)
+strata(F3_Juveniles_Intersect_genid) <- F3_Juv_strata_df
+setPop(F3_Juveniles_Intersect_genid) <- ~Treatment
+
+# All Juvneiles (low mod and high)  interect genes only 
+AllJuveniles_Intersect_genid <- vcfR2genind(AllJuveniles_intersect_vcf)
+AllJuveniles_strata_df$pop <- paste0(AllJuveniles_strata_df$Gen, AllJuveniles_strata_df$Treatment)
+strata(AllJuveniles_Intersect_genid) <- AllJuveniles_strata_df
+setPop(AllJuveniles_Intersect_genid) <- ~pop
+
+
+# F0 - F1 Merged and Intersect
+F0F1_Merged_genid <- vcfR2genind(F0F1_merged.vcf) # 81,325 loci
+F0F1_merged.strata$pop <- paste0(F0F1_merged.strata$Gen, F0F1_merged.strata$Treatment)
+strata(F0F1_Merged_genid) <- F0F1_merged.strata
+setPop(F0F1_Merged_genid) <- ~pop
+
+
+
+F0F1_Intersect_genid <- vcfR2genind(F0F1_intersect.vcf) # 6,048 loci;
+F0F1_merged.strata$pop <- paste0(F0F1_merged.strata$Gen, F0F1_merged.strata$Treatment)
+strata(F0F1_Intersect_genid) <- F0F1_merged.strata
+setPop(F0F1_Intersect_genid) <- ~pop
+
+
+F0F1_pH75_Intersect_genid <- vcfR2genind(F0BroodF1JuvenilespH75.vcf) # 6,048 loci;
+F0F1_strata_phH75$pop <- paste0(F0F1_strata_phH75$Gen, F0F1_strata_phH75$Treatment)
+strata(F0F1_pH75_Intersect_genid) <- F0F1_strata_phH75
+setPop(F0F1_pH75_Intersect_genid) <- ~pop
+
+
+F0F1_pH8_Intersect_genid <- vcfR2genind(F0BroodF1JuvenilespH8.vcf) # 6,048 loci;
+F0F1_strata_phH8$pop <- paste0(F0F1_strata_phH8$Gen, F0F1_strata_phH8$Treatment)
+strata(F0F1_pH8_Intersect_genid) <- F0F1_strata_phH8
+setPop(F0F1_pH8_Intersect_genid) <- ~pop
+
+
+```
+
+
+### Discriminant analysis of principle components (DAPC) 
+
+* find.clusters
+
+  - what is this all about? Investigating genetic diversity using multivarate aprpoches 
+  relies on synthetic variables build as linear combinations of alleles which relects the gnetic variation 
+  amoung the studied individuals - this allows us in turn to study the diversity beween groups of individuals.
+  One route is via genetic clusters where a standard multivariate ANOVA model is used 
+  
+  total variance = (variance between groups) + (variance within groups)
+  
+  - PCA focuses on the this total variance or global diveristy, overlooking the differences
+  between groups (as the sum of between and within!). 
+  
+  - DAPC optimizes the between group variance while minimizing the within group variance. 
+  Synthetic variables as discriminant functions show differenes between groups while minimizing variation within 
+  the cluster
+  
+  - Note: this is from the adagement tutorial - I am curious, does this DAPC and creation of 
+  discriminant functions *bias* the the outcome to focus on between-group variance? OR does it simply
+  remove the background to easily discern the present, yet shrouded between-group variance from heavy 
+  within-group variance? I hope my future self thinks this makes sence.. 
+  
+  
+```{r find clusters genind object}
+
+grp <- find.clusters(F3_Juveniles_Intersect_genid, max.n.clust=40)
+
+# graph of cumulated variance explained by the eigenvalues of the PCA
+# apart from computationa; time, no reason to keep a small number of components 
+# we can specify to retain PCs 
+table(pop(F3_Juveniles_Intersect_genid), grp$grp)
+
+
+
+# run the cluster filters onthe intersect data for F1 pH75 and 8
+grp_F1_Intersect <- find.clusters(F1_Juveniles_Intersect_genid, max.n.clust=40)
+table(pop(F1_Juveniles_Intersect_genid), grp_F1_Intersect$grp)
+table.value(table(pop(F1_Juveniles_Intersect_genid), grp_F1_Intersect$grp), 
+            col.lab=paste("inf", 1:20),
+            row.lab=paste("ori", 1:20))
+# DAPC using function dapc transforms data using PCA and runs discriminant analysis on the retained 
+# principle compoenents running on the inferred $grp groups
+dapc1 <- dapc(F3_Juveniles_Intersect_genid, grp_F1_Intersect$grp)
+scatter.dapc(dapc1, grp=F3_Juveniles_Intersect_genid$pop)
+?scatter.dapc
+scatter(dapc1, posi.da="topleft", bg="white",
+        grp=F3_Juveniles_Intersect_genid$pop,
+        pch=17:22, cstar=0,  scree.pca=TRUE,
+        posi.pca="bottomleft")
+
+scatter.dapc(dapc1,1,1, 
+        grp=F3_Juveniles_Intersect_genid$pop,
+        bg="white", scree.da=FALSE, legend=TRUE, solid=.4,
+        txt.leg=paste("Cluster",1:6))
+
+
+```
+
+
+## build genlight 
+
+* use adegent - genlight is a dataframe compatible with adegenet based on genome-wide SNP data
+```{r build genlight}
+F1F2_Juveniles_genlight <- vcfR2genlight(F1F2_Juveniles_vcf, n.cores = 4)
+
+```
+
+
+```{r}
+# pairwise Fst
+## wrapper for pegas pacakage
+F1F1_pH8_perloci.fst     <- Fst(as.loci(F0F1_pH8_Intersect_genid, pop=pop))
+F1F1_pH75_perloci.fst    <- Fst(as.loci(F0F1_pH75_Intersect_genid, pop=pop))
+
+F1F1_pH8_perloci.fst_NA  <- F1F1_pH8_perloci.fst %>% na.omit()
+F1F1_pH75_perloci.fst_NA <- F1F1_pH75_perloci.fst %>% na.omit()
+
+## wrapper for heirfstat
+mat.fst <- genet.dist(F1F2_Juveniles_genid) # (hierfstat): implements pairwise FST , which is also a Euclidean distance between populations.
+mat.fst
+is.euclid(mat.fst)
+
+?genet.dist
+
+# Fst using genet.dist
+# “Dch” By default, Cavalli-Sforza and Edwards Chord distance (eqn 6 in the reference) is returned. This distance is used as default since Takezaki & Nei (1996) found that it was the best to retrieve the relation among samples
+F1_intersect.fst      <- genet.dist(F1_Juveniles_Intersect_genid) # default is “Dch”
+F1_intersect.fstNei87 <- genet.dist(F1_Juveniles_Intersect_genid, method = "Nei87")
+
+
+
+F1F2_intersect.fst      <- genet.dist(F1F2_Juveniles_Intersect_genid) # default is “Dch”
+F1F2_intersect.fstNei87 <- genet.dist(F1F2_Juveniles_Intersect_genid, method = "Nei87")
+
+
+
+F3_intersect.fst      <- genet.dist(F3_Juveniles_Intersect_genid) # default is “Dch”
+F3_intersect.fstNei87 <- genet.dist(F3_Juveniles_Intersect_genid, method = "Nei87")
+
+
+
+AllJuveniles_intersect.fst      <- genet.dist(AllJuveniles_Intersect_genid) # default is “Dch”
+F3_intersect.fstNei87 <- genet.dist(AllJuveniles_Intersect_genid, method = "Nei87")
+
+
+
+F0F1_Merged.fst      <- genet.dist(F0F1_Merged_genid) # default is “Dch”
+F3_intersect.fstNei87 <- genet.dist(AllJuveniles_Intersect_genid, method = "Nei87")
+
+
+F0F1_Intersect.fst      <- genet.dist(F0F1_Intersect_genid) # default is “Dch”
+
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+-   F-statistics: a measure of genetic structure developed by Sewall Wright (1969, 1978). Related to statistical analysis of variance (ANOVA)
+
+    -   FST is the proportion of the total genetic variance contained in a subpopulation (the S subscript) relative to the total genetic variance (the T subscript). Values can range from 0 to 1. High FST implies a considerable degree of differentiation among populations.
+
+    -   FIS (inbreeding coefficient) is the proportion of the variance in the subpopulation contained in an individual. High FIS implies a considerable degree of inbreeding.
+
+    -   Related measures: q (theta) of Weir and Cockerham (1984) and GST of Nei (1973, 1978). [See Weir, 1996; Avise, Box 6.3, p. 206].
+
+
+```{r}
+getwd()
+my_vcf <- read.vcfR("C:/Users/samuel.gurr/Documents/F1_F2_Juveniles_Merged.vcf.gz")
+ld_filtered_vcf <- my_vcf[!is.na(res$loadings[,1]),]
+
+ld_filtered_vcf_LD <- my_vcf[!is.na(res_LD$loadings[,1]),]
+
+```
+
+-   Next, we will convert our vcfR file to a genlight input which can be used by the package adegenet. We will also use the strata and setPop function to enter population level information. Remember, we made the strata_df in the previous tutorial, but we will remake it here just in case.
+
+```{r}
+library(adegenet)
+library(hierfstat)
+mygl <- vcfR2genlight(ld_filtered_vcf_LD,n.cores =8)
+strata(mygl) <- strata_df
+setPop(mygl) <- ~Treatment
+
+#  glPca (adegenet): implements PCA for genome-wide SNP data stored as genlight
+# objects; see dedicated tutorial (genomics).
+
+myglPCA <- glPca(mygl)
+```
+
+
+```{r Fst}
+library(adegenet)
+# create genind object from vcf file - use the LD object 
+ld_genind <- vcfR2genind(my_vcf)
+# assign metadata to these loci 
+F1_F2_strata_df
+strata(ld_genind) <- F1_F2_strata_df
+setPop(ld_genind) <- ~Gen
+
+# pairwise Fst
+## wrapper for pegas pacakage
+Fst(as.loci(ld_genind))
+?Fst
+## wrapper for heirfstat
+mat.fst <- genet.dist(ld_genind) # (hierfstat): implements pairwise FST , which is also a Euclidean distance between populations.
+mat.fst
+is.euclid(mat.fst)
+
+
+
+# PCS analysis 
+X <- tab(ld_genind, freq = TRUE, NA.method = "mean")
+class(X) # "matrix" "array"
+dim(X) # 79 42782
+pca1 <- dudi.pca(X, scale = FALSE, scannf = FALSE, nf = 3)
+barplot(pca1$eig[1:50], main = "PCA eigenvalues", col = heat.colors(50))
+s.class(pca1$li, pop(ld_genind))
+title("PCA of F1 Juvenile dataset\naxes 1-2")
+add.scatter.eig(pca1$eig[1:20], 3,1,2)
+
+```
+
+Inbreeding 
+refers to an excess of homozygosity in a given individual due to the mating of
+genetically related parents. This excess of homozygosity is due to the fact that there are
+non-negligible chances of inheriting two identical alleles from a recent common ancestor.
+Inbreeding can be associated to a loss of fitness leading to ”inbreeding depression”. Typically,
+loss of fitness is caused by recessive deleterious alleles which have usually low frequency in
+the population, but for which inbred individuals are more likely to be homozygotes.
+
+```{r inbreeding}
+
+# use sepop to separate pops and explore inbreeding
+
+F1_Low <- seppop(ld_genind)$Low
+
+F1_Mod <- seppop(ld_genind)$Moderate
+
+# compute the mean inbreeding for each individual, and plot the resulting distribution
+F1_Low_temp <- inbreeding(F1_Low, N=100)
+F1_Mod_temp <- inbreeding(F1_Mod, N=100)
+
+# temp is a list of values sampled from the likelihood distribution of each individual; means
+# values are obtained for all individuals using sapply
+
+F1_Low_Fbar <- sapply(F1_Low_temp, mean)
+hist(F1_Low_Fbar, col="firebrick", main="Average inbreeding in F1 Low")
+
+
+# We can see that all  individuals  have higher inbreeding (>0.4).
+# We can recompute inbreeding for them, asking for the likelihood function to be  returned
+
+which(F1_Low_Fbar>0.4) # all of them
+F1_Low_F <- inbreeding(F1_Low, res.type="function")[which(F1_Low_Fbar>0.4)]
+
+plot(F1_Low_F$adapter_trim.201_querydupscoord.bam, 
+     main=paste("Inbreeding of individual",
+                names(F1_Low_F)),
+     xlab="Inbreeding (F)", 
+     ylab="Probability density")
+
+
+```
+
+
+-   Below, we use the PCA function of adegent to create a PCA.
+
+```{r}
+oyster.pca <- glPca(mygl, nf = 3)
+```
+
+-   Let’s look at how much variance each PC explains:
+
+```{r}
+barplot(100*oyster.pca$eig/sum(oyster.pca$eig),
+        col = heat.colors(50), 
+        main="PCA Variance Explained")
+title(ylab="Percent of variance\nexplained", 
+      line = 2)
+title(xlab="PC", 
+      line = 1)
+```
+
+-   We basically have TWO informative PCs here. Let’s plot the individuals on the first two PCs:
+
+```{r}
+myCol <- colorplot(oyster.pca$scores,oyster.pca$scores, 
+                   transp=TRUE, 
+                   cex=4)
+abline(h=0,
+       v=0, 
+       col="grey")
+add.scatter.eig(oyster.pca$eig[1:10],2,1,2, 
+                posi="bottomright", 
+                ratio=.16)
+```
+
+-   The plot above is combining information from the first 3 PCs to color dots, and using the first two for x,y coordinates. We can see possibly four groups across all PCs.
+
+-   We can also port this to ggplot and color by population:
+
+```{r}
+library(ggplot2)
+oyster.pca.df <- as.data.frame(oyster.pca$scores)
+oyster.pca.df$pop <- pop(mygl)
+cols <-c("#871a1a","#33A02C","#1F78B4")
+
+p <- ggplot(oyster.pca.df, aes(x=PC1, y=PC2, colour=pop)) 
+p <- p + geom_point(size=2)
+p <- p + stat_ellipse(level = 0.95, size = 1)
+p <- p + scale_color_manual(values = cols) 
+p <- p + geom_hline(yintercept = 0) 
+p <- p + geom_vline(xintercept = 0) 
+p <- p + theme_bw()
+
+p
+```
+
+# **DAPC**
+
+-   Discriminant analysis of Principal Components (DAPC), allows us to either infer groups or put in groups *a priori*. DAPC seeks to maximize between group variance while minimizing within group variance. I’ll show you how this works both ways below.
+
+### **Finding clusters**
+
+-   'Adegenet' has a built in method for inferring population groupings or clusters. It runs interactively, so this code block below won’t run on it’s own. You need to paste it into the Console.
+
+```{r}
+grp <- find.clusters(mygl, max.n.clust=10)
+# choose 40 for the number of OCs to retain
+```
+
+For the purpose of picking clusters, the more PCs the better. Pick any number greater than 40.
+
+We’d like to see an elbow here, where the lowest point would be the correct number. This doesn’t always work well for subtle structure. I’m going to pick 3 given the results above.
+
+```{r}
+grp <- find.clusters(mygl, max.n.clust=10, n.pca =100, n.clust =3)
+```
+
+We can make a simple table to see the assignments:
+
+```{r}
+table(pop(mygl), grp$grp)
+```
+
+
+<take some time to interpret what this means here!>
+
+## Discriminant Analysis
+
+This is another interactive function. Run in the console.
+
+```{r}
+oyster.dapc <- dapc(mygl, grp$grp)
+```
+
+**Now this is different than finding clusters. You can overload the analysis with two many PCs.** For this, you want to choose the lowest number that gets you > 60% of the variance. 
+  - I would choose 25 or 30.
+
+This is picking the number of discriminant functions. Because we put in four groups, there are only three.(check this if true with our data) Truly, only the first two are informative. Let’s pick 2.
+
+```{r}
+oyster.dapc <- dapc(mygl, n.pca = 25, n.da = 2, grp$grp)
+```
+
+Now, let’s plot the analysis
+
+```{r}
+scatter(oyster.dapc,col=cols,bg="white", solid=1)
+```
+
+We can also plot membership probabilities:
+
+```{r}
+compoplot(oyster.dapc, 
+          posi="bottom",
+          txt.leg=paste("Cluster", 1:3), 
+          lab="", 
+          ncol=4, 
+          xlab="individuals")
+```
+
+We can use ggplot to make this easier to read and put in the populations for each individual:
+
+```{r}
+library(tidyr)
+dapc.df <- as.data.frame(oyster.dapc$posterior)
+dapc.df$pop <- pop(mygl)
+dapc.df$indNames <- rownames(dapc.df)
+cols4 <-c("#871a1a","#33A02C","#1F78B4","#FDBF6F" )
+
+dapc.df <- pivot_longer(dapc.df, -c(pop, indNames))
+colnames(dapc.df) <- c("Original_Pop","Sample","Assigned_Pop","Posterior_membership_probability")
+
+p <- ggplot(dapc.df, aes(x=Sample, y=Posterior_membership_probability, fill=Assigned_Pop))
+p <- p + geom_bar(stat='identity') 
+p <- p + scale_fill_manual(values = cols4) 
+p <- p + facet_grid(~Original_Pop, scales = "free")
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+p <- p + ylab("Posterior membership probability")
+p
+```
+
+## DAPC with original populations
+
+Again, instead of inferring groups, we can use our original populations.
+
+```{r}
+oyster.dapc <- dapc(mygl, 
+                    n.pca = 25, 
+                    n.da = 2)
+scatter(oyster.dapc,
+        col = cols, 
+        cex = 2, 
+        legend = TRUE, 
+        clabel = F, 
+        posi.leg = "bottomleft", 
+        scree.pca = TRUE,
+        posi.pca = "topleft", 
+        cleg = 0.75, 
+        posi.da = "topright")
+```
+
+Let’s make this better with ggplot
+
+```{r}
+dapc.df <- as.data.frame(oyster.dapc$ind.coord)
+dapc.df$pop <- pop(mygl)
+dapc.df$indNames <- rownames(dapc.df)
+
+p <- ggplot(dapc.df, aes(x=LD1, 
+                         y=LD2, 
+                         colour=pop)) 
+p <- p + geom_point(size=2)
+p <- p + scale_color_manual(values = cols) 
+p <- p + geom_hline(yintercept = 0) 
+p <- p + geom_vline(xintercept = 0) 
+p <- p + theme_bw()+ xlab("DA 1") + ylab("DA 2")+ ggtitle("DAPC with populations as groups")
+
+p
+```
+
+**Works cited and acknowledgements**
+Code for this tutorial was adapted from the following sources:
+https://knausb.github.io/vcfR_documentation/
+https://grunwaldlab.github.io/Population_Genetics_in_R/gbs_analysis.html
+Documentation from the Adegenet R Package
