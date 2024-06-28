@@ -10,12 +10,21 @@ knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
 <<<<<<< HEAD
+<<<<<<< HEAD
 # knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
 knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 =======
 knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
 # knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 >>>>>>> 330d1b4c2e0f8f9e7342ae770fbf6f9a65be4880
+=======
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+# knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+=======
+# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+>>>>>>> 96298a93187dbf2d945062bca529290100b65058
+>>>>>>> 214fa44b371a13bca2ef83b7d5131affc2c7a2c5
 
 ```
 

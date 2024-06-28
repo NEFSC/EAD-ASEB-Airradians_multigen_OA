@@ -1,5 +1,5 @@
 ---
-title: "F0_F1_Popgen"
+title: "F1_F3_Juveniles_Popgen"
 author: "Samuel Gurr"
 date: "2024-02-04"
 output: html_document
@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
@@ -28,6 +28,7 @@ library(qqman)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
 # library(updog) # need a Seqinfo object  Airradians not registered in package
 # library(VariantAnnotation) # need a Seqinfo object  Airradians not registered in package
+
 ```
 
 
@@ -52,11 +53,13 @@ path = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
 # MERGED: ALL f1 and f3 juveniles from Low and Moderate OA
 
 F1F3_merged.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge.vcf.gz")) # 96,703 variants
+F1F3_merged.vcf_tidy   <- vcfR2tidy(F1F3_merged.vcf)
 F1F3_merged.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD.bed"), type = "bed") # 96,703 variants
 
 # MERGED: ALL f1 and f3 juveniles from Low and Moderate OA, LONG CONTIGS ONLY
 
 F1F3_merged_longcontigs.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge_longcontigs.vcf.gz")) # 48,120 variants
+# F1F3_merged_longcontigs.vcf_tidy   <- vcfR2tidy(F1F3_merged_longcontigs.vcf)
 F1F3_merged_longcontigs.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_merge_longcontig.bed"), type = "bed") # 48,120 variants
 
 ```
@@ -71,19 +74,20 @@ F1F3_merged_longcontigs.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_mer
   
 ```{r load and format strata as metadata}
 
-F1F3Juveniles_low.mod_strata <- read.csv("output/lcWGS/angsd/IDs/F1F3_Juveniles_LOWvMOD_strata.csv", sep =',', header=FALSE) %>% 
+F1F3Juveniles_low.mod_strata <- read.csv("output/lcWGS/angsd/IDs/F1F3_Juveniles_LOWvMOD_strata.csv", 
+                                         sep =',', header=FALSE) %>% 
                                 dplyr::rename(Individual = V1) %>% 
                                 dplyr::mutate(Individual = gsub('*./','',Individual),
                                       Gen = dplyr::case_when(grepl("F3", Individual) ~ "F3",
                                                                      .default = "F1"),
                                       Treatment       = dplyr::case_when(
-                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
-                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
+                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), 
+                                            Individual) ~ "Moderate",
+                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), 
+                                            Individual) ~ "Low")) %>% 
                                 dplyr::mutate(Gen_Treatment = paste0(Gen,'_',Treatment))
 
 ```
-
-
 
 # Screeplot of bed file
 
@@ -100,7 +104,7 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
 
 ```{r screeplot, Intersect F0 broodstock F1 juveniles}
 
-# MERGE DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# MERGE DATA :::::::::::::::::::::::::::::::::::::::::
 
 ## F1 and F3 Juveniles, all data
 ## data: F1F3_merged.bed
@@ -158,7 +162,7 @@ for (i in 1:4)
 
 clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
   
-        # For loop ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;;; #
+        # For loop :::::::::: #
         outputfilename      <- data.frame()  # start dataframe 
         loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
         colnames(loop.table)<-c('output_PC1', 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
@@ -237,6 +241,33 @@ ggarrange( (plot(F0B_F1JuvAll_intersect.res, option = "manhattan")),
 
 ```
 
+
+
+### Use the LD loadings to reduce the  vcf file 
+
+* ObjectiveL convert the large vcf to a smaller vcf , run the vcf tidy to create tidy object 
+
+  - why? we need this for qqman! 
+  
+
+```{r LD loadings reduce vcf files}
+
+pH8.vcf_LDfiltered  <- pH8.vcf[!is.na(pH8.LDres$loadings[,1]),] # 78,283 DOWN TO 21,555 variants
+pH75.vcf_LDfiltered <- pH75.vcf[!is.na(pH75.LDres$loadings[,1]),] # 54,315 DOWN TO 18,203 variants!
+
+```
+
+```{r convert LDfiltered vcf to vcf_tidy}
+
+pH8.vcf_LD_tidy <- vcfR2tidy(pH8.vcf_LDfiltered)
+pH75.vcf_LD_tidy <- vcfR2tidy(pH75.vcf_LDfiltered)
+
+```
+## Manhattan using qqman (tidyr vcf objects!)
+
+  * Objective: run the qqmanmanhattan plots on both res docs (with and without LD filtration!)
+
+  * datasets: pH8.vcf_tidy, pH75.vcf_tidy, pH8.vcf_LD_tidy, pH75.vcf_LD_tidy
 
 ```{r F0B_F1JuvMODERATE qqman manhattan plots}
 
@@ -339,7 +370,9 @@ ggarrange( (plot(F0B_F1JMODERATE_merged.LDres, option = "scores", pop = F0F1_str
 This might look normal, but you’ll notice that two of the populations are tightly grouped around PC1. We should check too make sure this pattern isn’t being driven by a linkage in the genome. To do this, we can look at the loading scores of the PCs. Loading scores show how much a particular SNP factors into a PC.
 
 ```{r View PCAs 1 through 4}
+getOption('timeout')
 
+df <- data.frame(nrow=10, ncol=1)
 # pH 8
 par(mfrow = c(2, 2))
 for (i in 1:4) {
