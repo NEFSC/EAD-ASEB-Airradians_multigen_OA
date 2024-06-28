@@ -1173,7 +1173,219 @@ Stats_SomaticMEAN_bfactor.all$About <- paste0("Somatic: one bfactor + mean data"
 ```
 
 
+# Dry Shell: b factor calc and plot
+```{r Shell b factor calc and plot}
+library(ggpmisc)
+# b factor for Shell? 
+LogDryShellvShell <- F2_dryweights_long %>% 
+                          dplyr::filter(measurement %in% c('Dry_Shell_weight_g', 'Shell_length_mm')) %>%
+                          # dplyr::group_by(measurement) %>% 
+                          tidyr::pivot_wider(
+                                              names_from = measurement,
+                                              values_from = value
+                          ) %>% 
+                          # dplyr::select(-row) %>% 
+                          dplyr::group_by(Age, pCO2, Tank_Replicate) %>%    
+                          dplyr::mutate(log10_Shell   = log10(Dry_Shell_weight_g),
+                                        log10_Length = log10(Shell_length_mm)) %>% 
+                          na.omit() %>% # we only have Shell for later life stage - omit rows without it
+                          dplyr::filter(!log10_Shell %in% '-Inf') # ommit instances when Shell weight == 0
 
+bfactorShell.Length.pCO2 <- LogDryShellvShell %>% ggplot(aes(x=log10_Length, y=log10_Shell, color = pCO2)) +
+                          geom_point() +
+                          ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                          ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                          theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())+ 
+                             scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                             values=c("forestgreen","darkorange2", "purple")) +
+                             scale_x_continuous(name ="log10_Length; in mm") +
+                             scale_y_continuous(name ="log10_Shell; in g)") +
+                             theme_classic() +
+                             theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                             ggtitle("Shell scaling: log10_Shell = log10_a + 
+                                      (b.factor * log10_Length)") +
+                             # geom_smooth(method = lm, color = 'red') +
+                             # ggpmisc::stat_poly_eq(parse=T, 
+                             #                       aes(label = paste(..eq.label.., ..rr.label.., 
+                             #                                       sep = "~~~")),
+                             #                          label.x.npc = "left") +
+                             facet_wrap(~pCO2)
+
+
+bfactorShell.Length.all <- LogDryShellvShell %>% ggplot(aes(x=log10_Length, y=log10_Shell)) +
+                          geom_point() +
+                          ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                          ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                          theme(panel.grid.major = element_blank(), 
+                                theme(panel.grid.major = element_blank(), 
+                                      panel.grid.minor = element_blank())) + 
+                             scale_x_continuous(name ="log10_Length; in mm") +
+                             scale_y_continuous(name ="log10_Shell; in g") +
+                             theme_classic() +
+                             theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                             ggtitle("Shell scaling: log10_Shell = log10_a + 
+                                      (b.factor * log10_Length)") #+
+                             # geom_smooth(method = lm, color = 'red') +
+                             # ggpmisc::stat_poly_eq(parse=T, 
+                             #                       aes(label = paste(..eq.label.., ..rr.label.., 
+                             #                                       sep = "~~~")),
+                             #                          label.x.npc = "left") 
+
+# call dataset - omit data without Shell weights
+F2_DryShell <- F2_dryweights %>% 
+    dplyr::select(Age, pCO2, Tank_Replicate, Dry_Shell_weight_g, Shell_length_mm) %>% 
+    na.omit()
+# call the mean Shell dry weight
+meanLength.all <- mean(F2_DryShell$Shell_length_mm) # 33.58173
+seLength.all   <- sd(F2_DryShell$Shell_length_mm)/sqrt(length((F2_DryShell$Shell_length_mm))) # 0.4933574
+# age range of animals 
+print(paste0('youngest = ', min(F2_DryShell$Age), '; oldest = ', max(F2_DryShell$Age)))
+#assign bfactors
+bLength.all  <- 2.95#
+bLength.low  <- 2.9#
+bLength.mod  <- 2.93 #3
+bLength.high <- 3.01#
+
+# standardize Shell dry weight using bfactors
+F2_DryShell.bfactor <- F2_DryShell %>% 
+                          dplyr::mutate(
+                           Shell_bFactorLength.all  =  ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.all))* # a
+                                                                    (meanLength.all^bLength.all) ) * 100,
+                           Shell_bFactorLength.pCO2 =  case_when(pCO2 == '500 μatm' ~
+                                                                   ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.low))* # a
+                                                                      (meanLength.all^bLength.low) ) * 100,
+                                                                 pCO2 == '800 μatm' ~ 
+                                                                   ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.mod))* # a
+                                                                      (meanLength.all^bLength.mod) ) * 100,
+                                                                 pCO2 == '1200 μatm' ~ 
+                                                                   ( (Dry_Shell_weight_g * (Shell_length_mm^-bLength.high))* # a
+                                                                      (meanLength.all^bLength.high) ) * 100
+                           ) # case when for pCO2 
+                          ) # mutate
+# pivot longer and plot 
+F2_DryShell.bfactor.long <- F2_DryShell.bfactor %>% 
+                              dplyr::select(-Shell_length_mm) %>% 
+                              tidyr::pivot_longer(
+                                cols = c(Dry_Shell_weight_g, Shell_bFactorLength.all, Shell_bFactorLength.pCO2),
+                                names_to = "measurement",
+                                values_to = "value"
+                              )
+# means by replicate tank 
+F2_DryShell.bfactor.long.MEANS <- F2_DryShell.bfactor.long %>% 
+                                    summarySE(measurevar="value", 
+                                               groupvars=c("Age","pCO2", "Tank_Replicate", "measurement")) %>% 
+                                    dplyr::arrange(as.numeric(Age))
+# mmeans master - median for E-H as A-D!
+F2_DryShell.bfactor.long.MEANS_master <- F2_DryShell.bfactor.long.MEANS %>%  # noew convert and resummarize by tank
+                        # dplyr::mutate(Tank_Replicate = case_when(
+                        #               Tank_Replicate == 'E' ~ 'A', #convert E to A
+                        #               Tank_Replicate == 'F' ~ 'B', #convert F to B
+                        #               Tank_Replicate == 'G' ~ 'C', #convert G to C
+                        #               Tank_Replicate == 'H' ~ 'D', #convert H to D
+                        #               .default = (as.character(Tank_Replicate)) # for cases A-D, keep em my mans
+                        #             )) %>% 
+                        summarySE(measurevar="value", 
+                                  groupvars=c("Age","pCO2", "Tank_Replicate", "measurement")) %>% # summarize again
+                        dplyr::arrange(as.numeric(Age), measurement, pCO2, Tank_Replicate)
+  
+Shell_bfactor.MeanSE <-ggplot(F2_DryShell.bfactor.long.MEANS_master,
+                                 aes(x=factor(Age), 
+                                     y=value, 
+                                     colour=factor(pCO2)),
+                                      stat="identity") +
+                             scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                             values=c("forestgreen","darkorange2", "purple")) +
+                           geom_point(aes(colour = pCO2), 
+                                            position = position_dodge2(width = 0.5)) + 
+                           stat_summary(fun.y="mean", size = 0.8,
+                                              position = position_dodge2(width = 0.5)) +
+                           stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                              fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                              geom = 'errorbar', width = 0.25, size = 1,
+                                              position = position_dodge2(width = 0.5)) + 
+                           labs(title="Mean + SE data", 
+                                                      x ="Age (dpf)", 
+                                                      y = "value") +
+                          # scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                # axis.title.y=element_blank(),
+                                # axis.title.x=element_blank(),
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none") +
+                          facet_wrap(~measurement, scales = "free_y")
+
+
+pdf("Output/DryWeights/F2/length_scaling/Dry_Shell_byLength.pdf", height=8, width =8)
+ggarrange(bfactorShell.Length.all, bfactorShell.Length.pCO2,Shell_bfactor.MeanSE, nrow=3)
+dev.off()
+
+
+Shell_final_plot <- F2_DryShell.bfactor.long.MEANS_master %>% 
+                          dplyr::filter(measurement %in% 'Shell_bFactorLength.pCO2') %>% 
+                          ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
+                             scale_colour_manual(breaks=c("500 μatm", "800 μatm", "1200 μatm"), 
+                                             values=c("forestgreen","darkorange2", "purple")) +
+                          stat_summary(fun.y="mean", size = 0.8,
+                                        position = position_dodge2(width = 0.25)) +
+                          stat_summary(fun.min = function(x) mean(x) - sd(x)/sqrt(length(x)), 
+                                        fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
+                                        geom = 'errorbar', width = 0.25, size = 1,
+                                        position = position_dodge2(width = 0.5)) + 
+                          labs(title="Shell: Length b factor pCO2", x ="Age (dpf)", y = "Dry Shell (mg Lengthbfactor_pCO2)") +
+                          theme_classic() +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                                axis.text=element_text(size=8),
+                                plot.title = element_text(size=12),
+                                legend.position="none")
+```
+
+# Dry Shell stats
+* significantly different at 165 and 192 DPF (low and moderate > high) - still need to verify with posthoc emmeans
+```{r Shell Stats raw - no standardization}
+
+F2_DryShell.raw.MEAN <- F2_DryShell.bfactor.long.MEANS_master %>% 
+                                dplyr::filter(measurement %in% 'Dry_Shell_weight_g')
+F2_DryShell.raw.MEAN$DPvar    <- F2_DryShell.raw.MEAN$value
+F2_DryShell.raw.MEAN$INDvar   <- F2_DryShell.raw.MEAN$pCO2
+F2_DryShell.raw.MEAN$GROUPvar <- F2_DryShell.raw.MEAN$Age
+
+Stats_ShellMEAN_raw <- as.data.frame(runstats(F2_DryShell.raw.MEAN))
+# About column
+Stats_ShellMEAN_raw$About <- paste0("Shell: raw, NO BFACTOR + mean data")
+```
+
+```{r Mean Shell Stats bfactor all - length standardized}
+
+F2_DryShell.bfactor.MEAN <- F2_DryShell.bfactor.long.MEANS_master %>% 
+                                dplyr::filter(measurement %in% 'Shell_bFactorLength.all')
+F2_DryShell.bfactor.MEAN$DPvar    <- F2_DryShell.bfactor.MEAN$value
+F2_DryShell.bfactor.MEAN$INDvar   <- F2_DryShell.bfactor.MEAN$pCO2
+F2_DryShell.bfactor.MEAN$GROUPvar <- F2_DryShell.bfactor.MEAN$Age
+
+Stats_ShellMEAN_bfactor.all <- as.data.frame(runstats(F2_DryShell.bfactor.MEAN))
+# About column
+Stats_ShellMEAN_bfactor.all$About <- paste0("Shell: one bfactor + mean data")
+```
+
+```{r Mean Shell Stats bfactor pCO2 specific - length standardized}
+
+F2_DryShell.bfactor.MEAN <- F2_DryShell.bfactor.long.MEANS_master %>% 
+                                dplyr::filter(measurement %in% 'Shell_bFactorLength.pCO2')
+F2_DryShell.bfactor.MEAN$DPvar    <- F2_DryShell.bfactor.MEAN$value
+F2_DryShell.bfactor.MEAN$INDvar   <- F2_DryShell.bfactor.MEAN$pCO2
+F2_DryShell.bfactor.MEAN$GROUPvar <- F2_DryShell.bfactor.MEAN$Age
+
+Stats_ShellMEAN_bfactor.all <- as.data.frame(runstats(F2_DryShell.bfactor.MEAN))
+# About column
+Stats_ShellMEAN_bfactor.all$About <- paste0("Shell: one bfactor + mean data")
+```
 
 
 

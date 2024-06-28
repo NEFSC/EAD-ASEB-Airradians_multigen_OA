@@ -17,12 +17,19 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 #### load packages
 
 ```{r load packages we need}
+
 library(qqman)
 library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
+<<<<<<< HEAD
+library(remotes)
+library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy
+
+=======
 library(rPlant)
+>>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -51,9 +58,10 @@ library(rPlant)
   
   
 ```{r load vcf and bed files}
-
 path = "output/lcWGS/angsd/Merge_Intercept/All_Juveniles/"
 
+<<<<<<< HEAD
+=======
 
 <<<<<<< HEAD
 pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78283 variants
@@ -71,6 +79,7 @@ F1F3.vcf_tidy <- vcfR2tidy(F1F3.vcf)
 F1F3.bed      <- read.pcadapt(paste0(path2,"F1F3_LOWvMOD.bed"), type = "bed") # 96703 variants
 
 =======
+>>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 pH8.vcf      <- read.vcfR(paste0(path,"pH8/Juveniles_pH8_merged.vcf.gz")) # 78,283 variants
 pH8.vcf_tidy <- vcfR2tidy(pH8.vcf)
 pH8.bed      <- read.pcadapt(paste0(path,"pH8/Juveniles_merged_pH8.bed"), type = "bed") # 78,283 variants
