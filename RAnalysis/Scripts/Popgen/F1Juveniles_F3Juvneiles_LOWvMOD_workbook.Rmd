@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
@@ -22,7 +22,7 @@ library(hierfstat)
 library(pcadapt)
 library(adegenet)
 library(qqman)
-
+library(ggpubr)
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -53,7 +53,7 @@ path = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
 # MERGED: ALL f1 and f3 juveniles from Low and Moderate OA
 
 F1F3_merged.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge.vcf.gz")) # 96,703 variants
-F1F3_merged.vcf_tidy   <- vcfR2tidy(F1F3_merged.vcf)
+#F1F3_merged.vcf_tidy   <- vcfR2tidy(F1F3_merged.vcf)
 F1F3_merged.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD.bed"), type = "bed") # 96,703 variants
 
 # MERGED: ALL f1 and f3 juveniles from Low and Moderate OA, LONG CONTIGS ONLY
@@ -199,43 +199,43 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 
 library(ggpubr)
 
-# MERGE DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# MERGE DATA :::::::
 
 # all data
-test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
+F1F3_merged.test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
                              LD.thr         = 0.1, # r squares
                              LD.K           = 4, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = F1F3_merged_LD))
-plot(output_PC1~input_Window , data=test) # window of 250
+plot(output_PC1~input_Window , data=F1F3_merged.test) # window of 250
 F1F3_merged.LDdiagnostics <- pcadapt(F1F3_merged.bed, 
                                                 K = 20, LD.clumping = list(size = 850, thr = 0.1),
                                                 min.maf= 0.05)
 plot(F1F3_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
-F1F3_merged.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
+F1F3_merged.LDres <- pcadapt(F1F3_merged.bed, 
                                         K = 8, 
                                         LD.clumping = list(size = 850, thr = 0.1), 
                                         min.maf= 0.05)
-ggarrange( (plot(F1F3_merged.res, option = "manhattan")),
-           (plot(F1F3_merged.LDres, option = "manhattan")),nrow=2)
+ggarrange( (plot(F1F3_merged.res, option = "manhattan", main = "F1 F3 Juv merge, all")),
+           (plot(F1F3_merged.LDres, option = "manhattan", main = "F1 F3 Juv merge, all + LD")),nrow=2)
 
 # long contigs
-test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
-                             LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                             outputfilename = F1F3_merged_LD))
-plot(output_PC1~input_Window , data=test) # window of 250
-F0B_F1JuvAll_intersect.LDdiagnostics <- pcadapt(F0B_F1JALL_intersect.bed, 
-                                                K = 20, LD.clumping = list(size = 250, thr = 0.1),
+F1F3_merged_long_contigs.test <- as.data.frame(clump4me(data = F1F3_merged_longcontigs.bed,
+                                     LD.thr         = 0.1, # r squares
+                                     LD.K           = 4, # number of PCAs
+                                     LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
+                                     outputfilename = F1F3_merged_LD))
+plot(output_PC1~input_Window, data=F1F3_merged_long_contigs.test) # window of 250
+F1F3_merged_long_contigs.LDdiagnostics <- pcadapt(F1F3_merged_longcontigs.bed, 
+                                                K = 20, LD.clumping = list(size = 550, thr = 0.1),
                                                 min.maf= 0.05)
-plot(F0B_F1JuvAll_intersect.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
-F0B_F1JuvAll_intersect.LDres <- pcadapt(F0B_F1JALL_intersect.bed, 
-                                        K = 7, 
-                                        LD.clumping = list(size = 250, thr = 0.1), 
+plot(F1F3_merged_long_contigs.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
+F1F3_merged_longcontigs.LDres <- pcadapt(F1F3_merged_longcontigs.bed, 
+                                        K = 6, 
+                                        LD.clumping = list(size = 550, thr = 0.1), 
                                         min.maf= 0.05)
-ggarrange( (plot(F0B_F1JuvAll_intersect.res, option = "manhattan")),
-           (plot(F0B_F1JuvAll_intersect.LDres, option = "manhattan")),nrow=2)
+ggarrange( (plot(F1F3_merged_longcontigs.res, option = "manhattan")),
+           (plot(F1F3_merged_longcontigs.LDres, option = "manhattan")),nrow=2)
 
 
 
@@ -252,15 +252,18 @@ ggarrange( (plot(F0B_F1JuvAll_intersect.res, option = "manhattan")),
 
 ```{r LD loadings reduce vcf files}
 
-pH8.vcf_LDfiltered  <- pH8.vcf[!is.na(pH8.LDres$loadings[,1]),] # 78,283 DOWN TO 21,555 variants
-pH75.vcf_LDfiltered <- pH75.vcf[!is.na(pH75.LDres$loadings[,1]),] # 54,315 DOWN TO 18,203 variants!
+F1F3_LDfiltered.vcf  <- F1F3_merged.vcf[!is.na(F1F3_merged.LDres$loadings[,1]),] # 96,703 DOWN TO 11,287 variants
 
+F1F3_longcontigs_LDfiltered.vcf  <- F1F3_merged_longcontigs.vcf[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),] # 48,120 DOWN TO 7,424 variants
+
+length(F1F3_merged_longcontigs.LDres$loadings[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),])
 ```
 
 ```{r convert LDfiltered vcf to vcf_tidy}
 
-pH8.vcf_LD_tidy <- vcfR2tidy(pH8.vcf_LDfiltered)
-pH75.vcf_LD_tidy <- vcfR2tidy(pH75.vcf_LDfiltered)
+# THIS TAKES A WHIIIIILE 
+F1F3_LD_tidy_all         <- vcfR2tidy(F1F3_LDfiltered.vcf)
+F1F3_LD_tidy_longcontigs <- vcfR2tidy(F1F3_longcontigs_LDfiltered.vcf)
 
 ```
 ## Manhattan using qqman (tidyr vcf objects!)
@@ -270,17 +273,19 @@ pH75.vcf_LD_tidy <- vcfR2tidy(pH75.vcf_LDfiltered)
   * datasets: pH8.vcf_tidy, pH75.vcf_tidy, pH8.vcf_LD_tidy, pH75.vcf_LD_tidy
 
 ```{r F0B_F1JuvMODERATE qqman manhattan plots}
-
-
-pH8Results_qqman            <- as.data.frame(matrix(nrow=nrow(pH8.vcf_tidy$fix), ncol=4)) 
-colnames(pH75Results_qqman) <- c('SNP','CHR', 'BP', 'P')
-pH8Results_qqman            <- pH8Results_qqman[-c(1:4)] %>% 
-                                    dplyr::mutate(
-                                      SNP = paste0(pH8.vcf_tidy$fix$CHROM, '_',pH8.vcf_tidy$fix$POS),
-                                      CHR = as.numeric(extract_numeric(pH8.vcf_tidy$fix$CHROM)),
-                                      BP  = pH8.vcf_tidy$fix$POS,
-                                      P   = pH8.LDres$pvalues
-                                    ) %>% na.omit()
+F1F3_merged_longcontigs.LDres[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),]
+length(F1F3_merged_longcontigs.LDres(!is.na(F1F3_merged_longcontigs.LDres$loadings[,1])))
+length(paste0(F1F3_LD_tidy_longcontigs$fix$CHROM, '_',F1F3_LD_tidy_longcontigs$fix$POS))
+library(tidyr)
+F1F3_longcontigs_qqman            <- as.data.frame(matrix(nrow=nrow(F1F3_LD_tidy_longcontigs$fix), ncol=4)) 
+colnames(F1F3_longcontigs_qqman)  <- c('SNP','CHR', 'BP', 'P')
+Longcontigs_qqmanResults_qqman    <- F1F3_longcontigs_qqman %>% 
+                                          dplyr::mutate(
+                                            SNP = paste0(F1F3_LD_tidy_longcontigs$fix$CHROM, '_',F1F3_LD_tidy_longcontigs$fix$POS),
+                                            CHR = as.numeric(extract_numeric(F1F3_LD_tidy_longcontigs$fix$CHROM)),
+                                            BP  = F1F3_LD_tidy_longcontigs$fix$POS,
+                                            P   = as.numeric( !is.na(F1F3_merged_longcontigs.LDres$pvalues)) %>% 
+                                          na.omit()
 pH8Results_qqman %>% dplyr::filter(CHR < 90 & -log(pH8Results_qqman$P) > -log(0.001))
 
 
