@@ -160,13 +160,19 @@ for (i in 1:4)
 
 ```{r clump4me}
 
+# LD.thr = r squared
+# LD.K = number of PCs 
+# LD.minMaf = the MAF (minor allele freq)
+
 clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
   
         # For loop :::::::::: #
         outputfilename      <- data.frame()  # start dataframe 
-        loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
-        colnames(loop.table)<-c('output_PC1', 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
-        LD.window_loop      <- seq(50,1000, by=50) # run the loop for CPM from 1 - 10 (counts per million) 
+        loop.table          <- data.frame(matrix(nrow = 1, ncol = 14)) # create dataframe, columns for the number of sampling days
+        colnames(loop.table)<-c('output_PC1', 'output_PC2', 'output_PC3', 'output_PC4', 'output_PC5', 'output_PC6',
+                                'output_PC7', 'output_PC8', 'output_PC9','output_PC10',
+                                'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
+        LD.window_loop      <- seq(100,6000, by=200) # run the loop for CPM from 1 - 10 (counts per million) 
         LD.window_loop      <- data.frame(LD.window_loop)
         
         
@@ -184,8 +190,14 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
           loop.table$input_Threshold = LD.thr
           loop.table$input_NumPCAs   = LD.K
           loop.table$output_PC1      = abs(mean(res$scores[,1]))
-        
-            
+          loop.table$output_PC2      = abs(mean(res$scores[,2]))
+          loop.table$output_PC3      = abs(mean(res$scores[,3]))
+          loop.table$output_PC4      = abs(mean(res$scores[,4]))
+          loop.table$output_PC5      = abs(mean(res$scores[,5]))
+          loop.table$output_PC6      = abs(mean(res$scores[,6]))
+          loop.table$output_PC7      = abs(mean(res$scores[,7]))
+          loop.table$output_PC8      = abs(mean(res$scores[,8]))
+          loop.table$output_PC9      = abs(mean(res$scores[,9]))
           # df             <- data.frame(loop.table) # name dataframe for this singl e row
           outputfilename <- rbind(outputfilename,loop.table) #bind to a cumulative list dataframe
           #print(df_total) # print to monitor progress
@@ -203,18 +215,18 @@ library(ggpubr)
 
 # all data
 F1F3_merged.test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
-                             LD.thr         = 0.1, # r squares
-                             LD.K           = 4, # number of PCAs
+                             LD.thr         = 0.1, # r squared
+                             LD.K           = 10, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = F1F3_merged_LD))
-plot(output_PC1~input_Window , data=F1F3_merged.test) # window of 250
+plot(output_PC1~input_Window, data=F1F3_merged.test) # window of 4500
 F1F3_merged.LDdiagnostics <- pcadapt(F1F3_merged.bed, 
-                                                K = 20, LD.clumping = list(size = 850, thr = 0.1),
+                                                K = 20, LD.clumping = list(size = 4500, thr = 0.1),
                                                 min.maf= 0.05)
 plot(F1F3_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
 F1F3_merged.LDres <- pcadapt(F1F3_merged.bed, 
-                                        K = 8, 
-                                        LD.clumping = list(size = 850, thr = 0.1), 
+                                        K = 2, 
+                                        LD.clumping = list(size = 4500, thr = 0.1), 
                                         min.maf= 0.05)
 ggarrange( (plot(F1F3_merged.res, option = "manhattan", main = "F1 F3 Juv merge, all")),
            (plot(F1F3_merged.LDres, option = "manhattan", main = "F1 F3 Juv merge, all + LD")),nrow=2)

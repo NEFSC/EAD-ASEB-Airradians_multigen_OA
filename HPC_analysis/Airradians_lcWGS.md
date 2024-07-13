@@ -1,5 +1,9 @@
 # Argopecten irradiains lcWGS Bioinformatics!
-.
+
+**NOTE** the following script chunks were run in tandem using 
+Snakemake, though here the input syntax and outputs are written in general terms for clarity 
+You can alternatively cater these tasks to a job-byjob workflow using SLURM, whatever floats your boat!
+
 ## <span style="color:blue">**Table of Contents**</span>
   - [Upon upload to HPC...](#Initial-diagnostics-upon-sequence-upload-to-HPC)
       - [Digital fingerprint md5sums](#run-checksum)
@@ -20,23 +24,54 @@
 # Initial diagnostics upon sequence upload to HPC
 --------------------------------------------
 
-# Assemble cumulative md5 reference
+## Assemble cumulative md5 reference
 
-* Genewiz provides a one txt line .md5 file for each of the .gz sequence files
+* The sequencing vedor (GEnewiz, Azenta, etc.) provides one .md5 for each of the .gz raw sequence files
 
-You can concatenate using 'cat *.md5 > new_file.md5'
+* Q: What is an md5? 
 
-	- example: cat *.md5 > ~/Airradians_lcWGS/F0_F2_April2023/output/md5checksum/April2023_reference.md5
+	- A: This is the digital barcode
 
-* first objective to assemble a cumulative file with these text lines in one .txt
+* Q: Why do we care? 
+
+	- A: A digital barcode will differ if corrupted, incompletely exported/downloade, etc. Since the data 
+	is now crossinghands from the sequencing vendor - to me - then to the high-performance computing cluster, this is 
+	a standard sanity check prior to working with these data. 
 
 
-
-# run checksum
-
-# shell script: <span style="color:green">**md5checksum.sh**<span>
+*Note:* You can concatenate all md5 files to one using 'cat *.md5 > new_file.md5'
 
 ```
+cat *.md5 > new_file.md5
+```
+
+### First, gather the digital fingerprint of all the files you pushed to the server! 
+
+**Objective** output a cumulative .txt file with the digital fingerprints of the uploaded .gz files
+
+### run checksum
+
+### shell script: <span style="color:green">**md5checksum.sh**<span>
+
+* general description of the task: 
+
+```
+ md5sum <input directory>/*.gz > <output folder>/check.md5 
+```
+
+* how to mark this in a for loop (using double brackets {{}} for snakemake) 
+
+```
+cat ./md5checksum/${{m}}/${{m}}_check.md5
+```
+
+* general description of the task: 
+
+```
+ md5sum <input directory>/*.gz > <output folder>/check.md5 
+```
+
+
 #!/bin/bash
 #SBATCH --job-name="md5checksum"
 #SBATCH -t 002:00:00
@@ -469,7 +504,7 @@ scp **upload to HPC**
 ## HISAT2 alignment
 
 **About:** HISAT2 is a sensitive alignment program for mapping sequencing reads.
-In our case here, we will use HISAT2 to **(1)** index our *P. generosa* reference genome **(2)** align our clean TagSeq reads to the indexed reference genome.
+In our case here, we will use HISAT2 to **(1)** index our *A. irradians* reference genome **(2)** align our clean lcWGS reads to the indexed reference genome.
 
 More information on HISAT2 can be read [here](http://daehwankimlab.github.io/hisat2/manual/)!
 
