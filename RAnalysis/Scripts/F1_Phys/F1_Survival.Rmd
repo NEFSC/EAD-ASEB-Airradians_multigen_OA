@@ -391,9 +391,23 @@ ggforest(F1_coxph_test, data = binary_surv_df)
 F1_coxph_test_table <- coxph(Surv(Age, Count_dead) ~ Treatment+(1|Replicate), data = binary_surv_df) %>% 
                               tbl_regression(exp = TRUE) 
 
+# COXME IS THE PROPER WAY TO ADDRESS THE TANK REPLICATE AS A RANDOM FACTOR - ALITHOU GGFOREST IS NOT COMPTATIBLE
+# THEREFORE, USE THE OUTPUT EXP AND c95 CI FROM THE COXME BUT PLOT THE COXPH HAZARD RATIO - ADJUST PDF MANUALLY OFF R
+# run mixed cox model with replicate as a random factor 
+F1_coxme_mixed_test   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | Replicate), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df)
+#                        coef exp(coef)   se(coef)    z       p
+# TreatmentModerate 0.1211895  1.128839 0.01470208 8.24 2.2e-16
+# Random effects
+#  Group     Variable  Std Dev   Variance 
+#  Replicate Intercept 0.2404987 0.0578396
 
-
-
+F1_coxme_mixed_HR   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | Replicate), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df) %>%  
+                                        tbl_regression(exp = TRUE) # thi gives us what we need
+# 1.13	1.10, 1.16	<0.001 # THESE ARE THE CORRECT VALUES - OUTPUT THE COXPH HAZARD GGFIREST BUT MANUALLY ADJUST FOR THESE EXPONENTS!!
 
 
 

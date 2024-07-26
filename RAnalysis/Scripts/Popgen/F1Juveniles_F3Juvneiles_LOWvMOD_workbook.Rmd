@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
@@ -23,6 +23,7 @@ library(pcadapt)
 library(adegenet)
 library(qqman)
 library(ggpubr)
+install.packages("AFLPsim")
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -31,6 +32,10 @@ library(ggpubr)
 
 ```
 
+
+## some reading 
+* check out thise use of bayscan for neutral blaancing and outlier loci https://github.com/laurabenestan/Bayescan
+* tutorial to contrast the outliers detected from bayscan and pcadapt https://rpubs.com/lbenestan/outlier
 
 ## load files
 
@@ -54,13 +59,13 @@ path = "output/lcWGS/angsd/Merge_Intercept/F1_F3_Juveniles_Low_v_Mod/"
 
 F1F3_merged.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge.vcf.gz")) # 96,703 variants
 #F1F3_merged.vcf_tidy   <- vcfR2tidy(F1F3_merged.vcf)
-F1F3_merged.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD.bed"), type = "bed") # 96,703 variants
+F1F3_merged.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_merge.vcf.gz"), type = "vcf",type.out = "bed") # 96,703 variants
 
 # MERGED: ALL f1 and f3 juveniles from Low and Moderate OA, LONG CONTIGS ONLY
 
 F1F3_merged_longcontigs.vcf        <- read.vcfR(paste0(path,"F1F3_LOWvMOD_merge_longcontigs.vcf.gz")) # 48,120 variants
 # F1F3_merged_longcontigs.vcf_tidy   <- vcfR2tidy(F1F3_merged_longcontigs.vcf)
-F1F3_merged_longcontigs.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_merge_longcontig.bed"), type = "bed") # 48,120 variants
+F1F3_merged_longcontigs.bed        <- read.pcadapt(paste0(path,"F1F3_LOWvMOD_merge_longcontigs.vcf.gz"), type = "vcf",type.out = "bed") # 48,120 variants
 
 ```
 
@@ -109,18 +114,45 @@ when working with whole genome data we need to perform SNP thinning to acocutn f
 ## F1 and F3 Juveniles, all data
 ## data: F1F3_merged.bed
 F1F3_merged.diagnostic      <- pcadapt(F1F3_merged.bed, K = 20)
-plot(F1F3_merged.diagnostic, option = "screeplot") # looks like 7
+
+ggarrange(
+  plot(F1F3_merged.diagnostic, option = "screeplot"), # looks like 5]
+  plot(F1F3_merged.diagnostic, option = "screeplot",min.maf = 0.01, ploidy=2)
+)
 F1F3_merged.res             <- pcadapt(F1F3_merged.bed, K = 5) # assign
 plot(F1F3_merged.res, option = "manhattan")
 
 ## F1 and F3 Juveniles, all data
 ## data: F1F3_merged_longcontigs.bed
 F1F3_merged_longcontigs.diagnostic      <- pcadapt(F1F3_merged_longcontigs.bed, K = 20)
-plot(F1F3_merged_longcontigs.diagnostic, option = "screeplot") # looks like 7
+ggarrange(
+  plot(F1F3_merged_longcontigs.diagnostic, option = "screeplot"), # looks like 5]
+  plot(F1F3_merged_longcontigs.diagnostic, option = "screeplot",min.maf = 0.01, ploidy=2)
+)
 F1F3_merged_longcontigs.res             <- pcadapt(F1F3_merged_longcontigs.bed, K = 5) # assign
 plot(F1F3_merged_longcontigs.res, option = "manhattan")
 
-## look at both 
+
+# look at  PCA1-4 
+
+## F1 and F3 Juveniles, all data
+## data: F1F3_merged.bed
+ggarrange(
+      plot(F1F3_merged.res, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           snp.info = NULL, plt.pkg = "ggplot"),
+      plot(F1F3_merged.res, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           i = 3, j = 4, snp.info = NULL, plt.pkg = "ggplot")
+)
+## F1 and F3 Juveniles, long contig data
+## data: F1F3_merged_longcontigs.bed
+ggarrange(
+      plot(F1F3_merged_longcontigs.res, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           snp.info = NULL, plt.pkg = "ggplot"),
+      plot(F1F3_merged_longcontigs.res, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           i = 3, j = 4, snp.info = NULL, plt.pkg = "ggplot")
+)
+
+## look at both Manhattan plots
 ggarrange(
   plot(F1F3_merged.res, option = "manhattan"),
   plot(F1F3_merged_longcontigs.res, option = "manhattan"), nrow = 2
@@ -168,11 +200,12 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
   
         # For loop :::::::::: #
         outputfilename      <- data.frame()  # start dataframe 
-        loop.table          <- data.frame(matrix(nrow = 1, ncol = 14)) # create dataframe, columns for the number of sampling days
-        colnames(loop.table)<-c('output_PC1', 'output_PC2', 'output_PC3', 'output_PC4', 'output_PC5', 'output_PC6',
-                                'output_PC7', 'output_PC8', 'output_PC9','output_PC10',
+        loop.table          <- data.frame(matrix(nrow = 1, ncol = 5)) # create dataframe, columns for the number of sampling days
+        colnames(loop.table)<-c('output_PC1', 
+                                #'output_PC2', 'output_PC3', 'output_PC4', 'output_PC5', 'output_PC6',
+                                #'output_PC7', 'output_PC8', 'output_PC9',
                                 'input_MinMaf', 'input_Window', 'input_Threshold', 'input_NumPCAs') # names for comuns in the for loop
-        LD.window_loop      <- seq(100,6000, by=200) # run the loop for CPM from 1 - 10 (counts per million) 
+        LD.window_loop      <- seq(100,20000, by=100) # run the loop for CPM from 1 - 10 (counts per million) 
         LD.window_loop      <- data.frame(LD.window_loop)
         
         
@@ -190,14 +223,6 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
           loop.table$input_Threshold = LD.thr
           loop.table$input_NumPCAs   = LD.K
           loop.table$output_PC1      = abs(mean(res$scores[,1]))
-          loop.table$output_PC2      = abs(mean(res$scores[,2]))
-          loop.table$output_PC3      = abs(mean(res$scores[,3]))
-          loop.table$output_PC4      = abs(mean(res$scores[,4]))
-          loop.table$output_PC5      = abs(mean(res$scores[,5]))
-          loop.table$output_PC6      = abs(mean(res$scores[,6]))
-          loop.table$output_PC7      = abs(mean(res$scores[,7]))
-          loop.table$output_PC8      = abs(mean(res$scores[,8]))
-          loop.table$output_PC9      = abs(mean(res$scores[,9]))
           # df             <- data.frame(loop.table) # name dataframe for this singl e row
           outputfilename <- rbind(outputfilename,loop.table) #bind to a cumulative list dataframe
           #print(df_total) # print to monitor progress
@@ -207,21 +232,54 @@ clump4me <- function(data, LD.thr, LD.K, LD.minMaf, outputfilename) {
 }
 ```
 
+
+* Run clump4me to identify the optimumm window size for peak PC1 
+
 ```{r run clump4me choose settings and run}
 
 library(ggpubr)
 
-# MERGE DATA :::::::
+# this takes a while - it outputs a plot of the PC! to optimize window size
+
 
 # all data
-F1F3_merged.test <- as.data.frame(clump4me(data         = F1F3_merged.bed,
+F1F3_merged.test <- as.data.frame(clump4me(data  = F1F3_merged.bed,
                              LD.thr         = 0.1, # r squared
-                             LD.K           = 10, # number of PCAs
+                             LD.K           = 9, # number of PCAs
                              LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
                              outputfilename = F1F3_merged_LD))
-plot(output_PC1~input_Window, data=F1F3_merged.test) # window of 4500
+plot(output_PC1~input_Window, data=F1F3_merged.test) # window of 5500
+
+
+
+# long contigs
+F1F3_merged_long_contigs.test <- as.data.frame(clump4me(data = F1F3_merged_longcontigs.bed,
+                                     LD.thr         = 0.1, # r squares
+                                     LD.K           = 1, # number of PCAs
+                                     LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
+                                     outputfilename = F1F3_merged_LD))
+plot(output_PC1~input_Window, data=F1F3_merged_long_contigs.test) # window of 1300
+
+F1F3_merged_long_contigs.test %>% dplyr::arrange(desc(output_PC1))
+
+
+```
+
+
+* Run the LD diagnostics using this window size 
+
+  - LD window size for all data is 5500
+  - LD window size for long contig data is 1300
+
+  - min maf 0.05
+  - threshold 0.1 (correlation)
+  - run with multiple pcs as K and narow based non screeplot 
+```{r}
+
+
 F1F3_merged.LDdiagnostics <- pcadapt(F1F3_merged.bed, 
-                                                K = 20, LD.clumping = list(size = 4500, thr = 0.1),
+                                                K = 20, 
+                                                LD.clumping = list(size = 4500, thr = 0.1),
                                                 min.maf= 0.05)
 plot(F1F3_merged.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
 F1F3_merged.LDres <- pcadapt(F1F3_merged.bed, 
@@ -232,28 +290,60 @@ ggarrange( (plot(F1F3_merged.res, option = "manhattan", main = "F1 F3 Juv merge,
            (plot(F1F3_merged.LDres, option = "manhattan", main = "F1 F3 Juv merge, all + LD")),nrow=2)
 
 # long contigs
-F1F3_merged_long_contigs.test <- as.data.frame(clump4me(data = F1F3_merged_longcontigs.bed,
-                                     LD.thr         = 0.1, # r squares
-                                     LD.K           = 4, # number of PCAs
-                                     LD.minMaf      = 0.05, # minumum allele freq threshold (5% - =0.05, etc)
-                                     outputfilename = F1F3_merged_LD))
-plot(output_PC1~input_Window, data=F1F3_merged_long_contigs.test) # window of 250
+
 F1F3_merged_long_contigs.LDdiagnostics <- pcadapt(F1F3_merged_longcontigs.bed, 
-                                                K = 20, LD.clumping = list(size = 550, thr = 0.1),
+                                                K = 10, 
+                                                LD.clumping = list(size = 1300, thr = 0.1),
                                                 min.maf= 0.05)
-plot(F1F3_merged_long_contigs.LDdiagnostics, option = "screeplot") # Lets try and use K = 7 after SNP thinning 
+plot(F1F3_merged_long_contigs.LDdiagnostics, option = "screeplot") # Lets try and use K = 6 after SNP thinning 
 F1F3_merged_longcontigs.LDres <- pcadapt(F1F3_merged_longcontigs.bed, 
                                         K = 6, 
-                                        LD.clumping = list(size = 550, thr = 0.1), 
+                                        LD.clumping = list(size = 1300, thr = 0.1), 
                                         min.maf= 0.05)
-ggarrange( (plot(F1F3_merged_longcontigs.res, option = "manhattan")),
-           (plot(F1F3_merged_longcontigs.LDres, option = "manhattan")),nrow=2)
-
+ggarrange(
+      plot(F1F3_merged_longcontigs.LDres, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           snp.info = NULL, plt.pkg = "ggplot"),
+      plot(F1F3_merged_longcontigs.LDres, option = "scores", pop=F1F3Juveniles_low.mod_strata$Gen_Treatment, 
+           i = 3, j = 4, snp.info = NULL, plt.pkg = "ggplot")
+)
 
 
 ```
 
 
+Create a dataframe gathering pcadapt results and sampling sites.
+
+
+```{r}
+
+data3 <- vcfR2genlight(F1F3_longcontigs_LDfiltered.vcf)
+snp <- as.data.frame(data3@loc.names)
+ind <- as.data.frame(data3@ind.names)
+colnames(ind) <-"Individual"
+
+ind_pop_map <- merge(ind, F1F3Juveniles_low.mod_strata, by=c("Individual"))
+pca_adapt_pop_map <-cbind(F1F3_merged_longcontigs.LDres$scores[,c(1:2)], ind_pop_map[,c(1,4)]) 
+colnames(pca_adapt_pop_map) <- c("PC1","PC2","IND","SITES")
+ggplot(pca_adapt_pop_map, aes(x=PC1, y=PC2, fill= factor(SITES)))+
+  geom_point(size=1.5, shape=21)+
+  # scale_fill_viridis(discrete = TRUE) +
+  theme_classic()+
+  xlab("PC1")+
+  ylab("PC2")+ 
+  theme_bw()
+
+
+
+F1F3_merged_longcontigs.LDres$pvalues[test$rowid]
+length(!is.na(F1F3_merged_longcontigs.LDres$loadings) == FALSE)
+
+# get th
+test <- as.data.frame(F1F3_merged_longcontigs.LDres$loadings) %>% tibble::rowid_to_column() %>% na.omit()
+list_pval_nums <- list(test$rowid)
+
+snps_pvalues <- cbind(snp, 
+                      as.data.frame(F1F3_merged_longcontigs.LDres$pvalues[(test$rowid)]))                                      
+```
 
 ### Use the LD loadings to reduce the  vcf file 
 
@@ -266,7 +356,7 @@ ggarrange( (plot(F1F3_merged_longcontigs.res, option = "manhattan")),
 
 F1F3_LDfiltered.vcf  <- F1F3_merged.vcf[!is.na(F1F3_merged.LDres$loadings[,1]),] # 96,703 DOWN TO 11,287 variants
 
-F1F3_longcontigs_LDfiltered.vcf  <- F1F3_merged_longcontigs.vcf[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),] # 48,120 DOWN TO 7,424 variants
+F1F3_longcontigs_LDfiltered.vcf  <- F1F3_merged_longcontigs.vcf[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),] # 48,120 DOWN TO 4,423 variants
 
 length(F1F3_merged_longcontigs.LDres$loadings[!is.na(F1F3_merged_longcontigs.LDres$loadings[,1]),])
 ```
