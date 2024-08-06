@@ -23,7 +23,9 @@ library(pcadapt)
 library(adegenet)
 library(qqman)
 library(ggpubr)
-install.packages("AFLPsim")
+library(radiator) # https://thierrygosselin.github.io/radiator/articles/get_started.html
+# run bayscan in R using radiator https://rdrr.io/github/thierrygosselin/radiator/man/run_bayescan.html
+?run_bayescan
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -36,6 +38,8 @@ install.packages("AFLPsim")
 ## some reading 
 * check out thise use of bayscan for neutral blaancing and outlier loci https://github.com/laurabenestan/Bayescan
 * tutorial to contrast the outliers detected from bayscan and pcadapt https://rpubs.com/lbenestan/outlier
+
+* Narum and Hess 2011 " Comparisons included simulation procedures (FDIST2, ARLEQUIN v.3.5 and BAYESCAN) as well as more conventional tools such as global FST histograms. Of the three simulation methods, FDIST2 and BAYESCAN typically had the lowest type II error, BAYESCAN had the least type I error and Arlequin had highest type I and II error. High error rates in Arlequin with a hierarchical approach were partially because of confounding scenarios where patterns of adaptive variation were contrary to neutral structure; however, Arlequin consistently had highest type I and type II error in all four simulation scenarios tested in this study. Given the results provided here, it is important that outlier loci are interpreted cautiously and error rates of various methods are taken into consideration in studies of adaptive molecular variation, especially when hierarchical structure is included."
 
 ## load files
 

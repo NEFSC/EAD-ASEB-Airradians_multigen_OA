@@ -222,4 +222,46 @@ View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
 
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F2/F2_Length_ANOVA_table.csv")
 
+
+
+# (2)  You can easitly do #1 by piping in the formula here BUT this does not have contingency based on assumptions
+F2_length_MEANS_bytank %>%
+  group_by(Age_DPF) %>%
+  t_test(data =., Length_mm ~ pCO2) %>% #243, 275, 318 are significnatly different via one0-way anova
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj") # with bonferroni JUST 273 is significantly different!
+# NO SIGNIFICANT DIFFERENCES WHETHER WITH CONSERVATIVE ADJUSTMENT OR NOT!
+
+# (3) GLMM 
+F2_length_MEANS_bytank$ID <- paste0(F2_length_MEANS_bytank$Replicate,
+                                     '_',
+                                     F2_length_MEANS_bytank$pH) # ID variable to run the GLMM withput averaging!
+
+F2_GLMM <- glmer(
+                   Length_mm ~ 
+                    pCO2 * Age_DPF + (1 | ID), 
+                      data = F2_length_MEANS_bytank, 
+                     # gaussian(link = "identity")
+                     Gamma(link="identity") 
+                     # Gamma(link="log") 
+                  )
+
+summary(F2_GLMM)
+
+# check the distribution of residuals 
+simulationOutput <- simulateResiduals(fittedModel = F2_GLMM, use.u = T)
+residuals        <- residuals(F2_GLMM, type = "response", retype="normalized")
+
+# pdf(file="Output/1_Survival_Growth/size_growth/Experiment4/Experiment4_Length_GLMM_QQ_Resid.pdf", height = 4, width = 7)
+plot(simulationOutput)
+# dev.off()
+
+# pdf(file="Output/1_Survival_Growth/size_growth/Experiment4/Experiment4_Length_GLMM_Resid.pdf", height = 5, width = 5)
+plot(residuals)
+# dev.off()
+
+# output the anova table 
+car::Anova(F2_GLMM, type=3) # JUST AN EFFECT OF TIME
+
+
 ```

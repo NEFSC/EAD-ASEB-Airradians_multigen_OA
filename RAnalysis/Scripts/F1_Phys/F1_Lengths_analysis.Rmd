@@ -21,13 +21,14 @@ library(dplyr)
 library(ggplot2)
 library(forcats)
 library(lme4)
-library(lmerTest)
-library(performance)
+# library(lmerTest)
+# library(performance)
+# install.packages('')
 library(car)
 library(ggpubr)
-library(SciViews)
+# library(SciViews)
 library(Rmisc)
-library(hrbrthemes)
+# library(hrbrthemes)lmerTest
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
 knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
@@ -226,8 +227,47 @@ for (i in 1:nrow(ANOVA_Age_DPF)) {
     print(AOVdf_total) # print to monitor progress
 }
 View(AOVdf_total) # view all the anova tests within data 
-View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
+View(AOVdf_total %>% dplyr::filter(P_val < 0.05)) # 243, 275, 318 are significnatly different via one0-way anova
 
 write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Length/F1/F1_Length_ANOVA_table.csv")
 
+
+# (2)  You can easitly do #1 by piping in the formula here BUT this does not have contingency based on assumptions
+F1_length_MEANS_growout %>%
+  group_by(Age_DPF) %>%
+  t_test(data =., Length_mm ~ pCO2) %>% #243, 275, 318 are significnatly different via one0-way anova
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj") # with bonferroni JUST 273 is significantly different!
+
+
+# (3) GLMM 
+F1_length_MEANS_growout$ID <- paste0(F1_length_MEANS_growout$Replicate,
+                                     '_',
+                                     F1_length_MEANS_growout$pH) # ID variable to run the GLMM withput averaging!
+
+F1_GLMM <- glmer(
+                   Length_mm ~ 
+                    pCO2 * Age_DPF + (1 | ID), 
+                      data = F1_length_MEANS_growout, 
+                     # gaussian(link = "identity")
+                     Gamma(link="identity") 
+                     # Gamma(link="log") 
+                  )
+
+summary(F1_GLMM)
+
+# check the distribution of residuals 
+simulationOutput <- simulateResiduals(fittedModel = F1_GLMM, use.u = T)
+residuals        <- residuals(F1_GLMM, type = "response", retype="normalized")
+
+# pdf(file="Output/1_Survival_Growth/size_growth/Experiment4/Experiment4_Length_GLMM_QQ_Resid.pdf", height = 4, width = 7)
+plot(simulationOutput)
+# dev.off()
+
+# pdf(file="Output/1_Survival_Growth/size_growth/Experiment4/Experiment4_Length_GLMM_Resid.pdf", height = 5, width = 5)
+plot(residuals)
+# dev.off()
+
+# output the anova table 
+car::Anova(F1_GLMM, type=3) # JUST AN EFFECT OF TIME
 ```

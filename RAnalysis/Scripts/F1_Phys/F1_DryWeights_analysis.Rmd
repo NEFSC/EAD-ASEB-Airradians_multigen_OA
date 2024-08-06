@@ -268,7 +268,7 @@ dev.off()
 * here we do no require a bfactor becuase we are already scalling to the individual!
 
 ### Build poroprtion dataset 
-```{r Poroportion calculate}
+```{r Proportion calculate}
 
 
 Proportion_master <- F1_dryweights_calc.long %>% 
@@ -2108,5 +2108,13 @@ print(ggarrange(Gonad_final_plot, Adductor_final_plot,
           ))
 dev.off()
 
+
+pdf("Output/DryWeights/F1/DryWeights_bFactorLengthpCO2.pdf", height=7.5, width =10)
+print(ggarrange(Gonad_final_plot, Adductor_final_plot,
+               Somatic_final_plot, Tissue_final_plot_SUBSET,
+               Shell_final_plot_SUBSET,
+          ncol = 3, nrow = 2
+          ))
+dev.off()
 
 ```
