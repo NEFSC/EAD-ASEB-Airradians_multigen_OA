@@ -32,7 +32,7 @@ output: html_document
 ```{r setup}
 
 library(devtools) # devtools::install_github # use devtools to instlal github link
-library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from github
+# library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from github
 library(dplyr)
 library(lubridate)
 library(rMR) 
@@ -308,48 +308,70 @@ F2_Masterfile$SfG_Widdows.1988           <- (
 
 ```
 
-```{r, analysis and plots}
+```{r, stats 1-31-23}
 
 # stats
 library(car)
 F2_Masterfile_1_31_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '1/31/2023')
 SGFmod_131 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_1_31_23 ))
-shapiro.test(resid(SGFmod_131)) # 0.7095
+shapiro.test(resid(SGFmod_131)) # 0.7315
 leveneTest(SGFmod_131)# 0.3366
 summary(SGFmod_131)
 #             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  46413   23207   8.236 0.00316 **
-# Residuals   17  47904    2818
+# pCO2         2  46256   23128   8.255 0.00313 **
+# Residuals   17  47629    2802
 TukeyHSD(SGFmod_131)
 # $pCO2
-#                          diff        lwr       upr     p adj
-# 800 μatm-500 μatm  102.084822   29.29459 174.87506 0.0059575 **
-# 1200 μatm-500 μatm   2.397027  -73.36545  78.15951 0.9963754
-# 1200 μatm-800 μatm -99.687795 -175.45027 -23.92532 0.009536  **
+#                          diff       lwr       upr     p adj
+# 500 μatm-1200 μatm  -1.480943 -77.02634  74.06446 0.9986068
+# 800 μatm-1200 μatm 100.021812  24.47641 175.56721 0.0091223
+# 800 μatm-500 μatm  101.502754  28.92108 174.08443 0.0060884
+SGFmod_131.tukey <- emmeans::emmeans(object = SGFmod_131, # run tukey
+                                    pairwise ~ "pCO2",
+                                    adjust = "tukey")
+SGFmod_131.tukey.letters   <- multcomp::cld(object = SGFmod_131.tukey$emmeans, Letters = letters) # letter display\
+# pCO2      emmean   SE df lower.CL upper.CL .group
+# 500 μatm     132 20.0 17     89.9      174  a    
+# 1200 μatm    134 21.6 17     88.0      179  a    
+# 800 μatm     234 20.0 17    191.4      276   b   
+```
 
 
+```{r, stats 2-23-23}
 
 F2_Masterfile_2_23_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '2/23/2023')
 SGFmod_223 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_2_23_23 ))
-shapiro.test(resid(SGFmod_223)) # 0.2744
-leveneTest(SGFmod_223)# 0.6057
+shapiro.test(resid(SGFmod_223)) # 0.5899
+leveneTest(SGFmod_223)# 0.3686
 summary(SGFmod_223)
 #             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2   6892    3446   8.082 0.00341 **
-# Residuals   17   7249     426
+# pCO2         2   5933  2966.4   7.658 0.00425 **
+# Residuals   17   6585   387.3 
 TukeyHSD(SGFmod_223)
 # $pCO2
-#                         diff        lwr      upr     p adj
-# 800 μatm-500 μatm   44.56721  15.094761 74.03966 0.0032726
-# 1200 μatm-500 μatm  34.21844   4.745988 63.69088 0.0218085
-# 1200 μatm-800 μatm -10.34877 -38.664985 17.96744 0.6247321
+#                         diff       lwr      upr     p adj
+# 500 μatm-1200 μatm -31.15070 -59.24016 -3.06124 0.0286399
+# 800 μatm-1200 μatm  10.42024 -16.56725 37.40772 0.5925516
+# 800 μatm-500 μatm   41.57094  13.48147 69.66040 0.0039029
+SGFmod_223.tukey <- emmeans::emmeans(object = SGFmod_223, # run tukey
+                                    pairwise ~ "pCO2",
+                                    adjust = "tukey")
+SGFmod_223.tukey.letters   <- multcomp::cld(object = SGFmod_223.tukey$emmeans, Letters = letters) # letter display\
+# pCO2      emmean   SE df lower.CL upper.CL .group
+# 500 μatm    -4.2 8.03 17    -21.2     12.8  a    
+# 1200 μatm   27.0 7.44 17     11.3     42.6   b   
+# 800 μatm    37.4 7.44 17     21.7     53.1   b   
+```
 
+
+```{r, stats 3-27-23}
 
 F2_Masterfile_3_27_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '3/27/2023')
 SGFmod_327 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_3_27_23 ))
-shapiro.test(resid(SGFmod_327)) # 0.1695
-leveneTest(SGFmod_327)# 0.004734 **
+shapiro.test(resid(SGFmod_327)) # 0.1709
+leveneTest(SGFmod_327)# 0.004695 **
 SGFmod_327_KW <- kruskal.test(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
+?kruskal.test
 # Kruskal-Wallis chi-squared = 6.4526, df = 2, p-value = 0.0397
 library(FSA)
 dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
@@ -357,15 +379,19 @@ dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
 # 1200 μatm - 800 μatm	-0.9233805	0.35580894	0.35580894	
 # 500 μatm - 800 μatm	-2.5020639	0.01234716	0.03704149	** 
 
+```
+
+
+```{r plotting}
 
 
 F2_Masterfile_2.0$pCO2 <- factor(F2_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
 
 F2_SGF_Means_by_tank <- F2_Masterfile_2.0 %>% 
-                            summarySE(measurevar="SFG", 
+                            Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2", "Replicate"))
 
-SFG_Pousse_F2          <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
+SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
                         scale_colour_manual(values=c("forestgreen","orange", "purple"))+
                         theme_classic() +  
                         geom_boxplot(fill="white", 
@@ -381,7 +407,7 @@ SFG_Pousse_F2          <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, c
 # convert meand by tank to summrizing means by treatment and age 
 
 F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
-                            summarySE(measurevar="SFG", 
+                            Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2"))
 
 F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
