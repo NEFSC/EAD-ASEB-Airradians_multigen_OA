@@ -31,8 +31,8 @@ output: html_document
 
 ```{r setup}
 
+
 library(devtools) # devtools::install_github # use devtools to instlal github link
-library(LoLinR) # install_github('colin-olito/LoLinR') # install LoLinR from github
 library(dplyr)
 library(lubridate)
 library(rMR) 
@@ -43,12 +43,11 @@ library(ggplot2)
 library(ggfortify)
 library(DESeq2)
 library(devtools)
-library(ggbiplot)
-library(VennDiagram)# venn diagrams
-library(eulerr) #venn diagrams -  check out the R shiny app (http://eulerr.co/) 
+
 
 # set wd
-knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
+knitr::opts_knit$set(root.dir = 'C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis')
+#knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
 getwd()
 
 ```
@@ -80,7 +79,8 @@ ExcretionRates   <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_ma
 Biodeposition_adj    <- Biodeposition %>% 
                           dplyr::select(-c(X, tank_ID.y)) %>% 
                           dplyr::rename(tank_ID = tank_ID.x) %>% 
-                          dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
+                          dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), 
+                                                      "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
                           dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", tank_ID)) %>% # new replicate column - reflects RR dataset 
                           dplyr::rename(Dry_Tissue_weight = animal_dry_weight_g) %>% # change name to match RR
                           dplyr::rename(Length_mm = animal_length_mm) %>% # change name to match RR
@@ -265,7 +265,8 @@ caloric value of dried phytoplankton = (0.632+0.086 *(%C)) where %C is the % of 
 
 ```{r}
 
-Biodep_blanks <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_input_blank.csv", h=T, sep =",") %>% 
+Biodep_blanks <- read.csv("Output/Biodeposition/Biodeposition_input_blank.csv", 
+                          h=T, sep =",") %>% 
                             dplyr::filter(Date %in% c(20230201,20230224,20230328)) %>% 
                             dplyr::mutate(Date = case_when(Date == 20230201 ~ '1/31/2023',
                                                            Date == 20230224 ~ '2/23/2023',
@@ -283,12 +284,14 @@ F2_Masterfile_2.0 <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>
                 RR_resp_mgO2_hr_bfactorTDW = ((RR_resp_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
                 RR_Joules_hr               = RR_resp_mgO2_hr_bfactorTDW*14, # convert to joules
                 # ER
-                ExcretionRate_mgNH4_bFactorNormTDW = ((ExcretionRate_umol_hr_bFactorNormTDW/1000)*18.04), # convert umol to mg NH4
+                ExcretionRate_mgNH4_bFactorNormTDW =
+                  ((ExcretionRate_umol_hr_bFactorNormTDW/1000)*18.04), # convert umol to mg NH4
+                
                 ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
                 # caloric value of dried phytoplankton
-                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following Pousee et al. -referenced paper below for calculation
-                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2):306–10
-                # A
+                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following 
+                #Pousee et al. -referenced paper below for calculation
+                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2)
                 A_Joules_hr = (CR_correct*AE)*Food_Joules_mg,
                 # FINALLY SCOPE FOR GROWTH YALL
                 SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
@@ -314,18 +317,18 @@ F2_Masterfile$SfG_Widdows.1988           <- (
 library(car)
 F2_Masterfile_1_31_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '1/31/2023')
 SGFmod_131 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_1_31_23 ))
-shapiro.test(resid(SGFmod_131)) # 0.7095
-leveneTest(SGFmod_131)# 0.3366
+shapiro.test(resid(SGFmod_131)) # 0.7315
+leveneTest(SGFmod_131)# 0.3329
 summary(SGFmod_131)
 #             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  46413   23207   8.236 0.00316 **
-# Residuals   17  47904    2818
+# pCO2         2  46256   23128   8.255 0.00313 **
+# Residuals   17  47629    2802  
 TukeyHSD(SGFmod_131)
 # $pCO2
-#                          diff        lwr       upr     p adj
-# 800 μatm-500 μatm  102.084822   29.29459 174.87506 0.0059575 **
-# 1200 μatm-500 μatm   2.397027  -73.36545  78.15951 0.9963754
-# 1200 μatm-800 μatm -99.687795 -175.45027 -23.92532 0.009536  **
+#                          diff       lwr       upr     p adj
+# 500 μatm-1200 μatm  -1.480943 -77.02634  74.06446 0.9986068
+# 800 μatm-1200 μatm 100.021812  24.47641 175.56721 0.0091223
+# 800 μatm-500 μatm  101.502754  28.92108 174.08443 0.0060884
 
 
 
