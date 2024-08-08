@@ -11,10 +11,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EAD-ASEB-Airradians_Larvae_crossgen_OA/RAnalysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/") # Sam's work
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/") # Sam's work
+
 
 ```
+
 
 
 
@@ -117,11 +119,35 @@ carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make nume
 
 # aquire means by group for mean SE plotting by Date and treamtent
 carbchem.MASTER_MEANS <- carbchem.MASTER_long %>% # calc means and standard error
-   na.omit() %>% 
-   dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
-   dplyr::summarise(mean = mean(value),
-                    sd   = sd(value),
-                    se   = sd/(sqrt(n())) )
+                           na.omit() %>% 
+                          dplyr::mutate(Date = 
+                                          as.POSIXct(Date, format = "%m/%d/%Y"),
+                                        Month = months(Date),
+                                        Year  = year(Date)) %>% 
+                           dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
+                           dplyr::summarise(mean = mean(value),
+                                            sd   = sd(value),
+                                            se   = sd/(sqrt(n())) )
+
+                        
+carbchem.MASTER_MEANS.MONTLY <-  carbchem.MASTER_long %>% # calc means and standard error
+                                   na.omit() %>% 
+                                  dplyr::filter(!Type %in% 'Larvae') %>% 
+                                   dplyr::mutate(Date = 
+                                        as.POSIXct(Date, format = "%m/%d/%Y"),
+                                        Month = months(Date),
+                                        Year  = year(Date)) %>% 
+                                   dplyr::group_by(Month, Year, pCO2_treatment, variable) %>% 
+                                   dplyr::summarise(mean = mean(value),
+                                            sd   = sd(value),
+                                            se   = sd/(sqrt(n())) ) %>% 
+                                   dplyr::mutate(
+                                     Month = as.integer(factor(Month, levels = month.name)),
+                                     Month_Year = (paste0(Month,'/',Year)),
+                                     Date = lubridate::my(Month_Year))
+
+
+
 
 # plot em!
 colnames(carbchem.MASTER) # target select
@@ -217,6 +243,60 @@ print(Adult)
 pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_adults.pdf", width=12, height=8)
 print(Adult)
 graphics.off()
+
+
+
+
+Ph_out_all <- as.data.frame(carbchem.MASTER_MEANS.MONTLY %>% 
+                na.omit() %>% 
+                # dplyr::filter(!Type %in% 'Larvae') %>carbchem.MASTER_MEANS.MONTLY% 
+                dplyr::filter(pCO2_treatment %in% c("Low", "Moderate")) %>% 
+                dplyr::filter(variable %in% c(
+                                               'Temperature_bucket_C',
+                                               'Salinity',
+                                               # 'DO_mg_l',
+                                               # 'pH',
+                                               'pH_out',
+                                               # 'TCO2_mmol_kgSW',
+                                               # 'TA_mmol_kgSW',
+                                               'War_out_DIC_pH',
+                                               'Wca_out'
+                                               ))
+                                          )
+
+ggplot(data= Ph_out_all, 
+         aes(x=Date, 
+             y=mean)) +
+             # shape=Type, 
+            # colour=factor(pCO2_treatment)))  +
+  # stat_summary(geom = "line", fun.y = mean) +
+  # stat_summary(geom = "ribbon", fun.data = mean_cl_normal, alpha = 0.3)
+  geom_ribbon(aes(ymin = (mean - sd), 
+                  ymax = (mean + sd),
+                  fill=factor(pCO2_treatment)), alpha = 0.2) +
+  geom_line(aes(y = mean - sd,
+                colour=factor(pCO2_treatment)), 
+            linetype = "solid") +
+  geom_line(aes(y = mean + sd,
+                colour=factor(pCO2_treatment)), 
+            linetype = "solid") +
+  #geom_line()  +
+  scale_fill_manual(values=c("forestgreen", "orange"), name="fill") +
+  scale_colour_manual(values = c("Low" = "forestgreen",
+                                 "Moderate"="orange")) +
+  theme_classic() +
+  # geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
+  # geom_line(position=pd) +
+  # scale_colour_manual(values = c("Low" = "forestgreen",
+  #                                "Moderate"="orange")) +
+  # theme_classic() +
+  # geom_point(position=pd, size=2) +
+  # theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
+  # scale_x_date(date_labels="%b-%d",date_breaks  ="3 month")+
+  # #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
+  facet_wrap(~variable, scales = "free")
+print(Adult)
+
 
 ```
 
