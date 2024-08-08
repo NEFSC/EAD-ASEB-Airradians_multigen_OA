@@ -19,8 +19,8 @@ knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositor
 
 
 
-```{r load data, include=FALSE}
-# install.packages('kableExtra')
+```{r load data}
+# install.packages('gcookbook')
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(dplyr)
 library(ggplot2)
@@ -28,6 +28,7 @@ library(reshape2)
 library(knitr)
 library(kableExtra)
 library(car)
+library(gcookbook)
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
