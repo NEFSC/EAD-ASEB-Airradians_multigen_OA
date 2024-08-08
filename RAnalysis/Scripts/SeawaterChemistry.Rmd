@@ -1,12 +1,26 @@
 ---
 title: "Seawater Chemistry"
 author: "Samuel Gurr"
-date: "12/9/2022"
+date: "8/7/2024"
 output: html_document
 ---
 
+### SET UP
 ```{r setup, include=FALSE}
 
+knitr::opts_chunk$set(echo = TRUE)
+# SET WORKING DIRECTORY 
+# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
+#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EAD-ASEB-Airradians_Larvae_crossgen_OA/RAnalysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/") # Sam's work
+
+```
+
+
+
+
+```{r load data, include=FALSE}
+# install.packages('kableExtra')
 # LOAD PACKAGES :::::::::::::::::::::::::::::::::::::::::::::::::::::::
 library(dplyr)
 library(ggplot2)
@@ -15,24 +29,30 @@ library(knitr)
 library(kableExtra)
 library(car)
 
-# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/") # personal computer
-
-
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-chem_larvae <- read.csv(file="Data/Chemistry/F1/cumulative_raw/F1_water_chemistry_raw_larvae.csv", header=TRUE) # load the chem data
-chem_spat.adult <- read.csv(file="Data/Chemistry/F1/cumulative_raw/F1_water_chemistry_raw.csv", header=TRUE) # load the chem data
+
+# F1 
+F1_chem_larvae     <- read.csv(file="Data/SeawaterChemistry/F1/F1_water_chemistry_raw_larvae.csv", header=TRUE) # load the chem data
+F1_chem_spat.adult <- read.csv(file="Data/SeawaterChemistry/F1/F1_water_chemistry_raw.csv", header=TRUE) # load the chem data
+
+
+# F2
+F2_chem_pre        <- read.csv(file="Data/SeawaterChemistry/F2/F2_water_chemistry_pre_overwinter_raw.csv", header=TRUE) # load the chem data
+F2_chem_post       <- read.csv(file="Data/SeawaterChemistry/F2/F2_water_chemistry_post_overwinter_raw.csv", header=TRUE) # load the chem data
+# note the pthe pre post is abitrary - GEneveive left off on the cumulative doc at mid January 
+# what this readlly representes is wehent DIC broke down, the second as -post; is when the DIC broke down 
+# therefore she reports the TA pH TA DC and the DIC pH at the headers of all columns 
 
 ```
 
 
-# PLOTS AND ANALYSIS - Aragonite saturation levels
+# MASTER FILE MERGE (rbind) datasets within generation
 
-```{r edit data master file}
-ncol(chem_larvae) == ncol(chem_spat.adult) # TRUE - same spreadsheet
-colnames(chem_larvae) == colnames(chem_spat.adult) # TRUE - also the same
+```{r F1 edit master file}
+ncol(F1_chem_larvae) == ncol(F1_chem_spat.adult) # TRUE - same spreadsheet
+colnames(F1_chem_larvae) == colnames(F1_chem_spat.adult) # TRUE - also the same
 
-chem.MASTER <- rbind(chem_larvae, chem_spat.adult)
+chem.MASTER <- rbind(F1_chem_larvae, F1_chem_spat.adult)
 
 # NOTe: full carbonate chemistry was taken non-continuosly, call all rows that contain full carb
 
@@ -51,16 +71,46 @@ carbchem.MASTER         <- subset(carbchem, !(TCO2_mmol_kgSW > TA_mmol_kgSW)) %>
 
 write.csv(carbchem.MASTER, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/master/CarbChem_master.csv")
 
+```
+
+## F2 master file 
+* total 64 sampling dates over the course of the experiment from spat to adult stage - we dont need all of it though!
+```{r F2 edit master file}
+F2_chem_pre.OM <- F2_chem_pre %>% dplyr::mutate(Treatment = case_when(Replicate.color %in% 'green/purple' ~ 7.0,
+                                          TRUE ~ Treatment)
+                                               ) %>% 
+                                  tidyr::drop_na(Wca_out)
+
+F2_chem_pre.REP.SUMM <- F2_chem_pre.OM %>% dplyr::select(c(Date, Treatment)) %>% 
+                       dplyr::group_by_all() %>% 
+                       dplyr::summarise(n=n())
+
+length(unique(F2_chem_pre.REP.SUMM$Date)) # 31 dates when measured over this period! 
+
+
+View(F2_chem_post.OM)
+F2_chem_post.OM <- F2_chem_post %>% 
+                                  tidyr::drop_na(Temperature_spec_C)
+
+F2_chem_post.REP.SUMM <- F2_chem_post.OM %>% dplyr::select(c(Date, Treatment)) %>% 
+                       dplyr::group_by_all() %>% 
+                       dplyr::summarise(n=n())
+
+length(unique(F2_chem_post.REP.SUMM$Date)) # 33 dates when measured over this period! 
 
 
 ```
+# PLOTS AND ANALYSIS - Aragonite saturation levels
+
+
 
 ```{r plotting}
 
 # change to long format to properly facet
 carbchem.MASTER_long <- carbchem.MASTER %>% 
-  dplyr::select(!c(Treatment,Replicate)) %>% 
-  melt(id.vars=c('Date', 'Type', 'pCO2_treatment'))
+                          dplyr::select(!c(Treatment,Replicate)) %>% 
+                          dplyr::filter(!pCO2_treatment %in% 'Severe') %>% 
+                          melt(id.vars=c('Date', 'Type', 'pCO2_treatment'))
 
 carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
 
@@ -92,9 +142,9 @@ Larvae <- carbchem.MASTER_MEANS %>%
   ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
   geom_line(position=pd) +
-  scale_colour_manual(values = c("Low" = "green",
-                                 "Moderate"="orange",
-                                 "Severe" = "purple")) +
+  scale_colour_manual(values = c("Low" = "forestgreen",
+                                 "Moderate"="orange")) +
+                                 # "Severe" = "purple")) +
   theme_classic() +
   geom_point(position=pd, size=2) +
   theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
@@ -123,9 +173,9 @@ Juvenile <- carbchem.MASTER_MEANS %>%
   ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
   geom_line(position=pd) +
-  scale_colour_manual(values = c("Low" = "green",
-                                 "Moderate"="orange",
-                                 "Severe" = "purple")) +
+  scale_colour_manual(values = c("Low" = "forestgreen",
+                                 "Moderate"="orange")) +
+                                 # "Severe" = "purple")) +
   theme_classic() +
   geom_point(position=pd, size=2) +
   theme(axis.text.x = element_text(angle = 45, hjust=1, size = 5)) +
@@ -153,7 +203,7 @@ Adult <- carbchem.MASTER_MEANS %>%
   ggplot(aes(x=Date, y=mean, shape=Type, colour=factor(pCO2_treatment))) + 
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), colour="black", width=.1, position=pd) +
   geom_line(position=pd) +
-  scale_colour_manual(values = c("Low" = "green",
+  scale_colour_manual(values = c("Low" = "forestgreen",
                                  "Moderate"="orange")) +
   theme_classic() +
   geom_point(position=pd, size=2) +
