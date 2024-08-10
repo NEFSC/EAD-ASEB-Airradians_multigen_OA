@@ -107,46 +107,57 @@ length(unique(F2_chem_post.REP.SUMM$Date)) # 33 dates when measured over this pe
 
 
 
-```{r plotting}
+```{r long master files}
 
+
+# ALL
 # change to long format to properly facet
 carbchem.MASTER_long <- carbchem.MASTER %>% 
-                          dplyr::select(!c(Treatment,Replicate)) %>% 
-                          dplyr::filter(!pCO2_treatment %in% 'Severe') %>% 
-                          melt(id.vars=c('Date', 'Type', 'pCO2_treatment'))
-
-carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
-
-# aquire means by group for mean SE plotting by Date and treamtent
-carbchem.MASTER_MEANS <- carbchem.MASTER_long %>% # calc means and standard error
-                           na.omit() %>% 
+                          dplyr::select(!c(Treatment)) %>% 
+                          dplyr::filter(!(pCO2_treatment %in% 'Severe'),!(Type %in% 'Larvae') ) %>% 
+                          dplyr::filter(Replicate %in% c('A','B','C','D','E','F','G','H')) %>% 
+                          melt(id.vars=c('Date', 'Replicate', 'Type', 'pCO2_treatment')) %>% 
+                          na.omit() %>% 
                           dplyr::mutate(Date = 
                                           as.POSIXct(Date, format = "%m/%d/%Y"),
                                         Month = months(Date),
-                                        Year  = year(Date)) %>% 
+                                        Year  = year(Date)) 
+
+carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
+
+# MEANS PER SAMPLING DAY (reducing replicates within treatment to one mean) 
+# aquire means by group for mean SE plotting by Date and treamtent
+carbchem.MEANS.by.day <- carbchem.MASTER_long %>% # calc means and standard error
                            dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
                            dplyr::summarise(mean = mean(value),
                                             sd   = sd(value),
                                             se   = sd/(sqrt(n())) )
 
-                        
-carbchem.MASTER_MEANS.MONTLY <-  carbchem.MASTER_long %>% # calc means and standard error
-                                   na.omit() %>% 
-                                  dplyr::filter(!Type %in% 'Larvae') %>% 
-                                   dplyr::mutate(Date = 
-                                        as.POSIXct(Date, format = "%m/%d/%Y"),
-                                        Month = months(Date),
-                                        Year  = year(Date)) %>% 
-                                   dplyr::group_by(Month, Year, pCO2_treatment, variable) %>% 
-                                   dplyr::summarise(mean = mean(value),
-                                            sd   = sd(value),
-                                            se   = sd/(sqrt(n())) ) %>% 
+# MONTHLY MEANS (taking the daily means within above and reduce to monthly) 
+carbchem.MEANS.monthy.by.rep <-  carbchem.MASTER_long %>% # calc means and standard error
+                                   dplyr::group_by(Month, Year, Replicate, pCO2_treatment, variable) %>% 
+                                   dplyr::summarise(
+                                            mean.month.rep = mean(value),
+                                            sd.month.rep   = sd(value),
+                                            se.month.rep   = sd.month.rep/(sqrt(n())) ) %>% 
                                    dplyr::mutate(
                                      Month = as.integer(factor(Month, levels = month.name)),
                                      Month_Year = (paste0(Month,'/',Year)),
                                      Date = lubridate::my(Month_Year))
+ 
+carbchem.MEANS.monthy       <- carbchem.MEANS.monthy.by.rep %>% 
+                                   dplyr::group_by(Date, Month_Year, pCO2_treatment, variable) %>% 
+                                   dplyr::summarise(
+                                            mean.month.all = mean(mean.month.rep),
+                                            sd.month.all   = sd(mean.month.rep),
+                                            se.month.all   = sd.month.all/(sqrt(n())) )
 
 
+```
+
+
+
+```{r plot}
 
 
 # plot em!
@@ -247,7 +258,8 @@ graphics.off()
 
 
 
-Ph_out_all <- as.data.frame(carbchem.MASTER_MEANS.MONTLY %>% 
+Ph_out_all <- as.data.frame(
+  carbchem.MEANS.monthy %>% 
                 na.omit() %>% 
                 # dplyr::filter(!Type %in% 'Larvae') %>carbchem.MASTER_MEANS.MONTLY% 
                 dplyr::filter(pCO2_treatment %in% c("Low", "Moderate")) %>% 
@@ -266,18 +278,18 @@ Ph_out_all <- as.data.frame(carbchem.MASTER_MEANS.MONTLY %>%
 
 ggplot(data= Ph_out_all, 
          aes(x=Date, 
-             y=mean)) +
+             y=mean.month.all)) +
              # shape=Type, 
             # colour=factor(pCO2_treatment)))  +
   # stat_summary(geom = "line", fun.y = mean) +
   # stat_summary(geom = "ribbon", fun.data = mean_cl_normal, alpha = 0.3)
-  geom_ribbon(aes(ymin = (mean - sd), 
-                  ymax = (mean + sd),
+  geom_ribbon(aes(ymin = (mean.month.all - sd.month.all ), 
+                  ymax = (mean.month.all + sd.month.all ),
                   fill=factor(pCO2_treatment)), alpha = 0.2) +
-  geom_line(aes(y = mean - sd,
+  geom_line(aes(y = mean.month.all - sd.month.all,
                 colour=factor(pCO2_treatment)), 
             linetype = "solid") +
-  geom_line(aes(y = mean + sd,
+  geom_line(aes(y = mean.month.all + sd.month.all,
                 colour=factor(pCO2_treatment)), 
             linetype = "solid") +
   #geom_line()  +
@@ -295,12 +307,113 @@ ggplot(data= Ph_out_all,
   # scale_x_date(date_labels="%b-%d",date_breaks  ="3 month")+
   # #scale_y_continuous(expand = c(0, 0), limits = c(0, 300000)) +
   facet_wrap(~variable, scales = "free")
-print(Adult)
+
 
 
 ```
 
 
+```{r ggribbon smooth with gam}
+# how do we get smooth geom ribbon figures
+# in summary run gam and use a fine scale for x axis 
+# https://stackoverflow.com/questions/61029929/smoothing-geom-ribbon
+# A principled way to achieve what you want is to fit a GAM model to your data using the gam() function in mgcv and then apply the predict() function to that model over a finer grid of values for your predictor variable. The grid can cover the span defined by the range of observed values for your predictor variable.
+
+
+pH_out <- as.data.frame(
+  carbchem.MEANS.by.day %>% 
+                na.omit() %>% 
+                # dplyr::filter(!Type %in% 'Larvae') %>carbchem.MASTER_MEANS.MONTLY% 
+                dplyr::filter(pCO2_treatment %in% c("Low", "Moderate")) %>% 
+                dplyr::filter(variable %in% (
+                                               # 'Temperature_bucket_C',
+                                               # 'Salinity',
+                                               # 'DO_mg_l',
+                                               # 'pH',
+                                               'pH_out'
+                                               # 'TCO2_mmol_kgSW'
+                                               # 'TA_mmol_kgSW',
+                                               # 'pCO2_out_matm'
+                                               #'War_out_DIC_pH'
+                                               # 'Wca_out'
+                                               ))
+                                          ) %>% 
+                 mutate(Date_asnum = dense_rank(Date))
+
+
+# calc the num days because the Date_asnumin ascending order dot not 
+# represent the elapsed time properly as an x axis
+pH_out$NumDays  <- as.numeric(
+                            difftime(as.Date(pH_out$Date),
+                            as.Date(pH_out$Date[1]),
+                            units="days")
+                            )
+
+pH_out.low      <- pH_out %>% dplyr::filter(pCO2_treatment %in% 'Low')
+pH_out.moderate <- pH_out %>% dplyr::filter(pCO2_treatment %in% 'Moderate')
+pH_out.all.ordered  <- rbind(pH_out.low, pH_out.moderate)
+
+# load R packages
+library(ggplot2)
+library(mgcv)
+
+# fit GAM model
+m.low      <- gam(mean ~ s(NumDays), data = pH_out.low) 
+m.moderate <- gam(mean ~ s(NumDays), data = pH_out.moderate) 
+
+# define finer grid of predictor values
+xnew.low      <- seq(min(pH_out.low$NumDays), 
+                     max(pH_out.low$NumDays), by = 0.1) 
+xnew.moderate <- seq(min(pH_out.moderate$NumDays), 
+                     max(pH_out.moderate$NumDays), by = 0.1) 
+
+# apply predict() function to the fitted GAM model
+# using the finer grid of x values
+p.low      <- predict(m.low, newdata = data.frame(NumDays = xnew.low), se = TRUE) 
+p.moderate <- predict(m.moderate, newdata = data.frame(NumDays = xnew.moderate), se = TRUE) 
+
+# plot the estimated mean values of y (fit) at given x values
+# over the finer grid of x values;
+# superimpose approximate 95% confidence band for the true 
+# mean values of y at given x values in the finer grid
+g.low <- data.frame(NumDays = xnew.low, 
+            fit = p.low$fit,
+            lwr = p.low$fit - 1.96*p.low$se.fit, # 1.96 * SE = 95% CI
+            upr = p.low$fit + 1.96*p.low$se.fit  # 1.96 * SE = 95% CI
+            ) %>% 
+         dplyr::mutate(pCO2_treatment = "Low")
+
+g.moderate <- data.frame(NumDays = xnew.moderate, 
+            fit = p.moderate$fit,
+            lwr = p.moderate$fit - 1.96*p.moderate$se.fit, 
+            upr = p.moderate$fit + 1.96*p.moderate$se.fit) %>% 
+         dplyr::mutate(pCO2_treatment = "Moderate")
+
+# r bind the data sets
+# use the first date of pH_out and add the elapsed numberic time, not that 1 = seconds, we 
+# convert to days by mutliplying by 86400 (seconds in a day)
+g.master <- rbind(g.low, g.moderate) %>% 
+                  dplyr::mutate(Date = pH_out$Date[1] + NumDays*86400)
+
+theme_set(theme_classic())
+
+ggplot(data = g.master, aes(Date, fit)) + 
+  geom_ribbon(aes(ymin = lwr, ymax = upr, fill=factor(pCO2_treatment)), alpha = 0.2) + 
+  geom_line(aes(y = lwr,
+                colour=factor(pCO2_treatment)),
+            linetype = "solid") +
+  geom_line(aes(y = upr,
+                colour=factor(pCO2_treatment)),
+            linetype = "solid") +
+  geom_point(data = pH_out.all.ordered, 
+             aes(Date, mean,
+                 colour=factor(pCO2_treatment)), 
+             shape = 3, size =1) +
+  scale_fill_manual(values=c("forestgreen", "orange"), name="fill") +
+  scale_colour_manual(values=c("forestgreen", "orange"), name="fill") 
+
+
+```
 
 
 
