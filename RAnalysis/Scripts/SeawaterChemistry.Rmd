@@ -313,15 +313,21 @@ ggplot(data= Ph_out_all,
 ```
 
 
-```{r ggribbon smooth with gam}
+```{r SmoothRibbon function with gam}
 # how do we get smooth geom ribbon figures
 # in summary run gam and use a fine scale for x axis 
 # https://stackoverflow.com/questions/61029929/smoothing-geom-ribbon
 # A principled way to achieve what you want is to fit a GAM model to your data using the gam() function in mgcv and then apply the predict() function to that model over a finer grid of values for your predictor variable. The grid can cover the span defined by the range of observed values for your predictor variable.
+# load R packages
+library(ggplot2)
+library(mgcv)
 
 
-pH_out <- as.data.frame(
-  carbchem.MEANS.by.day %>% 
+SmoothRibbon <- function(datafilename, col_name) {
+
+data <- as.data.frame(
+  # carbchem.MEANS.by.day %>% 
+                datafilename %>% 
                 na.omit() %>% 
                 # dplyr::filter(!Type %in% 'Larvae') %>carbchem.MASTER_MEANS.MONTLY% 
                 dplyr::filter(pCO2_treatment %in% c("Low", "Moderate")) %>% 
@@ -330,7 +336,8 @@ pH_out <- as.data.frame(
                                                # 'Salinity',
                                                # 'DO_mg_l',
                                                # 'pH',
-                                               'pH_out'
+                                               # 'pH_out'
+                                               col_name
                                                # 'TCO2_mmol_kgSW'
                                                # 'TA_mmol_kgSW',
                                                # 'pCO2_out_matm'
@@ -343,29 +350,26 @@ pH_out <- as.data.frame(
 
 # calc the num days because the Date_asnumin ascending order dot not 
 # represent the elapsed time properly as an x axis
-pH_out$NumDays  <- as.numeric(
-                            difftime(as.Date(pH_out$Date),
-                            as.Date(pH_out$Date[1]),
+data$NumDays  <- as.numeric(
+                            difftime(as.Date(data$Date),
+                            as.Date(data$Date[1]),
                             units="days")
                             )
 
-pH_out.low      <- pH_out %>% dplyr::filter(pCO2_treatment %in% 'Low')
-pH_out.moderate <- pH_out %>% dplyr::filter(pCO2_treatment %in% 'Moderate')
-pH_out.all.ordered  <- rbind(pH_out.low, pH_out.moderate)
+data.low      <- data %>% dplyr::filter(pCO2_treatment %in% 'Low')
+data.moderate <- data %>% dplyr::filter(pCO2_treatment %in% 'Moderate')
+data.all.ordered  <- rbind(data.low, data.moderate)
 
-# load R packages
-library(ggplot2)
-library(mgcv)
 
 # fit GAM model
-m.low      <- gam(mean ~ s(NumDays), data = pH_out.low) 
-m.moderate <- gam(mean ~ s(NumDays), data = pH_out.moderate) 
+m.low      <- gam(mean ~ s(NumDays), data = data.low) 
+m.moderate <- gam(mean ~ s(NumDays), data = data.moderate) 
 
 # define finer grid of predictor values
-xnew.low      <- seq(min(pH_out.low$NumDays), 
-                     max(pH_out.low$NumDays), by = 0.1) 
-xnew.moderate <- seq(min(pH_out.moderate$NumDays), 
-                     max(pH_out.moderate$NumDays), by = 0.1) 
+xnew.low      <- seq(min(data.low$NumDays), 
+                     max(data.low$NumDays), by = 0.1) 
+xnew.moderate <- seq(min(data.moderate$NumDays), 
+                     max(data.moderate$NumDays), by = 0.1) 
 
 # apply predict() function to the fitted GAM model
 # using the finer grid of x values
@@ -390,14 +394,14 @@ g.moderate <- data.frame(NumDays = xnew.moderate,
          dplyr::mutate(pCO2_treatment = "Moderate")
 
 # r bind the data sets
-# use the first date of pH_out and add the elapsed numberic time, not that 1 = seconds, we 
+# use the first date of data and add the elapsed numberic time, not that 1 = seconds, we 
 # convert to days by mutliplying by 86400 (seconds in a day)
 g.master <- rbind(g.low, g.moderate) %>% 
-                  dplyr::mutate(Date = pH_out$Date[1] + NumDays*86400)
+                  dplyr::mutate(Date = data$Date[1] + NumDays*86400)
 
 theme_set(theme_classic())
 
-ggplot(data = g.master, aes(Date, fit)) + 
+p <- ggplot(data = g.master, aes(Date, fit)) + 
   geom_ribbon(aes(ymin = lwr, ymax = upr, fill=factor(pCO2_treatment)), alpha = 0.2) + 
   geom_line(aes(y = lwr,
                 colour=factor(pCO2_treatment)),
@@ -405,14 +409,31 @@ ggplot(data = g.master, aes(Date, fit)) +
   geom_line(aes(y = upr,
                 colour=factor(pCO2_treatment)),
             linetype = "solid") +
-  geom_point(data = pH_out.all.ordered, 
+  geom_point(data = data.all.ordered, 
              aes(Date, mean,
                  colour=factor(pCO2_treatment)), 
              shape = 3, size =1) +
+  ylab(col_name) +
+  theme(legend.position="none") +
   scale_fill_manual(values=c("forestgreen", "orange"), name="fill") +
   scale_colour_manual(values=c("forestgreen", "orange"), name="fill") 
 
+print(p)
+}
 
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_Chem_95CI.pdf", width=8, height=11)
+    ggarrange(
+          SmoothRibbon(carbchem.MEANS.by.day, "Temperature_bucket_C"),
+          SmoothRibbon(carbchem.MEANS.by.day, "Salinity"),
+          SmoothRibbon(carbchem.MEANS.by.day, "pCO2_out_matm"),
+          SmoothRibbon(carbchem.MEANS.by.day, "pH_out"),
+          SmoothRibbon(carbchem.MEANS.by.day, "War_out_DIC_pH"),
+          SmoothRibbon(carbchem.MEANS.by.day, "Wca_out"),
+          nrow = 3,
+          ncol = 2
+    )
+graphics.off()
 ```
 
 
