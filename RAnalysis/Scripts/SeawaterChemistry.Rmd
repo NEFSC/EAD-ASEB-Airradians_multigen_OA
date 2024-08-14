@@ -491,6 +491,8 @@ pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalys
 graphics.off()
 
 
+
+
 pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F2s/plots/F2_Chem_95CI.pdf", width=8, height=11)
     ggarrange(
           SmoothRibbon(carbchem.MEANS.by.day.F2, "Temperature_bucket_C"),
