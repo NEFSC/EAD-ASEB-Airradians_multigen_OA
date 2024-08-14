@@ -55,35 +55,51 @@ F2_chem_post       <- read.csv(file="Data/SeawaterChemistry/F2/F2_water_chemistr
 ncol(F1_chem_larvae) == ncol(F1_chem_spat.adult) # TRUE - same spreadsheet
 colnames(F1_chem_larvae) == colnames(F1_chem_spat.adult) # TRUE - also the same
 
-chem.MASTER <- rbind(F1_chem_larvae, F1_chem_spat.adult)
+F1_carbchem <- rbind(F1_chem_larvae, F1_chem_spat.adult) %>% 
+                dplyr::select(Date, Treatment, Replicate, Type,
+                              Temperature_bucket_C, Salinity, DO_mg_l, 
+                              TCO2_mmol_kgSW, TA_mmol_kgSW,
+                              pH_out, pCO2_out_matm, Wca_out, War_out_DIC_pH) %>% 
+                dplyr::rename(WCa_out = Wca_out,
+                              WAr_out = War_out_DIC_pH)
 
 # NOTe: full carbonate chemistry was taken non-continuosly, call all rows that contain full carb
 
-carbchem                <- chem.MASTER[!(is.na(chem.MASTER$War_out_DIC_pH)),] 
-carbchem.flagged.DIC.TA <- subset(carbchem, (TCO2_mmol_kgSW > TA_mmol_kgSW)) # 13 rows flagged for DIC<TA
-carbchem.flagged.odd    <- subset(carbchem, War_out_DIC_pH > 400) # 8 w/ high aragonite, next highest is 2.05
+F1_carbchem                <- F1_carbchem[!(is.na(F1_carbchem$WAr_out)),] 
+F1_carbchem.flagged.DIC.TA <- subset(F1_carbchem, (TCO2_mmol_kgSW > TA_mmol_kgSW)) # 13 rows flagged for DIC<TA
+carbchem.flagged.odd       <- subset(F1_carbchem, WAr_out > 400) # 8 w/ high aragonite, next highest is 2.05
 
-write.csv((rbind(carbchem.flagged.DIC.TA, carbchem.flagged.odd)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/flagged_data.csv")
+write.csv(carbchem.flagged.odd), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/flagged_data.csv")
 
-carbchem.MASTER         <- subset(carbchem, !(TCO2_mmol_kgSW > TA_mmol_kgSW)) %>% # DIC>TA omit
-  dplyr::filter(War_out_DIC_pH < 3) %>% # omit these odd aragonite points
-  dplyr::mutate(pCO2_treatment = 
-                  case_when(Treatment == 8 ~ 'Low',
-                            Treatment == 7.5 ~ 'Moderate',
-                            Treatment == 7 ~ 'Severe'))
+F1_carbchem.final <- subset(F1_carbchem, !(TCO2_mmol_kgSW > TA_mmol_kgSW)) %>% # DIC>TA omit
+                        dplyr::filter(WAr_out < 3) %>% # omit these odd aragonite points
+                        dplyr::mutate(pCO2_treatment = 
+                                        case_when(Treatment == 8 ~ 'Low',
+                                                  Treatment == 7.5 ~ 'Moderate',
+                                                  Treatment == 7 ~ 'Severe'),
+                                              Generation = 'F1') %>% 
+                        dplyr::filter(!(pCO2_treatment %in% 'Severe'),!(Type %in% 'Larvae') ) %>% 
+                        dplyr::select(-c(TCO2_mmol_kgSW,TA_mmol_kgSW, Type))
 
-write.csv(carbchem.MASTER, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/master/CarbChem_master.csv")
+write.csv(F1_carbchem.final, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/master/CarbChem_master.csv")
 
 ```
 
 ## F2 master file 
 * total 64 sampling dates over the course of the experiment from spat to adult stage - we dont need all of it though!
 ```{r F2 edit master file}
-F2_chem_pre.OM <- F2_chem_pre %>% dplyr::mutate(Treatment = case_when(Replicate.color %in% 'green/purple' ~ 7.0,
+names(F2_chem_pre)
+F2_chem_pre.OM <- F2_chem_pre %>% dplyr::mutate(Treatment = 
+                                                  case_when(Replicate.color %in% 'green/purple' ~ 7.0,
                                           TRUE ~ Treatment)
                                                ) %>% 
-                                  tidyr::drop_na(Wca_out)
-
+                                  tidyr::drop_na(Wca_out) %>% 
+                                  dplyr::select(Date, Treatment, Replicate,
+                                      Temperature_bucket_C, Salinity, DO_mg_l,
+                                      pH_out, pCO2_out_matm, Wca_out, War_out_DIC_pH) %>% 
+                                  dplyr::rename(WCa_out = Wca_out,
+                                                WAr_out = War_out_DIC_pH)
+                              
 F2_chem_pre.REP.SUMM <- F2_chem_pre.OM %>% dplyr::select(c(Date, Treatment)) %>% 
                        dplyr::group_by_all() %>% 
                        dplyr::summarise(n=n())
@@ -91,7 +107,6 @@ F2_chem_pre.REP.SUMM <- F2_chem_pre.OM %>% dplyr::select(c(Date, Treatment)) %>%
 length(unique(F2_chem_pre.REP.SUMM$Date)) # 31 dates when measured over this period! 
 
 
-View(F2_chem_post.OM)
 F2_chem_post.OM <- F2_chem_post %>% 
                                   tidyr::drop_na(Temperature_spec_C)
 
@@ -102,33 +117,70 @@ F2_chem_post.REP.SUMM <- F2_chem_post.OM %>% dplyr::select(c(Date, Treatment)) %
 length(unique(F2_chem_post.REP.SUMM$Date)) # 33 dates when measured over this period! 
 
 
+#  call the core datasets
+F2_chem_post.core.columns   <- F2_chem_post.OM[,c(1,3:4,6:8, 10:12)]
+
+F2_chem_post.DIC_pH.columns <- F2_chem_post[ ,grepl( ("DIC_pH"), names(F2_chem_post) ) ]
+names(F2_chem_post.DIC_pH.columns) = gsub(pattern = "_DIC_pH.*", replacement = "", x = names(F2_chem_post.DIC_pH.columns))
+F2_chem_post.DIC_pH         <- cbind(F2_chem_post.core.columns, F2_chem_post.DIC_pH.columns)
+
+
+F2_chem_post.TA_pH.columns        <- F2_chem_post[ ,grepl( ("TA_pH"), names(F2_chem_post) ) ]
+names(F2_chem_post.TA_pH.columns) = gsub(pattern = "_TA_pH.*", replacement = "", x = names(F2_chem_post.TA_pH.columns))
+F2_chem_post.TA_pH         <- cbind(F2_chem_post.core.columns, F2_chem_post.TA_pH.columns)
+
+# Use full_join to merge the DIC_pH with the TA_pH dataframe 
+# this method below ensures ALL cased when we have DIC_pH are prioritizes
+# cases when DIC was broken (NAs for DIC_pH carb chem) are filled with TA_pH calculated data
+# this is wat we discussed with Shannon - use TA-PH when DIC was broken, otherwise DIC_pH whenever able 
+F2_chem_post_final <- full_join(F2_chem_post.DIC_pH, F2_chem_post.TA_pH, 
+                                by = c("Date", "Treatment", "Replicate"), suffix = c("", ".y")) %>%
+                        mutate(across( names(F2_chem_post.TA_pH.columns), 
+                                      ~ coalesce(., cur_data()[[ paste0(cur_column(), ".y") ]]))) %>%
+                        select(-ends_with(".y")) %>% 
+                        na.omit() %>% 
+                        dplyr::select(Date, Treatment, Replicate,
+                                      Temperature_bucket_C, Salinity, DO_mg_l,
+                                      pH_out, pCO2_out_.matm., WCa_out, WAr_out) %>% 
+                        dplyr::rename(pCO2_out_matm = pCO2_out_.matm.)
+
+# sanity check, are the names the same?                        
+names(F2_chem_post_final) == names(F2_chem_pre.OM)
+
+# If true, we can rbind the datasets!
+
+F2_carbchem.final <- rbind(F2_chem_pre.OM, F2_chem_post_final) %>% 
+                                dplyr::mutate(pCO2_treatment = 
+                                        case_when(Treatment == 8 ~ 'Low',
+                                                  Treatment == 7.5 ~ 'Moderate',
+                                                  Treatment == 7 ~ 'Severe'),
+                                              Generation = 'F2')
 ```
 # PLOTS AND ANALYSIS - Aragonite saturation levels
 
 
 
 ```{r long master files}
-
+names(F1_carbchem.final) == names(F2_carbchem.final)
 
 # ALL
 # change to long format to properly facet
-carbchem.MASTER_long <- carbchem.MASTER %>% 
+carbchem.MASTER_long <- rbind(F1_carbchem.final, F2_carbchem.final) %>% 
                           dplyr::select(!c(Treatment)) %>% 
-                          dplyr::filter(!(pCO2_treatment %in% 'Severe'),!(Type %in% 'Larvae') ) %>% 
                           dplyr::filter(Replicate %in% c('A','B','C','D','E','F','G','H')) %>% 
-                          melt(id.vars=c('Date', 'Replicate', 'Type', 'pCO2_treatment')) %>% 
+                          melt(id.vars=c('Date', 'Replicate', 'Generation', 'pCO2_treatment')) %>% 
                           na.omit() %>% 
                           dplyr::mutate(Date = 
                                           as.POSIXct(Date, format = "%m/%d/%Y"),
                                         Month = months(Date),
-                                        Year  = year(Date)) 
+                                        Year  = lubridate::year(Date)) 
 
 carbchem.MASTER_long$value <- as.numeric(carbchem.MASTER_long$value) # make numeric
 
 # MEANS PER SAMPLING DAY (reducing replicates within treatment to one mean) 
 # aquire means by group for mean SE plotting by Date and treamtent
 carbchem.MEANS.by.day <- carbchem.MASTER_long %>% # calc means and standard error
-                           dplyr::group_by(Date, Type, pCO2_treatment, variable) %>% 
+                           dplyr::group_by(Date, pCO2_treatment, Generation, variable) %>% 
                            dplyr::summarise(mean = mean(value),
                                             sd   = sd(value),
                                             se   = sd/(sqrt(n())) )
@@ -421,19 +473,37 @@ p <- ggplot(data = g.master, aes(Date, fit)) +
 print(p)
 }
 
+library(ggpubr)
+carbchem.MEANS.by.day.F1 <- carbchem.MEANS.by.day %>% filter(Generation %in% 'F1')
+carbchem.MEANS.by.day.F2 <- carbchem.MEANS.by.day %>% filter(Generation %in% 'F2')
 
 pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_Chem_95CI.pdf", width=8, height=11)
     ggarrange(
-          SmoothRibbon(carbchem.MEANS.by.day, "Temperature_bucket_C"),
-          SmoothRibbon(carbchem.MEANS.by.day, "Salinity"),
-          SmoothRibbon(carbchem.MEANS.by.day, "pCO2_out_matm"),
-          SmoothRibbon(carbchem.MEANS.by.day, "pH_out"),
-          SmoothRibbon(carbchem.MEANS.by.day, "War_out_DIC_pH"),
-          SmoothRibbon(carbchem.MEANS.by.day, "Wca_out"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "Temperature_bucket_C"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "Salinity"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "pCO2_out_matm"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "pH_out"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "WAr_out"),
+          SmoothRibbon(carbchem.MEANS.by.day.F1, "WCa_out"),
           nrow = 3,
           ncol = 2
     )
 graphics.off()
+
+
+pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F2s/plots/F2_Chem_95CI.pdf", width=8, height=11)
+    ggarrange(
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "Temperature_bucket_C"),
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "Salinity"),
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "pCO2_out_matm"),
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "pH_out"),
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "WAr_out"),
+          SmoothRibbon(carbchem.MEANS.by.day.F2, "WCa_out"),
+          nrow = 3,
+          ncol = 2
+    )
+graphics.off()
+
 ```
 
 
