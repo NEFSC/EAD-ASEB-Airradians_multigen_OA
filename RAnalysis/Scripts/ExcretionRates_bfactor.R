@@ -12,9 +12,11 @@ library(ggplot2)
 library(nlme)
 library(lme4)
 library(car)
+library(ggpmisc)
 
 # SET WORKING DIRECTORY 
 setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+setwd("C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis") # personal computer
 
 
 
@@ -112,7 +114,7 @@ Excretion_data_OM$log10_VER  <- log10(as.numeric(Excretion_data_OM$ExcretionRate
 Excretion_data_OM$log10_TDW  <- log10(as.numeric(Excretion_data_OM$Dry_Tissue_weight)) # assign length value 
 
 # run plot for b factor 
-nrow(Excretion_data_OM)
+nrow(Excretion_data_OM) # 160
 ER_b.factor_PLOT_ALL <- Excretion_data_OM %>% 
                         ggplot(aes(x=log10_TDW, y=log10_VER)) +
                         geom_point() +

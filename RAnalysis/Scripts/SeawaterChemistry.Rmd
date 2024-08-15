@@ -11,8 +11,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Sam's
-#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/") # Sam's work
+#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/") # Sam's work
 
 
 ```
@@ -31,7 +31,7 @@ library(knitr)
 library(kableExtra)
 library(car)
 library(gcookbook)
-
+library(ggpubr)
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # F1 
@@ -108,7 +108,7 @@ length(unique(F2_chem_pre.REP.SUMM$Date)) # 31 dates when measured over this per
 
 
 F2_chem_post.OM <- F2_chem_post %>% 
-                                  tidyr::drop_na(Temperature_spec_C)
+                                   tidyr::drop_na(Temperature_spec_C)
 
 F2_chem_post.REP.SUMM <- F2_chem_post.OM %>% dplyr::select(c(Date, Treatment)) %>% 
                        dplyr::group_by_all() %>% 
@@ -118,7 +118,7 @@ length(unique(F2_chem_post.REP.SUMM$Date)) # 33 dates when measured over this pe
 
 
 #  call the core datasets
-F2_chem_post.core.columns   <- F2_chem_post.OM[,c(1,3:4,6:8, 10:12)]
+F2_chem_post.core.columns   <- F2_chem_post[,c(1,3:4,6:8)]
 
 F2_chem_post.DIC_pH.columns <- F2_chem_post[ ,grepl( ("DIC_pH"), names(F2_chem_post) ) ]
 names(F2_chem_post.DIC_pH.columns) = gsub(pattern = "_DIC_pH.*", replacement = "", x = names(F2_chem_post.DIC_pH.columns))
@@ -127,14 +127,15 @@ F2_chem_post.DIC_pH         <- cbind(F2_chem_post.core.columns, F2_chem_post.DIC
 
 F2_chem_post.TA_pH.columns        <- F2_chem_post[ ,grepl( ("TA_pH"), names(F2_chem_post) ) ]
 names(F2_chem_post.TA_pH.columns) = gsub(pattern = "_TA_pH.*", replacement = "", x = names(F2_chem_post.TA_pH.columns))
-F2_chem_post.TA_pH         <- cbind(F2_chem_post.core.columns, F2_chem_post.TA_pH.columns)
+F2_chem_post.TA_pH                <- cbind(F2_chem_post.core.columns, F2_chem_post.TA_pH.columns)
 
 # Use full_join to merge the DIC_pH with the TA_pH dataframe 
 # this method below ensures ALL cased when we have DIC_pH are prioritizes
 # cases when DIC was broken (NAs for DIC_pH carb chem) are filled with TA_pH calculated data
 # this is wat we discussed with Shannon - use TA-PH when DIC was broken, otherwise DIC_pH whenever able 
-F2_chem_post_final <- full_join(F2_chem_post.DIC_pH, F2_chem_post.TA_pH, 
-                                by = c("Date", "Treatment", "Replicate"), suffix = c("", ".y")) %>%
+F2_chem_post_final <- dplyr::full_join(F2_chem_post.DIC_pH, F2_chem_post.TA_pH, 
+                                by = c("Date", "Treatment", "Replicate",
+                                       "Temperature_bucket_C", "Salinity", "DO_mg_l"), suffix = c("", ".y")) %>%
                         mutate(across( names(F2_chem_post.TA_pH.columns), 
                                       ~ coalesce(., cur_data()[[ paste0(cur_column(), ".y") ]]))) %>%
                         select(-ends_with(".y")) %>% 
@@ -156,16 +157,49 @@ F2_carbchem.final <- rbind(F2_chem_pre.OM, F2_chem_post_final) %>%
                                                   Treatment == 7 ~ 'Severe'),
                                               Generation = 'F2')
 ```
-# PLOTS AND ANALYSIS - Aragonite saturation levels
+
+
+### Flag odd values 
+
+* Note: to do this stewise, move forward with this chunk using F1_carbchem.final and F1_carbchem.final
+look at the plots generated fromthe Smooth Ribbon, these points are daily means within treatment (mean of all replicates measured)
+In some cased there are glaring outliers, far from the 95% CI trend and bland with the other treatment
+
+* Below I have completed these sanity check and repeately (and excrutiatingly) diagnosed those that present odd patterns, 
+I have flagged these and output the data. 
+
+* Generated are data omitted of these flagged values as "...OM" and these are now used to generate Smooth Ribbon files in 
+downsream chunks. 
+
+* that is all.
 
 
 
 ```{r long master files}
-names(F1_carbchem.final) == names(F2_carbchem.final)
+names(F1_carbchem.final) == names(F1_carbchem.final) # must be TRUE meaning the columnnames are exactly the same and we can merge successfully 
 
+# Beofre we merge, execuate cuts that we mentioned above inthe bullets before the chunk, read them please! 
+# If you proceed wtith 'F1_carbchem.final' and do not filterthere are several outliers, below I remedy them 
+
+# F1 data shows ouliers that are simply omitted by the calcite sat state < 1.7 in the low treatment 
+F1_carbchem.final.OM <- F1_carbchem.final %>% dplyr::filter(!(pCO2_treatment %in% 'Low' & 
+                                                                WCa_out < 1.7))
+ 
+# F2 data have outliers that are also easily filtered out by calcite saturation state < 2.0 in the low treatment 
+F2_carbchem.final.OM <- F2_carbchem.final %>% dplyr::filter(!(pCO2_treatment %in% 'Low' & 
+                                                                WCa_out < 2.0))
+
+# run the same code with '!' to callthese datapoint ONLY and output them as 'flagged'
+F1_carbchem.flagged <- F1_carbchem.final %>% dplyr::filter((pCO2_treatment %in% 'Low' & 
+                                                                WCa_out < 1.7))
+
+F2_carbchem.flagged <- F2_carbchem.final %>% dplyr::filter((pCO2_treatment %in% 'Low' & 
+                                                                WCa_out < 2.0))
+
+ # now proceed with 'F1_carbchem.final.OM'
 # ALL
 # change to long format to properly facet
-carbchem.MASTER_long <- rbind(F1_carbchem.final, F2_carbchem.final) %>% 
+carbchem.MASTER_long <- rbind(F1_carbchem.final.OM, F2_carbchem.final.OM) %>% 
                           dplyr::select(!c(Treatment)) %>% 
                           dplyr::filter(Replicate %in% c('A','B','C','D','E','F','G','H')) %>% 
                           melt(id.vars=c('Date', 'Replicate', 'Generation', 'pCO2_treatment')) %>% 
@@ -183,7 +217,8 @@ carbchem.MEANS.by.day <- carbchem.MASTER_long %>% # calc means and standard erro
                            dplyr::group_by(Date, pCO2_treatment, Generation, variable) %>% 
                            dplyr::summarise(mean = mean(value),
                                             sd   = sd(value),
-                                            se   = sd/(sqrt(n())) )
+                                            se   = sd/(sqrt(n())), 
+                                            n = n())
 
 # MONTHLY MEANS (taking the daily means within above and reduce to monthly) 
 carbchem.MEANS.monthy.by.rep <-  carbchem.MASTER_long %>% # calc means and standard error
@@ -473,11 +508,16 @@ p <- ggplot(data = g.master, aes(Date, fit)) +
 print(p)
 }
 
+```
+
+* USe SMooth Ribbon to make some narly plots!
+```{r Nice plots!}
 library(ggpubr)
-carbchem.MEANS.by.day.F1 <- carbchem.MEANS.by.day %>% filter(Generation %in% 'F1')
+carbchem.MEANS.by.day.F1 <- carbchem.MEANS.by.day %>% filter(Generation %in% 'F1') 
 carbchem.MEANS.by.day.F2 <- carbchem.MEANS.by.day %>% filter(Generation %in% 'F2')
 
-pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1s/plots/F1_Chem_95CI.pdf", width=8, height=11)
+# pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1/plots/F1_Chem_95CI.pdf", width=8, height=11)
+pdf("C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F1/plots/F1_Chem_95CI.pdf", width=8, height=11)
     ggarrange(
           SmoothRibbon(carbchem.MEANS.by.day.F1, "Temperature_bucket_C"),
           SmoothRibbon(carbchem.MEANS.by.day.F1, "Salinity"),
@@ -493,7 +533,8 @@ graphics.off()
 
 
 
-pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F2s/plots/F2_Chem_95CI.pdf", width=8, height=11)
+# pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F2/plots/F2_Chem_95CI.pdf", width=8, height=11)
+pdf("C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/SeawaterChemistry/F2/plots/F2_Chem_95CI.pdf", width=8, height=11)
     ggarrange(
           SmoothRibbon(carbchem.MEANS.by.day.F2, "Temperature_bucket_C"),
           SmoothRibbon(carbchem.MEANS.by.day.F2, "Salinity"),
