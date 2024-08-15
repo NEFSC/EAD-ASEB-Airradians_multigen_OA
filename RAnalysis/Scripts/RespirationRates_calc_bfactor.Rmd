@@ -41,7 +41,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Ai
 ```{r, load data}
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
-setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
+# setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # personal computer
 # setwd("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Work computer
 
 # LOAD DATA :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -540,7 +540,9 @@ back together. May also be interesting to explore metabolic scaling across gener
 RR_master_F1 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data
               # filter out the F2 measurements
-              filter(!Date %in% c('8/30/2022', '11/16/2022','8/30/2022', '11/16/2022', '1/31/2023', '2/23/2023', '3/27/2023',  '5/18/2023')) %>% # an F2 measurement
+              filter(!Date %in% c('8/30/2022', '11/16/2022','8/30/2022', 
+                                  '11/16/2022', '1/31/2023', '2/23/2023', 
+                                  '3/27/2023',  '5/18/2023')) %>% # an F2 measurement
               filter(!(Date == '9/22/2022' & filetype =='SDR_data')) %>%  # F2s were also measured on 9/22 but with the SDR system (F1s with the LoLigo)
               dplyr::mutate(Age = case_when(Date == '9/14/2021'  ~ 50,
                                             Date == '9/30/2021'  ~ 66,
@@ -559,7 +561,8 @@ unique(RR_master_F1$Date)
 RR_master_F2 <- read.csv(file="Output/Respiration/RR_calc_raw.csv", header=T) %>% 
               filter(!Food %in% 'unfed') %>% # omit low food trial data
               # filter out the F2 measurements
-              filter(Date %in% c('8/30/2022', '9/22/2022', '11/16/2022', '1/31/2023', '2/23/2023', '3/27/2023')) %>% # an F2 measurement
+              filter(Date %in% c('8/30/2022', '9/22/2022', '11/16/2022', 
+                                 '1/31/2023', '2/23/2023', '3/27/2023')) %>% # an F2 measurement
               filter(!(Date == '9/22/2022' & filetype =='LoLigo_data')) %>% # F1s were also measured on 9/22 but with the LoLigo system (F2s with the SDR)
   # unique(RR_master$Date) # "10/26/2021" "2/2/2022"   "3/1/2022"   "8/30/2022"  "9/14/2021"  "9/22/2022"  "9/30/2021"
               dplyr::mutate(Age = case_when(Date == '8/30/2022'   ~ 13,
@@ -825,9 +828,11 @@ print(ggarrange(MO2_b.factor_PLOT_OM,
 -   Moderate pCO2 TDW b factor  = 1.17
 -   High pCO2 TDW b factor  = 1.28
 *  treamtent x Generation
+F1
 -   Low pCO2 F1 TDW b factor  = 0.675
--   Low pCO2 F2 TDW b factor  = 0.665
 -   Moderate pCO2 F1 TDW b factor  = 0.662
+F2
+-   Low pCO2 F2 TDW b factor  = 0.665
 -   Moderate pCO2 F2 TDW b factor  = 0.832
 -   High pCO2 F2 TDW b factor  = 0.829
 
@@ -1062,9 +1067,21 @@ Generation
 -   Length b factor pCO2 F2 = 1.55 
 -   Length b factor pCO2 F3 = 3.52
 Treatment
--   Length b factor pCO2 low = 0.83
--   Length b factor pCO2 moderate = 1.79 
--   Length b factor pCO2 high = 2.23
+-   Length b factor pCO2 low = 1.9
+-   Length b factor pCO2 moderate = 1.77 
+-   Length b factor pCO2 high = 2.29
+Generation * Treatment
+F1
+-   Length b factor pCO2 low = 2.12
+-   Length b factor pCO2 moderate = 2.12 
+F2
+-   Length b factor pCO2 low = 1.59
+-   Length b factor pCO2 moderate = 1.57 
+-   Length b factor pCO2 high = 1.87 
+F3
+-   Length b factor pCO2 low = 2.7
+-   Length b factor pCO2 moderate = 2.19 
+-   Length b factor pCO2 high = 4.11 
 
 # F1s master file
 
@@ -1072,19 +1089,29 @@ Treatment
 
 ```{r, RR_formatted_F1smaster}
 
-# call all bfactors (calc above!) - these are using ALL DATA 
-bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.86 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+# call all bfactors (calc above!) - these are using all data
+bTDW = 0.67 # review the outlier-omitted b factor plot in previous chunk
+bLength.all = 2.12 # review the outlier-omitted b factor plot in previous chunk
 
-# calc the mean for TDw and length
+# assign bfactors by treatment
+bTDW.low <-  0.675 #mean data by rep tank # 6.99 - with all data
+bTDW.mod <-  0.662 #mean data by rep tank # 6.57 - with all data
+
+bLength.low <-  2.12 #mean data by rep tank # 6.99 - with all data
+bLength.mod <-  2.12 #mean data by rep tank # 6.57 - with all data
+
+# call the mean lengths of animals measured
 RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
 
 meanTDW      <- mean((RR_master_F1 %>% 
-                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
+                        dplyr::filter(!pH %in% 7) %>% # only looking at 8 and 7.5 NOT 7 here 
+                        dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
 
 meanLength   <- mean(RR_master_F1$Length_um/1000) # 16.57877 mm
 
 #View(RR_formatted_F1s$TDW_um)
+# SMRnorm = VO2 × (TDWmean / TDWindiv)b = µmol L-1 O2 g-1 hr-1
+# SMRnorm = VO2 × (SHmean / SHindiv)b = µmol L-1 O2 mm-1 hr-1
 
 RR_formatted_F1smaster <- RR_master_F1 %>% 
   
@@ -1102,26 +1129,37 @@ RR_formatted_F1smaster <- RR_master_F1 %>%
                                                TRUE ~ resp_mg_hr)) %>% 
   
   
-                              # TDW b factor - to mean TDW or 0.1g
-                              dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = 
-                                              (resp_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              dplyr::mutate(resp_mg_hr_bFactorNormTDW.1g = 
-                                              (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormTDW.MEAN = 
-                                              (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormTDW.1g = 
-                                              (resp_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              # Length b factor - to mean length within generation
-                              dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
-                                                (resp_mg_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormLength.MEAN = 
-                                                (resp_umol_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor 
-                              
+                              dplyr::mutate(
+                                            
+                                            resp_umol_hr_bFactorNormTDW.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.mod)
+                                              ),
+                                            
+                                            resp_mg_hr_bFactorNormTDW.1g = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.mod)
+                                              ), 
+                                            
+                                            resp_mg_hr_bFactorNormLength.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod)
+                                              ), 
+                                            
+                                            resp_mg_hr_bFactorNormLength.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod)
+                                              ), 
+                                            
+                                            resp_umol_hr_bFactorNormLength.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.mod)
+                                              ) )
                               
                               dplyr::select(c(Gen,
                                               Age,
@@ -1170,9 +1208,18 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 ```{r, RR_formatted_F2smaster}
 
-# call all bfactors (calc above!) - these are using ALL DATA 
-bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk
-bLength = 1.86 # previously 1.71) # review the outlier-omitted b factor plot in previous chunk
+# call all bfactors (calc above!) - these are using all data
+bTDW = 0.771 # review the outlier-omitted b factor plot in previous chunk
+bLength.all = 1.55 # review the outlier-omitted b factor plot in previous chunk
+
+# assign bfactors by treatment
+bTDW.low <-  0.665 #mean data by rep tank # 6.99 - with all data
+bTDW.mod <-  0.832 #mean data by rep tank # 6.57 - with all data
+bTDW.high <-  0.829 #mean data by rep tank # 6.57 - with all data
+
+bLength.low  <-  1.59 #mean data by rep tank # 6.99 - with all data
+bLength.mod  <-  1.57 #mean data by rep tank # 6.57 - with all data
+bLength.high <-  1.87 #mean data by rep tank # 6.57 - with all data
 
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)
@@ -1199,25 +1246,37 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                                     # when measured vol was availabel, simply print the rate present
                                                TRUE ~ resp_mg_hr)) %>% 
   
-                              # TDW b factor - using 'resp_umol_hr'
-                              dplyr::mutate(resp_mg_hr_bFactorNormTDW.MEAN = 
-                                              (resp_mg_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              dplyr::mutate(resp_mg_hr_bFactorNormTDW.1g = 
-                                              (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormTDW.MEAN = 
-                                              (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormTDW.1g = 
-                                              (resp_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor 
-                              
-                              # Length b factor
-                              dplyr::mutate(resp_mg_hr_bFactorNormLength.MEAN = 
-                                                (resp_mg_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  
-                              
-                              dplyr::mutate(resp_umol_hr_bFactorNormLength.MEAN = 
-                                                (resp_umol_hr)*((meanLength/Length_mm)^bLength) ) %>% # length b factor  
+                              # TDW b factor - to mean TDW or 0.1g
+                              dplyr::mutate(
+                                            
+                                            resp_umol_hr_bFactorNormTDW.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.mod),
+                                                pH  == 7.0 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.high)
+                                              ),
+                                            
+                                            resp_mg_hr_bFactorNormTDW.1g = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.mod),
+                                                pH  == 7.0 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.high)
+                                              ), 
+                                            
+                                            resp_mg_hr_bFactorNormLength.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod),
+                                                pH  == 7.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.high)
+                                              ), 
+                                            
+                                            
+                                            resp_umol_hr_bFactorNormLength.MEAN = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.mod),
+                                                pH  == 7.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.high)
+                                              ) )
                               
                               
                               dplyr::select(c(Gen,
