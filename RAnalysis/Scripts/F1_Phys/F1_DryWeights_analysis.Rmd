@@ -316,8 +316,8 @@ Proportion_master_long_MEANS <- Proportion_master_long_ordered %>%
 
 
 Proportion_master_long_MEANS$prop_metric <- factor(Proportion_master_long_MEANS$prop_metric, 
-                                                     levels = rev(c(rep("Proportion_Somatic",1), 
-                                                                    rep("Proportion_Gonad",1), 
+                                                     levels = rev(c(rep("Proportion_Gonad",1), 
+                                                                    rep("Proportion_Somatic",1), 
                                                                     rep("Proportion_Adductor",1))))
 
 # stacked proportion plot
@@ -470,6 +470,7 @@ F2_Proportion_Gonad_MEANS$GROUPvar <- F2_Proportion_Gonad_MEANS$Age
 
 ProportionGonad_stats <- as.data.frame(runstats(F2_Proportion_Gonad_MEANS)) # sig effect on Age 196 and 220
 # No significant differences
+ProportionGonad_stats <- as.data.frame(run_ttest(F2_Proportion_Gonad_MEANS)) # sig effect on Age 196 and 220
 
 
 
@@ -487,6 +488,7 @@ F2_Proportion_Adductor_MEANS$GROUPvar <- F2_Proportion_Adductor_MEANS$Age
 
 ProportionAdductor_stats <- as.data.frame(runstats(F2_Proportion_Adductor_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
 # No significnat differences
+ProportionAdductor_ttest <- as.data.frame(run_ttest(F2_Proportion_Adductor_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
 
 
 
@@ -504,8 +506,7 @@ F2_Proportion_Somatic_MEANS$GROUPvar <- F2_Proportion_Somatic_MEANS$Age
 
 ProportionSomatic_stats <- as.data.frame(runstats(F2_Proportion_Somatic_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
 # No significnat differences
-
-
+ProportionSomatic_stats <- as.data.frame(run_ttest(F2_Proportion_Somatic_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
 ```
 
 
@@ -616,6 +617,101 @@ runstats <- function(datafilename,  outputfilename) {
             }
 return(outputfilename)
 }
+
+
+
+
+run_ttest <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'model', 'ShapiroWilk', 'ResidNorm', 'Variance', 
+                                   'HomogVar', 'DF.num' , 'DF.denom', 
+                                   'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+            
+            unique(datafilename$Age)
+            outputfilename <- data.frame()
+
+            
+            for (i in 1:length(unique(datafilename$Age))) {
+              GROUPvar_loop <- unique(datafilename$GROUPvar)[i]
+              Data_all      <- datafilename %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+            # run assumptions 
+            # normality of data 
+            normality_A <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[1]
+            
+            normality_B <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[2]
+            
+            # equal variance 
+            variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
+            
+            # run all modles
+            Ttestmod.eqvar      <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
+                                           Data_all$DPvar, 
+                                           alternative = "greater",
+                                           var.equal = TRUE)
+            
+            Ttestmod.noneqvar   <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
+                                           Data_all$DPvar,
+                                           alternative = "greater",
+                                           var.equal = FALSE)
+            
+            Wilcoxmod           <- wilcox.test(Data_all$DPvar ~ 
+                                                 as.numeric(as.factor(Data_all$INDvar)))
+            
+            # normality tests for the anova model - asign 
+            DF_loop$ShapiroWilk <- paste0(normality_A, '; ',normality_B)
+            
+            DF_loop$ResidNorm   <- if(normality_A > 0.05 & normality_B > 0.05) {
+              'YES'} else {'NO'}
+            
+            DF_loop$Variance     <- variance
+            
+            DF_loop$HomogVar    <- if( variance > 0.05) {
+              'YES'} else {'NO'}
+            
+            if(normality_A > 0.05 & normality_B > 0.05 & variance > 0.05) {
+                DF_loop$model       <- 'Welchs T test, equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+        
+              } else if (normality_A > 0.05 & normality_B > 0.05 & variance < 0.05) {
+                DF_loop$model       <- 'Welchs T test, non-equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+              } else {
+                DF_loop$model       <- 'Wilcoxon rank sum exact test'
+                DF_loop$DF.num      <- 'NA'
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}            
+              }
+                  DF_loop$Age_DPF     <- GROUPvar_loop
+                  # asign loop and cumulative output table
+                  df                        <- data.frame(DF_loop) # name dataframe for this single row
+                  outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+                  # print(outputfilename) # print to monitor progress
+                  
+                }
+return(outputfilename)
+}
+
 
 ```
 
@@ -855,8 +951,11 @@ F1_DryGonad.raw.MEAN$INDvar   <- F1_DryGonad.raw.MEAN$pCO2
 F1_DryGonad.raw.MEAN$GROUPvar <- F1_DryGonad.raw.MEAN$Age
 
 Stats_GonadMEAN_raw <- as.data.frame(runstats(F1_DryGonad.raw.MEAN))
+Ttest_GonadMEAN_raw <- as.data.frame(run_ttest(F1_DryGonad.raw.MEAN))
 # About column
 Stats_GonadMEAN_raw$About <- paste0("Gonad: raw, NO BFACTOR + mean data")
+Ttest_GonadMEAN_raw$About <- paste0("Gonad: raw, NO BFACTOR + mean data")
+
 ```
 
 ```{r Mean Gonad Stats bfactor all - length standardized}
@@ -868,8 +967,11 @@ F1_DryGonad.bfactor.MEAN$INDvar   <- F1_DryGonad.bfactor.MEAN$pCO2
 F1_DryGonad.bfactor.MEAN$GROUPvar <- F1_DryGonad.bfactor.MEAN$Age
 
 Stats_GonadMEAN_bfactor.all <- as.data.frame(runstats(F1_DryGonad.bfactor.MEAN))
+Ttest_GonadMEAN_bfactor.all <- as.data.frame(run_ttest(F1_DryGonad.bfactor.MEAN))
 # About column
 Stats_GonadMEAN_bfactor.all$About <- paste0("Gonad: one bfactor + mean data")
+Ttest_GonadMEAN_bfactor.all$About <- paste0("Gonad: one bfactor + mean data")
+
 ```
 
 ```{r Mean Gonad Stats bfactor pCO2 - length standardized}
@@ -882,8 +984,10 @@ F1_DryGonad.bfactor.MEAN$INDvar   <- F1_DryGonad.bfactor.MEAN$pCO2
 F1_DryGonad.bfactor.MEAN$GROUPvar <- F1_DryGonad.bfactor.MEAN$Age
 
 Stats_GonadMEAN_bfactor.pCO2 <- as.data.frame(runstats(F1_DryGonad.bfactor.MEAN))
+Ttest_GonadMEAN_bfactor.pCO2 <- as.data.frame(run_ttest(F1_DryGonad.bfactor.MEAN))
 # About column
 Stats_GonadMEAN_bfactor.pCO2$About <- paste0("Gonad: two pCO2 bfactors + mean data")
+Ttest_GonadMEAN_bfactor.pCO2$About <- paste0("Gonad: two pCO2 bfactors + mean data")
 ```
 
 * merge all Gonad stats, save
@@ -892,6 +996,10 @@ Stats_GonadMEAN_bfactor.pCO2$About <- paste0("Gonad: two pCO2 bfactors + mean da
 GonadMaster_stats <- rbind(Stats_GonadMEAN_raw, Stats_GonadMEAN_bfactor.all, Stats_GonadMEAN_bfactor.pCO2)
 
 write.csv(GonadMaster_stats, "Output/DryWeights/F1/F1_Gonad_DryWeight_ANOVA_table.csv")
+
+GonadMaster_Ttest <- rbind(Ttest_GonadMEAN_raw, Ttest_GonadMEAN_bfactor.all, Ttest_GonadMEAN_bfactor.pCO2)
+write.csv(GonadMaster_Ttest, "Output/DryWeights/F1/F1_Gonad_DryWeight_Ttest_table.csv")
+
 ```
 
 
@@ -1052,7 +1160,8 @@ dev.off()
 Adductor_final_plot <- F1_DryAdductor.bfactor.long.MEANS_master %>% 
                           dplyr::filter(measurement %in% 'Adductor_bFactorLength.pCO2') %>% 
                           ggplot(aes(x=factor(Age), y=value, colour=factor(pCO2)),stat="identity") +
-                           scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
+                          # geom_jitter(shape = 4) +
+                          scale_colour_manual(breaks=c("500 μatm", "800 μatm"), 
                                                         values=c("forestgreen","darkorange2")) +
                           stat_summary(fun.y="mean", size = 0.8,
                                         position = position_dodge2(width = 0.25)) +
@@ -1060,7 +1169,8 @@ Adductor_final_plot <- F1_DryAdductor.bfactor.long.MEANS_master %>%
                                         fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
                                         geom = 'errorbar', width = 0.25, size = 1,
                                         position = position_dodge2(width = 0.5)) + 
-                          labs(title="Adductor: Length b factor pCO2", x ="Age (dpf)", y = "Dry adductor (mg bFactorLength.pCO2)") +
+                          labs(title="Adductor: Length b factor pCO2", x ="Age (dpf)", 
+                               y = "Dry adductor (mg bFactorLength.pCO2)") +
                           theme_classic() +
                           theme(panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
@@ -1080,8 +1190,10 @@ F1_DryAdductor.raw.MEAN$INDvar   <- F1_DryAdductor.raw.MEAN$pCO2
 F1_DryAdductor.raw.MEAN$GROUPvar <- F1_DryAdductor.raw.MEAN$Age
 
 Stats_AdductorMEAN_raw <- as.data.frame(runstats(F1_DryAdductor.raw.MEAN))
+Ttest_AdductorMEAN_raw <- as.data.frame(run_ttest(F1_DryAdductor.raw.MEAN))
 # About column
 Stats_AdductorMEAN_raw$About <- paste0("Adductor: raw, NO BFACTOR + mean data")
+Ttest_AdductorMEAN_raw$About <- paste0("Adductor: raw, NO BFACTOR + mean data")
 ```
 
 ```{r Mean Adductor Stats bfactor all - length standardized}
@@ -1093,8 +1205,12 @@ F1_DryAdductor.bfactor.MEAN$INDvar   <- F1_DryAdductor.bfactor.MEAN$pCO2
 F1_DryAdductor.bfactor.MEAN$GROUPvar <- F1_DryAdductor.bfactor.MEAN$Age
 
 Stats_AdductorMEAN_bfactor.all <- as.data.frame(runstats(F1_DryAdductor.bfactor.MEAN))
+Ttest_AdductorMEAN_bfactor.all <- as.data.frame(run_ttest(F1_DryAdductor.bfactor.MEAN))
+
 # About column
 Stats_AdductorMEAN_bfactor.all$About <- paste0("Adductor: one bfactor + mean data")
+Ttest_AdductorMEAN_bfactor.all$About <- paste0("Adductor: one bfactor + mean data")
+
 ```
 
 ```{r Mean Adductor Stats bfactor pCO2 - length standardized}
@@ -1107,8 +1223,12 @@ F1_DryAdductor.bfactor.MEAN$INDvar   <- F1_DryAdductor.bfactor.MEAN$pCO2
 F1_DryAdductor.bfactor.MEAN$GROUPvar <- F1_DryAdductor.bfactor.MEAN$Age
 
 Stats_AdductorMEAN_bfactor.pCO2 <- as.data.frame(runstats(F1_DryAdductor.bfactor.MEAN))
+Ttest_AdductorMEAN_bfactor.pCO2 <- as.data.frame(run_ttest(F1_DryAdductor.bfactor.MEAN))
+
 # About column
 Stats_AdductorMEAN_bfactor.pCO2$About <- paste0("Adductor: two pCO2 bfactors + mean data")
+Ttest_AdductorMEAN_bfactor.pCO2$About <- paste0("Adductor: two pCO2 bfactors + mean data")
+
 ```
 
 * merge all Adductor stats, save
@@ -1117,6 +1237,11 @@ Stats_AdductorMEAN_bfactor.pCO2$About <- paste0("Adductor: two pCO2 bfactors + m
 AdductorMaster_stats <- rbind(Stats_AdductorMEAN_raw, Stats_AdductorMEAN_bfactor.all, Stats_AdductorMEAN_bfactor.pCO2)
 
 write.csv(AdductorMaster_stats, "Output/DryWeights/F1/F1_Adductor_DryWeight_ANOVA_table.csv")
+
+AdductorMaster_Ttest <- rbind(Ttest_AdductorMEAN_raw, Ttest_AdductorMEAN_bfactor.all, Ttest_AdductorMEAN_bfactor.pCO2)
+
+write.csv(AdductorMaster_Ttest, "Output/DryWeights/F1/F1_Adductor_DryWeight_Ttest_table.csv")
+
 ```
 
 
@@ -1302,8 +1427,12 @@ F1_DrySomatic.raw.MEAN$INDvar   <- F1_DrySomatic.raw.MEAN$pCO2
 F1_DrySomatic.raw.MEAN$GROUPvar <- F1_DrySomatic.raw.MEAN$Age
 
 Stats_SomaticMEAN_raw <- as.data.frame(runstats(F1_DrySomatic.raw.MEAN))
+Ttest_SomaticMEAN_raw <- as.data.frame(run_ttest(F1_DrySomatic.raw.MEAN))
+
 # About column
 Stats_SomaticMEAN_raw$About <- paste0("Somatic: raw, NO BFACTOR + mean data")
+Ttest_SomaticMEAN_raw$About <- paste0("Somatic: raw, NO BFACTOR + mean data")
+
 ```
 
 ```{r Mean Somatic Stats bfactor all - length standardized}
@@ -1315,8 +1444,12 @@ F1_DrySomatic.bfactor.MEAN$INDvar   <- F1_DrySomatic.bfactor.MEAN$pCO2
 F1_DrySomatic.bfactor.MEAN$GROUPvar <- F1_DrySomatic.bfactor.MEAN$Age
 
 Stats_SomaticMEAN_bfactor.all <- as.data.frame(runstats(F1_DrySomatic.bfactor.MEAN))
+Ttest_SomaticMEAN_bfactor.all <- as.data.frame(run_ttest(F1_DrySomatic.bfactor.MEAN))
+
 # About column
 Stats_SomaticMEAN_bfactor.all$About <- paste0("Somatic: one bfactor + mean data")
+Ttest_SomaticMEAN_bfactor.all$About <- paste0("Somatic: one bfactor + mean data")
+
 ```
 
 ```{r Mean Somatic Stats bfactor pCO2 - length standardized}
@@ -1329,8 +1462,12 @@ F1_DrySomatic.bfactor.MEAN$INDvar   <- F1_DrySomatic.bfactor.MEAN$pCO2
 F1_DrySomatic.bfactor.MEAN$GROUPvar <- F1_DrySomatic.bfactor.MEAN$Age
 
 Stats_SomaticMEAN_bfactor.pCO2 <- as.data.frame(runstats(F1_DrySomatic.bfactor.MEAN))
+Ttest_SomaticMEAN_bfactor.pCO2 <- as.data.frame(run_ttest(F1_DrySomatic.bfactor.MEAN))
+
 # About column
 Stats_SomaticMEAN_bfactor.pCO2$About <- paste0("Somatic: two pCO2 bfactors + mean data")
+Ttest_SomaticMEAN_bfactor.pCO2$About <- paste0("Somatic: two pCO2 bfactors + mean data")
+
 ```
 
 * merge all Somatic stats, save
@@ -1339,6 +1476,10 @@ Stats_SomaticMEAN_bfactor.pCO2$About <- paste0("Somatic: two pCO2 bfactors + mea
 SomaticMaster_stats <- rbind(Stats_SomaticMEAN_raw, Stats_SomaticMEAN_bfactor.all, Stats_SomaticMEAN_bfactor.pCO2)
 
 write.csv(SomaticMaster_stats, "Output/DryWeights/F1/F1_Somatic_DryWeight_ANOVA_table.csv")
+
+SomaticMaster_Ttest <- rbind(Ttest_SomaticMEAN_raw, Ttest_SomaticMEAN_bfactor.all, Ttest_SomaticMEAN_bfactor.pCO2)
+
+write.csv(SomaticMaster_Ttest, "Output/DryWeights/F1/F1_Somatic_DryWeight_Ttest_table.csv")
 ```
 
 
@@ -1548,8 +1689,12 @@ F1_DryShell.raw.MEAN$INDvar   <- F1_DryShell.raw.MEAN$pCO2
 F1_DryShell.raw.MEAN$GROUPvar <- F1_DryShell.raw.MEAN$Age
 
 Stats_ShellMEAN_raw <- as.data.frame(runstats(F1_DryShell.raw.MEAN))
+Ttest_ShellMEAN_raw <- as.data.frame(run_ttest(F1_DryShell.raw.MEAN))
+
 # About column
 Stats_ShellMEAN_raw$About <- paste0("Shell: raw, NO BFACTOR + mean data")
+Ttest_ShellMEAN_raw$About <- paste0("Shell: raw, NO BFACTOR + mean data")
+
 ```
 
 ```{r Mean Shell Stats bfactor all - length standardized}
@@ -1561,8 +1706,12 @@ F1_DryShell.bfactor.MEAN$INDvar   <- F1_DryShell.bfactor.MEAN$pCO2
 F1_DryShell.bfactor.MEAN$GROUPvar <- F1_DryShell.bfactor.MEAN$Age
 
 Stats_ShellMEAN_bfactor.all <- as.data.frame(runstats(F1_DryShell.bfactor.MEAN))
+Ttest_ShellMEAN_bfactor.all <- as.data.frame(run_ttest(F1_DryShell.bfactor.MEAN))
+
 # About column
 Stats_ShellMEAN_bfactor.all$About <- paste0("Shell: one bfactor + mean data")
+Ttest_ShellMEAN_bfactor.all$About <- paste0("Shell: one bfactor + mean data")
+
 ```
 
 ```{r Mean Shell Stats bfactor pCO2 - length standardized}
@@ -1575,8 +1724,12 @@ F1_DryShell.bfactor.MEAN$INDvar   <- F1_DryShell.bfactor.MEAN$pCO2
 F1_DryShell.bfactor.MEAN$GROUPvar <- F1_DryShell.bfactor.MEAN$Age
 
 Stats_ShellMEAN_bfactor.pCO2 <- as.data.frame(runstats(F1_DryShell.bfactor.MEAN))
+Ttest_ShellMEAN_bfactor.pCO2 <- as.data.frame(run_ttest(F1_DryShell.bfactor.MEAN))
+
 # About column
 Stats_ShellMEAN_bfactor.pCO2$About <- paste0("Shell: two pCO2 bfactors + mean data")
+Ttest_ShellMEAN_bfactor.pCO2$About <- paste0("Shell: two pCO2 bfactors + mean data")
+
 ```
 
 * merge all Shell stats, save
@@ -1585,6 +1738,10 @@ Stats_ShellMEAN_bfactor.pCO2$About <- paste0("Shell: two pCO2 bfactors + mean da
 ShellMaster_stats <- rbind(Stats_ShellMEAN_raw, Stats_ShellMEAN_bfactor.all, Stats_ShellMEAN_bfactor.pCO2)
 
 write.csv(ShellMaster_stats, "Output/DryWeights/F1/F1_Shell_DryWeight_ANOVA_table.csv")
+
+ShellMaster_Ttest <- rbind(Ttest_ShellMEAN_raw, Ttest_ShellMEAN_bfactor.all, Ttest_ShellMEAN_bfactor.pCO2)
+
+write.csv(ShellMaster_Ttest, "Output/DryWeights/F1/F1_Shell_DryWeight_Ttest_table.csv")
 ```
 
 

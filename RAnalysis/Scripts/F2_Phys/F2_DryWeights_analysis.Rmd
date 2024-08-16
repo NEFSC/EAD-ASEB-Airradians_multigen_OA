@@ -198,6 +198,7 @@ dev.off()
 
 ```
 
+## Statistics function 'runstats' and 'run_ttest'
 ```{r Statistic function}
 
 
@@ -260,6 +261,101 @@ runstats <- function(datafilename,  outputfilename) {
             }
 return(outputfilename)
 }
+
+
+
+
+run_ttest <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'model', 'ShapiroWilk', 'ResidNorm', 'Variance', 
+                                   'HomogVar', 'DF.num' , 'DF.denom', 
+                                   'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+            
+            unique(datafilename$Age)
+            outputfilename <- data.frame()
+
+            
+            for (i in 1:length(unique(datafilename$Age))) {
+              GROUPvar_loop <- unique(datafilename$GROUPvar)[i]
+              Data_all      <- datafilename %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+            # run assumptions 
+            # normality of data 
+            normality_A <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[1]
+            
+            normality_B <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[2]
+            
+            # equal variance 
+            variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
+            
+            # run all modles
+            Ttestmod.eqvar      <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
+                                           Data_all$DPvar, 
+                                           alternative = "greater",
+                                           var.equal = TRUE)
+            
+            Ttestmod.noneqvar   <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
+                                           Data_all$DPvar,
+                                           alternative = "greater",
+                                           var.equal = FALSE)
+            
+            Wilcoxmod           <- wilcox.test(Data_all$DPvar ~ 
+                                                 as.numeric(as.factor(Data_all$INDvar)))
+            
+            # normality tests for the anova model - asign 
+            DF_loop$ShapiroWilk <- paste0(normality_A, '; ',normality_B)
+            
+            DF_loop$ResidNorm   <- if(normality_A > 0.05 & normality_B > 0.05) {
+              'YES'} else {'NO'}
+            
+            DF_loop$Variance     <- variance
+            
+            DF_loop$HomogVar    <- if( variance > 0.05) {
+              'YES'} else {'NO'}
+            
+            if(normality_A > 0.05 & normality_B > 0.05 & variance > 0.05) {
+                DF_loop$model       <- 'Welchs T test, equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+        
+              } else if (normality_A > 0.05 & normality_B > 0.05 & variance < 0.05) {
+                DF_loop$model       <- 'Welchs T test, non-equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+              } else {
+                DF_loop$model       <- 'Wilcoxon rank sum exact test'
+                DF_loop$DF.num      <- 'NA'
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}            
+              }
+                  DF_loop$Age_DPF     <- GROUPvar_loop
+                  # asign loop and cumulative output table
+                  df                        <- data.frame(DF_loop) # name dataframe for this single row
+                  outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+                  # print(outputfilename) # print to monitor progress
+                  
+                }
+return(outputfilename)
+}
+
 
 ```
 
@@ -471,7 +567,8 @@ F2_Proportion_Gonad_MEANS$INDvar   <- F2_Proportion_Gonad_MEANS$pCO2
 F2_Proportion_Gonad_MEANS$GROUPvar <- F2_Proportion_Gonad_MEANS$Age
 
 ProportionGonad_stats <- as.data.frame(runstats(F2_Proportion_Gonad_MEANS)) # sig effect on Age 196 and 220
-
+ProportionGonad_ttest <- as.data.frame(run_ttest(F2_Proportion_Gonad_MEANS %>% 
+                                                   dplyr::filter(!(pCO2 %in% '1200 μatm')))) # sig for all
 # Gonad posthoc
 aov_Gonad196             <- aov(lm(Proportion_Gonad~pCO2, data = (F2_Proportion_Gonad_MEANS %>% dplyr::filter(Age %in% 196))))
 summary(aov(aov_Gonad196)) # significnat as known already
@@ -507,7 +604,8 @@ F2_Proportion_Adductor_MEANS$INDvar   <- F2_Proportion_Adductor_MEANS$pCO2
 F2_Proportion_Adductor_MEANS$GROUPvar <- F2_Proportion_Adductor_MEANS$Age
 
 ProportionAdductor_stats <- as.data.frame(runstats(F2_Proportion_Adductor_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
-
+ProportionAdductor_ttest <- as.data.frame(run_ttest(F2_Proportion_Adductor_MEANS %>% 
+                                                   dplyr::filter(!(pCO2 %in% '1200 μatm')))) # sig for all
 # Adductor posthoc
 aov_Adductor165             <- aov(lm(Proportion_Adductor~pCO2, data = 
                                         (F2_Proportion_Adductor_MEANS %>% dplyr::filter(Age %in% 165))))
@@ -537,6 +635,25 @@ dunnTest(Proportion_Adductor~pCO2, data = (F2_Proportion_Adductor_MEANS %>% dply
 # 500 uatm a
 
 
+
+
+
+
+# Somatic (to total tissue)
+F2_Proportion_Somatic_MEANS <- Proportion_master %>% 
+                                    dplyr::select(Age,pCO2, Tank_Replicate,
+                                                  Proportion_Somatic) %>% 
+                                    summarySE(measurevar="Proportion_Somatic", 
+                                               groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
+                                    dplyr::arrange(as.numeric(Age))
+
+F2_Proportion_Somatic_MEANS$DPvar    <- F2_Proportion_Somatic_MEANS$Proportion_Somatic
+F2_Proportion_Somatic_MEANS$INDvar   <- F2_Proportion_Somatic_MEANS$pCO2
+F2_Proportion_Somatic_MEANS$GROUPvar <- F2_Proportion_Somatic_MEANS$Age
+
+ProportionSomatic_stats <- as.data.frame(runstats(F2_Proportion_Somatic_MEANS)) # 165, 196, 220 (220 is Kruskal Wallis!)
+ProportionSomatic_ttest <- as.data.frame(run_ttest(F2_Proportion_Somatic_MEANS %>% 
+                                                   dplyr::filter(!(pCO2 %in% '1200 μatm')))) # sig for all
 ```
 
 
