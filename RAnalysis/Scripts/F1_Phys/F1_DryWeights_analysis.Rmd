@@ -361,7 +361,9 @@ Proportion_Gonad_plot <- Proportion_master %>%
                                         fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
                                         geom = 'errorbar', width = 0.25, size = 1,
                                         position = position_dodge2(width = 0.5)) + 
-                          labs(title="Proportion Gonad to Total Tissue", x ="Age (dpf)", y = "Dry gonad (proportion)") +
+                          labs(title="Proportion Gonad to Total Tissue", 
+                               x ="Age (dpf)", 
+                               y = "Dry gonad (proportion)") +
                           theme_classic() +
                           theme(panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
@@ -652,13 +654,11 @@ run_ttest <- function(datafilename,  outputfilename) {
             variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
             
             # run all modles
-            Ttestmod.eqvar      <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
-                                           Data_all$DPvar, 
+            Ttestmod.eqvar      <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)), 
                                            alternative = "greater",
                                            var.equal = TRUE)
             
-            Ttestmod.noneqvar   <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
-                                           Data_all$DPvar,
+            Ttestmod.noneqvar   <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)),
                                            alternative = "greater",
                                            var.equal = FALSE)
             

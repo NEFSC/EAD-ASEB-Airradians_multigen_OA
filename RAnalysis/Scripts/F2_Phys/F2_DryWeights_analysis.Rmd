@@ -296,13 +296,11 @@ run_ttest <- function(datafilename,  outputfilename) {
             variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
             
             # run all modles
-            Ttestmod.eqvar      <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
-                                           Data_all$DPvar, 
+            Ttestmod.eqvar      <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)), 
                                            alternative = "greater",
                                            var.equal = TRUE)
             
-            Ttestmod.noneqvar   <- t.test( as.numeric(as.factor(Data_all$INDvar)), 
-                                           Data_all$DPvar,
+            Ttestmod.noneqvar   <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)), 
                                            alternative = "greater",
                                            var.equal = FALSE)
             
@@ -366,7 +364,7 @@ return(outputfilename)
 * here we do no require a bfactor becuase we are already scalling to the individual!
 
 ### Build poroprtion dataset 
-```{r Poroportion calculate}
+```{r Proportion calculate}
 
 
 Proportion_master <- F2_dryweights_long %>% 
@@ -383,7 +381,9 @@ Proportion_master <- F2_dryweights_long %>%
                             dplyr::mutate(Proportion_Gonad    = Dry_Gonad_weight_g/Total_Dry_Tissue_g,
                                           Proportion_Adductor = Dry_Adductor_Tissue_g/Total_Dry_Tissue_g,
                                           Proportion_Somatic  = Dry_Somatic_Tissue_g/Total_Dry_Tissue_g,
-                                          Sanity_check_prop_total = (Proportion_Gonad +  Proportion_Adductor + Proportion_Somatic)) 
+                                          Sanity_check_prop_total = (Proportion_Gonad +  
+                                                                       Proportion_Adductor + 
+                                                                       Proportion_Somatic)) 
 
 ```
 
@@ -459,7 +459,9 @@ Proportion_Gonad_plot <- Proportion_master %>%
                                         fun.max = function(x) mean(x) + sd(x)/sqrt(length(x)),
                                         geom = 'errorbar', width = 0.25, size = 1,
                                         position = position_dodge2(width = 0.5)) + 
-                          labs(title="Proportion Gonad to Total Tissue", x ="Age (dpf)", y = "Dry gonad (proportion)") +
+                          labs(title="Proportion Gonad to Total Tissue", 
+                               x ="Age (dpf)", 
+                               y = "Dry gonad (proportion)") +
                           theme_classic() +
                           theme(panel.grid.major = element_blank(), 
                                 panel.grid.minor = element_blank(), 
@@ -854,6 +856,8 @@ F2_DryGonad.raw.MEAN$INDvar   <- F2_DryGonad.raw.MEAN$pCO2
 F2_DryGonad.raw.MEAN$GROUPvar <- F2_DryGonad.raw.MEAN$Age
 
 Stats_GonadMEAN_raw <- as.data.frame(runstats(F2_DryGonad.raw.MEAN))
+Ttest_GonadMEAN_raw <- as.data.frame(run_ttest(F2_DryGonad.raw.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_GonadMEAN_raw$About <- paste0("Gonad: raw, NO BFACTOR + mean data")
 ```
@@ -868,6 +872,8 @@ F2_DryGonad.bfactor.MEAN$INDvar   <- F2_DryGonad.bfactor.MEAN$pCO2
 F2_DryGonad.bfactor.MEAN$GROUPvar <- F2_DryGonad.bfactor.MEAN$Age
 
 Stats_GonadMEAN_bfactor.all <- as.data.frame(runstats(F2_DryGonad.bfactor.MEAN))
+Ttest_GonadMEAN_bfactor_raw <- as.data.frame(run_ttest(F2_DryGonad.bfactor.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_GonadMEAN_bfactor.all$About <- paste0("Gonad: one bfactor + mean data")
 ```
@@ -883,6 +889,8 @@ F2_DryGonad.bfactor.MEAN$INDvar   <- F2_DryGonad.bfactor.MEAN$pCO2
 F2_DryGonad.bfactor.MEAN$GROUPvar <- F2_DryGonad.bfactor.MEAN$Age
 
 Stats_GonadMEAN_bfactor.pCO2 <- as.data.frame(runstats(F2_DryGonad.bfactor.MEAN))
+Ttest_GonadMEAN_bfactor.pCO2 <- as.data.frame(run_ttest(F2_DryGonad.bfactor.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_GonadMEAN_bfactor.pCO2$About <- paste0("Gonad: two pCO2 bfactors + mean data")
 ```
@@ -1083,6 +1091,8 @@ F2_DryAdductor.raw.MEAN$INDvar   <- F2_DryAdductor.raw.MEAN$pCO2
 F2_DryAdductor.raw.MEAN$GROUPvar <- F2_DryAdductor.raw.MEAN$Age
 
 Stats_AdductorMEAN_raw <- as.data.frame(runstats(F2_DryAdductor.raw.MEAN))
+Ttest_AdductorMEAN_raw <- as.data.frame(runstats(F2_DryAdductor.raw.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_AdductorMEAN_raw$About <- paste0("Adductor: raw, NO BFACTOR + mean data")
 ```
@@ -1096,6 +1106,8 @@ F2_DryAdductor.bfactor.MEAN$INDvar   <- F2_DryAdductor.bfactor.MEAN$pCO2
 F2_DryAdductor.bfactor.MEAN$GROUPvar <- F2_DryAdductor.bfactor.MEAN$Age
 
 Stats_AdductorMEAN_bfactor.all <- as.data.frame(runstats(F2_DryAdductor.bfactor.MEAN))
+Ttest_AdductorMEAN_bfactor.all  <- as.data.frame(runstats(F2_DryAdductor.bfactor.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_AdductorMEAN_bfactor.all$About <- paste0("Adductor: one bfactor + mean data")
 ```
@@ -1110,6 +1122,8 @@ F2_DryAdductor.bfactor.MEAN$INDvar   <- F2_DryAdductor.bfactor.MEAN$pCO2
 F2_DryAdductor.bfactor.MEAN$GROUPvar <- F2_DryAdductor.bfactor.MEAN$Age
 
 Stats_AdductorMEAN_bfactor.pCO2 <- as.data.frame(runstats(F2_DryAdductor.bfactor.MEAN))
+Ttest_AdductorMEAN_bfactor.pCO2 <- as.data.frame(runstats(F2_DryAdductor.bfactor.MEAN %>% dplyr::filter(!pCO2 %in% '1200 μatm')))
+
 # About column
 Stats_AdductorMEAN_bfactor.pCO2$About <- paste0("Adductor: two pCO2 bfactors + mean data")
 ```
