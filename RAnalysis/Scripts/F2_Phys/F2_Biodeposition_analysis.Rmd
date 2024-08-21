@@ -21,6 +21,8 @@ knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EA
 library(ggplot2)
 library(dplyr)
 library(car)
+library(purrr)
+library(rstatix)
 
 ```
 
@@ -34,12 +36,8 @@ nrow(Biodep_Master_F2) # 43
 Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # omit #6 pH7.5 on 20221027
 nrow(Biodep_Master_F2) # 43 - no NAs
 
-```
 
-
-```{r statistics one way anovas}
-
-
+# foramt it
 Biodep_Master_F2 <- Biodep_Master_F2 %>% 
                         dplyr::mutate(Age = case_when(Date == "20230201" ~  190, 
                                                        Date == "20230224" ~  213, 
@@ -52,91 +50,226 @@ Biodep_Master_F2 <- Biodep_Master_F2 %>%
                                                               Date == "20230224" ~  16,
                                                               Date == "20230328" ~  16))
 
+```
 
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# STATISTICS::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+## Statistics function 'runstats'
+```{r Statistic function}
 
 
-# (1) First, run anova within date for all records (for looped!)
-ANOVA_Dates       <- as.data.frame(unique(Biodep_Master_F2$Date)) # call a list to loop in 
+runanova <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'Metric', 'ShapiroWilk', 'ResidNorm', 
+                                   'Levenes', 'HomogVar', 'model', 
+                                   'DF.num' , 'DF.denom', 
+                                   'F_val','P_val', 'SigDif') # names for comuns in the for loop
+            
+            unique(datafilename$Age)
+            outputfilename <- data.frame()
 
-AOVdf_total       <- data.frame() # start dataframe, this will be the master output
-
-DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
-
-colnames(DF_loop) <- c('Date', 'Metric', 'model', 'ShapiroWilk', 
-                       'ResidNorm', 'Levenes', 'HomogVar', 
-                       'DF.num' , 'DF.denom',  'F_val','P_val', 'SigDif') # names for comuns in the for loop
-
-cols_m_loop       <- as.data.frame(c('SE','OIR','FR_correct', 
-                                     'CR_correct', 'RR_Percent',
-                                     'OIR','AR','AE')) %>% 
-                    `colnames<-`('biodep_meas')
-
-for (i in 1:nrow(ANOVA_Dates)) {
-  
-  date_loop     <- as.character(ANOVA_Dates[i,])
-  data_loop     <- Biodep_Master_F2 %>% 
-                          dplyr::filter(Date %in% date_loop) %>% 
-                          dplyr::select(Date, treatment, tank_ID.x, cols_m_loop$biodep_meas)
-  
-        for (m in 4:ncol(data_loop)) { # run anova and normality tests for each of these wihtin data i
-        # high cholorphyll model
-        
-        date_loop_MEAN <- as.data.frame(
-                              data_loop %>% 
-                              summarySE(measurevar=colnames(data_loop[m]), groupvars=c("Date","treatment","tank_ID.x")) 
-                              )
-          
-        DF_loop$Date        <- date_loop
-        DF_loop$Metric      <- colnames(date_loop_MEAN[5])
-        
-        # run both modles
-        AOVmod              <- aov(lm(date_loop_MEAN[,5] ~ as.factor(date_loop_MEAN$treatment)))
-        KWmod               <- kruskal.test(date_loop_MEAN[,5]  ~ as.factor(date_loop_MEAN$treatment))
-        
-        # normality tests for the anova model - asign 
-        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
-        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
-          'YES'} else {'NO'}
-        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
-        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
-          'YES'} else {'NO'}
-        
-       if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
-          DF_loop$model       <- 'one-way AOV; x ~ treatment'
-          DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
-          DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
-          DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
-          DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
-          DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
-            'NO'} else {'YES'}
-
-        } else {
-          DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
-          DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
-          DF_loop$DF.denom    <- NA
-          DF_loop$F_val       <- NA
-          DF_loop$P_val       <- (KWmod)[[3]]
-          DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
-            'NO'} else {'YES'}
-        }
-        
-        # asign loop and cumulative output table
-        df          <- data.frame(DF_loop) # name dataframe for this single row
-        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
-        print(AOVdf_total) # print to monitor progress
-        }
+            for (m in 1:length(unique(datafilename$type))) { # call the biodep metrics one by one
+              
+            DPvar_loop <- unique(as.character(datafilename$type))
+            Data_DPvar <- datafilename %>% 
+                                select(type, GROUPvar, DPvar, INDvar) %>% 
+                                dplyr::filter(type %in%  DPvar_loop[m])
+              
+            
+            for (i in 1:length(unique(datafilename$Age))) {
+              GROUPvar_loop <- unique(datafilename$GROUPvar)[i]
+              Data_all      <- datafilename %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+              AOVmod      <- aov(lm(Data_all$DPvar ~ as.factor(Data_all$INDvar))) # CHANGE HERE!
+              KWmod       <- kruskal.test(Data_all$DPvar  ~ as.factor(Data_all$INDvar)) # CHANGE HERE!
+              
+              # DF_loop$About <- paste0("Gonad: All bfactor + mean by replicate")
+              # DF_loop$About <- paste0("Gonad: All bfactor + all data")  # normality tests for the anova model - asign
+              
+              
+              DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
+              DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
+                  'YES'} else {'NO'}
+              DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
+              DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+                  'YES'} else {'NO'}
+                
+              if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
+                    DF_loop$model       <- 'one-way AOV; x ~ treatment'
+                    DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
+                    DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
+                    DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
+                    DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
+                    DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
+                      'NO'} else {'YES'}
+            
+                  } else {
+                    DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
+                    DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
+                    DF_loop$DF.denom    <- NA
+                    DF_loop$F_val       <- NA
+                    DF_loop$P_val       <- (KWmod)[[3]]
+                    DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
+                      'NO'} else {'YES'}
+                  }
+              DF_loop$Age_DPF     <- GROUPvar_loop
+              # asign loop and cumulative output table
+              df                        <- data.frame(DF_loop) # name dataframe for this single row
+              outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+              # print(outputfilename) # print to monitor progress
+              
+             } # m loop
+            } # i loop
+return(outputfilename)
 }
-View(AOVdf_total) # view all the anova tests within data 
-View(AOVdf_total %>% dplyr::filter(P_val < 0.05))
-# WRITE CSV OF THE MASTER FILE
-write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_ANOVA_table.csv")
 
+
+run_ttest <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'Metric', 'model', 'ShapiroWilk', 'ResidNorm', 'Variance', 
+                                   'HomogVar', 'DF.num' , 'DF.denom', 
+                                   'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+            
+            outputfilename <- data.frame()
+            datafilename$value = as.numeric(datafilename$value)
+            
+            for (m in 1:length(unique(datafilename$type))) { # call the biodep metrics one by one
+              
+              DPvar_loop <- unique(as.character(datafilename$type))
+              Data_DPvar <- datafilename %>% 
+                                select(type, GROUPvar, DPvar, INDvar) %>% 
+                                dplyr::filter(type %in%  DPvar_loop[m])
+              
+            
+            for (i in 1:length(unique(Data_DPvar$GROUPvar))) {
+              GROUPvar_loop <- unique(Data_DPvar$GROUPvar)[i] # Group var is Age (Date) 
+              Data_by_day   <- Data_DPvar %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+            # run assumptions 
+            # normality of data 
+            normality_A <- (Data_by_day %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[1]
+            
+            normality_B <- (Data_by_day %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[2]
+            
+            # equal variance 
+            variance <- (Data_by_day %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
+            
+            # run all modles
+            Ttestmod.eqvar      <- t.test(Data_by_day$DPvar ~ (as.factor(Data_by_day$INDvar)), 
+                                           alternative = "greater",
+                                           var.equal = TRUE)
+            
+            Ttestmod.noneqvar   <- t.test(Data_by_day$DPvar ~ (as.factor(Data_by_day$INDvar)),
+                                           alternative = "greater",
+                                           var.equal = FALSE)
+            
+            Wilcoxmod           <- wilcox.test(Data_by_day$DPvar ~ 
+                                                 as.numeric(as.factor(Data_by_day$INDvar)))
+            
+            # normality tests for the anova model - asign 
+            DF_loop$ShapiroWilk <- paste0(normality_A, '; ',normality_B)
+            
+            DF_loop$ResidNorm   <- if(normality_A > 0.05 & normality_B > 0.05) {
+              'YES'} else {'NO'}
+            
+            DF_loop$Variance     <- variance
+            
+            DF_loop$HomogVar    <- if( variance > 0.05) {
+              'YES'} else {'NO'}
+            
+            if(normality_A > 0.05 & normality_B > 0.05 & variance > 0.05) {
+                DF_loop$model       <- 'Welchs T test, equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+        
+              } else if (normality_A > 0.05 & normality_B > 0.05 & variance < 0.05) {
+                DF_loop$model       <- 'Welchs T test, non-equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+              } else {
+                DF_loop$model       <- 'Wilcoxon rank sum exact test'
+                DF_loop$DF.num      <- 'NA'
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}            
+              }
+                  DF_loop$Age_DPF     <- GROUPvar_loop
+                  DF_loop$Metric      <- DPvar_loop[m]
+                  # asign loop and cumulative output table
+                  df                        <- data.frame(DF_loop) # name dataframe for this single row
+                  outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+                  # print(outputfilename) # print to monitor progress
+            }
+                }
+return(outputfilename)
+}
 
 
 ```
+
+
+
+```{r Long foramat in prep for loop stats}
+library(data.table)
+
+# select target columns 
+Biodep_Master_F2_select <- Biodep_Master_F2 %>% select(Age,treatment,
+                                                       RR_mghr, ORR_mghr, IRR_mghr,ER_mghr,OER_mghr,IER_mghr,        
+                                                       IER_correct,IRR_correct,OER_correct,ORR_correct,CR,
+                                                       FR,RR_correct,SE,IFR,CR_correct,FR_correct,RR_Percent,
+                                                       TIR,OFR,OIR,i,AR, AE)
+
+# long format ready for lop stats
+Biodep_Master_F2_long <- as.data.frame(reshape2::melt(setDT(Biodep_Master_F2_select), 
+                                                      id.vars = c("Age","treatment"), 
+                                                      variable.name = "type")
+                                      )
+
+
+# call the variables needed
+Biodep_Master_F2_long$DPvar    <- Biodep_Master_F2_long$value
+Biodep_Master_F2_long$INDvar   <- Biodep_Master_F2_long$treatment
+Biodep_Master_F2_long$GROUPvar <- Biodep_Master_F2_long$Age
+
+# run the t test loop
+F2_Biodeposition_Ttest_Wilcox <- as.data.frame(run_ttest(
+                                    Biodep_Master_F2_long  %>%  filter(!INDvar == 7.0)
+                                    )
+                                    )
+View(F2_Biodeposition_Ttest_Wilcox)
+# output stats
+write.csv(F2_Biodeposition_Ttest_Wilcox, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_Ttest_table.csv")
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
 ```{r two way anovas}
 
@@ -246,27 +379,7 @@ DT_OIR
 
 # what effects are sigificnat?
 AOVdf_total %>% dplyr::filter(P_val < 0.05) %>% dplyr::select(Date, Metric)
-# 20230224	SE			
-# 20230224	OIR			
-# 20230224	CR_correct			
-# 20230224	RR_Percent			
-# 20230224	AR			
-# 20230224	AE		
 
-# 20230328	SE			
-# 20230328	AE
-
-
-# add a few columns for plotting 
-
-Biodep_Master_F2 <- Biodep_Master_F2 %>% 
-                        dplyr::mutate(Age = case_when(Date == "20230201" ~  190, 
-                                                      Date == "20230224" ~  213, 
-                                                      Date == "20230328" ~  245)) %>% 
-                        dplyr::mutate(pCO2 = case_when(treatment == 8 ~ "500 μatm", # add column for pCO2
-                                                       treatment == 7.5 ~ "800 μatm",
-                                                       treatment == 7.0 ~ "1200 μatm")) %>% # %>% #edit this!
-                        dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm","1200 μatm")))# relevel for plotting!
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # PLOTTING :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -216,11 +216,14 @@ F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
 
 
 # save
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_LowvMod.pdf"), width = 6, height = 8)
-print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN, F2_RR_Length_MeanSE, nrow = 2)) # print the model diagnostics 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_LowvMod.pdf"), width = 8, height = 4)
+print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN, F2_RR_Length_MeanSE, ncol = 2)) # print the model diagnostics 
 dev.off()
 
 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_meanSE.pdf"), width = 4, height = 4)
+print(ggarrange(F2_RR_Length_MeanSE)) # print the model diagnostics 
+dev.off()
 
 ```
 
@@ -321,12 +324,12 @@ for (i in 1:nrow(Ttest_Dates)) {
                                            as.numeric(as.factor(data_loop$pCO2)))[[3]]
         
         # run all modles
-        Ttestmod.eqvar      <- t.test( as.numeric(as.factor(data_loop$pCO2)), 
-                                       data_loop$resp_umol_hr_bFactorNormLength.MEAN, 
+        Ttestmod.eqvar      <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 
+                                         (as.factor(data_loop$pCO2)),
                                        var.equal = TRUE)
         
-        Ttestmod.noneqvar   <- t.test( as.numeric(as.factor(data_loop$pCO2)), 
-                                       data_loop$resp_umol_hr_bFactorNormLength.MEAN, 
+        Ttestmod.noneqvar   <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 
+                                         (as.factor(data_loop$pCO2)),
                                        var.equal = FALSE)
         
         Wilcoxmod           <- wilcox.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 

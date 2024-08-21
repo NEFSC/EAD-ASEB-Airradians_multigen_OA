@@ -109,81 +109,260 @@ Excretion_data_OM <- Excretion_data_OM %>% # merge size and excretion data
 
 Excretion_data_OM$pCO2 <- fct_relevel(Excretion_data_OM$pCO2, c('500 μatm', '800 μatm', '1200 μatm'))
 
-Excretion_data_OM            <- Excretion_data_OM %>% filter(!is.na(Excretion_data_OM$ExcretionRate_umol_hr)) 
-Excretion_data_OM$log10_VER  <- log10(as.numeric(Excretion_data_OM$ExcretionRate_umol_hr)) # assign resp value
-Excretion_data_OM$log10_TDW  <- log10(as.numeric(Excretion_data_OM$Dry_Tissue_weight)) # assign length value 
+Excretion_data_OM      <- Excretion_data_OM %>% filter(!is.na(Excretion_data_OM$ExcretionRate_umol_hr)) 
+
+# Separate into F1 and F2 files
+Excretion_data_F1 <- Excretion_data_OM %>%  
+                            dplyr::filter(Generation %in% 'F1') %>% 
+                            dplyr::mutate(Length_mm = Length_um/1000)
+
+Excretion_data_F2 <- Excretion_data_OM %>% 
+                            dplyr::filter(Generation %in% 'F2') %>% 
+                            dplyr::mutate(Length_mm = Length_um/1000)
+
+
+
+# F1
+# Log Log datasets 
+Excretion_data_F1$log10_VER     <- log10(as.numeric(Excretion_data_F1$ExcretionRate_umol_hr)) # assign resp value
+Excretion_data_F1$log10_TDW     <- log10(as.numeric(Excretion_data_F1$Dry_Tissue_weight)) # assign length value 
+Excretion_data_F1$log10_Length  <- log10(as.numeric(Excretion_data_F1$Length_mm)) # assign length value 
+
+mean(Excretion_data_F1$log10_Length) #1.343729
 
 # run plot for b factor 
-nrow(Excretion_data_OM) # 160
-ER_b.factor_PLOT_ALL <- Excretion_data_OM %>% 
-                        ggplot(aes(x=log10_TDW, y=log10_VER)) +
-                        geom_point() +
-                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                        scale_x_continuous(name ="log10_BodyMass; TDW in g") +
-                        scale_y_continuous(name ="log10_ER; ER in umol L-1 hr-1)") +
-                        theme_classic() +
-                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                        ggtitle("Excretion rate scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                        geom_smooth(method = lm, color = 'red') +
-                        ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left")
-ER_b.factor_PLOT_ALL
-# b factor == 0.979 for TDW
+
+nrow(Excretion_data_F1) # 78
 
 
-ER_b.factor_PLOT_pCO2 <-Excretion_data_OM %>% 
-                        ggplot(aes(x=log10_TDW, y=log10_VER, color = pCO2)) +
-                        geom_point() +
-                        scale_color_manual(values=c("darkgreen","orange", "purple")) +
-                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                        scale_x_continuous(name ="log10_BodyMass; TDW in g") +
-                        scale_y_continuous(name ="log10_ER; ER in umol L-1 hr-1)") +
-                        theme_classic() +
-                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                        ggtitle("Excretion rate scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                        geom_smooth(method = lm, color = 'red') +
-                        ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") + 
-                        facet_wrap(~pCO2)
-ER_b.factor_PLOT_pCO2
+# all
+ER_b.factorLENGTH_PLOT <- Excretion_data_F1 %>% 
+                              ggplot(aes(x=log10_Length, y=log10_VER)) +
+                              geom_point() +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_Length; in mm") +
+                              scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                              theme_classic() +
+                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                              ggtitle("Excretion Rate scaling: log10_VER = log10_a + 
+                                                                  (b.factor * log10_Length)") 
 
-
-ER_b.factor_PLOT_Gen <-Excretion_data_OM %>% 
-                        ggplot(aes(x=log10_TDW, y=log10_VER)) +
-                        geom_point() +
-                        # scale_color_manual(values=c("darkgreen","orange", "purple")) +
-                        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                        scale_x_continuous(name ="log10_BodyMass; TDW in g") +
-                        scale_y_continuous(name ="log10_ER; ER in umol L-1 hr-1)") +
-                        theme_classic() +
-                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                        ggtitle("Excretion rate scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                        geom_smooth(method = lm, color = 'red') +
-                        ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") + 
-                        facet_wrap(~Generation)
-ER_b.factor_PLOT_Gen
+# by treatment
+ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F1 %>% 
+                                  ggplot(aes(x=log10_Length, y=log10_VER)) +
+                                  geom_point() +
+                                  ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                  ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                                  theme(panel.grid.major = element_blank(), 
+                                        panel.grid.minor = element_blank())+ 
+                                  scale_x_continuous(name ="log10_Length; in mm") +
+                                  scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                                  theme_classic() +
+                                  theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                  ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_Length)") +
+                                  facet_wrap(~pCO2)
 
 
 
-ER_b.factor_PLOT_GenpCO2 <-Excretion_data_OM %>% 
-                            ggplot(aes(x=log10_TDW, y=log10_VER, color = pCO2)) +
+
+
+# OUTPUT PLOTS 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_Length.pdf"), 
+    width = 8, height = 16)
+print(ggarrange(ER_b.factorLENGTH_PLOT,
+                ER_b.factorLENGTH_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# F1 Low: 4.32
+# F1 Moderate 4.57
+
+
+
+
+# F1 
+
+# assign bfactors by treatment
+F1_bLength.low <-  4.32 #mean data by rep tank # 6.99 - with all data
+F1_bLength.mod <-  4.57 #mean data by rep tank # 6.57 - with all data
+
+# call the mean lengths of animals measured
+F1_meanLength   <- mean(Excretion_data_F1$Length_mm) # 26.37436 mm
+
+#View(RR_formatted_F1s$TDW_um)
+# ERnorm = ER × (SHmean / SHindiv)b = µmol L-1 O2 mm-1 hr-1
+
+Excretion_F1_calculated <- Excretion_data_F1 %>% 
+  
+  dplyr::mutate(
+    ExcretionRate_umol_hr_bFactorNormLength.MEAN = 
+      case_when(
+        pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F1_meanLength/Length_mm)^F1_bLength.low),
+        pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F1_meanLength/Length_mm)^F1_bLength.mod)
+      ))
+
+dplyr::select(c(Generation,
+                Date,
+                pH,
+                pCO2,
+                Replicate,
+                Number,
+                Run,
+                Length_um,
+                Length_mm,
+                Dry_Tissue_weight,
+                ExcretionRate_umol_hr,
+                ExcretionRate_umol_hr_bFactorNormLength.MEAN))
+#View(RR_formatted_F1smaster)
+write.csv(Excretion_F1_calculated, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")
+
+
+
+
+
+
+
+
+
+
+#F2
+# Log Log datasets 
+Excretion_data_F2$log10_VER     <- log10(as.numeric(Excretion_data_F2$ExcretionRate_umol_hr)) # assign resp value
+Excretion_data_F2$log10_TDW     <- log10(as.numeric(Excretion_data_F2$Dry_Tissue_weight)) # assign length value 
+Excretion_data_F2$log10_Length  <- log10(as.numeric(Excretion_data_F2$Length_mm)) # assign length value 
+
+mean(Excretion_data_F2$log10_Length) #1.453697
+
+# run plot for b factor 
+
+nrow(Excretion_data_F2) # 82
+
+
+# all
+ER_b.factorLENGTH_PLOT <- Excretion_data_F2 %>% 
+                            ggplot(aes(x=log10_Length, y=log10_VER)) +
                             geom_point() +
-                            scale_color_manual(values=c("darkgreen","orange", "purple")) +
-                            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
-                            scale_x_continuous(name ="log10_BodyMass; TDW in g") +
-                            scale_y_continuous(name ="log10_ER; ER in umol L-1 hr-1)") +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_Length; in mm") +
+                            scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
                             theme_classic() +
                             theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                            ggtitle("Excretion rate scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                            geom_smooth(method = lm, color = 'red') +
-                            ggpmisc::stat_poly_eq(parse=T, aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), label.x.npc = "left") + 
-                            facet_wrap(~Generation*pCO2)
-ER_b.factor_PLOT_GenpCO2
+                            ggtitle("Excretion Rate scaling: log10_VER = log10_a + (b.factor * log10_Length)") 
+
+# by treatment
+ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F2 %>% 
+                            ggplot(aes(x=log10_Length, y=log10_VER)) +
+                            geom_point() +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_Length; in mm") +
+                            scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                            theme_classic() +
+                            theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                            ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_Length)") +
+                            facet_wrap(~pCO2)
 
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/ExcretionScaling_bFactor_TDW.pdf"), 
-                        width = 8, height = 12)
-print(ggarrange(ER_b.factor_PLOT_ALL, ER_b.factor_PLOT_pCO2, 
-                ER_b.factor_PLOT_Gen, ER_b.factor_PLOT_GenpCO2, nrow = 4, ncol = 1)) # print the model diagnostics 
-dev.off()
+
+
+
+# OUTPUT PLOTS 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F2_ExcretionScaling_bFactor_Length.pdf"), 
+    width = 8, height = 16)
+print(ggarrange(ER_b.factorLENGTH_PLOT,
+                ER_b.factorLENGTH_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# F2 Low: 3.24
+# F2 Moderate 2.55
+# F2 High 2.91
+
+
+
+
+
+# F2 
+
+# assign bfactors by treatment
+F2_bLength.low  <-  3.24 #mean data by rep tank # 6.99 - with all data
+F2_bLength.mod  <-  2.55 #mean data by rep tank # 6.57 - with all data
+F2_bLength.high <-  2.91 #mean data by rep tank # 6.57 - with all data
+
+# call the mean lengths of animals measured
+F2_meanLength   <- mean(Excretion_data_F2$Length_mm) # 30.67378 mm
+
+#View(RR_formatted_F2s$TDW_um)
+# ERnorm = ER × (SHmean / SHindiv)b = µmol L-1 O2 mm-1 hr-1
+
+Excretion_F2_calculated <- Excretion_data_F2 %>% 
+  
+                            dplyr::mutate(
+                              ExcretionRate_umol_hr_bFactorNormLength.MEAN = 
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.mod),
+                                  pH  == 7.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.high)
+                                ))
+                          
+                            dplyr::select(c(Generation,
+                                            Date,
+                                            pH,
+                                            pCO2,
+                                            Replicate,
+                                            Number,
+                                            Run,
+                                            Length_um,
+                                            Length_mm,
+                                            Dry_Tissue_weight,
+                                            ExcretionRate_umol_hr,
+                                            ExcretionRate_umol_hr_bFactorNormLength.MEAN))
+#View(RR_formatted_F2smaster)
+write.csv(Excretion_F2_calculated, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F2/F2_ExcretionRates_master.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

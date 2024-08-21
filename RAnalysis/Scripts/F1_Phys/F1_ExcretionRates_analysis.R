@@ -45,29 +45,29 @@ F1_ER_master <- F1_ER_master %>%
 
 # now take the means by Date pCO2  and tank and remove the tank group - means and st error by date and pCO2
 F1_ER_MEANS <- F1_ER_master %>% 
-                    dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
-                    summarySE(measurevar="ExcretionRate_umol_hr_TDWbfactor", 
+                    # dplyr::filter(!ExcretionRate_umol_hr_Lengthbfactor >40) %>% # one extreme outlier value!
+                    summarySE(measurevar="ExcretionRate_umol_hr_bFactorNormLength.MEAN", 
                               groupvars=c("Date", "Age", "pCO2", "Replicate"))
 
 F1_ER_MEANS_plotting <- F1_ER_MEANS %>% 
-                          dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
-                          summarySE(measurevar="ExcretionRate_umol_hr_TDWbfactor", 
+                          # dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
+                          summarySE(measurevar="ExcretionRate_umol_hr_bFactorNormLength.MEAN", 
                                     groupvars=c("Date", "Age", "pCO2"))
 
 
 F1_ER_plot <- F1_ER_MEANS_plotting %>% 
                   ggplot(aes(x=as.factor(Age), 
-                             y=ExcretionRate_umol_hr_TDWbfactor, 
+                             y=ExcretionRate_umol_hr_bFactorNormLength.MEAN, 
                              color=as.factor(pCO2))) +
                   geom_point(position=position_dodge(.5))+ 
                   scale_color_manual(values=c("forestgreen",
                                               "darkorange2"))+
-                  geom_errorbar(aes(ymin=ExcretionRate_umol_hr_TDWbfactor-se, 
-                                    ymax=ExcretionRate_umol_hr_TDWbfactor+se), width=.2,
+                  geom_errorbar(aes(ymin=ExcretionRate_umol_hr_bFactorNormLength.MEAN-se, 
+                                    ymax=ExcretionRate_umol_hr_bFactorNormLength.MEAN+se), width=.2,
                                 position=position_dodge(.5))+
                   theme_classic() +  
                   xlab("Age (dpf)") + 
-                  ggtitle("F1 Scallops: Excretion rate TDW b factor norm (umol NH4 hr)") +
+                  ggtitle("F1 Scallops: Excretion rate Length b factor norm (umol NH4 hr)") +
                   theme_classic() +
                   theme(legend.position="none",
                         panel.grid.major = element_blank(), 
@@ -77,7 +77,7 @@ F1_ER_plot <- F1_ER_MEANS_plotting %>%
                   theme(text = element_text(size=10))
 
 # output the plot 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ER_TDWbfactor.pdf"), width = 8, height = 3)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ER_Lengthbfactor.pdf"), width = 8, height = 3)
 print(F1_ER_plot)
 dev.off()
 
