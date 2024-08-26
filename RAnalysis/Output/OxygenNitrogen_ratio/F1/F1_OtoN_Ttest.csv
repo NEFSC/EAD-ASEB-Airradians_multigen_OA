@@ -1,0 +1,6 @@
+"","Date","Age","Metric","model","ShapiroWilk","ResidNorm","Variance","HomogVar","DF.num","DF.denom","Tstat","P_val","SigDif"
+"1","20211026",92,"RR; LENGTH b factor normalized","Wilcoxon rank sum exact test",0.0292175235672089,"NO",0.0896677073545773,"YES","NA","NA",5,0.857142857142857,"NO"
+"2","20220202",191,"RR; LENGTH b factor normalized","Welchs T test, equal variance",0.968165935070623,"YES",0.514729981976609,"YES","14","NA",1.01034233783102,0.329475372610607,"NO"
+"3","20220301",218,"RR; LENGTH b factor normalized","Wilcoxon rank sum exact test",0.00013526701647602,"NO",7.17850759564179e-05,"NO","NA","NA",11,0.0281274281274281,"YES"
+"4","20220922",423,"RR; LENGTH b factor normalized","Wilcoxon rank sum exact test",0.00519320856146783,"NO",0.0888738945099805,"YES","NA","NA",14,0.114285714285714,"NO"
+"5","20221026",457,"RR; LENGTH b factor normalized","Welchs T test, equal variance",0.455737526770507,"YES",0.294020339099278,"YES","11","NA",0.520794911398404,0.612831922581854,"NO"

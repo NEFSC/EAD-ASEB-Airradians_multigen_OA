@@ -32,23 +32,111 @@ F1_ER_master <- F1_ER_master %>%
                       dplyr::mutate(pCO2 = factor(pCO2, levels = c('500 μatm','800 μatm','1200 μatm')))
 
 
-
-
-
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ANALYSIS AND PLOTTING  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# means by tank replicate - necessary for the ACTUAL data for plotting and statistics!
+F1_ER_MEANS <- F1_ER_master %>% 
+  # dplyr::filter(!ExcretionRate_umol_hr_Lengthbfactor >40) %>% # one extreme outlier value!
+  summarySE(measurevar="ExcretionRate_umol_hr_bFactorNormLength.MEAN", 
+            groupvars=c("Date", "Age", "pCO2", "Replicate"))
+
+# (run t tests in lop 
+Ttest_Dates       <- as.data.frame(unique(F1_ER_MEANS$Date)) # call a list to loop in 
+Ttest_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 
+                       'ShapiroWilk', 'ResidNorm', 'Variance', 
+                       'HomogVar', 'DF.num' , 'DF.denom', 'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+library(purrr)
+library(rstatix)
+
+for (i in 1:nrow(Ttest_Dates)) {
+  
+  date_loop     <- as.character(Ttest_Dates[i,])
+  data_loop     <- F1_ER_MEANS %>% 
+    dplyr::filter(!pCO2 %in% '1200 μatm') %>% 
+    dplyr::filter(Date == date_loop) %>% 
+    dplyr::select(Date, Age, pCO2, ExcretionRate_umol_hr_bFactorNormLength.MEAN) %>% 
+    na.omit()
+  
+  DF_loop$Date        <- date_loop
+  DF_loop$Age         <- data_loop$Age[1]
+  DF_loop$Metric      <- 'ER; LENGTH b factor normalized'
+  
+  # run assumptions 
+  # normality of data 
+  normality <- shapiro.test(data_loop$ExcretionRate_umol_hr_bFactorNormLength.MEAN)[[2]]
+  # equal variance 
+  variance <- var.test(data_loop$ExcretionRate_umol_hr_bFactorNormLength.MEAN~ 
+                         as.numeric(as.factor(data_loop$pCO2)))[[3]]
+  
+  # run all modles
+  Ttestmod.eqvar      <- t.test( data_loop$ExcretionRate_umol_hr_bFactorNormLength.MEAN ~ 
+                                   (as.factor(data_loop$pCO2)),
+                                 var.equal = TRUE)
+  
+  Ttestmod.noneqvar   <- t.test( data_loop$ExcretionRate_umol_hr_bFactorNormLength.MEAN ~ 
+                                   (as.factor(data_loop$pCO2)),
+                                 var.equal = FALSE)
+  
+  Wilcoxmod           <- wilcox.test(data_loop$ExcretionRate_umol_hr_bFactorNormLength.MEAN ~ 
+                                       as.numeric(as.factor(data_loop$pCO2)))
+  
+  # normality tests for the anova model - asign 
+  DF_loop$ShapiroWilk <- normality
+  
+  DF_loop$ResidNorm   <- if( normality > 0.05) {
+    'YES'} else {'NO'}
+  
+  DF_loop$Variance     <- variance
+  
+  DF_loop$HomogVar    <- if( variance > 0.05) {
+    'YES'} else {'NO'}
+  
+  if(normality > 0.05 & variance > 0.05) {
+    DF_loop$model       <- 'Welchs T test, equal variance'
+    DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}
+    
+  } else if (normality > 0.05 & variance < 0.05) {
+    DF_loop$model       <- 'Welchs T test, non-equal variance'
+    DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}
+  } else {
+    DF_loop$model       <- 'Wilcoxon rank sum exact test'
+    DF_loop$DF.num      <- 'NA'
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}            
+  }
+  # asign loop and cumulative output table
+  df          <- data.frame(DF_loop) # name dataframe for this single row
+  Ttest_total <- rbind(Ttest_total,DF_loop) #bind to a cumulative list dataframe
+  # print(Ttest_total) # print to monitor progress
+  
+}
+write.csv(Ttest_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ER_LengthbFactor_Ttest.csv")
+
+
+
 
 # PLOTS
 
 # Summarise Percent Deformities for plotting 
 
 # now take the means by Date pCO2  and tank and remove the tank group - means and st error by date and pCO2
-F1_ER_MEANS <- F1_ER_master %>% 
-                    # dplyr::filter(!ExcretionRate_umol_hr_Lengthbfactor >40) %>% # one extreme outlier value!
-                    summarySE(measurevar="ExcretionRate_umol_hr_bFactorNormLength.MEAN", 
-                              groupvars=c("Date", "Age", "pCO2", "Replicate"))
-
 F1_ER_MEANS_plotting <- F1_ER_MEANS %>% 
                           # dplyr::filter(!ExcretionRate_umol_hr_TDWbfactor >40) %>% # one extreme outlier value!
                           summarySE(measurevar="ExcretionRate_umol_hr_bFactorNormLength.MEAN", 
@@ -77,7 +165,7 @@ F1_ER_plot <- F1_ER_MEANS_plotting %>%
                   theme(text = element_text(size=10))
 
 # output the plot 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ER_Lengthbfactor.pdf"), width = 8, height = 3)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ER_Lengthbfactor.pdf"), width = 4, height = 4)
 print(F1_ER_plot)
 dev.off()
 

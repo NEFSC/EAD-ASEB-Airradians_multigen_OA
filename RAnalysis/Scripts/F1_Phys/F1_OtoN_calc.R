@@ -53,22 +53,29 @@ SMR_F1_sub <- SMR_F1 %>% dplyr::mutate(Date = paste("20",(format(as.Date(Date, "
                          dplyr::filter(Date %in% c('20211026', '20220202', '20220301', '20220922', '20221026')) %>% 
                          dplyr::filter(filetype %in% 'LoLigo_data') %>% # ommits all microplate SDR dish data, in which ER MEASUREMENTS WERE NOT COMPLETED!!!!
                          dplyr::mutate(Replicate = gsub(".*_","",Chamber_tank)) %>% 
-                         dplyr::select(-(c(filetype, Length_um, pCO2,Dry_Tissue_weight, whole_Dry_weight))) %>%  # do not need it anymore!
-                          dplyr::select(c('Date','pH','Replicate','Number', 'Run','Length_mm',
-                                          'resp_umol_hr'))
+                         dplyr::select(c('Date', 'Age', 'pCO2','Replicate',
+                                          'Number', 'Run','Length_mm',
+                                          'resp_umol_hr')) %>% 
+                         dplyr::mutate(pCO2 = case_when(pCO2 %in% '500 uatm' ~ '500 μatm',
+                                                        pCO2 %in% '800 uatm' ~ '800 μatm'))
 nrow(SMR_F1_sub) # 77 - we have one value less than ER due to a bad datapoint
 
+
+ER_F1_sub <- ER_F1 %>% dplyr::select(c('Date', 'Age', 'pCO2','Replicate',
+                                       'Number', 'Run','Length_mm',
+                                       'ExcretionRate_umol_hr'))
 # now when we merge, ER is our limiting factor 
-F1_ON_Master<- merge(ER_F1,SMR_F1_sub, by=c('Date','pH',  'Replicate','Number', 'Run')) %>% 
-                  dplyr::select(-c(Run,Biovolume_g_in_sw,Dry_Shell_weight,whole_Dry_weight,log10_VER,log10_TDW))
-nrow(F1_ON_Master) # 74 aligned - 4 less than ER master file 
+F1_ON_Merge<- merge(ER_F1_sub, SMR_F1_sub, by=c('Date','Age', 'pCO2',  'Replicate','Number', 'Run'))
+nrow(F1_ON_Merge) # 74 aligned - 4 less than ER master file 
 
 # F1 Plots ::::::::::::::::::::::::::
 library(forcats)
-F1_ON_Master <- F1_ON_Master %>% 
-                  dplyr::mutate(O_N =(resp_umol_hr)*2 / # for umol of oxygen, curretnly as O2, convert to O 
+F1_ON_Master <- F1_ON_Merge %>% 
+                  # IMPORTANT! out resp_mg_hr  is in O2 - we cover to resp_umol_hr by divideding by 32 (atomic weight of O2! 
+                  # so technically our umol is the atomic equivelnts of O2, not O, to get this we mutliply by 2
+                  dplyr::mutate(O_N = (resp_umol_hr)*2 / # for umol of oxygen, curretnly as O2, convert to O 
                                   ExcretionRate_umol_hr) %>% 
-                  dplyr::filter(!O_N >150) %>% # outlier omit
+                  # dplyr::filter(!O_N >200) %>% # outlier omit
                   dplyr::mutate(pCO2 = factor(pCO2, levels=c("500 μatm", "800 μatm")))
 
 # View(F1_ON_Master %>% dplyr::select(Date,pH, Replicate,resp_umol_hr, ExcretionRate_umol_hr, O_N))
@@ -78,6 +85,7 @@ write.csv(F1_ON_Master,
 
 
 F1_ON_MasterMEANS <- F1_ON_Master %>% # mean by tank replicate 
+                        dplyr::filter(!O_N > 400) %>% 
                         dplyr::select(c(Date, Age, pCO2,  Replicate, O_N)) %>% # one extreme outlier value!
                         Rmisc::summarySE(measurevar="O_N", 
                                   groupvars=c("Date", "Age", "pCO2",  "Replicate"))
@@ -105,7 +113,7 @@ F1_Boxplot <- F1_ON_MasterMEANS %>%
                                 axis.title.y=element_text(size=7),
                                 axis.title.x=element_text(size=7),
                                 axis.text.x=element_text(size=7)) +
-                          scale_y_continuous(name ="O:N (umol TDW b factor)",expand = c(0, 0), limits = c(0, NA)) +
+                          scale_y_continuous(name ="O:N (raw umol)",expand = c(0, 0), limits = c(0, NA)) +
                           stat_summary(fun.y=mean, 
                                        geom = "errorbar", 
                                        aes(ymax = ..y.., ymin = ..y..), 
@@ -145,7 +153,7 @@ F1_ON_Plot <- F1_ON_MasterMEANSMEANS %>%
 library(ggpubr)
 ggarrange(F1_Boxplot, F1_ON_Plot, ncol = 1)
 
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_ON_Mean_SE.pdf"), width = 8, height = 3)
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_ON_Mean_SE.pdf"), width = 4, height = 4)
 print(F1_ON_Plot)
 dev.off()
 
@@ -213,7 +221,98 @@ for (i in 1:nrow(ANOVA_Dates)) {
 
 
 # WRITE CSV OF THE MASTER FILE
-write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_O_N_Statistics.csv")
+write.csv(AOVdf_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_OtoN_ANOVA.csv")
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
 
 
+
+
+
+
+# T-tests
+
+Ttest_Dates       <- as.data.frame(unique(F1_ON_MasterMEANS$Date)) # call a list to loop in 
+Ttest_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 
+                       'ShapiroWilk', 'ResidNorm', 'Variance', 
+                       'HomogVar', 'DF.num' , 'DF.denom', 'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+
+for (i in 1:nrow(Ttest_Dates)) {
+  
+  date_loop     <- as.character(Ttest_Dates[i,])
+  data_loop     <- F1_ON_MasterMEANS %>% 
+    dplyr::filter(Date == date_loop) %>% 
+    dplyr::select(Date, Age, pCO2, O_N) %>% 
+    na.omit()
+  
+  DF_loop$Date        <- date_loop
+  DF_loop$Age         <- data_loop$Age[1]
+  DF_loop$Metric      <- 'RR; LENGTH b factor normalized'
+  
+  # run assumptions 
+  # normality of data 
+  normality <- shapiro.test(data_loop$O_N)[[2]]
+  # equal variance 
+  variance <- var.test(data_loop$O_N~ 
+                         as.numeric(as.factor(data_loop$pCO2)))[[3]]
+  
+  # run all modles
+  Ttestmod.eqvar      <- t.test( data_loop$O_N ~ 
+                                   (as.factor(data_loop$pCO2)),
+                                 var.equal = TRUE)
+  
+  Ttestmod.noneqvar   <- t.test( data_loop$O_N ~ 
+                                   (as.factor(data_loop$pCO2)),
+                                 var.equal = FALSE)
+  
+  Wilcoxmod           <- wilcox.test(data_loop$O_N ~ 
+                                       as.numeric(as.factor(data_loop$pCO2)))
+  
+  # normality tests for the anova model - asign 
+  DF_loop$ShapiroWilk <- normality
+  
+  DF_loop$ResidNorm   <- if( normality > 0.05) {
+    'YES'} else {'NO'}
+  
+  DF_loop$Variance     <- variance
+  
+  DF_loop$HomogVar    <- if( variance > 0.05) {
+    'YES'} else {'NO'}
+  
+  if(normality > 0.05 & variance > 0.05) {
+    DF_loop$model       <- 'Welchs T test, equal variance'
+    DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}
+    
+  } else if (normality > 0.05 & variance < 0.05) {
+    DF_loop$model       <- 'Welchs T test, non-equal variance'
+    DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}
+  } else {
+    DF_loop$model       <- 'Wilcoxon rank sum exact test'
+    Wilcoxmod
+    DF_loop$DF.num      <- 'NA'
+    DF_loop$DF.denom    <- 'NA'
+    DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+    DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+    DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+      'NO'} else {'YES'}            
+  }
+  # asign loop and cumulative output table
+  df          <- data.frame(DF_loop) # name dataframe for this single row
+  Ttest_total <- rbind(Ttest_total,DF_loop) #bind to a cumulative list dataframe
+  # print(Ttest_total) # print to monitor progress
+  
+}
+# View(AOVdf_total) # view all the anova tests within data 
+
+write.csv(Ttest_total, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/OxygenNitrogen_ratio/F1/F1_OtoN_Ttest.csv")
