@@ -136,7 +136,7 @@ nrow(Excretion_data_F1) # 78
 
 
 # all
-ER_b.factorLENGTH_PLOT <- Excretion_data_F1 %>% 
+ER_b.factorLENGTH_PLOT <- Excretion_data_F1 %>% # 2.94 F2 = 0.73, n = 82
                               ggplot(aes(x=log10_Length, y=log10_VER)) +
                               geom_point() +
                               ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
@@ -149,6 +149,22 @@ ER_b.factorLENGTH_PLOT <- Excretion_data_F1 %>%
                               theme(legend.position="none",axis.title.y=element_text(size=7)) +
                               ggtitle("Excretion Rate scaling: log10_VER = log10_a + 
                                                                   (b.factor * log10_Length)") 
+
+
+ER_b.factorTDW_PLOT <- Excretion_data_F1 %>% # 1.29, n = 78, R2 = 0.81
+                              ggplot(aes(x=log10_TDW, y=log10_VER)) +
+                              geom_point() +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                              theme_classic() +
+                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                              ggtitle("Excretion Rate scaling: log10_VER = log10_a + 
+                                                                  (b.factor * log10_TDW)") 
+
 
 # by treatment
 ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F1 %>% 
@@ -165,21 +181,42 @@ ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F1 %>%
                                   ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_Length)") +
                                   facet_wrap(~pCO2)
 
-
+ER_b.factorTDW_PLOT_pCO2 <- Excretion_data_F1 %>% # 1.26 and 1.32
+                                  ggplot(aes(x=log10_TDW, y=log10_VER)) +
+                                  geom_point() +
+                                  ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                  ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                                  theme(panel.grid.major = element_blank(), 
+                                        panel.grid.minor = element_blank())+ 
+                                  scale_x_continuous(name ="log10_TDW; in mm") +
+                                  scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                                  theme_classic() +
+                                  theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                  ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_TDW)") +
+                                  facet_wrap(~pCO2)
 
 
 
 # OUTPUT PLOTS 
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_Length.pdf"), 
     width = 8, height = 16)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_Length.pdf"), 
+    width = 8, height = 16)
 print(ggarrange(ER_b.factorLENGTH_PLOT,
                 ER_b.factorLENGTH_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_TDW.pdf"), 
+    width = 8, height = 16)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_TDW.pdf"), 
+    width = 8, height = 16)
+print(ggarrange(ER_b.factorTDW_PLOT,
+                ER_b.factorTDW_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
 dev.off() 
 
 
 # F1 Low: 4.32
 # F1 Moderate 4.57
-
 
 
 
@@ -189,8 +226,13 @@ dev.off()
 F1_bLength.low <-  4.32 #mean data by rep tank # 6.99 - with all data
 F1_bLength.mod <-  4.57 #mean data by rep tank # 6.57 - with all data
 
+F1_bTDW.low <-  1.26 #mean data by rep tank # 6.99 - with all data
+F1_bTDW.mod <-  1.32 #mean data by rep tank # 6.57 - with all data
+
+
 # call the mean lengths of animals measured
 F1_meanLength   <- mean(Excretion_data_F1$Length_mm) # 26.37436 mm
+F1_meanTDW      <- mean(Excretion_data_F1$Dry_Tissue_weight) # 0.4684321 mm
 
 #View(RR_formatted_F1s$TDW_um)
 # ERnorm = ER × (SHmean / SHindiv)b = µmol L-1 O2 mm-1 hr-1
@@ -202,22 +244,29 @@ Excretion_F1_calculated <- Excretion_data_F1 %>%
       case_when(
         pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F1_meanLength/Length_mm)^F1_bLength.low),
         pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F1_meanLength/Length_mm)^F1_bLength.mod)
-      ))
-
-dplyr::select(c(Generation,
-                Date,
-                pH,
-                pCO2,
-                Replicate,
-                Number,
-                Run,
-                Length_um,
-                Length_mm,
-                Dry_Tissue_weight,
-                ExcretionRate_umol_hr,
-                ExcretionRate_umol_hr_bFactorNormLength.MEAN))
+      ),
+    ExcretionRate_umol_hr_bFactorNormTDW.MEAN = 
+      case_when(
+        pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F1_meanTDW/Dry_Tissue_weight)^F1_bTDW.low),
+        pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F1_meanTDW/Dry_Tissue_weight)^F1_bTDW.mod)
+      )
+    ) %>% 
+    dplyr::select(c(Generation,
+                    Date,
+                    pH,
+                    pCO2,
+                    Replicate,
+                    Number,
+                    Run,
+                    Length_um,
+                    Length_mm,
+                    Dry_Tissue_weight,
+                    ExcretionRate_umol_hr,
+                    ExcretionRate_umol_hr_bFactorNormLength.MEAN,
+                    ExcretionRate_umol_hr_bFactorNormTDW.MEAN))
 #View(RR_formatted_F1smaster)
 write.csv(Excretion_F1_calculated, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")
+write.csv(Excretion_F1_calculated, "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")
 
 
 
@@ -255,6 +304,20 @@ ER_b.factorLENGTH_PLOT <- Excretion_data_F2 %>%
                             theme(legend.position="none",axis.title.y=element_text(size=7)) +
                             ggtitle("Excretion Rate scaling: log10_VER = log10_a + (b.factor * log10_Length)") 
 
+ER_b.factorTDW_PLOT <- Excretion_data_F2 %>% # 0.754
+                              ggplot(aes(x=log10_TDW, y=log10_VER)) +
+                              geom_point() +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                              theme_classic() +
+                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                              ggtitle("Excretion Rate scaling: log10_VER = log10_a + (b.factor * log10_TDW)") 
+
+
 # by treatment
 ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F2 %>% 
                             ggplot(aes(x=log10_Length, y=log10_VER)) +
@@ -270,7 +333,19 @@ ER_b.factorLENGTH_PLOT_pCO2 <- Excretion_data_F2 %>%
                             ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_Length)") +
                             facet_wrap(~pCO2)
 
-
+ER_b.factorTDW_PLOT_pCO2 <- Excretion_data_F2 %>%  #0.413 0.725 0.587
+                                  ggplot(aes(x=log10_TDW, y=log10_VER)) +
+                                  geom_point() +
+                                  ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                  ggpmisc::stat_ma_eq(use_label(c("eq", "n", "R2"))) +
+                                  theme(panel.grid.major = element_blank(), 
+                                        panel.grid.minor = element_blank())+ 
+                                  scale_x_continuous(name ="log10_TDW; in mm") +
+                                  scale_y_continuous(name ="log10_VER; RR in umol L-1 hr-1)") +
+                                  theme_classic() +
+                                  theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                  ggtitle("Excretion Rate scaling: log10_VER = log10_a +  (b.factor * log10_TDW)") +
+                                  facet_wrap(~pCO2)
 
 
 
@@ -281,10 +356,21 @@ print(ggarrange(ER_b.factorLENGTH_PLOT,
                 ER_b.factorLENGTH_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
 dev.off() 
 
-
 # F2 Low: 3.24
 # F2 Moderate 2.55
 # F2 High 2.91
+
+
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F2_ExcretionScaling_bFactor_TDW.pdf"), 
+    width = 8, height = 16)
+print(ggarrange(ER_b.factorTDW_PLOT,
+                ER_b.factorTDW_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+
+
+
 
 
 
@@ -297,8 +383,30 @@ F2_bLength.low  <-  3.24 #mean data by rep tank # 6.99 - with all data
 F2_bLength.mod  <-  2.55 #mean data by rep tank # 6.57 - with all data
 F2_bLength.high <-  2.91 #mean data by rep tank # 6.57 - with all data
 
+
+F2_bTDW.low  <-  0.906 #mean data by rep tank # 6.99 - with all data
+F2_bTDW.mod  <-  0.725 #mean data by rep tank # 6.57 - with all data
+F2_bTDW.high <-  0.587 #mean data by rep tank # 6.57 - with all data
+
+
+
 # call the mean lengths of animals measured
-F2_meanLength   <- mean(Excretion_data_F2$Length_mm) # 30.67378 mm
+F2_meanLength_all   <- mean(Excretion_data_F2$Length_mm) # 30.67378 mm
+F2_meanLength_LvM   <- mean(
+                            (Excretion_data_F2 %>% filter(!pCO2 %in% '1200 μatm'))$Length_mm
+                            )# 30.55455 mm
+F2_meanLength_LvH   <-  mean(
+                            (Excretion_data_F2 %>% filter(!pCO2 %in% '800 μatm'))$Length_mm
+                            )# 31.01759 mm
+
+
+F2_meanTDW_all   <- mean(Excretion_data_F2$Dry_Tissue_weight) # 0.3775268 g
+F2_meanTDW_LvM   <- mean(
+                           (Excretion_data_F2 %>% filter(!pCO2 %in% '1200 μatm'))$Dry_Tissue_weight
+                           )# 0.3638818 g
+F2_meanTDW_LvH   <-  mean(
+                            (Excretion_data_F2 %>% filter(!pCO2 %in% '800 μatm'))$Dry_Tissue_weight
+                          )# 0.3943907 g
 
 #View(RR_formatted_F2s$TDW_um)
 # ERnorm = ER × (SHmean / SHindiv)b = µmol L-1 O2 mm-1 hr-1
@@ -306,12 +414,55 @@ F2_meanLength   <- mean(Excretion_data_F2$Length_mm) # 30.67378 mm
 Excretion_F2_calculated <- Excretion_data_F2 %>% 
   
                             dplyr::mutate(
-                              ExcretionRate_umol_hr_bFactorNormLength.MEAN = 
+                              
+                              
+                              # LEngth b factor for all, lvm aND LVh
+                              ExcretionRate_umol_hr_bFactorNormLength.MEAN_all = 
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength_all/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F2_meanLength_all/Length_mm)^F2_bLength.mod),
+                                  pH  == 7.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength_all/Length_mm)^F2_bLength.high)
+                                ),
+                              
+                              ExcretionRate_umol_hr_bFactorNormLength.MEAN_LvM = # same except new mean Length
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength_LvM/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F2_meanLength_LvM/Length_mm)^F2_bLength.mod),
+                                  pH  == 7.0 ~ NA
+                                ),                              
+                              
+                              ExcretionRate_umol_hr_bFactorNormLength.MEAN_LvH =  # same except new mean Length
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength_LvH/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ NA,
+                                  pH  == 7.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength_LvH/Length_mm)^F2_bLength.high)
+                                ),
+                              
+                              
+                              
+                              # TDW b factor for all, lvm aND LVh
+                              ExcretionRate_umol_hr_bFactorNormTDW.MEAN_all = 
                                 case_when(
                                   pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.low),
                                   pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.mod),
                                   pH  == 7.0 ~ (ExcretionRate_umol_hr)*((F2_meanLength/Length_mm)^F2_bLength.high)
-                                ))
+                                ),
+                              
+                              ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvM =  # same except new mean TDW
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanTDW_LvM/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ (ExcretionRate_umol_hr)*((F2_meanTDW_LvM/Length_mm)^F2_bLength.mod),
+                                  pH  == 7.0 ~ NA
+                                ),                                   
+                              
+                              ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvH = # same except new mean TDW
+                                case_when(
+                                  pH  == 8.0 ~ (ExcretionRate_umol_hr)*((F2_meanTDW_LvH/Length_mm)^F2_bLength.low),
+                                  pH  == 7.5 ~ NA,
+                                  pH  == 7.0 ~ (ExcretionRate_umol_hr)*((F2_meanTDW_LvH/Length_mm)^F2_bLength.high)
+                                )                                   
+                              
+                              ) %>% 
                           
                             dplyr::select(c(Generation,
                                             Date,
@@ -324,9 +475,16 @@ Excretion_F2_calculated <- Excretion_data_F2 %>%
                                             Length_mm,
                                             Dry_Tissue_weight,
                                             ExcretionRate_umol_hr,
-                                            ExcretionRate_umol_hr_bFactorNormLength.MEAN))
+                                            ExcretionRate_umol_hr_bFactorNormLength.MEAN_all,
+                                            ExcretionRate_umol_hr_bFactorNormLength.MEAN_LvM,
+                                            ExcretionRate_umol_hr_bFactorNormLength.MEAN_LvH,
+                                            ExcretionRate_umol_hr_bFactorNormTDW.MEAN_all,
+                                            ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                            ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvH
+                                            ))
 #View(RR_formatted_F2smaster)
 write.csv(Excretion_F2_calculated, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F2/F2_ExcretionRates_master.csv")
+write.csv(Excretion_F2_calculated, "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F2/F2_ExcretionRates_master.csv")
 
 
 
@@ -372,25 +530,25 @@ write.csv(Excretion_F2_calculated, "C:/Users/samjg/Documents/Github_repositories
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # NORMALIZED BASED ON B FACTOR 1.06 (ABOVE)::::::::::::::::::::::::::::::
-unique(Excretion_master$Date)
-Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
-                      dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
-                      dplyr::mutate(ExcretionRate_umol_hr_TDWbfactor =  
-                                      ExcretionRate_umol_hr*
-                                      ( (1/(as.numeric(Dry_Tissue_weight)))^0.979) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
-                      dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
-                                                     pH == 7.5 ~ "800 μatm", 
-                                                     pH == 7.0 ~ "1200 μatm"))
-
-
-F1_Excretion_master_bfactor<- Excretion_master %>% 
-                          dplyr::filter(!Date %in% c('20221116','20230131','20230223','20230327')) 
-nrow(F1_Excretion_master_bfactor) # 78
-F2_Excretion_master_bfactor <- Excretion_master %>% 
-                          dplyr::filter(Date %in% c('20221116', '20230131','20230223','20230327')) 
-nrow(F2_Excretion_master_bfactor) # 82
-
-# WRITE CSV OF THE MASTER FILE
-write.csv(F1_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")
-write.csv(F2_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F2/F2_ExcretionRates_master.csv")
-
+# unique(Excretion_master$Date)
+# Excretion_master <- Excretion_data_OM %>% # merge size and excretion datadata
+#                       dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
+#                       dplyr::mutate(ExcretionRate_umol_hr_TDWbfactor =  
+#                                       ExcretionRate_umol_hr*
+#                                       ( (1/(as.numeric(Dry_Tissue_weight)))^0.979) ) %>% # correct ExcretionRate_umol_mL_hr for gram of Tissue Dry WEight
+#                       dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
+#                                                      pH == 7.5 ~ "800 μatm", 
+#                                                      pH == 7.0 ~ "1200 μatm"))
+# 
+# 
+# F1_Excretion_master_bfactor<- Excretion_master %>% 
+#                           dplyr::filter(!Date %in% c('20221116','20230131','20230223','20230327')) 
+# nrow(F1_Excretion_master_bfactor) # 78
+# F2_Excretion_master_bfactor <- Excretion_master %>% 
+#                           dplyr::filter(Date %in% c('20221116', '20230131','20230223','20230327')) 
+# nrow(F2_Excretion_master_bfactor) # 82
+# 
+# # WRITE CSV OF THE MASTER FILE
+# write.csv(F1_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F1/F1_ExcretionRates_master.csv")
+# write.csv(F2_Excretion_master_bfactor, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/F2/F2_ExcretionRates_master.csv")
+# 

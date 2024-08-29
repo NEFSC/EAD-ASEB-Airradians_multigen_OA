@@ -50,7 +50,7 @@ library(devtools)
 # set wd
 knitr::opts_knit$set(root.dir = 'C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis')
 #knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
-getwd()
+
 
 ```
 
@@ -107,38 +107,61 @@ RespirationRates_adj <- RespirationRates %>%
                                           Replicate,
                                           Length_mm, 
                                           Dry_Tissue_weight,
-                                          resp_umol_hr_bFactorNormTDW.1g)) %>% 
-                          dplyr::rename(RR_resp_umol_hr_bfactorTDW = 
-                                          resp_umol_hr_bFactorNormTDW.1g) 
+                                          resp_umol_hr_bFactorNormTDW.MEAN_all,
+                                          resp_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                          resp_umol_hr_bFactorNormTDW.MEAN_LvH)) %>% 
+  
+                          dplyr::rename(RR_umol_hr_bfactorTDW_all = 
+                                          resp_umol_hr_bFactorNormTDW.MEAN_all,
+                                        
+                                        RR_umol_hr_bfactorTDW_LvM = 
+                                          resp_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                        
+                                        RR_umol_hr_bfactorTDW_LvH = 
+                                          resp_umol_hr_bFactorNormTDW.MEAN_LvH,
+                                        )  
+
+
 RespirationRates_adj$Dry_Tissue_weight <- as.numeric(RespirationRates_adj$Dry_Tissue_weight)                     
 nrow(RespirationRates_adj) # 63
 
 # ER
 # note - we will bfctor and mean corret for TDW)
-bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F2 data!
+# bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F2 data!
 
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
                           dplyr::mutate(Date = case_when(Date == "01/31/2023" ~ '1/31/2023',
                                                          Date == "02/23/2023" ~ '2/23/2023',
                                                          Date == "03/27/2023" ~ '3/27/2023',)) %>% 
-                          dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_hr/1000) %>% 
-                          dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_hr) %>% 
-  
-                          dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
-                                          (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
-                          
-                          dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW = 
-                                          (ExcretionRate_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
-                          dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
+                          # dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_hr/1000) %>% 
+                          # dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_hr) %>% 
+                          # 
+                          # dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
+                          #                 (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
+                          # 
+                          # dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW = 
+                          #                 (ExcretionRate_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
+                          # dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
                           dplyr::select(c(Date, 
                                           pH, 
                                           Replicate, 
-                                          Chamber_tank,
-                                          Length_um,
+                                          # Chamber_tank,
+                                          Length_mm,
                                           Dry_Tissue_weight,
-                                          ExcretionRate_mg_hr_bFactorNormTDW,
-                                          ExcretionRate_umol_hr_bFactorNormTDW))
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_all,
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvH))  %>% 
+  
+                          dplyr::rename(ER_umol_hr_bfactorTDW_all = 
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_all,
+                                        
+                                        ER_umol_hr_bfactorTDW_LvM = 
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                        
+                                        ER_umol_hr_bfactorTDW_LvH = 
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN_LvH,
+                                        ) 
 # sanity check before we merge
 nrow(ExcretionRates_adj)          == (nrow(RespirationRates_adj)  + nrow(Biodeposition_adj)) / 2 # FLASE becuase there were 2 outliers removed for biodep
 unique(ExcretionRates_adj$Date)   == unique(RespirationRates_adj$Date) # should be TRUE
@@ -199,11 +222,18 @@ F2_Masterfile <- merge(RR_ER_merge, Biodeposition_adj,
                                   pCO2,
                                   pH,
                                   Replicate,
-                                  Chamber_tank,
                                   Length_mm,
                                   Dry_Tissue_weight,
-                                  RR_resp_umol_hr_bfactorTDW,
-                                  ExcretionRate_umol_hr_bFactorNormTDW,
+                                  
+                                  ER_umol_hr_bfactorTDW_all,
+                                  RR_umol_hr_bfactorTDW_all,
+                                  
+                                  ER_umol_hr_bfactorTDW_LvM,
+                                  RR_umol_hr_bfactorTDW_LvM,
+                                  
+                                  ER_umol_hr_bfactorTDW_LvH,
+                                  RR_umol_hr_bfactorTDW_LvH,
+                                  
                                   IER_correct,
                                   IRR_correct,
                                   OER_correct,
@@ -275,19 +305,19 @@ Biodep_blanks <- read.csv("Output/Biodeposition/Biodeposition_input_blank.csv",
                                                            Date == 20230328 ~ '3/27/2023')) %>% 
                             dplyr::select(c(Date,treatment,Perc_ORG_1)) %>% 
                             dplyr::rename(pH = treatment)
-unique(Biodep_blanks$Date)
+unique(Biodep_blanks$Date) # "1/31/2023" "2/23/2023" "3/27/2023"
 
 
 nrow(F2_Masterfile) == nrow(merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH"))) # TRUE = YAY!
 
-F2_Masterfile_2.0 <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>% 
-  dplyr::mutate(
+F2_Masterfile_2.0_all <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>% 
+                dplyr::mutate(
                 # RR
-                RR_resp_mgO2_hr_bfactorTDW = ((RR_resp_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
-                RR_Joules_hr               = RR_resp_mgO2_hr_bfactorTDW*14, # convert to joules
+                RR_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW_all/1000)*32),# convert umol to mg O2
+                RR_Joules_hr          = RR_mgO2_hr_bfactorTDW*14, # convert to joules
                 # ER
                 ExcretionRate_mgNH4_bFactorNormTDW =
-                  ((ExcretionRate_umol_hr_bFactorNormTDW/1000)*18.04), # convert umol to mg NH4
+                  ((ER_umol_hr_bfactorTDW_all/1000)*18.04), # convert umol to mg NH4
                 
                 ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
                 # caloric value of dried phytoplankton
@@ -299,99 +329,122 @@ F2_Masterfile_2.0 <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>
                 SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
   )
                 
+F2_Masterfile_2.0_LvM <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>% # 
+                tidyr::drop_na(RR_umol_hr_bfactorTDW_LvM) %>% 
+                dplyr::mutate(
+                # RR RR_umol_hr_bfactorTDW_LvM
+                RR_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW_LvM/1000)*32),# convert umol to mg O2
+                RR_Joules_hr          = RR_mgO2_hr_bfactorTDW*14, # convert to joules
+                # ER ER_umol_hr_bfactorTDW_LvM
+                ExcretionRate_mgNH4_bFactorNormTDW =
+                  ((ER_umol_hr_bfactorTDW_LvM/1000)*18.04), # convert umol to mg NH4
+                
+                ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
+                # caloric value of dried phytoplankton
+                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following 
+                #Pousee et al. -referenced paper below for calculation
+                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2)
+                A_Joules_hr = (CR_correct*AE)*Food_Joules_mg,
+                # FINALLY SCOPE FOR GROWTH YALL
+                SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
+  )
+       
 
-
-# following the Widdows and Johnson 1988 aper described above..
-# Note- RR is in L O2 so we will multiply 20.33*1000 to account for 20.33 Joules per ml-1 O2 
-F2_Masterfile$RR_Energy_Widdows.1988     <- (20.33*F2_Masterfile$RR_resp_umol_hr_bfactorTDW)
-F2_Masterfile$RR_Excretion_Widdows.1988  <- (19.4*F2_Masterfile$ExcretionRate_umol_hr_bFactorNormTDW)
-
-F2_Masterfile$SfG_Widdows.1988           <- (  
-                        (F2_Masterfile$AR * (F2_Masterfile$CR_correct*23)) - 
-                        (F2_Masterfile$RR_Energy_Widdows.1988 + F2_Masterfile$RR_Excretion_Widdows.1988)
-                        )
+F2_Masterfile_2.0_LvH <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")) %>% # 
+                tidyr::drop_na(RR_umol_hr_bfactorTDW_LvH) %>% 
+                dplyr::mutate(
+                # RR RR_umol_hr_bfactorTDW_LvH
+                RR_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW_LvH/1000)*32),# convert umol to mg O2
+                RR_Joules_hr          = RR_mgO2_hr_bfactorTDW*14, # convert to joules
+                # ER ER_umol_hr_bfactorTDW_LvH
+                ExcretionRate_mgNH4_bFactorNormTDW =
+                  ((ER_umol_hr_bfactorTDW_LvH/1000)*18.04), # convert umol to mg NH4
+                
+                ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
+                # caloric value of dried phytoplankton
+                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following 
+                #Pousee et al. -referenced paper below for calculation
+                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2)
+                A_Joules_hr = (CR_correct*AE)*Food_Joules_mg,
+                # FINALLY SCOPE FOR GROWTH YALL
+                SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
+  )
 
 ```
 
-```{r, stats 1-31-23}
+```{r, F2_Masterfile_2.0_all stats 1-31-23}
 
 # stats
 library(car)
-F2_Masterfile_1_31_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '1/31/2023')
+F2_Masterfile_1_31_23 <- F2_Masterfile_2.0_all %>% dplyr::filter(Date %in% '1/31/2023')
 SGFmod_131 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_1_31_23 ))
-shapiro.test(resid(SGFmod_131)) # 0.7315
-
-leveneTest(SGFmod_131)# 0.3329
+shapiro.test(resid(SGFmod_131)) # 0.6713
+leveneTest(SGFmod_131)# 0.3677
 summary(SGFmod_131)
 #             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  46256   23128   8.255 0.00313 **
-# Residuals   17  47629    2802  
+# pCO2         2  44662   22331   7.749 0.00405 **
+# Residuals   17  48987    2882 
 
-leveneTest(SGFmod_131)# 0.3366
-summary(SGFmod_131)
-#             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  46256   23128   8.255 0.00313 **
-# Residuals   17  47629    2802
 
 TukeyHSD(SGFmod_131)
 # $pCO2
-#                          diff       lwr       upr     p adj
-# 500 μatm-1200 μatm  -1.480943 -77.02634  74.06446 0.9986068
-# 800 μatm-1200 μatm 100.021812  24.47641 175.56721 0.0091223
-# 800 μatm-500 μatm  101.502754  28.92108 174.08443 0.0060884
+#                         diff       lwr      upr     p adj
+# 500 μatm-1200 μatm  -3.92091 -80.53572  72.6939 0.9905478
+# 800 μatm-1200 μatm  96.90813  20.29332 173.5229 0.0125474
+# 800 μatm-500 μatm  100.82904  27.21991 174.4382 0.0071161
 
 SGFmod_131.tukey <- emmeans::emmeans(object = SGFmod_131, # run tukey
                                     pairwise ~ "pCO2",
                                     adjust = "tukey")
 SGFmod_131.tukey.letters   <- multcomp::cld(object = SGFmod_131.tukey$emmeans, Letters = letters) # letter display\
-# pCO2      emmean   SE df lower.CL upper.CL .group
-# 500 μatm     132 20.0 17     89.9      174  a    
-# 1200 μatm    134 21.6 17     88.0      179  a    
-# 800 μatm     234 20.0 17    191.4      276   b   
+ # pCO2      emmean   SE df lower.CL upper.CL .group
+ # 500 μatm     140 20.3 17     97.5      183  a    
+ # 1200 μatm    144 21.9 17     98.0      190  a    
+ # 800 μatm     241 20.3 17    198.4      284   b   
 ```
 
 
-```{r, stats 2-23-23}
+```{r, F2_Masterfile_2.0_all stats 2-23-23}
 
-F2_Masterfile_2_23_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '2/23/2023')
+F2_Masterfile_2_23_23 <- F2_Masterfile_2.0_all %>% dplyr::filter(Date %in% '2/23/2023')
 SGFmod_223 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_2_23_23 ))
-shapiro.test(resid(SGFmod_223)) # 0.5899
-leveneTest(SGFmod_223)# 0.3686
+shapiro.test(resid(SGFmod_223)) # 0.6276
+leveneTest(SGFmod_223)# 0.244
 summary(SGFmod_223)
 #             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2   5933  2966.4   7.658 0.00425 **
-# Residuals   17   6585   387.3 
-TukeyHSD(SGFmod_223)
+# pCO2         2   5991  2995.7    7.92 0.00371 **
+# Residuals   17   6431   378.3 
+# TukeyHSD(SGFmod_223)
 # $pCO2
-#                         diff       lwr      upr     p adj
-# 500 μatm-1200 μatm -31.15070 -59.24016 -3.06124 0.0286399
-# 800 μatm-1200 μatm  10.42024 -16.56725 37.40772 0.5925516
-# 800 μatm-500 μatm   41.57094  13.48147 69.66040 0.0039029
+#                         diff       lwr       upr     p adj
+# 500 μatm-1200 μatm -31.47811 -59.23644 -3.719785 0.0251343
+# 800 μatm-1200 μatm  10.23495 -16.43438 36.904290 0.5961931
+# 800 μatm-500 μatm   41.71306  13.95474 69.471390 0.0034461
 SGFmod_223.tukey <- emmeans::emmeans(object = SGFmod_223, # run tukey
                                     pairwise ~ "pCO2",
                                     adjust = "tukey")
 SGFmod_223.tukey.letters   <- multcomp::cld(object = SGFmod_223.tukey$emmeans, Letters = letters) # letter display\
-# pCO2      emmean   SE df lower.CL upper.CL .group
-# 500 μatm    -4.2 8.03 17    -21.2     12.8  a    
-# 1200 μatm   27.0 7.44 17     11.3     42.6   b   
-# 800 μatm    37.4 7.44 17     21.7     53.1   b   
+ # pCO2      emmean   SE df lower.CL upper.CL .group
+ # 500 μatm    1.08 7.94 17    -15.7     17.8  a    
+ # 1200 μatm  32.56 7.35 17     17.0     48.1   b   
+ # 800 μatm   42.79 7.35 17     27.3     58.3   b   
 ```
 
 
 ```{r, stats 3-27-23}
 
-F2_Masterfile_3_27_23 <- F2_Masterfile_2.0 %>% dplyr::filter(Date %in% '3/27/2023')
+F2_Masterfile_3_27_23 <- F2_Masterfile_2.0_all %>% dplyr::filter(Date %in% '3/27/2023')
 SGFmod_327 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_3_27_23 ))
-shapiro.test(resid(SGFmod_327)) # 0.1709
-leveneTest(SGFmod_327)# 0.004695 **
+shapiro.test(resid(SGFmod_327)) # 0.1604
+leveneTest(SGFmod_327)# 0.005288 **
 SGFmod_327_KW <- kruskal.test(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
-?kruskal.test
+# ?kruskal.test
 # Kruskal-Wallis chi-squared = 6.4526, df = 2, p-value = 0.0397
 library(FSA)
 dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
 # 1200 μatm - 500 μatm	1.5438267	0.12263033	0.24526065	
 # 1200 μatm - 800 μatm	-0.9233805	0.35580894	0.35580894	
-# 500 μatm - 800 μatm	-2.5020639	0.01234716	0.03704149	** 
+# 500 μatm - 800 μatm	-2.5020639	0.01234716	0.03704149	**
 
 ```
 
@@ -399,9 +452,9 @@ dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
 ```{r plotting}
 
 
-F2_Masterfile_2.0$pCO2 <- factor(F2_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
+F2_Masterfile_2.0_all$pCO2 <- factor(F2_Masterfile_2.0_all$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
 
-F2_SGF_Means_by_tank <- F2_Masterfile_2.0 %>% 
+F2_SGF_Means_by_tank <- F2_Masterfile_2.0_all %>% 
                             Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2", "Replicate"))
 
@@ -448,7 +501,142 @@ F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
                                     theme(text = element_text(size=10))
 
 
-pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F2_SFG.pdf", width = 6, height = 8)
+pdf("Output/F2_SFG.pdf", width = 6, height = 8)
 print(ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
 dev.off()
+```
+
+
+
+#### Runttest 
+
+* why? we may have separate manuscript for Lo v M and Low v H, in this case
+we need to run two sample t tests, and when not 
+meeting assumptions,the wilkcox ranksum 
+
+```{r run_ttest}
+
+
+run_ttest <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'model', 'ShapiroWilk', 'ResidNorm', 'Variance', 
+                                   'HomogVar', 'DF.num' , 'DF.denom', 
+                                   'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+            
+            unique(datafilename$Age)
+            outputfilename <- data.frame()
+
+            
+            for (i in 1:length(unique(datafilename$Age))) {
+              GROUPvar_loop <- unique(datafilename$GROUPvar)[i]
+              Data_all      <- datafilename %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+            # run assumptions 
+            # normality of data 
+            normality_A <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[1]
+            
+            normality_B <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[2]
+            
+            # equal variance 
+            variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
+            
+            # run all modles
+            Ttestmod.eqvar      <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)), 
+                                           alternative = "greater",
+                                           var.equal = TRUE)
+            
+            Ttestmod.noneqvar   <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)),
+                                           alternative = "greater",
+                                           var.equal = FALSE)
+            
+            Wilcoxmod           <- wilcox.test(Data_all$DPvar ~ 
+                                                 as.numeric(as.factor(Data_all$INDvar)))
+            
+            # normality tests for the anova model - asign 
+            DF_loop$ShapiroWilk <- paste0(normality_A, '; ',normality_B)
+            
+            DF_loop$ResidNorm   <- if(normality_A > 0.05 & normality_B > 0.05) {
+              'YES'} else {'NO'}
+            
+            DF_loop$Variance     <- variance
+            
+            DF_loop$HomogVar    <- if( variance > 0.05) {
+              'YES'} else {'NO'}
+            
+            if(normality_A > 0.05 & normality_B > 0.05 & variance > 0.05) {
+                DF_loop$model       <- 'Welchs T test, equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+        
+              } else if (normality_A > 0.05 & normality_B > 0.05 & variance < 0.05) {
+                DF_loop$model       <- 'Welchs T test, non-equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+              } else {
+                DF_loop$model       <- 'Wilcoxon rank sum exact test'
+                DF_loop$DF.num      <- 'NA'
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}            
+              }
+                  DF_loop$Age_DPF     <- GROUPvar_loop
+                  # asign loop and cumulative output table
+                  df                        <- data.frame(DF_loop) # name dataframe for this single row
+                  outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+                  # print(outputfilename) # print to monitor progress
+                  
+                }
+return(outputfilename)
+}
+
+
+```
+
+
+```{r Low v Moderate execuate runttest for stats}
+
+library(purrr)
+F2_Masterfile_2.0_LvM$GROUPvar <- F2_Masterfile_2.0_LvM$Age 
+F2_Masterfile_2.0_LvM$DPvar    <- F2_Masterfile_2.0_LvM$SFG 
+F2_Masterfile_2.0_LvM$INDvar   <- F2_Masterfile_2.0_LvM$pCO2 
+
+
+as.data.frame(run_ttest(F2_Masterfile_2.0_LvM))
+
+write.csv( 
+          as.data.frame(run_ttest(F2_Masterfile_2.0_LvM)),
+          "Output/F2_SFG_Ttests_LOWvMOD.csv"
+         )
+
+
+F2_Masterfile_2.0_LvH$GROUPvar <- F2_Masterfile_2.0_LvH$Age 
+F2_Masterfile_2.0_LvH$DPvar    <- F2_Masterfile_2.0_LvH$SFG 
+F2_Masterfile_2.0_LvH$INDvar   <- F2_Masterfile_2.0_LvH$pCO2 
+
+
+as.data.frame(run_ttest(F2_Masterfile_2.0_LvH))
+
+write.csv( 
+          as.data.frame(run_ttest(F2_Masterfile_2.0_LvH)),
+          "Output/F2_SFG_Ttests_LOWvHIGH.csv"
+         )
+
+
 ```

@@ -29,10 +29,11 @@ library(latex2exp)
 library(Rmisc)
 library(devtools)
 library(ggpubr)
-library(hrbrthemes)
+# library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis")
 
 
 ```
@@ -507,6 +508,7 @@ Resp.Master_OM %>% ggplot(aes(x = Length_um, y = resp_umol_hr)) +
 #write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_OA/RAnalysis/Output/Respiration/Calculated_Resp_Master.csv")
 write.csv(Resp.Master_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/RR_calc_raw.csv")
 
+Resp.Master_OM <- read.csv("Output/Respiration/RR_calc_raw.csv", head= T)
 
 View(Resp.Master_OM)
 ```
@@ -591,7 +593,7 @@ unique(RR_master_F3$Date)
 # "5/18/2023"
 
 RR_master <- rbind(RR_master_F1, RR_master_F2, RR_master_F3)
-View(RR_master)
+# View(RR_master)
 
 ```
 
@@ -1107,7 +1109,10 @@ meanTDW      <- mean((RR_master_F1 %>%
                         dplyr::filter(!pH %in% 7) %>% # only looking at 8 and 7.5 NOT 7 here 
                         dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4750597 g
 
-meanLength   <- mean(RR_master_F1$Length_um/1000) # 16.57877 mm
+meanLength   <- mean((RR_master_F1 %>% 
+                        dplyr::filter(!pH %in% 7) %>% # only looking at 8 and 7.5 NOT 7 here 
+                        dplyr::filter(!Length_um %in% NA))$Length_um) /1000 # 16.57877 mm
+
 
 #View(RR_formatted_F1s$TDW_um)
 # SMRnorm = VO2 × (TDWmean / TDWindiv)b = µmol L-1 O2 g-1 hr-1
@@ -1137,29 +1142,18 @@ RR_formatted_F1smaster <- RR_master_F1 %>%
                                                 pH  == 7.5 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.mod)
                                               ),
                                             
-                                            resp_mg_hr_bFactorNormTDW.1g = 
+                                            resp_umol_hr_bFactorNormTDW.1g = 
                                               case_when(
-                                                pH  == 8.0 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.low),
-                                                pH  == 7.5 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.mod)
-                                              ), 
-                                            
-                                            resp_mg_hr_bFactorNormLength.MEAN = 
-                                              case_when(
-                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
-                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod)
-                                              ), 
-                                            
-                                            resp_mg_hr_bFactorNormLength.MEAN = 
-                                              case_when(
-                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
-                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod)
+                                                pH  == 8.0 ~ (resp_umol_hr)*((1/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((1/Dry_Tissue_weight)^bTDW.mod)
                                               ), 
                                             
                                             resp_umol_hr_bFactorNormLength.MEAN = 
                                               case_when(
                                                 pH  == 8.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.low),
                                                 pH  == 7.5 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.mod)
-                                              ) )
+                                              ) 
+                                            ) %>% 
                               
                               dplyr::select(c(Gen,
                                               Age,
@@ -1188,17 +1182,17 @@ RR_formatted_F1smaster <- RR_master_F1 %>%
                                               BLANK.mean_Lpc,
                                               resp_blankStand,
                                               resp_mg_hr, 
-                                              resp_mg_hr_biovolcalc,
-                                              resp_mg_hr_bFactorNormTDW.MEAN, 
-                                              resp_mg_hr_bFactorNormTDW.1g,
-                                              resp_mg_hr_bFactorNormLength.MEAN,
                                               resp_umol_hr,
-                                              resp_umol_hr_biovolcalc,
+                                              resp_mg_hr_biovolcalc,
+                                              resp_umol_hr_biovolcalc,  
+                                              
+                                              resp_umol_hr_bFactorNormTDW.1g, 
                                               resp_umol_hr_bFactorNormTDW.MEAN,
-                                              resp_umol_hr_bFactorNormTDW.1g,
+
                                               resp_umol_hr_bFactorNormLength.MEAN))
 #View(RR_formatted_F1smaster)
 write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_calc_master.csv")
+write.csv(RR_formatted_F1smaster, "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_calc_master.csv")
 
 ```
 
@@ -1209,7 +1203,7 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samjg/Documents/Github_repositories/
 ```{r, RR_formatted_F2smaster}
 
 # call all bfactors (calc above!) - these are using all data
-bTDW = 0.771 # review the outlier-omitted b factor plot in previous chunk
+bTDW        = 0.771 # review the outlier-omitted b factor plot in previous chunk
 bLength.all = 1.55 # review the outlier-omitted b factor plot in previous chunk
 
 # assign bfactors by treatment
@@ -1224,10 +1218,34 @@ bLength.high <-  1.87 #mean data by rep tank # 6.57 - with all data
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)
 
-meanTDW    <- mean((RR_master_F2 %>% 
-                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.4836937 g
+F2_meanLength_all  <- mean(RR_master_F2$Length_um/1000) # 18.34275 mm
 
-meanLength <- mean(RR_master_F2$Length_um/1000) # 18.45981 mm
+F2_meanLength_LvM   <- mean(
+                            (RR_master_F2 %>% filter(!pCO2 %in% '1200 uatm'))$Length_um / 1000
+                            )# 15.4249 mm
+
+F2_meanLength_LvH   <-  mean(
+                            (RR_master_F2 %>% filter(!pCO2 %in% '800 uatm'))$Length_um / 1000
+                            )# 22.02472 mm
+
+
+
+F2_meanTDW_all     <- mean((RR_master_F2 %>% 
+                     dplyr::filter(!Dry_Tissue_weight %in% NA))$Dry_Tissue_weight) # 0.3692024 g
+
+F2_meanTDW_LvM     <- mean(
+                           (RR_master_F2 %>% 
+                              dplyr::filter(!Dry_Tissue_weight %in% NA) %>% 
+                              dplyr::filter(!pCO2 %in% '1200 uatm'))$Dry_Tissue_weight
+                           )# 0.3579696 g
+
+F2_meanTDW_LvH   <-  mean(
+                           (RR_master_F2 %>% 
+                              dplyr::filter(!Dry_Tissue_weight %in% NA) %>% 
+                              dplyr::filter(!pCO2 %in% '800 uatm'))$Dry_Tissue_weight
+                           )# 0.3813018 g
+
+
 
 #View(RR_formatted_F1s$TDW_um)
 RR_formatted_F2smaster <- RR_master_F2 %>% 
@@ -1249,12 +1267,6 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                               # TDW b factor - to mean TDW or 0.1g
                               dplyr::mutate(
                                             
-                                            resp_umol_hr_bFactorNormTDW.MEAN = 
-                                              case_when(
-                                                pH  == 8.0 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.low),
-                                                pH  == 7.5 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.mod),
-                                                pH  == 7.0 ~ (resp_umol_hr)*((meanTDW/Dry_Tissue_weight)^bTDW.high)
-                                              ),
                                             
                                             resp_mg_hr_bFactorNormTDW.1g = 
                                               case_when(
@@ -1263,20 +1275,63 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                                                 pH  == 7.0 ~ (resp_mg_hr)*((1/Dry_Tissue_weight)^bTDW.high)
                                               ), 
                                             
+                                            resp_umol_hr_bFactorNormTDW.MEAN_all = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanTDW_all/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((F2_meanTDW_all/Dry_Tissue_weight)^bTDW.mod),
+                                                pH  == 7.0 ~ (resp_umol_hr)*((F2_meanTDW_all/Dry_Tissue_weight)^bTDW.high)
+                                              ),                                            
+                                            
+                                            resp_umol_hr_bFactorNormTDW.MEAN_LvM = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanTDW_LvM/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((F2_meanTDW_LvM/Dry_Tissue_weight)^bTDW.mod),
+                                                pH  == 7.0 ~ NA
+                                              ),                                            
+                                            
+                                            
+                                            resp_umol_hr_bFactorNormTDW.MEAN_LvH = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanTDW_LvH/Dry_Tissue_weight)^bTDW.low),
+                                                pH  == 7.5 ~ NA,
+                                                pH  == 7.0 ~ (resp_umol_hr)*((F2_meanTDW_LvH/Dry_Tissue_weight)^bTDW.high)
+                                              ),
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
                                             resp_mg_hr_bFactorNormLength.MEAN = 
                                               case_when(
-                                                pH  == 8.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.low),
-                                                pH  == 7.5 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.mod),
-                                                pH  == 7.0 ~ (resp_mg_hr)*((meanLength/Length_mm)^bLength.high)
+                                                pH  == 8.0 ~ (resp_mg_hr)*((F2_meanLength_all/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_mg_hr)*((F2_meanLength_all/Length_mm)^bLength.mod),
+                                                pH  == 7.0 ~ (resp_mg_hr)*((F2_meanLength_all/Length_mm)^bLength.high)
                                               ), 
                                             
                                             
-                                            resp_umol_hr_bFactorNormLength.MEAN = 
+                                            resp_umol_hr_bFactorNormLength.MEAN_all = 
                                               case_when(
-                                                pH  == 8.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.low),
-                                                pH  == 7.5 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.mod),
-                                                pH  == 7.0 ~ (resp_umol_hr)*((meanLength/Length_mm)^bLength.high)
-                                              ) )
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanLength_all/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((F2_meanLength_all/Length_mm)^bLength.mod),
+                                                pH  == 7.0 ~ (resp_umol_hr)*((F2_meanLength_all/Length_mm)^bLength.high)
+                                              ),
+                                            
+                                            resp_umol_hr_bFactorNormLength.MEAN_LvM = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanLength_LvM/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ (resp_umol_hr)*((F2_meanLength_LvM/Length_mm)^bLength.mod),
+                                                pH  == 7.0 ~ NA
+                                              ),                                            
+                                            
+                                            resp_umol_hr_bFactorNormLength.MEAN_LvH = 
+                                              case_when(
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanLength_LvH/Length_mm)^bLength.low),
+                                                pH  == 7.5 ~ NA,
+                                                pH  == 7.0 ~ (resp_umol_hr)*((F2_meanLength_LvH/Length_mm)^bLength.high)
+                                              ),                                            
+                                            
+                                            ) %>% 
                               
                               
                               dplyr::select(c(Gen,
@@ -1305,18 +1360,23 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                                               Lpc,
                                               BLANK.mean_Lpc,
                                               resp_blankStand,
-                                              resp_mg_hr, 
                                               resp_mg_hr_biovolcalc,
-                                              resp_mg_hr_bFactorNormTDW.MEAN, 
-                                              resp_mg_hr_bFactorNormTDW.1g,
-                                              resp_mg_hr_bFactorNormLength.MEAN,
-                                              resp_umol_hr,
                                               resp_umol_hr_biovolcalc,
-                                              resp_umol_hr_bFactorNormTDW.MEAN,
-                                              resp_umol_hr_bFactorNormTDW.1g,
-                                              resp_umol_hr_bFactorNormLength.MEAN))
+                                              resp_mg_hr,
+                                              resp_umol_hr,
+                                              
+                                              resp_mg_hr_bFactorNormTDW.1g,
+                                              resp_umol_hr_bFactorNormTDW.MEAN_all, 
+                                              resp_umol_hr_bFactorNormTDW.MEAN_LvM,
+                                              resp_umol_hr_bFactorNormTDW.MEAN_LvH,
+                                              
+                                              resp_umol_hr_bFactorNormLength.MEAN_all,
+                                              resp_umol_hr_bFactorNormLength.MEAN_LvM,
+                                              resp_umol_hr_bFactorNormLength.MEAN_LvH))
 #View(RR_formatted_F1smaster)
 write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_calc_master.csv")
+write.csv(RR_formatted_F2smaster, "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_calc_master.csv")
+
 ```
 
 
@@ -1324,7 +1384,7 @@ write.csv(RR_formatted_F2smaster, "C:/Users/samjg/Documents/Github_repositories/
 
 -   calculate RR rates with b factor and my mean tissue and mean shell length
 
-```{r, RR_formatted_F2smaster}
+```{r, RR_formatted_F3smaster}
 
 # call all bfactors (calc above!) - these are using ALL DATA 
 bTDW = 0.704 # review the outlier-omitted b factor plot in previous chunk

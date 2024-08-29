@@ -44,11 +44,13 @@ library(ggfortify)
 library(DESeq2)
 library(devtools)
 library(ggbiplot)
-library(VennDiagram)# venn diagrams
+# library(VennDiagram)# venn diagrams
 library(eulerr) #venn diagrams -  check out the R shiny app (http://eulerr.co/) 
 
 # set wd
-knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
+# knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
+knitr::opts_knit$set(root.dir = 'C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis')
+
 # getwd()
 
 ```
@@ -101,7 +103,7 @@ RespirationRates_adj <- RespirationRates %>%
                           dplyr::mutate(Date = case_when(Date == "3/1/2022" ~ '3/2/2022',
                                                          Date == "9/22/2022" ~ '9/23/2022',
                                                          Date == "10/26/2022" ~ '10/27/2022')) %>%                           
-                          dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", Chamber_tank)) %>% # new replicate column - reflects RR dataset 
+                          dplyr::mutate(Replicate = gsub("[^a-zA-Z]", "", Chamber_tank)) %>% # new replicate column - reflects RR dataset
                           dplyr::select(c(Date, 
                                           Age,  
                                           pH, 
@@ -109,40 +111,45 @@ RespirationRates_adj <- RespirationRates %>%
                                           Replicate,
                                           Length_mm, 
                                           Dry_Tissue_weight,
-                                          resp_umol_hr_bFactorNormTDW.1g)) %>% 
-                          dplyr::rename(RR_resp_umol_hr_bfactorTDW = 
-                                          resp_umol_hr_bFactorNormTDW.1g) 
+                                          # resp_umol_hr_bFactorNormTDW.1g,
+                                          resp_umol_hr_bFactorNormTDW.MEAN)) %>% 
+                          dplyr::rename(RR_umol_hr_bfactorTDW = 
+                                          resp_umol_hr_bFactorNormTDW.MEAN)  
 RespirationRates_adj$Dry_Tissue_weight <- as.numeric(RespirationRates_adj$Dry_Tissue_weight)                     
 nrow(RespirationRates_adj) # 45
 
 # ER
 # note - we will bfctor and mean corret for TDW)
 bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F1 data!
-unique(ExcretionRates$Date)
+unique(ExcretionRates$Date) # 20211026 20220202 20220301 20220922 20221026
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::filter(Date %in% c(20220301, 20220922, 20221026)) %>% 
                           dplyr::mutate(Date = format(strptime(Date, format = "%Y%m%d"), "%m/%d/%Y")) %>% # format to mm/dd/yyy as RR dataset
                           dplyr::mutate(Date = case_when(Date == '03/01/2022' ~ '3/2/2022',
                                                          Date == '09/22/2022' ~ '9/23/2022',
                                                          Date == '10/26/2022' ~ '10/27/2022')) %>% 
-                          dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_hr/1000) %>% 
-                          dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_hr) %>% 
-  
-                          dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
-                                          (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
-                          
-                          dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW = 
-                                          (ExcretionRate_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
-                          dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
-                          dplyr::select(c(Date, 
+                          # dplyr::mutate(ExcretionRate_mg_hr = ExcretionRate_ug_hr/1000) %>% 
+                          # dplyr::rename(ExcretionRate_umol_hr = ExcretionRate_umol_hr) %>% 
+                          # 
+                          # dplyr::mutate(ExcretionRate_mg_hr_bFactorNormTDW = 
+                          #                 (ExcretionRate_mg_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - mg
+                          # 
+                          # dplyr::mutate(ExcretionRate_umol_hr_bFactorNormTDW = 
+                          #                 (ExcretionRate_umol_hr)*((1/Dry_Tissue_weight)^bTDW)) %>% # TDW b factor - umol
+                          # dplyr::mutate(Length_mm = as.numeric(Length_um / 1000)) %>% # Length_mm matched biodep and RR 
+                          dplyr::select(c(Date,
+                                          # Age,
                                           pH, 
+                                          # pCO2,
                                           Replicate, 
-                                          Chamber_tank,
-                                          Length_um,
+                                          Length_mm,
                                           Dry_Tissue_weight,
-                                          ExcretionRate_mg_hr_bFactorNormTDW,
-                                          ExcretionRate_umol_hr_bFactorNormTDW))
-# sanity check before we merge
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN)) %>% 
+                          dplyr::rename(ER_umol_hr_bfactorTDW = 
+                                          ExcretionRate_umol_hr_bFactorNormTDW.MEAN)  # sanity check before we merge
+
+
+
 nrow(ExcretionRates_adj)          == (nrow(RespirationRates_adj)  + nrow(Biodeposition_adj)) / 2 # FLASE becuase there were 2 outliers removed for biodep
 unique(ExcretionRates_adj$Date)   == unique(RespirationRates_adj$Date) # should be TRUE
 unique(RespirationRates_adj$Date) ==  unique(Biodeposition_adj$Date)  # should be TRUE
@@ -182,7 +189,7 @@ nrow(subset(ExcretionRates_adj,
 
 # now btwn RR and biodep
 nrow(subset(RespirationRates_adj, 
-            !(uniqueID %in% Biodeposition_adj$uniqueID))) # 2 discrepancies, these are the removed outliers from biodep
+            !(uniqueID %in% Biodeposition_adj$uniqueID))) # 3 discrepancies, these are the removed outliers from biodep
 ```
 
 ### Let's merge this thang!
@@ -202,11 +209,11 @@ F1_Masterfile <- merge(RR_ER_merge, Biodeposition_adj,
                                   pCO2,
                                   pH,
                                   Replicate,
-                                  Chamber_tank,
+                                  # Chamber_tank,
                                   Length_mm,
                                   Dry_Tissue_weight,
-                                  RR_resp_umol_hr_bfactorTDW,
-                                  ExcretionRate_umol_hr_bFactorNormTDW,
+                                  RR_umol_hr_bfactorTDW,
+                                  ER_umol_hr_bfactorTDW,
                                   IER_correct,
                                   IRR_correct,
                                   OER_correct,
@@ -270,7 +277,8 @@ caloric value of dried phytoplankton = (0.632+0.086 *(%C)) where %C is the % of 
 
 ```{r}
 unique(Biodep_blanks$Date)
-Biodep_blanks <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_input_blank.csv", h=T, sep =",") %>% 
+Biodep_blanks <- read.csv("Output/Biodeposition/Biodeposition_input_blank.csv", 
+                          h=T, sep =",") %>% 
                             dplyr::filter(Type%in% 'blank') %>%  # blanks from the biodep rig, not the inpu, we stopped using input value to correct
                             dplyr::filter(Date %in% c(20220302, 20220923, 20221027)) %>% 
                             dplyr::mutate(Date = case_when(Date == 20220302 ~ '3/2/2022',
@@ -284,13 +292,13 @@ unique(Biodep_blanks$Date)# "3/2/2022"   "9/23/2022"  "10/27/2022"
 nrow(F1_Masterfile) == nrow(merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH"))) # TRUE = YAY!
 
 F1_Masterfile_2.0 <- merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH")) %>% 
-  dplyr::mutate(
+          dplyr::mutate(
                 # RR
-                RR_resp_mgO2_hr_bfactorTDW = ((RR_resp_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
+                RR_resp_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
                 RR_Joules_hr               = RR_resp_mgO2_hr_bfactorTDW*14, # convert to joules
                 # ER
-                ExcretionRate_mgNH4_bFactorNormTDW = ((ExcretionRate_umol_hr_bFactorNormTDW/1000)*18.04), # convert umol to mg NH4
-                ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
+                ER_mgNH4_bFactorNormTDW = ((ER_umol_hr_bfactorTDW/1000)*18.04), # convert umol to mg NH4
+                ER_Joules_hr                       = ER_mgNH4_bFactorNormTDW*24.83, # convert o Joules
                 # caloric value of dried phytoplankton
                 Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following Pousee et al. -referenced paper below for calculation
                 #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2):306–10
@@ -314,38 +322,38 @@ F1_Masterfile$SfG_Widdows.1988           <- (
 
 ```
 
-```{r, analysis and plots}
-
-# stats
-library(car)
-unique(F1_Masterfile_2.0$Date)
-
-F1_Masterfile_3_2_2022 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '3/2/2022')
-SGFmod_322 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_3_2_2022 ))
-shapiro.test(resid(SGFmod_322)) # 0.2245
-leveneTest(SGFmod_322)# 0.7378
-summary(SGFmod_322)
-#             Df Sum Sq Mean Sq F value Pr(>F)
-# pCO2         1    266   265.7   1.236  0.279
-# Residuals   21   4514   215.0 
-
-
-F1_Masterfile_9_23_22<- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '9/23/2022')
-SGFmod_923 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_9_23_22 ))
-shapiro.test(resid(SGFmod_923)) # 0.8132
-leveneTest(SGFmod_923)# 0.8839
-summary(SGFmod_923)
-#             Df Sum Sq Mean Sq F value Pr(>F)
-# pCO2         1    491   490.7   0.656  0.435
-# Residuals   11   8225   747.7
-
-
-
-F1_Masterfile_10_27_22 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '10/27/2022')
-SGFmod_1027 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_10_27_22 ))
-shapiro.test(resid(SGFmod_1027)) # 0.009596
-leveneTest(SGFmod_1027)# 0.9256 **
-SGFmod_1027_KW <- kruskal.test(SFG ~ pCO2, data =F1_Masterfile_10_27_22)
+```{r, plots}
+# 
+# # stats
+# library(car)
+# unique(F1_Masterfile_2.0$Date) #"10/27/2022" "3/2/2022"   "9/23/2022" 
+# 
+# F1_Masterfile_3_2_2022 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '3/2/2022')
+# SGFmod_322 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_3_2_2022 ))
+# shapiro.test(resid(SGFmod_322)) # 0.5223
+# leveneTest(SGFmod_322)# 0.9869
+# summary(SGFmod_322)
+# #             Df Sum Sq Mean Sq F value Pr(>F)
+# # pCO2         1  169.2   169.2   0.922  0.353
+# # Residuals   14 2567.8   183.4 
+# 
+# 
+# F1_Masterfile_9_23_22<- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '9/23/2022')
+# SGFmod_923 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_9_23_22 ))
+# shapiro.test(resid(SGFmod_923)) # 0.8132
+# leveneTest(SGFmod_923)# 0.8839
+# summary(SGFmod_923)
+# #             Df Sum Sq Mean Sq F value Pr(>F)
+# # pCO2         1    491   490.7   0.656  0.435
+# # Residuals   11   8225   747.7
+# 
+# 
+# 
+# F1_Masterfile_10_27_22 <- F1_Masterfile_2.0 %>% dplyr::filter(Date %in% '10/27/2022')
+# SGFmod_1027 <- aov(lm(SFG ~ pCO2 , data =F1_Masterfile_10_27_22 ))
+# shapiro.test(resid(SGFmod_1027)) # 0.009596
+# leveneTest(SGFmod_1027)# 0.9256 **
+# SGFmod_1027_KW <- kruskal.test(SFG ~ pCO2, data =F1_Masterfile_10_27_22)
 # Kruskal-Wallis chi-squared = 0.92308, df = 1, p-value = 0.3367
 
 
@@ -398,7 +406,123 @@ F1_SGF_MeanSE <-  F1_SGF_Means_plotting %>%
                                     # labs(color='pCO2 treatment') + # legend name
                                     theme(text = element_text(size=10))
 
-pdf("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/F1_SFG.pdf", width = 6, height = 8)
+pdf("Output/F1_SFG.pdf", width = 6, height = 8)
 print(ggarrange(SFG_Pousse_F1,F1_SGF_MeanSE,nrow=2))
 dev.off()
+```
+
+
+```{r run_ttest}
+
+
+run_ttest <- function(datafilename,  outputfilename) {
+            # variables for both for loops
+            DF_loop           <- data.frame(matrix(nrow = 1, ncol = 12)) # create dataframe to save during for loop
+            colnames(DF_loop) <- c('Age_DPF', 'model', 'ShapiroWilk', 'ResidNorm', 'Variance', 
+                                   'HomogVar', 'DF.num' , 'DF.denom', 
+                                   'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+            
+            unique(datafilename$Age)
+            outputfilename <- data.frame()
+
+            
+            for (i in 1:length(unique(datafilename$Age))) {
+              GROUPvar_loop <- unique(datafilename$GROUPvar)[i]
+              Data_all      <- datafilename %>% dplyr::filter(GROUPvar %in% GROUPvar_loop)
+              # Data_mean   <- Data_all %>% summarySE(measurevar="DPvar", 
+              #                                       groupvars=c("group1","Tank_Replicate", "INDvar")) 
+              
+            # run assumptions 
+            # normality of data 
+            normality_A <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[1]
+            
+            normality_B <- (Data_all %>% 
+                                  group_by(as.factor(INDvar)) %>% 
+                                  rstatix::shapiro_test(DPvar))$p[2]
+            
+            # equal variance 
+            variance <- (Data_all %>% rstatix::levene_test(DPvar ~ as.factor(INDvar)))$p[1]
+            
+            # run all modles
+            Ttestmod.eqvar      <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)), 
+                                           alternative = "greater",
+                                           var.equal = TRUE)
+            
+            Ttestmod.noneqvar   <- t.test(Data_all$DPvar ~ (as.factor(Data_all$INDvar)),
+                                           alternative = "greater",
+                                           var.equal = FALSE)
+            
+            Wilcoxmod           <- wilcox.test(Data_all$DPvar ~ 
+                                                 as.numeric(as.factor(Data_all$INDvar)))
+            
+            # normality tests for the anova model - asign 
+            DF_loop$ShapiroWilk <- paste0(normality_A, '; ',normality_B)
+            
+            DF_loop$ResidNorm   <- if(normality_A > 0.05 & normality_B > 0.05) {
+              'YES'} else {'NO'}
+            
+            DF_loop$Variance     <- variance
+            
+            DF_loop$HomogVar    <- if( variance > 0.05) {
+              'YES'} else {'NO'}
+            
+            if(normality_A > 0.05 & normality_B > 0.05 & variance > 0.05) {
+                DF_loop$model       <- 'Welchs T test, equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+        
+              } else if (normality_A > 0.05 & normality_B > 0.05 & variance < 0.05) {
+                DF_loop$model       <- 'Welchs T test, non-equal variance'
+                DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}
+              } else {
+                DF_loop$model       <- 'Wilcoxon rank sum exact test'
+                DF_loop$DF.num      <- 'NA'
+                DF_loop$DF.denom    <- 'NA'
+                DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+                DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+                DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+                  'NO'} else {'YES'}            
+              }
+                  DF_loop$Age_DPF     <- GROUPvar_loop
+                  # asign loop and cumulative output table
+                  df                        <- data.frame(DF_loop) # name dataframe for this single row
+                  outputfilename <- rbind(outputfilename,DF_loop) #bind to a cumulative list dataframe
+                  # print(outputfilename) # print to monitor progress
+                  
+                }
+return(outputfilename)
+}
+
+
+```
+
+
+
+```{r execuate runttest for stats}
+
+library(purrr)
+F1_Masterfile_2.0$GROUPvar <- F1_Masterfile_2.0$Age 
+F1_Masterfile_2.0$DPvar    <- F1_Masterfile_2.0$SFG 
+F1_Masterfile_2.0$INDvar   <- F1_Masterfile_2.0$pCO2 
+
+
+as.data.frame(run_ttest(F1_Masterfile_2.0))
+
+write.csv( 
+          as.data.frame(run_ttest(F1_Masterfile_2.0)),
+          "Output/F1_SFG_Ttests.csv"
+         )
+
+
 ```
