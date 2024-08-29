@@ -1,0 +1,614 @@
+---
+title: "F2_surival"
+author: "Samuel Gurr"
+date: "3/13/2024"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+Last updates: March 3, 2024
+
+
+## Load libraries
+
+```{r setup, include= FALSE, echo = FALSE}
+
+# LOAD LIBRARIES 
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(rcompanion)
+library(FSA)
+library(car)
+library(forcats)
+library(kableExtra) # nice Rmd tables
+library(emmeans)
+library(ggpubr)
+library(survival)
+library(Rmisc)
+library(coxme)
+library(ggsurvfit) # survfit2
+library(gtsummary) # tbl_survfit
+library(survminer) # ggforect hazard ratio plot
+# SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+
+```
+
+## load data - F2 survival for the grow out 
+* Note: this entials when the animals were transferred from the static system upstairs 
+to the basement under flow throgh conditions, reestablishing a baseline starting density on 8/18/2021 (23 DPF)
+```{r load data}
+F2_survival <- read.csv(file= "Data/Physiology/Survival/F2/cumulative_raw/F2_survival_raw_growout.csv", header = TRUE) %>% 
+                    mutate(Treatment=fct_relevel(Treatment,c("Low","Moderate","High")),
+                           pCO2 = case_when(Treatment %in% 'Low'  ~ '400 μatm"',
+                                            Treatment %in% 'Moderate'  ~ '800 μatm"',
+                                            Treatment %in% 'High'  ~ '1200 μatm"'))
+unique(F2_survival$Date)
+unique(F2_survival$Age)
+```
+
+# SUVIVAL: Visualize and Stats
+
+
+## Visual
+
+### Table Summary
+* N per treamment per day and the mean +- survival
+```{r F2 summary table means}
+
+summ_F2 <- F2_survival %>%  na.omit() %>% summarySE(measurevar="Survival", groupvars=c("Age", "Treatment"))
+summ_F2 %>% kbl() %>% kable_classic(full_width = F, html_font = "Cambria")
+unique(summ_F2$Age) == unique(F2_survival$Age) # should all be true, the na omit above is essential for replicates w/o value later on..
+```
+
+### Plot it
+```{r F2 plot raw counts}
+F2_PlotMeanSE <-  ggplot(summ_F2, aes(x=Age, y=Survival, color=Treatment)) + geom_line()+
+                          geom_point()+ 
+                           geom_errorbar(aes(ymin=Survival-se, 
+                                             ymax=Survival+se), width=.2,
+                                        position=position_dodge(.1)) +
+                          scale_color_manual(values=c("green4", "darkorange1", "purple"))+
+                          theme_classic() + 
+                          labs(x="Age (days)", y="Percent Survival")+ #scale_y_continuous(breaks=seq(0,100,20))+ 
+                          ggtitle("F2 grow out survival (Mean +- SE)") + 
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(), 
+                                panel.background = element_blank(), 
+                                axis.line = element_line(colour = "black"))
+ 
+F2_PlotMeanSE
+
+pdf("Output/Survival/F2/F2_Survival_meanSE.pdf", width=8, height=3)
+print(F2_PlotMeanSE)
+dev.off()
+
+```
+
+## Survival - binary data calc
+```{r assemble binary survival object}
+
+# count data with the replicate resolution 
+
+surv_F2 <- F2_survival %>% 
+              dplyr::mutate(Count = 
+                              as.numeric(gsub(",","",Count_corrected))) %>% # remove the commas from these numbers- id as character if not removed!
+              dplyr::rename(Count_alive = Count) %>% # rename to avoid confusion
+              dplyr::mutate(Count_total = case_when(Survival == 0 ~ 0,
+                                               Survival >0 ~
+                                                 (1/as.numeric(Survival))*
+                                                 as.numeric(Count_alive)),# proportion is that of alive
+                           Count_dead = Count_total - Count_alive)
+
+
+binary_surv_df     <- data.frame()
+
+surv_F2 <- surv_F2[!is.na(surv_F2$Survival),]
+for (i in 1:nrow(surv_F2)) {
+   count_alive <- round(surv_F2[i,]$Count_alive) # divide all counts by 1000, round to nearest
+   count_dead  <- round(surv_F2[i,]$Count_dead)  # divide all counts by 1000, round to nearest
+   
+   loopDF           <- data.frame(matrix(0,ncol = 4, nrow = (count_alive + count_dead))) 
+   colnames(loopDF) <- (c('Treatment','Replicate','Age','Count_dead'))
+   loopDF           <- loopDF %>% 
+                            dplyr::mutate(
+                            Treatment = surv_F2[i,]$Treatment,
+                            Replicate   = surv_F2[i,]$Rep,  
+                            Age         = surv_F2[i,]$Age,
+                            Count_dead  = surv_F2[i,]$Count_dead
+                          ) 
+  loopDF[c(1:count_dead),4] = 1 # 1 for dead 
+  loopDF[c((count_dead + 1):nrow(loopDF)),4] = 0 # 0 for alive
+
+  loopDF           <- data.frame(loopDF) # name dataframe for this single row
+  binary_surv_df <- rbind(binary_surv_df,loopDF) #bind to a cumulative list dataframe
+  
+}
+
+# View(binary_surv_df)
+# mean suriv object - synthesizing the count data within time nad treamtnet (means by replicate!)
+
+
+surv_F2_MEANS <- surv_F2 %>% 
+              dplyr::select(-c(Date, Rep, Survival)) %>% 
+              dplyr::group_by(Treatment, Age) %>% 
+              dplyr::summarise(mean_Count_alive = mean(Count_alive), 
+                               mean_Count_dead = mean(Count_dead))
+# call datafarme binary for plotting
+binary_surv_df_MEANS <- data.frame() # start dataframe 
+
+# run it 
+for (i in 1:nrow(surv_F2_MEANS)) {
+   count_alive <- round(surv_F2_MEANS[i,]$mean_Count_alive) # divide all counts by 1000, round to nearest
+   count_dead  <- round(surv_F2_MEANS[i,]$mean_Count_dead)  # divide all counts by 1000, round to nearest
+   
+   loopDF           <- data.frame(matrix(0,ncol = 3, nrow = (count_alive + count_dead))) 
+   colnames(loopDF) <- (c('Treatment','Age','Count_dead'))
+   loopDF           <- loopDF %>% 
+                            dplyr::mutate(
+                            Treatment = surv_F2_MEANS[i,]$Treatment,
+                            Age         = surv_F2_MEANS[i,]$Age
+                          ) 
+  loopDF[c(1:count_dead),3] = 1 # 1 for dead 
+  loopDF[c((count_dead + 1):nrow(loopDF)),3] = 0 # 0 for alive
+
+  loopDF             <- data.frame(loopDF) # name dataframe for this single row
+  binary_surv_df_MEANS <- rbind(binary_surv_df_MEANS,loopDF) #bind to a cumulative list dataframe
+  
+}
+# View(binary_surv_F2_MEANS)
+```
+
+
+```{r format}
+# To address tank as a random factor it MUST be numeric, change this here
+unique(binary_surv_df$Replicate) #  "A" "B" "C" "D"
+
+binary_surv_df <- binary_surv_df %>% 
+                    dplyr::mutate(Replicate = case_when(Replicate== 'A'~1,
+                                                       Replicate== 'B'~2,
+                                                       Replicate== 'C'~3,
+                                                       Replicate== 'D'~4),
+                                  TankID   = as.numeric(
+                                                        as.factor(
+                                                          paste0(
+                                                              Replicate, Treatment)
+                                                          )
+                                                        )
+                                  ) %>% 
+                        na.omit()
+unique(binary_surv_df$Replicate)  # 1 2 3 4 
+binary_surv_df$Replicate <- as.numeric(binary_surv_df$Replicate) # convert to numeric to be sure
+
+```
+# Create surv objects 
+  * binary_surv_df - all data with replicate as random factor
+  * binary_surv_df_MEANS - no replicate, this is the mean 0s and 1s 
+```{r create surv object}
+
+binary_surv_df$Age    <- as.numeric(binary_surv_df$Age)
+
+surv_obj.all <- survfit2(Surv(Age, Count_dead) ~ Treatment+(1|TankID), data = binary_surv_df)
+#                                        n events median 0.95LCL 0.95UCL
+# Treatment=Low, 1 | TankID=TRUE      3143    391     NA      NA      NA
+# Treatment=Moderate, 1 | TankID=TRUE 2996    217     NA      NA      NA
+# Treatment=High, 1 | TankID=TRUE     3430    293     NA      NA      NA
+
+binary_surv_df_MEANS$Age <- as.numeric(binary_surv_df_MEANS$Age)
+surv_obj.means           <- survfit2(Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS)
+
+#                      n events median 0.95LCL 0.95UCL
+# Treatment=Low      674     77     NA      NA      NA
+# Treatment=Moderate 642     42     NA      NA      NA
+# Treatment=High     734     56     NA      NA      NA
+```
+
+
+# Plot the surv object
+
+
+```{r Plot surv_obj}
+
+F2_KaplanMeier.all <- surv_obj.all %>% 
+                      ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","orange", "purple")) +
+                        scale_fill_manual(values = c("forestgreen","orange", "purple")) +
+                        labs(
+                          x = "Days",
+                          y = "Overall survival probability"
+                        ) + 
+                        add_confidence_interval() +
+                        # add_risktable() +
+                        # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                        # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                        add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier.all
+
+
+F2_KaplanMeier.means <- surv_obj.means %>% 
+                        ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","orange", "purple")) +
+                        scale_fill_manual(values = c("forestgreen","orange", "purple")) +
+                          labs(
+                            x = "Days",
+                            y = "Overall survival probability"
+                          ) + 
+                          add_confidence_interval() +
+                          # add_risktable() +
+                          # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                          # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                          add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier.means
+
+# output plot 
+pdf(paste0("Output/Survival/F2/F2_Survival_ggsurvfit.pdf"),width=8, height=4)
+print(F2_KaplanMeier.means)
+dev.off()
+
+```
+
+
+
+# Comparing survival times between groups (log-rank test)
+* We can conduct between-group significance tests using a log-rank test. The log-rank test equally weights observations over the entire follow-up time and is the most common way to compare survival times between groups. There are versions that more heavily weight the early or late follow-up that could be more appropriate depending on the research question (see ?survdiff for different test options).
+
+* We get the log-rank p-value using the survdiff function
+* use binary_surv_df_MEANS
+```{r log-rank test survdiff}
+
+
+F2_logrank_test.all <- survdiff(formula = Surv(Age, Count_dead) ~ 
+                              Treatment+(1|Replicate), data = binary_surv_df)
+#                                           N Observed Expected (O-E)^2/E (O-E)^2/V
+# Treatment=Low, 1 | Replicate=TRUE      3143      391      296     30.54     50.66
+# Treatment=Moderate, 1 | Replicate=TRUE 2996      217      282     15.02     24.37
+# Treatment=High, 1 | Replicate=TRUE     3430      293      323      2.78      4.83
+# 
+#  Chisq= 53.9  on 2 degrees of freedom, p= 2e-12 
+
+F2_logrank_test.means <- survdiff(formula = Surv(Age, Count_dead) ~ 
+                                    Treatment, data = binary_surv_df_MEANS)
+#                      N Observed Expected (O-E)^2/E (O-E)^2/V
+# Treatment=Low      674       77     57.5     6.580     10.87
+# Treatment=Moderate 642       42     54.8     2.988      4.82
+# Treatment=High     734       56     62.7     0.709      1.22
+# 
+#  Chisq= 11.4  on 2 degrees of freedom, p= 0.003 
+```
+
+
+# The Cox regression model + Hazard Ratio
+
+ * We may want to quantify an effect size for a single variable, or include **more than one variable** into a regression model to account for the effects of multiple variables.
+
+* The Cox regression model is a semi-parametric model that can be used to fit univariable and multivariable regression models that have survival outcomes.
+
+* use binary_surv_df - WE CAN ADDRESS REP HERE!
+
+
+# Hazard ratio is equivalent to the exp(coef) in the coxpH model
+
+  *  HR > 1 indicates an increased risk of death, An HR < 1, on the other hand, 
+  indicates a decreased risk
+
+  *  For example, a hazard ratio of 0.25 for treatment groups tells you 
+  that individuals who received treatment  B have a reduced risk of dying compared 
+  to patients who received treatment A
+
+```{r cox  for multiple variables}
+
+# Hazard ratio is equivalent to the exp(coef)
+# HR > 1 indicates an increased risk of death, An HR < 1, on the other hand, indicates a decreased risk
+# For example, a hazard ratio of 0.25 for treatment groups tells you that individuals who received treatment 
+# B have a reduced risk of dying compared to patients who received treatment A
+
+
+
+# run cox test on all data with replicate as a random factor
+F2_coxph_test   <- coxph(formula = Surv(Age, Count_dead) ~ Treatment+(1|Replicate), data = binary_surv_df)
+summary(F2_coxph_test)
+#                       coef exp(coef) se(coef)      z Pr(>|z|)    
+# TreatmentModerate -0.56888   0.56616  0.08466 -6.720 1.82e-11 ***
+# TreatmentHigh     -0.40118   0.66953  0.07727 -5.192 2.09e-07 ***
+# 1 | ReplicateTRUE       NA        NA  0.00000     NA       NA    
+ggforest(F2_coxph_test, data = binary_surv_df)
+# Likelihood ratio test=106  on 1 df, p=< 2.2e-16
+# n= 47946, number of events= 6902
+F2_coxph_test_table <- coxph(Surv(Age, Count_dead) ~ Treatment+(1|Replicate), 
+                             data = binary_surv_df) %>% 
+                              tbl_regression(exp = TRUE) 
+
+# COXME IS THE PROPER WAY TO ADDRESS THE TANK REPLICATE AS A RANDOM FACTOR - ALITHOU GGFOREST IS NOT COMPTATIBLE
+# THEREFORE, USE THE OUTPUT EXP AND c95 CI FROM THE COXME BUT PLOT THE COXPH HAZARD RATIO - ADJUST PDF MANUALLY OFF R
+# run mixed cox model with replicate as a random factor 
+F2_coxme_mixed_test   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df)
+#                        coef exp(coef)   se(coef)    z       p
+#                         coef exp(coef)   se(coef)     z       p
+# TreatmentModerate -0.5608798 0.5707068 0.08467482 -6.62 3.5e-11
+# TreatmentHigh     -0.4055568 0.6666055 0.07743579 -5.24 1.6e-07
+# 
+# Random effects
+#  Group     Variable  Std Dev    Variance  
+#  Replicate Intercept 0.22400948 0.05018025
+
+F2_coxme_mixed_HR   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df) %>%  
+                                        tbl_regression(exp = TRUE) # thi gives us what we need
+# 0.55	0.32,0.96, 0.036	MODERATE # THESE ARE THE CORRECT VALUES - OUTPUT THE COXPH HAZARD GGFIREST BUT MANUALLY ADJUST FOR THESE EXPONENTS!!
+# 0.66	0.38,1.16, 0.15	HIGH # THESE ARE THE CORRECT VALUES - OUTPUT THE COXPH HAZARD GGFIREST BUT MANUALLY ADJUST FOR THESE EXPONENTS!!
+
+
+# run cox test on all data as a mean
+# * no replicate tank, these are the binary data as a mean
+F2_coxph_test.means    <- coxph(formula = Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS)
+summary(F2_coxph_test.means)
+#                  exp(coef) exp(-coef) lower .95 upper .95
+# TreatmentModerate    0.5577      1.793    0.3830    0.8123
+# TreatmentHigh        0.6509      1.536    0.4613    0.9184
+HaxardRatio_plot <- ggforest(F2_coxph_test.means,
+                               data = binary_surv_df_MEANS)
+
+pdf(paste0("Output/Survival/F2/F2_Survival_hazardratio.pdf"),width=6, height=2)
+print(HaxardRatio_plot)
+dev.off()
+
+# Likelihood ratio test=106  on 1 df, p=< 2.2e-16
+# n= 47946, number of events= 6902
+F2_coxph_test_table.mean <- coxph(Surv(Age, Count_dead) ~ Treatment, 
+                                  data = binary_surv_df_MEANS) %>% 
+                              tbl_regression(exp = TRUE) 
+
+```
+
+
+```{r REPEAT everything for Low v Moderate in this one chunk}
+
+# truncate for low v mod  separate comparisons (for use in separate papers!) 
+binary_surv_df_LvM       <- binary_surv_df %>% dplyr::filter(!Treatment %in% 'High')
+binary_surv_df_MEANS_LvM <- binary_surv_df_MEANS %>% dplyr::filter(!Treatment %in% 'High')
+
+binary_surv_df_LvM       <- droplevels(binary_surv_df_LvM) 
+binary_surv_df_MEANS_LvM <- droplevels(binary_surv_df_MEANS_LvM) 
+
+
+
+
+
+
+# create surv objects
+binary_surv_df_LvM$Age  <- as.numeric(binary_surv_df_LvM$Age)
+surv_obj_LvM            <- survfit2(Surv(Age, Count_dead) ~ Treatment+(1|TankID), data = binary_surv_df_LvM)
+#                                        n events median 0.95LCL 0.95UCL
+# Treatment=Low, 1 | TankID=TRUE      3143    391     NA      NA      NA
+# Treatment=Moderate, 1 | TankID=TRUE 2996    217     NA      NA      NA
+binary_surv_df_MEANS_LvM$Age <- as.numeric(binary_surv_df_MEANS_LvM$Age)
+surv_obj_LvM.means          <- survfit2(Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS_LvM)
+#                      n events median 0.95LCL 0.95UCL
+# Treatment=Low      674     77     NA      NA      NA
+# Treatment=Moderate 642     42     NA      NA      NA
+
+
+
+
+
+
+
+
+# Kaplan meier plot 
+F2_KaplanMeier_LvM <- surv_obj_LvM %>% 
+                      ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","orange")) +
+                        scale_fill_manual(values = c("forestgreen","orange")) +
+                        labs(
+                          x = "Days",
+                          y = "Overall survival probability"
+                        ) + 
+                        add_confidence_interval() +
+                        # add_risktable() +
+                        # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                        # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                        add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier_LvM
+
+F2_KaplanMeier_LvM.means <- surv_obj_LvM.means %>% 
+                        ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","orange")) +
+                        scale_fill_manual(values = c("forestgreen","orange")) +
+                          labs(
+                            x = "Days",
+                            y = "Overall survival probability"
+                          ) + 
+                          add_confidence_interval() +
+                          # add_risktable() +
+                          # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                          # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                          add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier_LvM.means
+
+
+
+# output plot 
+pdf(paste0("Output/Survival/F2/F2_Survival_ggsurvfit_LvM.pdf"),width=8, height=4)
+print(F2_KaplanMeier_LvM.means)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# Mixed Coxme mdoel and hazard ratio
+F2_coxph_LvM   <- coxph(formula = Surv(Age, Count_dead) ~ Treatment+(1|TankID), data = binary_surv_df_LvM)
+summary(F2_coxph_LvM)
+#                       coef exp(coef) se(coef)      z Pr(>|z|)    
+# TreatmentModerate -0.56888   0.56616  0.08466 -6.720 1.82e-11 ***
+# TreatmentHigh     -0.40118   0.66953  0.07727 -5.192 2.09e-07 ***
+# 1 | ReplicateTRUE       NA        NA  0.00000     NA       NA    
+ggforest(F2_coxph_LvM, data = binary_surv_df_LvM)
+# Likelihood ratio test=106  on 1 df, p=< 2.2e-16
+# n= 47946, number of events= 6902
+F2_coxph_table_LvM <- coxph(Surv(Age, Count_dead) ~ Treatment+(1|TankID), 
+                             data = binary_surv_df_LvM) %>% 
+                              tbl_regression(exp = TRUE) 
+
+# COXME IS THE PROPER WAY TO ADDRESS THE TANK REPLICATE AS A RANDOM FACTOR - ALITHOU GGFOREST IS NOT COMPTATIBLE
+# THEREFORE, USE THE OUTPUT EXP AND c95 CI FROM THE COXME BUT PLOT THE COXPH HAZARD RATIO - ADJUST PDF MANUALLY OFF R
+# run mixed cox model with replicate as a random factor 
+F2_coxme_mixed_LvM      <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df_LvM)
+#                         coef exp(coef)  se(coef)     z     p
+# TreatmentModerate -0.5993226 0.5491835 0.3031015 -1.98 0.048
+F2_coxme_mixed_HR_LvM   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df_LvM) %>%  
+                                        tbl_regression(exp = TRUE) # thi gives us what we need
+# 0.55	0.30,1.0, 0.048	MODERATE # THESE ARE THE CORRECT VALUES - OUTPUT THE COXPH HAZARD GGFIREST BUT MANUALLY ADJUST FOR THESE EXPONENTS!!
+
+
+# run cox test on all data as a mean
+# * no replicate tank, these are the binary data as a mean
+F2_coxph_test_LvM.means    <- coxph(formula = Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS_LvM)
+HaxardRatio_plot_LvM       <- ggforest(F2_coxph_test.means,
+                               data = binary_surv_df_MEANS)
+
+pdf(paste0("Output/Survival/F2/F2_Survival_hazardratio_LvM.pdf"),width=6, height=2)
+print(HaxardRatio_plot_LvM)
+dev.off()
+
+
+
+```
+
+
+```{r REPEAT everything for Low v High in this one chunk}
+
+# truncate for Low v. High separate comparisons (for use in separate papers!) 
+binary_surv_df_LvH       <- binary_surv_df %>% dplyr::filter(!Treatment %in% 'Moderate')
+binary_surv_df_MEANS_LvH <- binary_surv_df_MEANS %>% dplyr::filter(!Treatment %in% 'Moderate')
+
+
+binary_surv_df_LvH       <- droplevels(binary_surv_df_LvH) 
+binary_surv_df_MEANS_LvH <- droplevels(binary_surv_df_MEANS_LvH) 
+
+
+
+
+
+# create surv objects
+binary_surv_df_LvH$Age  <- as.numeric(binary_surv_df_LvH$Age)
+surv_obj_LvH            <- survfit2(Surv(Age, Count_dead) ~ Treatment+(1|TankID), data = binary_surv_df_LvH)
+#                                        n events median 0.95LCL 0.95UCL
+# Treatment=Low, 1 | TankID=TRUE      3143    391     NA      NA      NA
+# Treatment=Moderate, 1 | TankID=TRUE 2996    217     NA      NA      NA
+binary_surv_df_MEANS_LvH$Age <- as.numeric(binary_surv_df_MEANS_LvH$Age)
+surv_obj_LvH.means          <- survfit2(Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS_LvH)
+#                      n events median 0.95LCL 0.95UCL
+# Treatment=Low      674     77     NA      NA      NA
+# Treatment=Moderate 642     42     NA      NA      NA
+
+
+
+
+
+
+
+
+# Kaplan meier plot 
+F2_KaplanMeier_LvH <- surv_obj_LvH %>% 
+                      ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","purple")) +
+                        scale_fill_manual(values = c("forestgreen","purple")) +
+                        labs(
+                          x = "Days",
+                          y = "Overall survival probability"
+                        ) + 
+                        add_confidence_interval() +
+                        # add_risktable() +
+                        # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                        # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                        add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier_LvH
+
+F2_KaplanMeier_LvH.means <- surv_obj_LvH.means %>% 
+                        ggsurvfit(linetype_aes = TRUE, linewidth = 1) +
+                        scale_color_manual(values = c("forestgreen","purple")) +
+                        scale_fill_manual(values = c("forestgreen","purple")) +
+                          labs(
+                            x = "Days",
+                            y = "Overall survival probability"
+                          ) + 
+                          add_confidence_interval() +
+                          # add_risktable() +
+                          # add_risktable_strata_symbol() + # (symbol = "\U25CF", size = 10
+                          # scale_ggsurvfit(x_scales = list(breaks = 0:1)) #+
+                          add_pvalue(location  = "annotation", x = 8.5)
+F2_KaplanMeier_LvH.means
+
+
+
+# output plot 
+pdf(paste0("Output/Survival/F2/F2_Survival_ggsurvfit_LvH.pdf"),width=8, height=4)
+print(F2_KaplanMeier_LvH.means)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+# Mixed Coxme mdoel and hazard ratio
+F2_coxph_LvH   <- coxph(formula = Surv(Age, Count_dead) ~ Treatment+(1|TankID), data = binary_surv_df_LvH)
+summary(F2_coxph_LvH)
+#                       coef exp(coef) se(coef)      z Pr(>|z|)    
+# TreatmentModerate -0.56888   0.56616  0.08466 -6.720 1.82e-11 ***
+# TreatmentHigh     -0.40118   0.66953  0.07727 -5.192 2.09e-07 ***
+# 1 | ReplicateTRUE       NA        NA  0.00000     NA       NA    
+ggforest(F2_coxph_LvH, data = binary_surv_df_LvH)
+# Likelihood ratio test=106  on 1 df, p=< 2.2e-16
+# n= 47946, number of events= 6902
+F2_coxph_table_LvH <- coxph(Surv(Age, Count_dead) ~ Treatment+(1|TankID), 
+                             data = binary_surv_df_LvH) %>% 
+                              tbl_regression(exp = TRUE) 
+
+# COXME IS THE PROPER WAY TO ADDRESS THE TANK REPLICATE AS A RANDOM FACTOR - ALITHOU GGFOREST IS NOT COMPTATIBLE
+# THEREFORE, USE THE OUTPUT EXP AND c95 CI FROM THE COXME BUT PLOT THE COXPH HAZARD RATIO - ADJUST PDF MANUALLY OFF R
+# run mixed cox model with replicate as a random factor 
+F2_coxme_mixed_LvH      <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df_LvH)
+#                         coef exp(coef)  se(coef)     z     p
+# TreatmentModerate -0.5993226 0.5491835 0.3031015 -1.98 0.048
+F2_coxme_mixed_HR_LvH   <- coxme(Surv(Age, Count_dead) ~ # using coxme, notice ther results are the same as coxpH
+                                   Treatment + (1 | TankID), # note we cannot make a hazrd ratio plot using coxme
+                                 data = binary_surv_df_LvH) %>%  
+                                        tbl_regression(exp = TRUE) # thi gives us what we need
+# 0.67	0.40,1.10, 0.11	HIGH OA comparison to LOw # THESE ARE THE CORRECT VALUES - OUTPUT THE COXPH HAZARD GGFIREST BUT MANUALLY ADJUST FOR THESE EXPONENTS!!
+
+
+# run cox test on all data as a mean
+# * no replicate tank, these are the binary data as a mean
+F2_coxph_test_LvH.means    <- coxph(formula = Surv(Age, Count_dead) ~ Treatment, data = binary_surv_df_MEANS_LvH)
+HaxardRatio_plot_LvH       <- ggforest(F2_coxph_test_LvH.means,
+                               data = binary_surv_df_MEANS_LvH)
+
+pdf(paste0("Output/Survival/F2/F2_Survival_hazardratio_LvH.pdf"),width=6, height=2)
+print(HaxardRatio_plot_LvH)
+dev.off()
+```
+
+
+
