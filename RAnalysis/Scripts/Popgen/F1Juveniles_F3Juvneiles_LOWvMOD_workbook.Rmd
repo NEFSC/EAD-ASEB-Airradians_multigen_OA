@@ -9,23 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
+#knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
 
 ```
 
 #### load packages
 
 ```{r load packages we need}
+# install.packages('radiator')
 library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
-library(qqman)
+# library(qqman)
 library(ggpubr)
 library(radiator) # https://thierrygosselin.github.io/radiator/articles/get_started.html
 # run bayscan in R using radiator https://rdrr.io/github/thierrygosselin/radiator/man/run_bayescan.html
-?run_bayescan
+# ?run_bayescan
 # library(pegas)
 # library(LDlinkR)
 # library(ldsep) # need a Seqinfo object  Airradians not registered in package
@@ -417,6 +418,7 @@ F1F3_LDfiltered.genindhierfstat <-  genind2hierfstat(F1F3_LDfiltered.genind,
 allele.count(F1F3_LDfiltered.genindhierfstat,diploid=TRUE)
 allelic.richness(F1F3_LDfiltered.genindhierfstat,min.n=NULL,diploid=TRUE)
 
+# basic stats does this give you popultation level values 
 F1F3_LOWvMOD_Fst <- hierfstat::basic.stats(F1F3_LDfiltered.genindhierfstat,
                        diploid=TRUE,
                        digits=4)
