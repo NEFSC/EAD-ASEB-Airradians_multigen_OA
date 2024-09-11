@@ -45,7 +45,7 @@ library(DESeq2)
 library(devtools)
 library(ggbiplot)
 # library(VennDiagram)# venn diagrams
-library(eulerr) #venn diagrams -  check out the R shiny app (http://eulerr.co/) 
+# library(eulerr) #venn diagrams -  check out the R shiny app (http://eulerr.co/) 
 
 # set wd
 # knitr::opts_knit$set(root.dir = 'C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis')
@@ -288,38 +288,27 @@ Biodep_blanks <- read.csv("Output/Biodeposition/Biodeposition_input_blank.csv",
                             dplyr::rename(pH = treatment)
 unique(Biodep_blanks$Date)# "3/2/2022"   "9/23/2022"  "10/27/2022"
 
-
 nrow(F1_Masterfile) == nrow(merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH"))) # TRUE = YAY!
 
 F1_Masterfile_2.0 <- merge(Biodep_blanks,F1_Masterfile, by = c("Date", "pH")) %>% 
-          dplyr::mutate(
+                dplyr::mutate(
                 # RR
-                RR_resp_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
-                RR_Joules_hr               = RR_resp_mgO2_hr_bfactorTDW*14, # convert to joules
+                RR_mgO2_hr_bfactorTDW = ((RR_umol_hr_bfactorTDW/1000)*32),# convert umol to mg O2
+                RR_Joules_hr          = RR_mgO2_hr_bfactorTDW*14, # convert to joules
                 # ER
-                ER_mgNH4_bFactorNormTDW = ((ER_umol_hr_bfactorTDW/1000)*18.04), # convert umol to mg NH4
-                ER_Joules_hr                       = ER_mgNH4_bFactorNormTDW*24.83, # convert o Joules
+                ExcretionRate_mgNH4_bFactorNormTDW =
+                  ((ER_umol_hr_bfactorTDW/1000)*18.04), # convert umol to mg NH4
+                
+                ER_Joules_hr                       = ExcretionRate_mgNH4_bFactorNormTDW*24.83, # convert o Joules
                 # caloric value of dried phytoplankton
-                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following Pousee et al. -referenced paper below for calculation
-                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2):306–10
-                # A
+                Food_Joules_mg = (0.632+0.086 *(Perc_ORG_1))*4.184, # caloric value of dried phytoplaknton following 
+                #Pousee et al. -referenced paper below for calculation
+                #Platt T, Irwin B. Caloric content of phytoplankton. Limnology and Oceanography. 1973;18(2)
                 A_Joules_hr = (CR_correct*AE)*Food_Joules_mg,
                 # FINALLY SCOPE FOR GROWTH YALL
                 SFG = A_Joules_hr - (RR_Joules_hr + ER_Joules_hr)
   )
-                
-
-
-# following the Widdows and Johnson 1988 aper described above..
-# Note- RR is in L O2 so we will multiply 20.33*1000 to account for 20.33 Joules per ml-1 O2 
-F1_Masterfile$RR_Energy_Widdows.1988     <- (20.33*F1_Masterfile$RR_resp_umol_hr_bfactorTDW)
-F1_Masterfile$RR_Excretion_Widdows.1988  <- (19.4*F1_Masterfile$ExcretionRate_umol_hr_bFactorNormTDW)
-
-F1_Masterfile$SfG_Widdows.1988           <- (  
-                        (F1_Masterfile$AR * (F1_Masterfile$CR_correct*23)) - 
-                        (F1_Masterfile$RR_Energy_Widdows.1988 + F1_Masterfile$RR_Excretion_Widdows.1988)
-                        )
-
+     
 ```
 
 ```{r, plots}
@@ -357,11 +346,11 @@ F1_Masterfile$SfG_Widdows.1988           <- (
 # Kruskal-Wallis chi-squared = 0.92308, df = 1, p-value = 0.3367
 
 
-F1_Masterfile_2.0$pCO2 <- factor(F1_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
+F1_Masterfile_2.0$pCO2 <- factor(F1_Masterfile_2.0$pCO2, levels= c('500 μatm','800 μatm'))
 F1_Masterfile_2.0$Date <- factor(F1_Masterfile_2.0$Date, levels= c('3/2/2022','9/23/2022','10/27/2022'))
 
 F1_SGF_Means_by_tank <- F1_Masterfile_2.0 %>% 
-                            summarySE(measurevar="SFG", 
+                            Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2", "Replicate"))
 
 SFG_Pousse_F1          <- ggplot(data=F1_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
@@ -380,7 +369,7 @@ SFG_Pousse_F1          <- ggplot(data=F1_SGF_Means_by_tank, aes(x=pCO2, y=SFG, c
 # convert meand by tank to summrizing means by treatment and age 
 
 F1_SGF_Means_plotting <- F1_SGF_Means_by_tank %>% 
-                            summarySE(measurevar="SFG", 
+                            Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2"))
 
 F1_SGF_MeanSE <-  F1_SGF_Means_plotting %>%
@@ -407,7 +396,7 @@ F1_SGF_MeanSE <-  F1_SGF_Means_plotting %>%
                                     theme(text = element_text(size=10))
 
 pdf("Output/F1_SFG.pdf", width = 6, height = 8)
-print(ggarrange(SFG_Pousse_F1,F1_SGF_MeanSE,nrow=2))
+print(ggpubr::ggarrange(SFG_Pousse_F1,F1_SGF_MeanSE,nrow=2))
 dev.off()
 ```
 
@@ -512,6 +501,9 @@ return(outputfilename)
 ```{r execuate runttest for stats}
 
 library(purrr)
+library(tidyr)
+library(broom)
+
 F1_Masterfile_2.0$GROUPvar <- F1_Masterfile_2.0$Age 
 F1_Masterfile_2.0$DPvar    <- F1_Masterfile_2.0$SFG 
 F1_Masterfile_2.0$INDvar   <- F1_Masterfile_2.0$pCO2 

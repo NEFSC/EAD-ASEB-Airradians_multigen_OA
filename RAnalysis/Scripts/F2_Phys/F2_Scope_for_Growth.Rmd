@@ -449,7 +449,7 @@ dunnTest(SFG ~ pCO2, data =F2_Masterfile_3_27_23)
 ```
 
 
-```{r plotting}
+```{r plotting - all treatments}
 
 
 F2_Masterfile_2.0_all$pCO2 <- factor(F2_Masterfile_2.0_all$pCO2, levels= c('500 μatm','800 μatm','1200 μatm'))
@@ -501,12 +501,123 @@ F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
                                     theme(text = element_text(size=10))
 
 
-pdf("Output/F2_SFG.pdf", width = 6, height = 8)
-print(ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
+pdf("Output/F2_SFG_all_treatments.pdf", width = 6, height = 8)
+print(ggpubr::ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
+dev.off()
+```
+
+```{r plotting - L v M}
+
+
+F2_Masterfile_2.0_LvM$pCO2 <- factor(F2_Masterfile_2.0_LvM$pCO2, levels= c('500 μatm','800 μatm'))
+
+F2_SGF_Means_by_tank <- F2_Masterfile_2.0_LvM %>% 
+                            Rmisc::summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2", "Replicate"))
+
+SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
+                        scale_colour_manual(values=c("forestgreen","orange"))+
+                        theme_classic() +  
+                        geom_boxplot(fill="white", 
+                                     outlier.colour=NA, 
+                                     position=position_dodge(width=0.9)) +
+                        geom_point(position=position_jitterdodge()) +
+                        theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                        labs(title="F2 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
+                        facet_wrap(~Age)
+
+# convert meand by tank to summrizing means by treatment and age 
+
+F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
+                            Rmisc::summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2"))
+
+F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
+                                 ggplot(aes(x=(as.factor(Age)), 
+                                               y=SFG, 
+                                               color=as.factor(pCO2))) +
+                                    geom_point(position=position_dodge(.5))+ 
+                                    scale_color_manual(values=c("forestgreen",
+                                                                "darkorange2"))+
+                                    geom_errorbar(aes(ymin=SFG-se, 
+                                                      ymax=SFG+se), width=.2,
+                                                  position=position_dodge(.5)) +
+                                    ggtitle("SFG (mean+-SE)") +
+                                    theme_classic() +  
+                                    xlab("Age (dpf)") +
+                                    ylab("SFG") +
+                                   #xlab("Age (d)") +
+                                    theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                                    # scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                    # labs(color='pCO2 treatment') + # legend name
+                                    theme(text = element_text(size=10))
+
+
+pdf("Output/F2_SFG_LvM.pdf", width = 6, height = 8)
+print(ggpubr::ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
 dev.off()
 ```
 
 
+```{r plotting - L v H}
+
+
+F2_Masterfile_2.0_LvH$pCO2 <- factor(F2_Masterfile_2.0_LvH$pCO2, levels= c('500 μatm','1200 μatm'))
+
+F2_SGF_Means_by_tank <- F2_Masterfile_2.0_LvH %>% 
+                            Rmisc::summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2", "Replicate"))
+
+SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
+                        scale_colour_manual(values=c("forestgreen","purple"))+
+                        theme_classic() +  
+                        geom_boxplot(fill="white", 
+                                     outlier.colour=NA, 
+                                     position=position_dodge(width=0.9)) +
+                        geom_point(position=position_jitterdodge()) +
+                        theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                        labs(title="F2 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
+                        facet_wrap(~Age)
+
+# convert meand by tank to summrizing means by treatment and age 
+
+F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
+                            Rmisc::summarySE(measurevar="SFG", 
+                                      groupvars=c("Age", "pCO2"))
+
+F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
+                                 ggplot(aes(x=(as.factor(Age)), 
+                                               y=SFG, 
+                                               color=as.factor(pCO2))) +
+                                    geom_point(position=position_dodge(.5))+ 
+                                    scale_color_manual(values=c("forestgreen",
+                                                                "purple"))+
+                                    geom_errorbar(aes(ymin=SFG-se, 
+                                                      ymax=SFG+se), width=.2,
+                                                  position=position_dodge(.5)) +
+                                    ggtitle("SFG (mean+-SE)") +
+                                    theme_classic() +  
+                                    xlab("Age (dpf)") +
+                                    ylab("SFG") +
+                                   #xlab("Age (d)") +
+                                    theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                                    # scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                    # labs(color='pCO2 treatment') + # legend name
+                                    theme(text = element_text(size=10))
+
+
+pdf("Output/F2_SFG_LvH.pdf", width = 6, height = 8)
+print(ggpubr::ggarrange(SFG_Pousse_F2,F2_SGF_MeanSE,nrow=2))
+dev.off()
+```
 
 #### Runttest 
 
@@ -613,6 +724,7 @@ return(outputfilename)
 ```{r Low v Moderate execuate runttest for stats}
 
 library(purrr)
+library(tidyverse)
 F2_Masterfile_2.0_LvM$GROUPvar <- F2_Masterfile_2.0_LvM$Age 
 F2_Masterfile_2.0_LvM$DPvar    <- F2_Masterfile_2.0_LvM$SFG 
 F2_Masterfile_2.0_LvM$INDvar   <- F2_Masterfile_2.0_LvM$pCO2 
