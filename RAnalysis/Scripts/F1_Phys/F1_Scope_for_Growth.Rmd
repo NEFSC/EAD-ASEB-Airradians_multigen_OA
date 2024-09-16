@@ -363,7 +363,7 @@ SFG_Pousse_F1          <- ggplot(data=F1_SGF_Means_by_tank, aes(x=pCO2, y=SFG, c
                         theme(panel.grid.major = element_blank(), 
                                           panel.grid.minor = element_blank(),
                                           legend.position="none")+ 
-                        labs(title="F2 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
+                        labs(title="F1 Bay Scallops: Scope for Growth ", x ="Month", y = "Scope for Growth") + 
                         facet_wrap(~Age)
 
 # convert meand by tank to summrizing means by treatment and age 
@@ -509,7 +509,7 @@ F1_Masterfile_2.0$DPvar    <- F1_Masterfile_2.0$SFG
 F1_Masterfile_2.0$INDvar   <- F1_Masterfile_2.0$pCO2 
 
 
-as.data.frame(run_ttest(F1_Masterfile_2.0))
+as.data.frame(run_ttest(F1_Masterfile_2.0)) 
 
 write.csv( 
           as.data.frame(run_ttest(F1_Masterfile_2.0)),
