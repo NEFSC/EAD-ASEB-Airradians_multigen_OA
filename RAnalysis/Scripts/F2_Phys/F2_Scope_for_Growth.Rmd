@@ -723,6 +723,30 @@ return(outputfilename)
 
 ```{r Low v Moderate execuate runttest for stats}
 
+# Run the full model NOTE that temperature WAS THE SMAE ACROSS ALL SFG MEASUREMENTS so this has SOUND RATIONALE
+# considering that temperature largely affects metabolism and therefore scope for growth 
+
+library(rcompanion)
+library(FSA)
+F2_Masterfile_2.0_LvM$Age <- as.factor(F2_Masterfile_2.0_LvM$Age)
+TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F2_Masterfile_2.0_LvM)
+shapiro.test(resid(TwoWayANOVA_LvM)) # 0.0517 pass 
+leveneTest(TwoWayANOVA_LvM) # 0.02117 * no pass
+scheirerRayHare(SFG ~ pCO2 * Age, data = F2_Masterfile_2.0_LvM)
+#           Df Sum Sq       H p.value
+# pCO2       1  952.0  6.9661 0.00831
+# Age        2 3358.0 24.5710 0.00000
+# pCO2:Age   2   37.5  0.2746 0.87172
+# Residuals 34 1050.8 
+SRH_LvM_Age = dunnTest(SFG ~ Age, 
+              data = F2_Masterfile_2.0_LvM,
+              method="bh")      # Adjusts p-values for multiple comparisons;
+SRH_LvM_Age
+# 167 - 190	4.778524	1.765864e-06	5.297591e-06	
+# 167 - 222	3.275168	1.055990e-03	1.583985e-03	
+# 190 - 222	-1.476266	1.398724e-01	1.398724e-01
+
+# measure effects of OA binary within date (ttest wilcox if needed)
 library(purrr)
 library(tidyverse)
 F2_Masterfile_2.0_LvM$GROUPvar <- F2_Masterfile_2.0_LvM$Age 

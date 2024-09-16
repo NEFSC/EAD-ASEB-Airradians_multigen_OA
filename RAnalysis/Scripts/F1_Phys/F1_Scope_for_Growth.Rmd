@@ -500,6 +500,30 @@ return(outputfilename)
 
 ```{r execuate runttest for stats}
 
+# Run the foull model NOTE that temperature differed with time so this does not have sound rationalize 
+# considering that temperature largely affects metabolism and therefore scope for growth 
+library(rcompanion)
+library(FSA)
+F1_Masterfile_2.0$Age <- as.factor(F1_Masterfile_2.0$Age)
+TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F1_Masterfile_2.0)
+shapiro.test(resid(TwoWayANOVA_LvM)) # 0.05553 pass 
+leveneTest(TwoWayANOVA_LvM) # 0.5724 *  pass
+summary(aov(TwoWayANOVA_LvM))
+#             Df Sum Sq Mean Sq F value   Pr(>F)    
+# pCO2         1    380     380    0.84    0.366    
+# Age          2  13060    6530   14.44 2.67e-05 ***
+# pCO2:Age     2      9       5    0.01    0.990    
+# Residuals   35  15828     452  
+
+TukeyHSD(aov(TwoWayANOVA_LvM))
+# $Age
+#              diff        lwr       upr     p adj
+# 423-218  42.19358  22.761245 61.625917 0.0000182
+# 457-218  13.21206  -6.661981 33.086093 0.2479479
+# 457-423 -28.98153 -49.815177 -8.147874 0.0046619
+
+
+# measure tests wihtin date, more applicable here
 library(purrr)
 library(tidyr)
 library(broom)
