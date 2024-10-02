@@ -554,7 +554,8 @@ dev.off()
 
 ### Statistics on proportion data
 ```{r Proportion stats}
-
+library(purrr)
+library(rstatix)
 
 # Gonad (to total tissue)
 F2_Proportion_Gonad_MEANS <- Proportion_master %>% 
@@ -563,6 +564,14 @@ F2_Proportion_Gonad_MEANS <- Proportion_master %>%
                                     summarySE(measurevar="Proportion_Gonad", 
                                                groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
                                     dplyr::arrange(as.numeric(Age))
+
+
+F2_Proportion_Gonad_MEANS %>% summarySE(measurevar="Proportion_Gonad", 
+                                               groupvars=c("Age","pCO2"))
+# 220	500 μatm	5	0.11154640	0.064620441	0.028899140	0.080236875
+# 220	800 μatm	6	0.25291354	0.089489351	0.036533874	0.093913314
+# 
+# 0.25291354 - 0.11154640 # at 220 dpf 14 % more of the total tissue weight comprised of gonad under moderate OA
 
 F2_Proportion_Gonad_MEANS$DPvar    <- F2_Proportion_Gonad_MEANS$Proportion_Gonad
 F2_Proportion_Gonad_MEANS$INDvar   <- F2_Proportion_Gonad_MEANS$pCO2
@@ -601,7 +610,16 @@ F2_Proportion_Adductor_MEANS <- Proportion_master %>%
                                                groupvars=c("Age","pCO2", "Tank_Replicate")) %>% 
                                     dplyr::arrange(as.numeric(Age))
 
+F2_Proportion_Adductor_MEANS %>% summarySE(measurevar="Proportion_Adductor", 
+                                               groupvars=c("Age","pCO2"))
+
+# 220	500 μatm	5	0.3227584	0.027336394	0.012225207	0.033942616
+# 220	800 μatm	6	0.2371311	0.047686561	0.019467957	0.050043976
+# 
+# 0.3227584 - 0.2371311 # at 220 dpf 8 % more of the total tissue weight comprised of adductor under low OA
+
 F2_Proportion_Adductor_MEANS$DPvar    <- F2_Proportion_Adductor_MEANS$Proportion_Adductor
+
 F2_Proportion_Adductor_MEANS$INDvar   <- F2_Proportion_Adductor_MEANS$pCO2
 F2_Proportion_Adductor_MEANS$GROUPvar <- F2_Proportion_Adductor_MEANS$Age
 

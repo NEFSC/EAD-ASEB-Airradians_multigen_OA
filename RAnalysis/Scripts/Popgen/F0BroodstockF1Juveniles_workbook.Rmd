@@ -8,23 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
-# knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-<<<<<<< HEAD
-<<<<<<< HEAD
-# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
-=======
+
 knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
 # knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
->>>>>>> 330d1b4c2e0f8f9e7342ae770fbf6f9a65be4880
-=======
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-# knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
-=======
-# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/HPC_analysis") # Sam's
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/HPC_analysis") # Sam's
->>>>>>> 96298a93187dbf2d945062bca529290100b65058
->>>>>>> 214fa44b371a13bca2ef83b7d5131affc2c7a2c5
 
 ```
 
@@ -35,13 +21,12 @@ library(vcfR)
 library(hierfstat)
 library(pcadapt)
 library(adegenet)
-<<<<<<< HEAD
 library(pegas)
+# install.packages('vcf2ploidy')
 library(vcf2ploidy) # https://github.com/dandewaters/VCF2Ploidy # use interactive shiny script to covert to colony
 # library(stackr) # devtools::install_github("thierrygosselin/stackr")
-=======
+library(sequoia)
 library(qqman)
->>>>>>> 257bc02b3042ccda768454985c46622fb64b0f8b
 
 # library(pegas)
 # library(LDlinkR)
@@ -67,7 +52,7 @@ library(qqman)
     the intersection can be partial 
     
     
-  - intersect: contains only SNPs *shared* amoung **all** *input vscf files* using ```bcftools isec -n=<#input>```
+  - intersect: contains only SNPs *shared* amoung **all** *input vscf files* using bcftools isec -n=<#input>
   
   
 ```{r load vcf and bed files}
@@ -77,15 +62,17 @@ path = "output/lcWGS/angsd/Merge_Intercept/F0Broodstock_F1Juveniles/"
 
 # INTERSECT: ALL f0 broodstock and f1 juveniles from Low and Moderate OA
 F0B_F1JALL_intersect.vcf     <- read.vcfR(paste0(path,"F0F1_intersect.vcf.gz")) # 6,048 variants
-F0B_F1JALL_intersect.vcf     <- read.vcf(paste0(path,"F0F1_intersect.vcf.gz"), from = NULL, to = NULL, which.loci = NULL, quiet = FALSE)
-write.vcf(F0B_F1JALL_intersect.vcf, paste0(path,"F0F1_intersect.vcf"), CHROM = NULL, POS = NULL, quiet = FALSE)
+F0B_F1JALL_intersect.vcf     <- read.vcf(paste0(path,"F0F1_intersect.vcf.gz"), 
+                                         from = NULL, to = NULL, which.loci = NULL, quiet = FALSE)
+write.vcf(F0B_F1JALL_intersect.vcf, paste0(path,"F0F1_intersect.vcf"), 
+          CHROM = NULL, POS = NULL, quiet = FALSE)
 vcf2ploidy_app()
 
 
 F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
 
-F0B_F1JALL_intersect_longcontigs.vcf     <- read.vcfR(paste0(path,"F0F1_intersect_longcontigs.vcf.gz")) # 6,048 variants
-F0B_F1JALL_intersect_longcontigs.bed     <- read.pcadapt(paste0(path,"F0F1_intersect_longcontig.bed"), type = "bed") # 6,048 variants
+F0B_F1JALL_intersect_longcontigs.vcf     <- read.vcfR(paste0(path,"F0F1_intersect_longcontigs.vcf.gz")) # 2,920  variants
+F0B_F1JALL_intersect_longcontigs.bed     <- read.pcadapt(paste0(path,"F0F1_intersect_longcontig.bed"), type = "bed") # 2,920  variants
 
 # MERGED: ALL f0 broodstock and f1 juveniles from Low and Moderate OA
 
@@ -103,6 +90,70 @@ F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
 
 ```
 
+
+# Pedigree with SEQUOIA
+## build genlight 
+
+* use adegent - genlight is a dataframe compatible with adegenet based on genome-wide SNP data
+```{r build genlight}
+?sequoia
+F0BF1J_longcontigs_genlight <- vcfR2genlight(F0B_F1JALL_intersect_longcontigs.vcf, n.cores = 4)
+
+View(Geno)
+Geno_Sequoia <- GenoConvert(
+                    InData = F0BF1J_longcontigs_genlight,
+                    # InFile = NULL,
+                    InFormat = "vcf",
+                    # OutFile = NA,
+                    OutFormat = "seq")
+
+
+Geno_Sequoia                <-  (as.matrix(F0BF1J_longcontigs_genlight))
+
+delim_add <- stringr::str_replace_all(rownames(Geno_Sequoia), "_", ".")
+splt <- strsplit(sub(".", "_", delim_add),".", fixed = TRUE)
+rownames(Geno_Sequoia) <- sapply(splt, "[", 3)
+
+
+LH_Sequoia <- F0BroodF1Juveniles_strata %>% 
+                dplyr::mutate(BirthYear = dplyr::case_when(
+                                          Gen %in% 'F0' ~ 2020,
+                                          Gen %in% 'F1' ~ 2021)) %>% 
+                dplyr::select(Individual, BirthYear) %>% 
+                dplyr::rename(ID = Individual)
+
+delim_add <- stringr::str_replace_all(LH_Sequoia$ID, "_", ".")
+splt <- strsplit(sub(".", "_", delim_add),".", fixed = TRUE)
+LH_Sequoia$ID <- sapply(splt, "[", 3)
+
+F0_parentage <- read.csv('output/lcWGS/angsd/F0_Broodstock/parentage.csv') %>% 
+                    dplyr::mutate(Sample.ID = sub('.*adapter_trim.', '', Sample.ID)) %>% 
+                    dplyr::rename(ID = Sample.ID, Sex = key)
+
+# merge with parentage to assign Sex for squoia
+# also change ID witha prexis so it can run
+LH_Sequoia_2 <- merge(LH_Sequoia, F0_parentage,by="ID", all=T) %>% 
+                      dplyr::mutate(
+                        ID = paste0('ID_',ID),
+                        Sex = dplyr::case_when(
+                          Sex %in% 'Mo' ~ '1',
+                          Sex %in% 'Pa' ~ '4',
+                          Sex %in% 'Fa' ~ '2',
+                          TRUE ~ Sex)) %>% 
+                      dplyr::mutate(Sex = as.numeric(Sex))
+rownames(Geno_Sequoia) <- paste0('ID_',rownames(Geno_Sequoia))
+
+
+ParOUT <-sequoia(GenoM = Geno_Sequoia,
+                 LifeHistData = LH_Sequoia_2,
+                 Module="par")
+SeqOUT <-sequoia(GenoM= Geno_Sequoia,
+                 SeqList =ParOUT,
+                 Module="ped")
+
+```
+
+
 * strata - metadata
 
   - note, this must be in the same order at which files were analyzed with angsd , these are the columns in the vcf file 
@@ -119,8 +170,10 @@ F0BroodF1Juveniles_strata   <- read.csv("output/lcWGS/angsd/IDs/F0BroodstockF1Ju
                                       Gen = dplyr::case_when(grepl("F0", Individual) ~ "F0",
                                                                      .default = "F1"),
                                       Treatment       = dplyr::case_when(grepl("F0", Individual) ~ "none",
-                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~ "Moderate",
-                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ "Low")) %>% 
+                                      grepl(c("pH75|201|203|204|251|253|254|301|303|304|351|352|353|354"), Individual) ~
+                                        "Moderate",
+                                      grepl(c("pH8|101|103|104|153|154|155|3_||.4_|.5_"), Individual) ~ 
+                                        "Low")) %>% 
                                 dplyr::mutate(Gen_Treatment = dplyr::case_when(Gen == "F0" ~ "F0",
                                                                         Gen == "F1" ~ paste0(Gen,'_',Treatment)))
 

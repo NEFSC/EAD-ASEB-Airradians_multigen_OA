@@ -23,32 +23,89 @@ library(dplyr)
 library(car)
 library(purrr)
 library(rstatix)
-
+library(forcats)
 ```
 
 
 ```{r load data}
 
 # F1s
+Biodep_Master_F1 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1/F1_Biodeposition_master.csv", header = T)
+nrow(Biodep_Master_F1) # 43
 
 Biodep_Master_F2 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
-nrow(Biodep_Master_F2) # 43
+nrow(Biodep_Master_F2) # 61
 Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # omit #6 pH7.5 on 20221027
-nrow(Biodep_Master_F2) # 43 - no NAs
+nrow(Biodep_Master_F2) # 61 - no NAs
 
 
-# foramt it
+
+# format it
+Biodep_Master_F1 <- Biodep_Master_F1 %>% 
+                        dplyr::mutate(Age = case_when(Date == "20220302" ~  219, 
+                                                       Date == "20220923" ~  424, 
+                                                       Date == "20221027" ~  261)) %>% 
+                        dplyr::mutate(pCO2 = case_when(treatment == 8 ~ "500 μatm", # add column for pCO2
+                                                       treatment == 7.5 ~ "800 μatm")) %>% # %>% #edit this!
+                        dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm")),
+                                      Temperature = case_when(Date == "20220302" ~  16,
+                                                              Date == "20220923" ~  20,
+                                                              Date == "20221027" ~  12)) %>% 
+                        dplyr::mutate(Gen = 'F1')
+
 Biodep_Master_F2 <- Biodep_Master_F2 %>% 
                         dplyr::mutate(Age = case_when(Date == "20230201" ~  190, 
                                                        Date == "20230224" ~  213, 
                                                        Date == "20230328" ~  245)) %>% 
                         dplyr::mutate(pCO2 = case_when(treatment == 8 ~ "500 μatm", # add column for pCO2
                                                        treatment == 7.5 ~ "800 μatm",
-                                                       treatment == 7 ~ "12000 μatm")) %>% # %>% #edit this!
+                                                       treatment == 7 ~ "1200 μatm")) %>% # %>% #edit this!
                         dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 μatm","800 μatm")),
                                       Temperature = case_when(Date == "20230201" ~  16,
                                                               Date == "20230224" ~  16,
-                                                              Date == "20230328" ~  16))
+                                                              Date == "20230328" ~  16)) %>% 
+                        dplyr::mutate(Gen = 'F2')
+
+# Figures for presentation NOAa 2024
+Biodep_Master <- rbind(Biodep_Master_F1,Biodep_Master_F2)
+
+Biodep_Master_200dpf <- Biodep_Master %>% dplyr::filter(Age == c(219, 213))
+
+```
+
+
+```{r Figures for NOAA presnetation 2024}
+
+F1F2_OIR_MEANS <- Rmisc::summarySE(Biodep_Master_200dpf, measurevar="OIR", 
+                              groupvars=c("Gen", "Age", "pCO2"))
+
+F1F2_OIR_Plot  <- F1F2_OIR_MEANS %>% 
+                          dplyr::filter(!pCO2 %in% "1200 μatm") %>% 
+                          ggplot(aes(x=as.factor(Age), 
+                                     y=OIR, 
+                                     color=as.factor(pCO2))) +
+                          geom_point(position=position_dodge(.5), size = 4)+ 
+                          scale_color_manual(values=c("forestgreen",
+                                                      "darkorange2"))+
+                          geom_errorbar(aes(ymin=OIR-se, 
+                                            ymax=OIR+se), width=.2,
+                                        position=position_dodge(.5))+
+                          ggtitle("Organic Ingestion Rate") +
+                          theme_classic() +  
+                          xlab("Age (dpf)") +
+                         #xlab("Age (d)") +
+                          theme(panel.grid.major = element_blank(), 
+                                panel.grid.minor = element_blank(),
+                                legend.position = "none")+ 
+                          scale_y_continuous(name ="Orgnaic Ingestion Rate")+
+                          geom_line(stat = "identity", size=1.0)+
+                          theme(text = element_text(size=10)) + 
+                          facet_wrap(~Gen, scales = "free_x")
+
+pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F1F2_OIR.pdf"), width = 5, height= 4)
+print(F1F2_OIR_Plot)
+dev.off()
+
 
 ```
 
