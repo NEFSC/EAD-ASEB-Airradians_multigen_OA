@@ -20,12 +20,8 @@ library(dplyr)
 library(stringi)
 library(tibble)
 library(stringr)
-<<<<<<< HEAD
-# library(BEDASSLE)
-=======
 library(BEDASSLE)
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
-# ?BEDASSLE
+
 ```
 
 ```{r call data, include=FALSE}
@@ -104,12 +100,8 @@ converter = function (InputFile) {
 ```
 
 
-<<<<<<< HEAD
-```{r run the converter}
-=======
 
 ```{r run converter Juveniles Mod pCO2}
->>>>>>> 29cee00d029b3dd89bede960bf88fe341c13c82c
 converter(F1J_pH75_raw_geno)
 
 # View(OutputFile)
@@ -421,7 +413,13 @@ F1Juv_pH75_parentage_df[is.na(F1Juv_pH75_parentage_df)] = "-/-" # this takes a w
 
 
 ```{r run apparent}
-apparentOUT <- apparent(F1Juv_pH8_parentage_df[,c(1:ncol(F1Juv_pH8_parentage_df))], MaxIdent=0.10, alpha=0.01, nloci=100, self=TRUE, plot=FALSE, Dyad=FALSE)
+apparentOUT <- apparent(F1Juv_pH8_parentage_df[,c(1:ncol(F1Juv_pH8_parentage_df))], 
+                        MaxIdent=0.10, 
+                        alpha=0.01, 
+                        nloci=100, 
+                        self=TRUE, 
+                        plot=FALSE, 
+                        Dyad=FALSE)
 
 
 

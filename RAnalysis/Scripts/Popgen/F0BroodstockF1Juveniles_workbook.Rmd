@@ -36,6 +36,26 @@ library(qqman)
 ```
 
 
+## About parentage analysis 
+
+the choice of the package will depend on the specifc reesarch questions and the nature of the study species
+
+**Sequoia**
+
+a comprehensive R package for muligenerational pedigree reconstruction
+emplpys a fast heuristic hill-climbing algorithm to explore the liklihood surface
+using SNP data and input sinply the birthyear of your genotyped individuals
+
+key features include: 
+
+* parentage assignment 
+* sibship clustering
+* grandparent assignment 
+* andles any proportion of genotyped parents
+* accounts for genotyping errors 
+* does not require predefined lists of candidate parents 
+
+
 ### Now lets load the total dataset of Juveniles 
 
 * At this time (F3 still running), this includes the pH8 andpH75 data for F1s and F2s Juveniles 
@@ -66,11 +86,10 @@ F0B_F1JALL_intersect.vcf     <- read.vcf(paste0(path,"F0F1_intersect.vcf.gz"),
                                          from = NULL, to = NULL, which.loci = NULL, quiet = FALSE)
 write.vcf(F0B_F1JALL_intersect.vcf, paste0(path,"F0F1_intersect.vcf"), 
           CHROM = NULL, POS = NULL, quiet = FALSE)
-vcf2ploidy_app()
-
-
 F0B_F1JALL_intersect.bed     <- read.pcadapt(paste0(path,"F0F1_intersect.bed"), type = "bed") # 6,048 variants
 
+
+# INTERSECT: ALL f0 broodstock and f1 juveniles from Low and Moderate OA - only long contigs!
 F0B_F1JALL_intersect_longcontigs.vcf     <- read.vcfR(paste0(path,"F0F1_intersect_longcontigs.vcf.gz")) # 2,920  variants
 F0B_F1JALL_intersect_longcontigs.bed     <- read.pcadapt(paste0(path,"F0F1_intersect_longcontig.bed"), type = "bed") # 2,920  variants
 
@@ -95,30 +114,44 @@ F0B_F1JMODERATE_merged.bed   <- read.pcadapt(paste0(path,"F0_F1Juveniles_merged_
 ## build genlight 
 
 * use adegent - genlight is a dataframe compatible with adegenet based on genome-wide SNP data
+
+```{r squois mock data}
+
+data(Ped_HSg5, LH_HSg5)
+# Simulate some genotype data to use for this try-out.
+Geno <- SimGeno(Ped = Ped_HSg5, nSnp = 200)
+# Run sequoia with the genotype data, lifehistory data, and otherwise default values. It is often advisable to first only run parentage assignment, and check if the results are sensible and/or if any parameters need adjusting. Full pedigree reconstruction, including sibship clustering etc., is much more time consuming.
+ParOUT <- sequoia(GenoM = Geno,
+                  LifeHistData = LH_HSg5,
+                  Module = 'par')
+ParOUT$PedigreePar
+```
+
 ```{r build genlight}
 ?sequoia
-F0BF1J_longcontigs_genlight <- vcfR2genlight(F0B_F1JALL_intersect_longcontigs.vcf, n.cores = 4)
-
-View(Geno)
+# Go from vcf file to a geno file for sequoia
+# create a genlight object from vcf file
+F0BF1J_longcontigs_genlight <- vcfR2genlight(F0B_F1JALL_intersect.vcf, n.cores = 4)
+?GenoConvert
+View(Geno_Sequoia)
 Geno_Sequoia <- GenoConvert(
                     InData = F0BF1J_longcontigs_genlight,
                     # InFile = NULL,
-                    InFormat = "vcf",
+                    InFormat = "seq",
                     # OutFile = NA,
                     OutFormat = "seq")
-
-
+# convert to matrix
 Geno_Sequoia                <-  (as.matrix(F0BF1J_longcontigs_genlight))
 
 delim_add <- stringr::str_replace_all(rownames(Geno_Sequoia), "_", ".")
 splt <- strsplit(sub(".", "_", delim_add),".", fixed = TRUE)
 rownames(Geno_Sequoia) <- sapply(splt, "[", 3)
-
+rownames(Geno_Sequoia) <- paste0('ID_',rownames(Geno_Sequoia))
 
 LH_Sequoia <- F0BroodF1Juveniles_strata %>% 
                 dplyr::mutate(BirthYear = dplyr::case_when(
-                                          Gen %in% 'F0' ~ 2020,
-                                          Gen %in% 'F1' ~ 2021)) %>% 
+                                          Gen %in% 'F0' ~ 1,
+                                          Gen %in% 'F1' ~ 2)) %>% 
                 dplyr::select(Individual, BirthYear) %>% 
                 dplyr::rename(ID = Individual)
 
@@ -141,12 +174,14 @@ LH_Sequoia_2 <- merge(LH_Sequoia, F0_parentage,by="ID", all=T) %>%
                           Sex %in% 'Fa' ~ '2',
                           TRUE ~ Sex)) %>% 
                       dplyr::mutate(Sex = as.numeric(Sex))
-rownames(Geno_Sequoia) <- paste0('ID_',rownames(Geno_Sequoia))
 
+# ?sequoia
 
 ParOUT <-sequoia(GenoM = Geno_Sequoia,
                  LifeHistData = LH_Sequoia_2,
                  Module="par")
+ParOUT$LifeHist
+
 SeqOUT <-sequoia(GenoM= Geno_Sequoia,
                  SeqList =ParOUT,
                  Module="ped")
