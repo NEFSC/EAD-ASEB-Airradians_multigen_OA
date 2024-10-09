@@ -32,8 +32,8 @@ library(ggpubr)
 # library(hrbrthemes)
 
 # SET WORKING DIRECTORY :::::::::::::::::::::::::::::::::::::::::::::::
-# knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
-knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis")
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis")
+#knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis")
 
 
 ```
@@ -652,6 +652,7 @@ RR_master_OM            <- RR_master %>%
 nrow(RR_master_OM) # 317
 
 ```
+
 # ALOMETRIC COEFFICIENT (b factor)
 
 ## by TISSUE DRY WEIGHT ::::::::::
@@ -968,79 +969,64 @@ RR_master_OM$log10_Length  <- log10(as.numeric(RR_master_OM$Length_um)) # assign
 
 # all
 MO2_b.factorLENGTH_PLOT <- RR_master_OM %>% 
-                           ggplot(aes(x=log10_Length, y=log10_VO2)) +
-                              geom_point() +
-                              theme(panel.grid.major = element_blank(), 
-                                    panel.grid.minor = element_blank())+ 
-                              scale_x_continuous(name ="log10_Length; in mm") +
-                              scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                              theme_classic() +
-                              theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                              ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                      (b.factor * log10_Length)") +
-                              geom_smooth(method = lm, color = 'red') +
-                              ggpmisc::stat_poly_eq(parse=T, 
-                                                    aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                      sep = "~~~")),
-                                                    label.x.npc = "left") 
-
-# by generation
+                            ggplot(aes(x=log10_Length, y=log10_VO2)) +
+                            geom_point() +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_Length; in mm") +
+                            scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                            theme_classic() +
+                            theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                            ggtitle("RR Length scaling: log10_VO2 = log10_a + (b.factor * log10_Length)")
+                            
+                            
+                            
 MO2_b.factorLENGTH_PLOT_Gen <- RR_master_OM %>% 
-                                  ggplot(aes(x=log10_Length, y=log10_VO2)) +
-                                      geom_point() +
-                                      theme(panel.grid.major = element_blank(), 
-                                            panel.grid.minor = element_blank())+ 
-                                      scale_x_continuous(name ="log10_Length; in mm") +
-                                      scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                                      theme_classic() +
-                                      theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                                      ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                              (b.factor * log10_Length)") +
-                                      geom_smooth(method = lm, color = 'red') +
-                                      ggpmisc::stat_poly_eq(parse=T, 
-                                                            aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                              sep = "~~~")),
-                                                            label.x.npc = "left") +
-                                      facet_wrap(~Gen)
+                            ggplot(aes(x=log10_Length, y=log10_VO2)) +
+                            geom_point() +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_Length; in mm") +
+                            scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                            theme_classic() +
+                            theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                            ggtitle("RR Length scaling: log10_VO2 = log10_a + (b.factor * log10_Length)") +
+                            facet_wrap(~Gen)
 # by treatment
 MO2_b.factorLENGTH_PLOT_pCO2 <- RR_master_OM %>% 
-                                  ggplot(aes(x=log10_Length, y=log10_VO2)) +
-                                      geom_point() +
-                                      theme(panel.grid.major = element_blank(), 
-                                            panel.grid.minor = element_blank())+ 
-                                      scale_x_continuous(name ="log10_Length; in mm") +
-                                      scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                                      theme_classic() +
-                                      theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                                      ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                              (b.factor * log10_Length)") +
-                                      geom_smooth(method = lm, color = 'red') +
-                                      ggpmisc::stat_poly_eq(parse=T, 
-                                                            aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                              sep = "~~~")),
-                                                            label.x.npc = "left") +
-                                      facet_wrap(~pCO2)
+                            ggplot(aes(x=log10_Length, y=log10_VO2)) +
+                            geom_point() +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_Length; in mm") +
+                            scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                            theme_classic() +
+                            theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                            ggtitle("RR Length scaling: log10_VO2 = log10_a + (b.factor * log10_Length)") +
+                            facet_wrap(~pCO2)
 
 
 # by generation * treatment
 MO2_b.factorLENGTH_PLOT_pCO2_Gen <- RR_master_OM %>% 
-                                     ggplot(aes(x=log10_Length, y=log10_VO2, color = pCO2)) +
-                                        geom_point() +
-                                        scale_color_manual(values=c("blue","orange","purple")) +
-                                        theme(panel.grid.major = element_blank(), 
-                                              panel.grid.minor = element_blank())+ 
-                                        scale_x_continuous(name ="log10_Length; in mm") +
-                                        scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                                        theme_classic() +
-                                        theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                                        ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                                (b.factor * log10_Length)") +
-                                        geom_smooth(method = lm, color = 'red') +
-                                        ggpmisc::stat_poly_eq(parse=T, 
-                                                              aes(label = paste(..eq.label..,
-                                                                                ..rr.label.., sep = "~~~")),
-                                                              label.x.npc = "left") +
-                                        facet_wrap(~pCO2*Gen)
+                                    ggplot(aes(x=log10_Length, y=log10_VO2)) +
+                                    geom_point() +
+                                    scale_color_manual(values=c("forestgreen","darkorange","purple")) +
+                                    ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                    ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +
+                                    theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank())+ 
+                                    scale_x_continuous(name ="log10_Length; in mm") +
+                                    scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                                    theme_classic() +
+                                    theme(legend.position="none",axis.title.y=element_text(size=7)) +
+                                    ggtitle("RR Length scaling: log10_VO2 = log10_a + (b.factor * log10_Length)") +
+                                    facet_wrap(~pCO2*Gen)
 
 
 
@@ -1052,38 +1038,69 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT,
                 MO2_b.factorLENGTH_PLOT_pCO2_Gen, nrow = 4, ncol = 1)) # print the model diagnostics
 dev.off() 
 
-print(ggarrange(MO2_b.factorLENGTH_PLOT,
-                MO2_b.factorLENGTH_PLOT_Gen,
-                MO2_b.factorLENGTH_PLOT_pCO2,
-                MO2_b.factorLENGTH_PLOT_pCO2_Gen, nrow = 4, ncol = 1)) # print the model diagnostics
 
-
+ength_bfactor <- RR_master_OM %>% 
+                                     dplyr::filter(!pH %in% 7.0) %>% 
+                                     dplyr::filter(!Gen %in% 'F3') %>% 
+                                     dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                                     ggplot(aes(x=log10_Length, 
+                                                y=log10_VO2, 
+                                                color = Gen_pCO2,
+                                                shape = Gen_pCO2)) +
+                                        geom_point(size = 2) +
+                                        ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                        ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                                        scale_color_manual(values=c("forestgreen","darkorange", "forestgreen", "darkorange")) +
+                                        scale_shape_manual(values=c(19,19, 1, 1)) +
+                                        theme(panel.grid.major = element_blank(), 
+                                              panel.grid.minor = element_blank())+ 
+                                        scale_x_continuous(name ="log10_Length; in mm") +
+                                        scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
+                                        theme_classic() +
+                                        theme(legend.position="none",
+                                              element_line(linewidth = 0.5, 
+                                                           color = 'black'),
+                                              axis.title.y=element_text(size=12),
+                                              axis.text.x=element_text(size=(15)),
+                                              axis.text.y=element_text(size=(15))) + # legend.position="none",
+                                        ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
+                                                (b.factor * log10_Length)") +
+                                        scale_linetype_discrete(name="Gen x pCO2", 
+                                                    breaks=c("F1_500 uatm", 
+                                                             "F1_800 uatm", 
+                                                             "F2_500 uatm", 
+                                                             "F2_800 uatm"), 
+                                                    labels = c("F1 x low pCO2", 
+                                                               "F1 x moderate pCO2", 
+                                                               "F2 x low pCO2",
+                                                               "F2 x moderate pCO2")) +
+                                        facet_wrap(~Gen)
 
 ```
 
 ### summary:
 
--   Length b factor total = 1.86 
+-   Length b factor total = 2.16 
 Generation
--   Length b factor pCO2 F1 = 2.12
--   Length b factor pCO2 F2 = 1.55 
--   Length b factor pCO2 F3 = 3.52
+-   Length b factor pCO2 F1 = 2.3
+-   Length b factor pCO2 F2 = 1.74 
+-   Length b factor pCO2 F3 = 8.38
 Treatment
--   Length b factor pCO2 low = 1.9
--   Length b factor pCO2 moderate = 1.77 
--   Length b factor pCO2 high = 2.29
+-   Length b factor pCO2 low = 2.21
+-   Length b factor pCO2 moderate = 2.05
+-   Length b factor pCO2 high = 2.5
 Generation * Treatment
 F1
--   Length b factor pCO2 low = 2.12
--   Length b factor pCO2 moderate = 2.12 
+-   Length b factor pCO2 low = 2.34
+-   Length b factor pCO2 moderate = 2.25
 F2
--   Length b factor pCO2 low = 1.59
--   Length b factor pCO2 moderate = 1.57 
--   Length b factor pCO2 high = 1.87 
+-   Length b factor pCO2 low = 1.8
+-   Length b factor pCO2 moderate = 1.71 
+-   Length b factor pCO2 high = 7.27 
 F3
--   Length b factor pCO2 low = 2.7
--   Length b factor pCO2 moderate = 2.19 
--   Length b factor pCO2 high = 4.11 
+-   Length b factor pCO2 low = 14.3
+-   Length b factor pCO2 moderate = 10.4 
+-   Length b factor pCO2 high = 6.01 
 
 # F1s master file
 
@@ -1093,14 +1110,14 @@ F3
 
 # call all bfactors (calc above!) - these are using all data
 bTDW = 0.67 # review the outlier-omitted b factor plot in previous chunk
-bLength.all = 2.12 # review the outlier-omitted b factor plot in previous chunk
+bLength.all = 2.3 # review the outlier-omitted b factor plot in previous chunk
 
 # assign bfactors by treatment
 bTDW.low <-  0.675 #mean data by rep tank # 6.99 - with all data
 bTDW.mod <-  0.662 #mean data by rep tank # 6.57 - with all data
 
-bLength.low <-  2.12 #mean data by rep tank # 6.99 - with all data
-bLength.mod <-  2.12 #mean data by rep tank # 6.57 - with all data
+bLength.low <-  2.34 #mean data by rep tank # 6.99 - with all data
+bLength.mod <-  2.25 #mean data by rep tank # 6.57 - with all data
 
 # call the mean lengths of animals measured
 RR_master_F1$Dry_Tissue_weight <- as.numeric(RR_master_F1$Dry_Tissue_weight)
@@ -1204,16 +1221,16 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samuel.gurr/Documents/Github_reposit
 
 # call all bfactors (calc above!) - these are using all data
 bTDW        = 0.771 # review the outlier-omitted b factor plot in previous chunk
-bLength.all = 1.55 # review the outlier-omitted b factor plot in previous chunk
+bLength.all = 1.74 # review the outlier-omitted b factor plot in previous chunk
 
 # assign bfactors by treatment
 bTDW.low <-  0.665 #mean data by rep tank # 6.99 - with all data
 bTDW.mod <-  0.832 #mean data by rep tank # 6.57 - with all data
 bTDW.high <-  0.829 #mean data by rep tank # 6.57 - with all data
 
-bLength.low  <-  1.59 #mean data by rep tank # 6.99 - with all data
-bLength.mod  <-  1.57 #mean data by rep tank # 6.57 - with all data
-bLength.high <-  1.87 #mean data by rep tank # 6.57 - with all data
+bLength.low  <-  1.8 #mean data by rep tank # 6.99 - with all data
+bLength.mod  <-  1.71 #mean data by rep tank # 6.57 - with all data
+bLength.high <-  7.27 #mean data by rep tank # 6.57 - with all data
 
 # calc the mean for TDw and length
 RR_master_F2$Dry_Tissue_weight <- as.numeric(RR_master_F2$Dry_Tissue_weight)

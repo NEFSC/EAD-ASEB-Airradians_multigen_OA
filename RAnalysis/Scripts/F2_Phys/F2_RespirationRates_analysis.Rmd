@@ -39,26 +39,51 @@ RR_formatted_F2s <- read.csv(file="Output/Respiration/F2/F2_RR_calc_master.csv")
                       dplyr::select(-X) %>% 
                       dplyr::mutate(pCO2 = fct_relevel(pCO2, c("500 uatm","800 uatm","1200 uatm")))# relevel for plotting!
 
+# NOTE: data is b factor scaled to the mean of all animals measured 
+# within generation. We seek two manuscripts, one under low and moderate only (F1 and F2) 
+# and the other being the F2s under low and high, these have different b factors!
 
 # formatted for plotting and stats 
 # length b factor norm
-F2_RR_Length_Meanbytank     <- RR_formatted_F2s%>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN", 
+F2_RR_Length_Meanbytank_LvM     <- RR_formatted_F2s %>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvM", 
+                                      groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
+                            dplyr::arrange(sort(Age)) #%>% 
+                            # dplyr::filter(!Date %in% '9/22/2022')
+unique(F2_RR_Length_Meanbytank_LvM$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"                     
+
+
+F2_RR_Length_Meanbytank_LvH     <- RR_formatted_F2s %>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvH", 
                                       groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
                             dplyr::arrange(sort(Age)) %>% 
                             dplyr::filter(!Date %in% '9/22/2022')
-unique(F2_RR_Length_Meanbytank$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"                     
+unique(F2_RR_Length_Meanbytank_LvMH$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"                     
 
-write.csv(F2_RR_Length_Meanbytank, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRLength_by_tank.csv")
+
+write.csv(F2_RR_Length_Meanbytank_LvM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRLength_by_tank_LvM.csv")
+
+
+write.csv(F2_RR_Length_Meanbytank_LvH, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRLength_by_tank_LvH.csv")
+
 
 # length b factor norm
-F2_RR_TDW_Meanbytank <- RR_formatted_F2s%>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormTDW.MEAN", 
+F2_RR_TDW_Meanbytank_LvM <- RR_formatted_F2s%>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvM", 
                                       groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
-                            filter(!is.na(resp_umol_hr_bFactorNormTDW.MEAN))
-unique(F2_RR_TDW_Meanbytank$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"                       
+                            filter(!is.na(resp_umol_hr_bFactorNormLength.MEAN_LvM))
+unique(F2_RR_TDW_Meanbytank_LvM$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"  "9/22/2022"                      
 
-write.csv(F2_RR_TDW_Meanbytank, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRTDW_by_tank.csv")
+
+F2_RR_TDW_Meanbytank_LvH <- RR_formatted_F2s%>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvH", 
+                                      groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
+                            filter(!is.na(resp_umol_hr_bFactorNormLength.MEAN_LvH))
+unique(F2_RR_TDW_Meanbytank_LvH$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"  "9/22/2022" 
+
+write.csv(F2_RR_TDW_Meanbytank_LvM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRTDW_by_tank_LvM.csv")
+
+write.csv(F2_RR_TDW_Meanbytank_LvH, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRTDW_by_tank_LvH.csv")
 
 
 # NOTE: the spat on 9/22/2022 are F2s measured witht heSDR dish and do not have a replicate ID (neither replicate nor chamber tank)
@@ -70,94 +95,17 @@ F2_RR_Length_Meanbytank_spat <- RR_formatted_F2s%>%
 # SHELL LENGTH (allometric scalingexpnent applied - review "RespirationRates_calc_bfactor.Rmd")
 
 ## plots
-* all three treatments
+* two treatments Low v Moderate
 ```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
 
  
 # LENGTH  ---------------------------------------------------------------------------- #
 
-F2s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F2s %>% 
+F2s.BOXPLOT_Length_bfactor.MEAN_LvM <- RR_formatted_F2s %>% 
                                     dplyr::filter(!Age < 40) %>%
+                                    # dplyr::filter(!pH == 7.0) %>% 
                                       ggplot(aes(x = factor(Age), 
-                                                 y = resp_umol_hr_bFactorNormLength.MEAN, 
-                                                 fill = pCO2)) +
-                                             geom_boxplot(alpha = 0.5, # color hue
-                                                 width=0.6, # boxplot width
-                                                 outlier.size=0, # make outliers small
-                                                 position = position_dodge(preserve = "single")) + 
-                                             geom_point(pch = 19, 
-                                                        position = position_jitterdodge(0.01), 
-                                                        size=1) +
-                                             scale_fill_manual(values=c("500 uatm"  = "forestgreen",
-                                                                        "800 uatm"  = "darkorange2", 
-                                                                        "1200 uatm" = "purple")) +
-                                             theme_classic() + 
-                                             ggtitle("RR b factor corrected (all data points)") +
-                                             theme(legend.position="none",
-                                                   axis.title.y=element_text(size=10),
-                                                   axis.title.x=element_text(size=10),
-                                                   axis.text.x=element_text(size=10)) +
-                                             ylab("RR uatm hr (b factor corrrected)") +
-                                             scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-                                             stat_summary(fun.y=mean, 
-                                                          geom = "errorbar", 
-                                                          aes(ymax = ..y.., ymin = ..y..), 
-                                                          width = 0.6, 
-                                                          size=0.4, 
-                                                          linetype = "dashed", 
-                                                          position = position_dodge(preserve = "single")) +
-                                             theme(text = element_text(size=10))
-# convert meand by tank to summrizing means by treatment and age 
-F2_RR_Length_Means <- F2_RR_Length_Meanbytank %>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN", 
-                                      groupvars=c("Age", "pCO2"))
-
-
-F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
-                                 dplyr::filter(!Age < 40) %>% 
-                                 ggplot(aes(x=as.factor(Age), 
-                                               y=resp_umol_hr_bFactorNormLength.MEAN, 
-                                               color=as.factor(pCO2))) +
-                                    geom_point(position=position_dodge(.5))+ 
-                                             scale_color_manual(values=c("500 uatm"  = "forestgreen",
-                                                                        "800 uatm"  = "darkorange2", 
-                                                                        "1200 uatm" = "purple")) +
-                                    geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN-se, 
-                                                      ymax=resp_umol_hr_bFactorNormLength.MEAN+se), width=.2,
-                                                  position=position_dodge(.5))+
-                                    ggtitle("RR b factor corrected (mean+-SE)") +
-                                    theme_classic() +  
-                                    xlab("Age (dpf)") +
-                                    ylab("RR uatm hr (b factor corrrected)") +
-                                   #xlab("Age (d)") +
-                                    theme(panel.grid.major = element_blank(), 
-                                          panel.grid.minor = element_blank(),
-                                          legend.position="none")+ 
-                                    scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-                                    # labs(color='pCO2 treatment') + # legend name
-                                    theme(text = element_text(size=10))
-
-
-# save
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor.pdf"), width = 6, height = 8)
-print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN, F2_RR_Length_MeanSE, nrow = 2)) # print the model diagnostics 
-dev.off()
-
-
-
-```
-
-* two treatments
-```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
-
- 
-# LENGTH  ---------------------------------------------------------------------------- #
-
-F2s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F2s %>% 
-                                    dplyr::filter(!Age < 40) %>%
-                                    dplyr::filter(!pH == 7.0) %>% 
-                                      ggplot(aes(x = factor(Age), 
-                                                 y = resp_umol_hr_bFactorNormLength.MEAN, 
+                                                 y = resp_umol_hr_bFactorNormLength.MEAN_LvM, 
                                                  fill = pCO2)) +
                                              geom_boxplot(alpha = 0.5, # color hue
                                                  width=0.6, # boxplot width
@@ -185,22 +133,22 @@ F2s.BOXPLOT_Length_bfactor.MEAN <- RR_formatted_F2s %>%
                                                           position = position_dodge(preserve = "single")) +
                                              theme(text = element_text(size=10))
 # convert meand by tank to summrizing means by treatment and age 
-F2_RR_Length_Means <- F2_RR_Length_Meanbytank %>% 
-                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN", 
+F2_RR_Length_Means_LvM <- F2_RR_Length_Meanbytank_LvM %>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvM", 
                                       groupvars=c("Age", "pCO2"))
 
 
-F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
+F2_RR_Length_MeanSE_LvM <-  F2_RR_Length_Means_LvM %>%
                                  dplyr::filter(!Age < 40) %>% 
-                                 dplyr::filter(!pCO2 %in% '1200 uatm') %>%                                  
+                                 # dplyr::filter(!pCO2 %in% '1200 uatm') %>%                                  
                                     ggplot(aes(x=as.factor(Age), 
-                                               y=resp_umol_hr_bFactorNormLength.MEAN, 
+                                               y=resp_umol_hr_bFactorNormLength.MEAN_LvM, 
                                                color=as.factor(pCO2))) +
                                     geom_point(position=position_dodge(.5))+ 
                                              scale_color_manual(values=c("500 uatm"  = "forestgreen",
                                                                         "800 uatm"  = "darkorange2")) +
-                                    geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN-se, 
-                                                      ymax=resp_umol_hr_bFactorNormLength.MEAN+se), width=.2,
+                                    geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN_LvM-se, 
+                                                      ymax=resp_umol_hr_bFactorNormLength.MEAN_LvM+se), width=.2,
                                                   position=position_dodge(.5))+
                                     ggtitle("RR b factor corrected (mean+-SE)") +
                                     theme_classic() +  
@@ -217,12 +165,92 @@ F2_RR_Length_MeanSE <-  F2_RR_Length_Means %>%
 
 # save
 pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_LowvMod.pdf"), width = 8, height = 4)
-print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN, F2_RR_Length_MeanSE, ncol = 2)) # print the model diagnostics 
+print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN_LvM, F2_RR_Length_MeanSE_LvM, ncol = 2)) # print the model diagnostics 
 dev.off()
 
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_meanSE.pdf"), width = 4, height = 4)
-print(ggarrange(F2_RR_Length_MeanSE)) # print the model diagnostics 
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_meanSE_LowvMod.pdf"), width = 4, height = 4)
+print(ggarrange(F2_RR_Length_MeanSE_LvM)) # print the model diagnostics 
+dev.off()
+
+```
+
+* two treatments Low v high
+```{r, by MM LENGTH,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
+
+ 
+# LENGTH  ---------------------------------------------------------------------------- #
+
+F2s.BOXPLOT_Length_bfactor.MEAN_LvH <- RR_formatted_F2s %>% 
+                                    dplyr::filter(!Age < 40) %>%
+                                    # dplyr::filter(!pH == 7.0) %>% 
+                                      ggplot(aes(x = factor(Age), 
+                                                 y = resp_umol_hr_bFactorNormLength.MEAN_LvH, 
+                                                 fill = pCO2)) +
+                                             geom_boxplot(alpha = 0.5, # color hue
+                                                 width=0.6, # boxplot width
+                                                 outlier.size=0, # make outliers small
+                                                 position = position_dodge(preserve = "single")) + 
+                                             geom_point(pch = 19, 
+                                                        position = position_jitterdodge(0.01), 
+                                                        size=1) +
+                                             scale_fill_manual(values=c("500 uatm"  = "forestgreen",
+                                                                        "1200 uatm"  = "purple")) +
+                                             theme_classic() + 
+                                             ggtitle("RR b factor corrected (all data points)") +
+                                             theme(legend.position="none",
+                                                   axis.title.y=element_text(size=10),
+                                                   axis.title.x=element_text(size=10),
+                                                   axis.text.x=element_text(size=10)) +
+                                             ylab("RR uatm hr (b factor corrrected)") +
+                                             scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                             stat_summary(fun.y=mean, 
+                                                          geom = "errorbar", 
+                                                          aes(ymax = ..y.., ymin = ..y..), 
+                                                          width = 0.6, 
+                                                          size=0.4, 
+                                                          linetype = "dashed", 
+                                                          position = position_dodge(preserve = "single")) +
+                                             theme(text = element_text(size=10))
+# convert meand by tank to summrizing means by treatment and age 
+F2_RR_Length_Means_LvH <- F2_RR_Length_Meanbytank_LvH %>% 
+                            summarySE(measurevar="resp_umol_hr_bFactorNormLength.MEAN_LvH", 
+                                      groupvars=c("Age", "pCO2"))
+
+
+F2_RR_Length_MeanSE_LvH <-  F2_RR_Length_Means_LvH %>%
+                                 dplyr::filter(!Age < 40) %>% 
+                                 # dplyr::filter(!pCO2 %in% '1200 uatm') %>%                                  
+                                    ggplot(aes(x=as.factor(Age), 
+                                               y=resp_umol_hr_bFactorNormLength.MEAN_LvH, 
+                                               color=as.factor(pCO2))) +
+                                    geom_point(position=position_dodge(.5))+ 
+                                             scale_color_manual(values=c("500 uatm"  = "forestgreen",
+                                                                        "1200 uatm"  = "purple")) +
+                                    geom_errorbar(aes(ymin=resp_umol_hr_bFactorNormLength.MEAN_LvH-se, 
+                                                      ymax=resp_umol_hr_bFactorNormLength.MEAN_LvH+se), width=.2,
+                                                  position=position_dodge(.5))+
+                                    ggtitle("RR b factor corrected (mean+-SE)") +
+                                    theme_classic() +  
+                                    xlab("Age (dpf)") +
+                                    ylab("RR uatm hr (b factor corrrected)") +
+                                   #xlab("Age (d)") +
+                                    theme(panel.grid.major = element_blank(), 
+                                          panel.grid.minor = element_blank(),
+                                          legend.position="none")+ 
+                                    scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                    # labs(color='pCO2 treatment') + # legend name
+                                    theme(text = element_text(size=10))
+
+
+# save
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_LowvHigh.pdf"), width = 8, height = 4)
+print(ggarrange(F2s.BOXPLOT_Length_bfactor.MEAN_LvH, F2_RR_Length_MeanSE_LvH, ncol = 2)) # print the model diagnostics 
+dev.off()
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_bfactor_meanSE_LowvHigh.pdf"), width = 4, height = 4)
+print(ggarrange(F2_RR_Length_MeanSE_LvH)) # print the model diagnostics 
 dev.off()
 
 ```
@@ -292,11 +320,21 @@ AOVdf_total <- AOVdf_total %>% dplyr::arrange(sort(Date))
 # WRITE CSV OF THE MASTER FILE
 write.csv( (AOVdf_total %>% dplyr::arrange(sort(Date))), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Statistics.csv")
 #write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
+```
 
+```{r ttests Lov v Mod}
+library(purrr)
+library(rstatix)
+
+# F2_RR_Length_Meanbytank_LvM :::::::::::::::::::::
 
 
 # (2) t.test 
-Ttest_Dates       <- as.data.frame(unique(F2_RR_Length_Meanbytank$Date)) # call a list to loop in 
+Ttest_Dates       <- as.data.frame(
+                              unique( 
+                                (F2_RR_Length_Meanbytank_LvM %>% 
+                                   filter(!Date %in% c('8/30/2022','9/22/2022'))
+                                 )$Date) ) # call a list to loop in 
 Ttest_total       <- data.frame() # start dataframe, this will be the master output
 DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
 colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 
@@ -306,10 +344,10 @@ colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model',
 for (i in 1:nrow(Ttest_Dates)) {
 
   date_loop     <- as.character(Ttest_Dates[i,])
-  data_loop     <- F2_RR_Length_Meanbytank %>% 
+  data_loop     <- F2_RR_Length_Meanbytank_LvM %>% 
                           dplyr::filter(!pCO2 %in% '1200 uatm') %>% 
                           dplyr::filter(Date == date_loop) %>% 
-                          dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN) %>% 
+                          dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN_LvM) %>% 
                           na.omit()
 
         DF_loop$Date        <- date_loop
@@ -318,21 +356,21 @@ for (i in 1:nrow(Ttest_Dates)) {
         
         # run assumptions 
         # normality of data 
-        normality <- shapiro.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN)[[2]]
+        normality <- shapiro.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvM)[[2]]
         # equal variance 
-        variance <- var.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN~ 
+        variance <- var.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvM~ 
                                            as.numeric(as.factor(data_loop$pCO2)))[[3]]
         
         # run all modles
-        Ttestmod.eqvar      <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 
+        Ttestmod.eqvar      <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvM ~ 
                                          (as.factor(data_loop$pCO2)),
                                        var.equal = TRUE)
         
-        Ttestmod.noneqvar   <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 
+        Ttestmod.noneqvar   <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvM ~ 
                                          (as.factor(data_loop$pCO2)),
                                        var.equal = FALSE)
         
-        Wilcoxmod           <- wilcox.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ 
+        Wilcoxmod           <- wilcox.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvM ~ 
                                              as.numeric(as.factor(data_loop$pCO2)))
         
         # normality tests for the anova model - asign 
@@ -381,7 +419,104 @@ for (i in 1:nrow(Ttest_Dates)) {
 }
 # View(AOVdf_total) # view all the anova tests within data 
 
-write.csv( (Ttest_total %>% dplyr::arrange(Age)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F1/F1_RR_LENGTH_Ttests.csv")
+write.csv( (Ttest_total %>% dplyr::arrange(Age)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Ttests_LowvMod.csv")
+
+```
+
+```{r ttests Lov v High}
+library(purrr)
+library(rstatix)
+
+# F2_RR_Length_Meanbytank_LvH :::::::::::::::::::::
+
+
+# (2) t.test 
+Ttest_Dates       <- as.data.frame(unique(F2_RR_Length_Meanbytank_LvH$Date))# call a list to loop in 
+Ttest_total       <- data.frame() # start dataframe, this will be the master output
+DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
+colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 
+                       'ShapiroWilk', 'ResidNorm', 'Variance', 
+                       'HomogVar', 'DF.num' , 'DF.denom', 'Tstat','P_val', 'SigDif') # names for comuns in the for loop
+
+for (i in 1:4) { # 1-4 to not run row 5 "8/30/2022" this is at 133 dpf dp not run
+
+  date_loop     <- as.character(Ttest_Dates[i,])
+  data_loop     <- F2_RR_Length_Meanbytank_LvH %>% 
+                          dplyr::filter(!pCO2 %in% '800 uatm') %>% 
+                          dplyr::filter(Date == date_loop) %>% 
+                          dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN_LvH) %>% 
+                          na.omit()
+
+        DF_loop$Date        <- date_loop
+        DF_loop$Age         <- data_loop$Age[1]
+        DF_loop$Metric      <- 'RR; LENGTH b factor normalized'
+        
+        # run assumptions 
+        # normality of data 
+        normality <- shapiro.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvH)[[2]]
+        # equal variance 
+        variance <- var.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvH~ 
+                                           as.numeric(as.factor(data_loop$pCO2)))[[3]]
+        
+        # run all modles
+        Ttestmod.eqvar      <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvH ~ 
+                                         (as.factor(data_loop$pCO2)),
+                                       var.equal = TRUE)
+        
+        Ttestmod.noneqvar   <- t.test( data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvH ~ 
+                                         (as.factor(data_loop$pCO2)),
+                                       var.equal = FALSE)
+        
+        Wilcoxmod           <- wilcox.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN_LvH ~ 
+                                             as.numeric(as.factor(data_loop$pCO2)))
+        
+        # normality tests for the anova model - asign 
+        DF_loop$ShapiroWilk <- normality
+        
+        DF_loop$ResidNorm   <- if( normality > 0.05) {
+          'YES'} else {'NO'}
+        
+        DF_loop$Variance     <- variance
+        
+        DF_loop$HomogVar    <- if( variance > 0.05) {
+          'YES'} else {'NO'}
+        
+        if(normality > 0.05 & variance > 0.05) {
+            DF_loop$model       <- 'Welchs T test, equal variance'
+            DF_loop$DF.num      <- map_df(list(Ttestmod.eqvar), tidy)$parameter[[1]]
+            DF_loop$DF.denom    <- 'NA'
+            DF_loop$Tstat       <- map_df(list(Ttestmod.eqvar), tidy)$statistic[[1]]
+            DF_loop$P_val       <- map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]
+            DF_loop$SigDif      <- if( (map_df(list(Ttestmod.eqvar), tidy)$p.value[[1]]) > 0.05) {
+              'NO'} else {'YES'}
+    
+          } else if (normality > 0.05 & variance < 0.05) {
+            DF_loop$model       <- 'Welchs T test, non-equal variance'
+            DF_loop$DF.num      <- map_df(list(Ttestmod.noneqvar), tidy)$parameter[[1]]
+            DF_loop$DF.denom    <- 'NA'
+            DF_loop$Tstat       <- map_df(list(Ttestmod.noneqvar), tidy)$statistic[[1]]
+            DF_loop$P_val       <- map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]
+            DF_loop$SigDif      <- if( (map_df(list(Ttestmod.noneqvar), tidy)$p.value[[1]]) > 0.05) {
+              'NO'} else {'YES'}
+          } else {
+            DF_loop$model       <- 'Wilcoxon rank sum exact test'
+            Wilcoxmod
+            DF_loop$DF.num      <- 'NA'
+            DF_loop$DF.denom    <- 'NA'
+            DF_loop$Tstat       <- map_df(list(Wilcoxmod), tidy)$statistic[[1]]
+            DF_loop$P_val       <- map_df(list(Wilcoxmod), tidy)$p.value[[1]]
+            DF_loop$SigDif      <- if( (map_df(list(Wilcoxmod), tidy)$p.value[[1]]) > 0.05) {
+              'NO'} else {'YES'}            
+          }
+        # asign loop and cumulative output table
+        df          <- data.frame(DF_loop) # name dataframe for this single row
+        Ttest_total <- rbind(Ttest_total,DF_loop) #bind to a cumulative list dataframe
+        print(Ttest_total) # print to monitor progress
+        
+}
+# View(AOVdf_total) # view all the anova tests within data 
+
+write.csv( (Ttest_total %>% dplyr::arrange(Age)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Ttests_LowvHigh.csv")
 
 ```
 
