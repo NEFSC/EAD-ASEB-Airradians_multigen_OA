@@ -34,9 +34,9 @@ Biodep_Master_F1 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airra
 nrow(Biodep_Master_F1) # 43
 
 Biodep_Master_F2 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
-nrow(Biodep_Master_F2) # 61
+nrow(Biodep_Master_F2) # 55
 Biodep_Master_F2 <- na.omit(Biodep_Master_F2) # omit #6 pH7.5 on 20221027
-nrow(Biodep_Master_F2) # 61 - no NAs
+nrow(Biodep_Master_F2) # 55 - no NAs
 
 
 

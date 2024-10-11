@@ -682,6 +682,9 @@ RR_master_OM$log10_VO2  <- log10(as.numeric(RR_master_OM$resp_umol_hr)) # assign
 RR_master_OM$log10_TDW  <- log10(as.numeric(RR_master_OM$Dry_Tissue_weight)) # assign length value 
 #summary(lm(RR_master_OM$log10_VO2~RR_master_OM$log10_TDW)) # 0.79749 == b factor
 
+
+
+
 MO2_b.factor_PLOT <- RR_master_OM %>% 
                        ggplot(aes(x=log10_TDW, y=log10_VO2)) +
                           geom_point() +
@@ -733,16 +736,18 @@ MO2_b.factor_PLOT_OM <- RR_master_OM %>%
                                          log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
                        ggplot(aes(x=log10_TDW, y=log10_VO2)) +
                           geom_point() +
+                          ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                          ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
                           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
                           theme(legend.position="none",axis.title.y=element_text(size=7)) +
-                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                          geom_smooth(method = lm, color = 'red') +
-                          ggpmisc::stat_poly_eq(parse=T, 
-                                                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
-                                                label.x.npc = "left")
+                          ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") #+
+                          # geom_smooth(method = lm, color = 'red') +
+                          # ggpmisc::stat_poly_eq(parse=T, 
+                          #                       aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                          #                       label.x.npc = "left")
 
 # by generation
 MO2_b.factorTDW_PLOT_Gen <- RR_master_OM %>% 
@@ -750,6 +755,8 @@ MO2_b.factorTDW_PLOT_Gen <- RR_master_OM %>%
                                          log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
                        ggplot(aes(x=log10_TDW, y=log10_VO2)) +
                                       geom_point() +
+                                      ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                      ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
                                       theme(panel.grid.major = element_blank(), 
                                             panel.grid.minor = element_blank())+ 
                                       scale_x_continuous(name ="log10_Length; in mm") +
@@ -758,11 +765,11 @@ MO2_b.factorTDW_PLOT_Gen <- RR_master_OM %>%
                                       theme(legend.position="none",axis.title.y=element_text(size=7)) +
                                       ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
                                               (b.factor * log10_Length)") +
-                                      geom_smooth(method = lm, color = 'red') +
-                                      ggpmisc::stat_poly_eq(parse=T, 
-                                                            aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                              sep = "~~~")),
-                                                            label.x.npc = "left") +
+                                      # geom_smooth(method = lm, color = 'red') +
+                                      # ggpmisc::stat_poly_eq(parse=T, 
+                                      #                       aes(label = paste(..eq.label.., ..rr.label.., 
+                                      #                                         sep = "~~~")),
+                                      #                       label.x.npc = "left") +
                                       facet_wrap(~Gen)
 # by treatment
 MO2_b.factorTDW_PLOT_pCO2 <- RR_master_OM %>% 
@@ -770,6 +777,8 @@ MO2_b.factorTDW_PLOT_pCO2 <- RR_master_OM %>%
                                          log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
                        ggplot(aes(x=log10_TDW, y=log10_VO2)) +
                                       geom_point() +
+                                      ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                                      ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
                                       theme(panel.grid.major = element_blank(), 
                                             panel.grid.minor = element_blank())+ 
                                       scale_x_continuous(name ="log10_Length; in mm") +
@@ -778,11 +787,11 @@ MO2_b.factorTDW_PLOT_pCO2 <- RR_master_OM %>%
                                       theme(legend.position="none",axis.title.y=element_text(size=7)) +
                                       ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
                                               (b.factor * log10_Length)") +
-                                      geom_smooth(method = lm, color = 'red') +
-                                      ggpmisc::stat_poly_eq(parse=T, 
-                                                            aes(label = paste(..eq.label.., ..rr.label.., 
-                                                                              sep = "~~~")),
-                                                            label.x.npc = "left") +
+                                      # geom_smooth(method = lm, color = 'red') +
+                                      # ggpmisc::stat_poly_eq(parse=T, 
+                                      #                       aes(label = paste(..eq.label.., ..rr.label.., 
+                                      #                                         sep = "~~~")),
+                                      #                       label.x.npc = "left") +
                                       facet_wrap(~pCO2)
 
 
@@ -791,20 +800,22 @@ MO2_b.factorTDW_PLOT_pCO2_Gen <- RR_master_OM %>%
                                          log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
                        ggplot(aes(x=log10_TDW, y=log10_VO2, color = pCO2)) +
                           geom_point() +
-                          scale_color_manual(values=c("blue","orange", "purple")) +
+                          ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                          ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                          scale_color_manual(values=c("forestgreen","darkorange", "purple")) +
                           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
                           scale_x_continuous(name ="log10_BodyMass; TDW in g") +
                           scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
                           theme_classic() +
                           theme(legend.position="none",axis.title.y=element_text(size=7)) +
                           ggtitle("Metabolic scaling: log10_MO2 = log10_a + (b.factor * log10_BodyMass)") +
-                          geom_smooth(method = lm, color = 'red') +
-                          ggpmisc::stat_poly_eq(parse=T, 
-                                                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
-                                                label.x.npc = "left") +
+                          # geom_smooth(method = lm, color = 'red') +
+                          # ggpmisc::stat_poly_eq(parse=T, 
+                          #                       aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                          #                       label.x.npc = "left") +
                           facet_wrap(~pCO2*Gen)
 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_OM.pdf"), width = 8, height = 8)
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/MetabolicScaling_bFactor_TDW_OM.pdf"), width = 8, height = 16)
 print(ggarrange(MO2_b.factor_PLOT_OM, 
                 MO2_b.factorTDW_PLOT_Gen,
                 MO2_b.factorTDW_PLOT_pCO2,
@@ -818,26 +829,111 @@ print(ggarrange(MO2_b.factor_PLOT_OM,
                 nrow = 4, ncol = 1)) # print the model diagnostics 
 
 
+
+
+# F1 and F2 TDW bfactor, LOW and MODERATE pCO2
+TDW_RR_b.factor_LowVMod <- RR_master_OM %>% 
+                              dplyr::filter(!(log10_TDW > -0.5 & 
+                                         log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
+                              dplyr::filter(!pCO2 %in% '1200 uatm') %>% # omit high pCO2 from F2 samples
+                              dplyr::filter(!Gen %in% 'F3') %>% 
+                              dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10_TDW, 
+                                         y=log10_VO2, 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("forestgreen","darkorange","forestgreen","darkorange")) +
+                              scale_shape_manual(values=c(19, 19, 1,1)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                              ylim(-1.5,2) +
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_VO2 = log10_a + (b.factor * log10_TDW)") +
+                              scale_linetype_discrete(name="Gen x pCO2", 
+                                                      breaks=c("F1_500 uatm", 
+                                                               "F1_800 uatm", 
+                                                               "F2_500 uatm", 
+                                                               "F2_800 uatm"), 
+                                                      labels = c("F1 x low pCO2", 
+                                                                 "F1 x moderate pCO2", 
+                                                                 "F2 x low pCO2",
+                                                                 "F2 x moderate pCO2"))
+TDW_RR_b.factor_LowVMod_facetted  <- TDW_RR_b.factor_LowVMod + facet_wrap(~Gen)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/F1_F2_RR_bFactor_TDW_LowvMod.pdf"), 
+    width = 5, height = 10)
+print(ggpubr::ggarrange(TDW_RR_b.factor_LowVMod,
+                        TDW_RR_b.factor_LowVMod_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# F2 TDW bfactor, LOW and High pCO2
+levels(RR_master_OM$pCO2)
+F2_TDW_RR_b.factor_LowVHigh <- RR_master_OM %>% 
+                              dplyr::filter(!(log10_TDW > -0.5 & 
+                                         log10_VO2 < -0.2)) %>%  # outliers ommited (should be 2 data points)
+                              dplyr::filter(!pCO2 %in% '800 uatm') %>% # omit high pCO2 from F2 samples
+                              dplyr::filter(!Gen %in% c('F1','F3')) %>% 
+                              dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10_TDW, 
+                                         y=log10_VO2, 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("purple","forestgreen")) +
+                              scale_shape_manual(values=c(19, 19)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                              ylim(-1,2) +
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_VO2 = log10_a + (b.factor * log10_TDW)") 
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/F2_RR_bFactor_TDW_LowvHigh.pdf"), 
+    width = 5, height = 5)
+print(F2_TDW_RR_b.factor_LowVHigh) # print the model diagnostics
+dev.off() 
+
+
 ```
 
 ### summary:
 * all
--   TDW b factor total = 0.704
+-   TDW b factor total = 0.801
 * Generation
--  F1 TDW b factor  = 0.67
--  F2 TDW b factor  = 0.771
+-  F1 TDW b factor  = 0.724
+-  F2 TDW b factor  = 0.955
 * treamtent
--   Low pCO2 TDW b factor  = 0.675
--   Moderate pCO2 TDW b factor  = 1.17
--   High pCO2 TDW b factor  = 1.28
+-   Low pCO2 TDW b factor  = 0.758
+-   Moderate pCO2 TDW b factor  = 0.775
+-   High pCO2 TDW b factor  = 1.05
 *  treamtent x Generation
 F1
--   Low pCO2 F1 TDW b factor  = 0.675
--   Moderate pCO2 F1 TDW b factor  = 0.662
+-   Low pCO2 F1 TDW b factor  = 0.732
+-   Moderate pCO2 F1 TDW b factor  = 0.710
 F2
--   Low pCO2 F2 TDW b factor  = 0.665
--   Moderate pCO2 F2 TDW b factor  = 0.832
--   High pCO2 F2 TDW b factor  = 0.829
+-   Low pCO2 F2 TDW b factor  = 0.826
+-   Moderate pCO2 F2 TDW b factor  = 0.986
+-   High pCO2 F2 TDW b factor  = 1.05
 
 ## by TISSUE DRY WEIGHT (biovol calculated) ::::::::::
 
@@ -1039,42 +1135,86 @@ print(ggarrange(MO2_b.factorLENGTH_PLOT,
 dev.off() 
 
 
-ength_bfactor <- RR_master_OM %>% 
-                                     dplyr::filter(!pH %in% 7.0) %>% 
-                                     dplyr::filter(!Gen %in% 'F3') %>% 
-                                     dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
-                                     ggplot(aes(x=log10_Length, 
-                                                y=log10_VO2, 
-                                                color = Gen_pCO2,
-                                                shape = Gen_pCO2)) +
-                                        geom_point(size = 2) +
-                                        ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
-                                        ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
-                                        scale_color_manual(values=c("forestgreen","darkorange", "forestgreen", "darkorange")) +
-                                        scale_shape_manual(values=c(19,19, 1, 1)) +
-                                        theme(panel.grid.major = element_blank(), 
-                                              panel.grid.minor = element_blank())+ 
-                                        scale_x_continuous(name ="log10_Length; in mm") +
-                                        scale_y_continuous(name ="log10_MO2; RR in umol L-1 hr-1)") +
-                                        theme_classic() +
-                                        theme(legend.position="none",
-                                              element_line(linewidth = 0.5, 
-                                                           color = 'black'),
-                                              axis.title.y=element_text(size=12),
-                                              axis.text.x=element_text(size=(15)),
-                                              axis.text.y=element_text(size=(15))) + # legend.position="none",
-                                        ggtitle("Metabolic scaling: log10_MO2 = log10_a + 
-                                                (b.factor * log10_Length)") +
-                                        scale_linetype_discrete(name="Gen x pCO2", 
-                                                    breaks=c("F1_500 uatm", 
-                                                             "F1_800 uatm", 
-                                                             "F2_500 uatm", 
-                                                             "F2_800 uatm"), 
-                                                    labels = c("F1 x low pCO2", 
-                                                               "F1 x moderate pCO2", 
-                                                               "F2 x low pCO2",
-                                                               "F2 x moderate pCO2")) +
-                                        facet_wrap(~Gen)
+# F1 and F2 TDW bfactor, LOW and MODERATE pCO2
+Length_RR_b.factor_LowVMod <- RR_master_OM %>% 
+                              dplyr::filter(!pCO2 %in% '1200 uatm') %>% # omit high pCO2 from F2 samples
+                              dplyr::filter(!Gen %in% 'F3') %>% 
+                              dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10_Length, 
+                                         y=log10_VO2, 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("forestgreen","darkorange","forestgreen","darkorange")) +
+                              scale_shape_manual(values=c(19, 19, 1,1)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_Length; in mm") +
+                              scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                              # ylim(-2,2) +
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_VO2 = log10_a + (b.factor * log10_Length)") +
+                              scale_linetype_discrete(name="Gen x pCO2", 
+                                                      breaks=c("F1_500 uatm", 
+                                                               "F1_800 uatm", 
+                                                               "F2_500 uatm", 
+                                                               "F2_800 uatm"), 
+                                                      labels = c("F1 x low pCO2", 
+                                                                 "F1 x moderate pCO2", 
+                                                                 "F2 x low pCO2",
+                                                                 "F2 x moderate pCO2"))
+Length_RR_b.factor_LowVMod_facetted  <- Length_RR_b.factor_LowVMod + facet_wrap(~Gen)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/F1_F2_RR_bFactor_Length_LowvMod.pdf"), 
+    width = 5, height = 10)
+print(ggpubr::ggarrange(Length_RR_b.factor_LowVMod,
+                        Length_RR_b.factor_LowVMod_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# F2 TDW bfactor, LOW and High pCO2 - just the time points of F2 that have hihgh OA and low OA data
+levels(RR_master_OM$pCO2)
+F2_Length_RR_b.factor_LowVHigh <- RR_master_OM %>% 
+                              dplyr::filter(!pCO2 %in% '800 uatm') %>% # omit high pCO2 from F2 samples
+                              dplyr::filter(!Gen %in% c('F1','F3')) %>% 
+                              dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10_Length, 
+                                         y=log10_VO2, 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("purple","forestgreen")) +
+                              scale_shape_manual(values=c(19, 19)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_Length; in mm") +
+                              scale_y_continuous(name ="log10_VO2; RR in umol L-1 hr-1)") +
+                              xlim(4,4.8) + # if you comment our these you can see there much more ealier data for low OA than high OA
+                              ylim(-2,2) + # if you comment our these you can see there much more ealier data for low OA than high OA
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_VO2 = log10_a + (b.factor * log10_Length)") 
+
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/metabolic_scaling/F2_RR_bFactor_Length_LowvHigh.pdf"), 
+    width = 5, height = 5)
+print(F2_Length_RR_b.factor_LowVHigh) # print the model diagnostics
+dev.off() 
+
+
 
 ```
 
@@ -1094,11 +1234,11 @@ F1
 -   Length b factor pCO2 low = 2.34
 -   Length b factor pCO2 moderate = 2.25
 F2
--   Length b factor pCO2 low = 1.8
+-   Length b factor pCO2 low = 1.8 (Note we have 3.4 when truncating to data to compare to high OA OTHER PAPER LOOKING AT LOW V HIGH F2)
 -   Length b factor pCO2 moderate = 1.71 
 -   Length b factor pCO2 high = 7.27 
 F3
--   Length b factor pCO2 low = 14.3
+-   Length b factor pCO2 low = 14.3 
 -   Length b factor pCO2 moderate = 10.4 
 -   Length b factor pCO2 high = 6.01 
 
@@ -1109,12 +1249,12 @@ F3
 ```{r, RR_formatted_F1smaster}
 
 # call all bfactors (calc above!) - these are using all data
-bTDW = 0.67 # review the outlier-omitted b factor plot in previous chunk
+bTDW = 0.724 # review the outlier-omitted b factor plot in previous chunk
 bLength.all = 2.3 # review the outlier-omitted b factor plot in previous chunk
 
 # assign bfactors by treatment
-bTDW.low <-  0.675 #mean data by rep tank # 6.99 - with all data
-bTDW.mod <-  0.662 #mean data by rep tank # 6.57 - with all data
+bTDW.low <-  0.732 #mean data by rep tank # 6.99 - with all data
+bTDW.mod <-  0.710 #mean data by rep tank # 6.57 - with all data
 
 bLength.low <-  2.34 #mean data by rep tank # 6.99 - with all data
 bLength.mod <-  2.25 #mean data by rep tank # 6.57 - with all data
@@ -1220,15 +1360,17 @@ write.csv(RR_formatted_F1smaster, "C:/Users/samuel.gurr/Documents/Github_reposit
 ```{r, RR_formatted_F2smaster}
 
 # call all bfactors (calc above!) - these are using all data
-bTDW        = 0.771 # review the outlier-omitted b factor plot in previous chunk
+bTDW        = 0.955 # review the outlier-omitted b factor plot in previous chunk
 bLength.all = 1.74 # review the outlier-omitted b factor plot in previous chunk
 
 # assign bfactors by treatment
-bTDW.low <-  0.665 #mean data by rep tank # 6.99 - with all data
-bTDW.mod <-  0.832 #mean data by rep tank # 6.57 - with all data
-bTDW.high <-  0.829 #mean data by rep tank # 6.57 - with all data
+bTDW.low <-  0.826 #mean data by rep tank # 6.99 - with all data, WE DO NOT NEED SPECIAL CASE TO COMPARE TO HIGH BECAUSE THIS IS TDW, recorded as same timepoints as high OA
+bTDW.mod <-  0.986 #mean data by rep tank # 6.57 - with all data
+bTDW.high <-  1.05 #mean data by rep tank # 6.57 - with all data
 
-bLength.low  <-  1.8 #mean data by rep tank # 6.99 - with all data
+# note that high values for length b factor - LvH uses a different low b factor to compare these!
+bLength.low.LvH <- 3.4 # USE THIS FOR LOW V HIGH, omits earlier values for low when high was not present or measured
+bLength.low  <-  1.8 #mean data by rep tank USE THIS FOR LOW V MODERATE # 6.99 - with all data
 bLength.mod  <-  1.71 #mean data by rep tank # 6.57 - with all data
 bLength.high <-  7.27 #mean data by rep tank # 6.57 - with all data
 
@@ -1242,8 +1384,12 @@ F2_meanLength_LvM   <- mean(
                             )# 15.4249 mm
 
 F2_meanLength_LvH   <-  mean(
-                            (RR_master_F2 %>% filter(!pCO2 %in% '800 uatm'))$Length_um / 1000
-                            )# 22.02472 mm
+                            (RR_master_F2 %>% 
+                               dplyr::filter(!Dry_Tissue_weight %in% NA) %>% # later life stages only when high and low OA were present 
+                               # this truncates out the small size data that we have for F2 under low without high, 
+                               # all high measurements also had dry tissue (later life stages)
+                               filter(!pCO2 %in% '800 uatm'))$Length_um / 1000
+                            )# 30.45804 mm
 
 
 
@@ -1343,7 +1489,7 @@ RR_formatted_F2smaster <- RR_master_F2 %>%
                                             
                                             resp_umol_hr_bFactorNormLength.MEAN_LvH = 
                                               case_when(
-                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanLength_LvH/Length_mm)^bLength.low),
+                                                pH  == 8.0 ~ (resp_umol_hr)*((F2_meanLength_LvH/Length_mm)^bLength.low.LvH), # special case
                                                 pH  == 7.5 ~ NA,
                                                 pH  == 7.0 ~ (resp_umol_hr)*((F2_meanLength_LvH/Length_mm)^bLength.high)
                                               ),                                            
