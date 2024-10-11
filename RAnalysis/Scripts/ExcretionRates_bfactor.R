@@ -94,31 +94,211 @@ nrow(Size_data_filt) # 166
 # GET B FACTOR FOR ALL AVAILABLE INDIVIDUALS WITH TDW AND MO2 ::::::::::::::::::::::::::::::
 
 Excretion_data_OM  <- merge(Excretion_data, Size_data_filt) %>% 
-                          dplyr::filter(!Dry_Tissue_weight %in% '<add here>')
-nrow(Excretion_data_OM) # 166 - with the dry tissue weights omiited
+                          dplyr::filter(!Dry_Tissue_weight %in% '<add here>') %>% 
+                          dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 6 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
+                          dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
+                                                         pH == 7.5 ~ "800 μatm",
+                                                         pH == 7 ~ "1200 μatm"),
+                                        Length_mm = Length_um/1000)
+nrow(Excretion_data_OM) # 160 - with the dry tissue weights omiited
 # View(Excretion_data_OM)
 # View(Excretion_data)
 # View(Size_data_2)
 # Excretion_data_OM$Dry_Tissue_weight
 # View(Excretion_data_OM)
-Excretion_data_OM <- Excretion_data_OM %>% # merge size and excretion data
-                          dplyr::filter(!ExcretionRate_umol_hr < 0) %>% # 3 excretion < 0 omit (20211026 7.5C, 20220202 7.5C, 20220202 8.0C)
-                          dplyr::mutate(pCO2 = case_when(pH == 8.0 ~ "500 μatm", 
-                                                         pH == 7.5 ~ "800 μatm",
-                                                         pH == 7 ~ "1200 μatm"))
 
 Excretion_data_OM$pCO2 <- fct_relevel(Excretion_data_OM$pCO2, c('500 μatm', '800 μatm', '1200 μatm'))
 
 Excretion_data_OM      <- Excretion_data_OM %>% filter(!is.na(Excretion_data_OM$ExcretionRate_umol_hr)) 
+nrow(Excretion_data_OM) # 160
+
 
 # Separate into F1 and F2 files
 Excretion_data_F1 <- Excretion_data_OM %>%  
-                            dplyr::filter(Generation %in% 'F1') %>% 
-                            dplyr::mutate(Length_mm = Length_um/1000)
+                            dplyr::filter(Generation %in% 'F1') 
 
 Excretion_data_F2 <- Excretion_data_OM %>% 
-                            dplyr::filter(Generation %in% 'F2') %>% 
-                            dplyr::mutate(Length_mm = Length_um/1000)
+                            dplyr::filter(Generation %in% 'F2')
+
+
+
+
+
+
+# F1 and F2 
+
+Excretion_data_OM$log10_VER     <- log10(as.numeric(Excretion_data_OM$ExcretionRate_umol_hr)) # assign resp value
+Excretion_data_OM$log10_TDW     <- log10(as.numeric(Excretion_data_OM$Dry_Tissue_weight)) # assign length value 
+Excretion_data_OM$log10_Length  <- log10(as.numeric(Excretion_data_OM$Length_mm)) # assign length value 
+
+# TDW: LOW and MODERATE pCO2 b factor plots by treatment 
+TDW_ER_b.factor_LowVMod <- Excretion_data_OM %>% 
+                              dplyr::filter(!pCO2 %in% '1200 μatm') %>% # omit high pCO2 from F2 samples
+                              dplyr::mutate(Gen_pCO2 = paste0(Generation,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10_TDW, 
+                                         y=log10_VER, 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("forestgreen","darkorange","forestgreen","darkorange")) +
+                              scale_shape_manual(values=c(19, 19, 1,1)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_VER; ER in umol L-1 hr-1)") +
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_VER = log10_a + (b.factor * log10_TDW)") +
+                              scale_linetype_discrete(name="Gen x pCO2", 
+                                                      breaks=c("F1_500 uatm", 
+                                                               "F1_800 uatm", 
+                                                               "F2_500 uatm", 
+                                                               "F2_800 uatm"), 
+                                                      labels = c("F1 x low pCO2", 
+                                                                 "F1 x moderate pCO2", 
+                                                                 "F2 x low pCO2",
+                                                                 "F2 x moderate pCO2"))
+TDW_ER_b.factor_LowVMod_facetted  <- TDW_ER_b.factor_LowVMod + facet_wrap(~Generation)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_F2_ER_bFactor_TDW_LowvMod.pdf"), 
+    width = 5, height = 10)
+print(ggpubr::ggarrange(TDW_ER_b.factor_LowVMod,
+                        TDW_ER_b.factor_LowVMod_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# TDW: LOW and HIGH pCO2 b factor plots by treatment 
+TDW_ER_b.factor_LowVMHigh <- Excretion_data_OM %>% 
+                      dplyr::filter(!Generation %in% 'F1') %>%  # no High OA treatment - separate paper
+                      dplyr::filter(!pCO2 %in% '800 μatm') %>% # omit high pCO2 from F2 samples
+                      dplyr::mutate(Gen_pCO2 = paste0(Generation,'_',pCO2)) %>% 
+                      ggplot(aes(x=log10_TDW, 
+                                 y=log10_VER, 
+                                 color = Gen_pCO2,
+                                 shape = Gen_pCO2)) +
+                      geom_point(size = 2) +
+                      ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                      ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                      scale_color_manual(values=c("forestgreen","purple","forestgreen","purple")) +
+                      scale_shape_manual(values=c(19, 19, 1,1)) +
+                      theme(panel.grid.major = element_blank(), 
+                            panel.grid.minor = element_blank())+ 
+                      scale_x_continuous(name ="log10_TDW; in mm") +
+                      scale_y_continuous(name ="log10_VER; ER in umol L-1 hr-1)") +
+                      theme_classic() +
+                      theme(legend.position="none",
+                            element_line(linewidth = 0.5, color = 'black'),
+                            axis.title.y=element_text(size=12),
+                            axis.text.x=element_text(size=(12)),
+                            axis.text.y=element_text(size=(12))) + # legend.position="none",
+                      ggtitle("Allometric scaling: log10_VER = log10_a + (b.factor * log10_TDW)") +
+                      scale_linetype_discrete(name="Gen x pCO2", 
+                                              breaks=c("F1_500 uatm", 
+                                                       "F1_1200 uatm", 
+                                                       "F2_500 uatm", 
+                                                       "F2_1200 uatm"), 
+                                              labels = c("F1 x low pCO2", 
+                                                         "F1 x high pCO2", 
+                                                         "F2 x low pCO2",
+                                                         "F2 x high pCO2"))
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F2_ER_bFactor_TDW_LowvHigh.pdf"), 
+    width = 5, height = 5)
+print(TDW_ER_b.factor_LowVMHigh) # print the model diagnostics
+dev.off() 
+
+
+# Length: LOW and MODERATE pCO2 b factor plots by treatment 
+Length_ER_b.factor_LowVMod <- Excretion_data_OM %>% 
+                      dplyr::filter(!pCO2 %in% '1200 μatm') %>% # omit high pCO2 from F2 samples
+                      dplyr::mutate(Gen_pCO2 = paste0(Generation,'_',pCO2)) %>% 
+                      ggplot(aes(x=log10_Length, 
+                                 y=log10_VER, 
+                                 color = Gen_pCO2,
+                                 shape = Gen_pCO2)) +
+                      geom_point(size = 2) +
+                      ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                      ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                      scale_color_manual(values=c("forestgreen","darkorange","forestgreen","darkorange")) +
+                      scale_shape_manual(values=c(19, 19, 1,1)) +
+                      theme(panel.grid.major = element_blank(), 
+                            panel.grid.minor = element_blank())+ 
+                      scale_x_continuous(name ="log10_Length; in mm") +
+                      scale_y_continuous(name ="log10_VER; ER in umol L-1 hr-1)") +
+                      theme_classic() +
+                      theme(legend.position="none",
+                            element_line(linewidth = 0.5, color = 'black'),
+                            axis.title.y=element_text(size=12),
+                            axis.text.x=element_text(size=(12)),
+                            axis.text.y=element_text(size=(12))) + # legend.position="none",
+                      ggtitle("Allometric scaling: log10_VER = log10_a + (b.factor * log10_Length)") +
+                      scale_linetype_discrete(name="Gen x pCO2", 
+                                              breaks=c("F1_500 uatm", 
+                                                       "F1_800 uatm", 
+                                                       "F2_500 uatm", 
+                                                       "F2_800 uatm"), 
+                                              labels = c("F1 x low pCO2", 
+                                                         "F1 x moderate pCO2", 
+                                                         "F2 x low pCO2",
+                                                         "F2 x moderate pCO2")) 
+Length_ER_b.factor_LowVMod_facetted <- Length_ER_b.factor_LowVMod + facet_wrap(~Generation)
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_F2_ER_bFactor_Length_LowvMod.pdf"), 
+    width = 5, height = 10)
+print(ggpubr::ggarrange(Length_ER_b.factor_LowVMod,
+                        Length_ER_b.factor_LowVMod_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+# Length: LOW and HIGH pCO2 b factor plots by treatment 
+Length_ER_b.factor_LowVMHigh <- Excretion_data_OM %>% 
+  dplyr::filter(!Generation %in% 'F1') %>%  # no High OA treatment - separate paper
+  dplyr::filter(!pCO2 %in% '800 μatm') %>% # omit high pCO2 from F2 samples
+  dplyr::mutate(Gen_pCO2 = paste0(Generation,'_',pCO2)) %>% 
+  ggplot(aes(x=log10_Length, 
+             y=log10_VER, 
+             color = Gen_pCO2,
+             shape = Gen_pCO2)) +
+  geom_point(size = 2) +
+  ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+  ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+  scale_color_manual(values=c("forestgreen","purple","forestgreen","purple")) +
+  scale_shape_manual(values=c(19, 19, 1,1)) +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())+ 
+  scale_x_continuous(name ="log10_Length; in mm") +
+  scale_y_continuous(name ="log10_VER; ER in umol L-1 hr-1)") +
+  theme_classic() +
+  theme(legend.position="none",
+        element_line(linewidth = 0.5, color = 'black'),
+        axis.title.y=element_text(size=12),
+        axis.text.x=element_text(size=(12)),
+        axis.text.y=element_text(size=(12))) + # legend.position="none",
+  ggtitle("Allometric scaling: log10_VER = log10_a + (b.factor * log10_TDW)") +
+  scale_linetype_discrete(name="Gen x pCO2", 
+                          breaks=c("F1_500 uatm", 
+                                   "F1_1200 uatm", 
+                                   "F2_500 uatm", 
+                                   "F2_1200 uatm"), 
+                          labels = c("F1 x low pCO2", 
+                                     "F1 x high pCO2", 
+                                     "F2 x low pCO2",
+                                     "F2 x high pCO2"))
+
+pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F2_ER_bFactor_Length_LowvHigh.pdf"), 
+    width = 5, height = 5)
+print(Length_ER_b.factor_LowVMHigh) # print the model diagnostics
+dev.off() 
+
+
+
+
 
 
 
@@ -197,22 +377,6 @@ ER_b.factorTDW_PLOT_pCO2 <- Excretion_data_F1 %>% # 1.26 and 1.32
 
 
 
-# OUTPUT PLOTS 
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_Length.pdf"), 
-    width = 8, height = 16)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_Length.pdf"), 
-    width = 8, height = 16)
-print(ggarrange(ER_b.factorLENGTH_PLOT,
-                ER_b.factorLENGTH_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
-dev.off() 
-
-pdf(paste0(filename = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_TDW.pdf"), 
-    width = 8, height = 16)
-pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/ExcretionRates/allometric_scaling/F1_ExcretionScaling_bFactor_TDW.pdf"), 
-    width = 8, height = 16)
-print(ggarrange(ER_b.factorTDW_PLOT,
-                ER_b.factorTDW_PLOT_pCO2, nrow = 2, ncol = 1)) # print the model diagnostics
-dev.off() 
 
 
 # F1 Low: 4.32
