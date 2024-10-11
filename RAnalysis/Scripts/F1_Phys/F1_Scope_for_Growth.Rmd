@@ -120,7 +120,7 @@ nrow(RespirationRates_adj) # 45
 
 # ER
 # note - we will bfctor and mean corret for TDW)
-bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F1 data!
+# bTDW    <- 0.979 # FR_bfactor script using ALL F1 and F1 data!
 unique(ExcretionRates$Date) # 20211026 20220202 20220301 20220922 20221026
 ExcretionRates_adj  <- ExcretionRates  %>% 
                           dplyr::filter(Date %in% c(20220301, 20220922, 20221026)) %>% 
@@ -506,22 +506,21 @@ library(rcompanion)
 library(FSA)
 F1_Masterfile_2.0$Age <- as.factor(F1_Masterfile_2.0$Age)
 TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F1_Masterfile_2.0)
-shapiro.test(resid(TwoWayANOVA_LvM)) # 0.05553 pass 
-leveneTest(TwoWayANOVA_LvM) # 0.5724 *  pass
+shapiro.test(resid(TwoWayANOVA_LvM)) # 0.1412
+leveneTest(TwoWayANOVA_LvM) # 0.9095 *  pass
 summary(aov(TwoWayANOVA_LvM))
 #             Df Sum Sq Mean Sq F value   Pr(>F)    
-# pCO2         1    380     380    0.84    0.366    
-# Age          2  13060    6530   14.44 2.67e-05 ***
-# pCO2:Age     2      9       5    0.01    0.990    
-# Residuals   35  15828     452  
+# pCO2         1     45      45   0.079 0.779957    
+# Age          2  10887    5443   9.512 0.000502 ***
+# pCO2:Age     2    357     178   0.312 0.734220    
+# Residuals   35  20029     572   
 
 TukeyHSD(aov(TwoWayANOVA_LvM))
 # $Age
-#              diff        lwr       upr     p adj
-# 423-218  42.19358  22.761245 61.625917 0.0000182
-# 457-218  13.21206  -6.661981 33.086093 0.2479479
-# 457-423 -28.98153 -49.815177 -8.147874 0.0046619
-
+#               diff       lwr       upr     p adj
+# 423-218  35.916420  14.05645  57.77639 0.0008389
+# 457-218   2.284024 -20.07283  24.64087 0.9661612
+# 457-423 -33.632396 -57.06874 -10.19605 0.0034848
 
 # measure tests wihtin date, more applicable here
 library(purrr)

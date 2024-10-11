@@ -4,6 +4,7 @@
 
 library(ggplot2)
 library(dplyr)
+library(Rmisc)
 
 # note! as of 12/19/22 it was discussed that we need to use the 'blanks' NOT the input for our blank POM  values! 
 
@@ -244,7 +245,7 @@ sp_COEF <- 0.78 # standardization coefficient - calculated from CR data (review 
 
 dates             <- as.data.frame(unique(biodep$Date)) 
 #F1s == 20220302, 20220923, and 20221027
-#F2s == 20230201, 20230224
+#F2s == 20230201, 20230224, and 20230328
 colnames(dates)   <- "Date"
 Biodep_Master_F1s <- data.frame() # start dataframe 
 Biodep_Master_F2s <- data.frame() # start dataframe 
@@ -390,11 +391,11 @@ Biodep_Master_F1s %>%
 # b factor CR Low 0.981
 
 # F2 data!! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-F2sp_coef_8   <- 0.303 # b factor CR Low .303
+View(BioSamples_merged)
+  
+F2sp_coef_8   <- 0.301 # b factor CR Low .303
 F2sp_coef_75  <- 0.596 # b factor CR moderate  0.596
-F2sp_coef_7   <- 0.445 # b factor CR moderate  0.445
+F2sp_coef_7   <- 0.489 # b factor CR moderate  0.445
 
 # main diff here are the case_when for the first second and third rows in blanks_loop (as 7, 7.5 and 8 respectively)
 for (i in 4:6) { # only the F2 data 20230201, 20230224
@@ -413,21 +414,21 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
     
     # IRR == Inorganic Rejection Rate: PIM of pseudofeces/pseudofeces collection time
     dplyr::mutate(IRR_correct = case_when( # previously IRR_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>%  # previously 0.1/animal_dry_weight_g
-      treatment == 7.0 ~ IER_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
+      treatment == 7.0 ~ IRR_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
       treatment == 7.5 ~ IRR_mghr*((1/animal_dry_weight_g)^F2sp_coef_75), # plotted below based on SMA log(CR) log(TDW)
       treatment == 8.0 ~ IRR_mghr*((1/animal_dry_weight_g)^F2sp_coef_8)  # plotted below based on SMA log(CR) log(TDW)                        )) %>% 
     )) %>% 
     
     # OER == Organic Egestion Rate: POM of feces/feces collection time
     dplyr::mutate(OER_correct = case_when( # prevviously OER_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% # previously 0.1/animal_dry_weight_g
-      treatment == 7.0 ~ IER_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
+      treatment == 7.0 ~ OER_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
       treatment == 7.5 ~ OER_mghr*((1/animal_dry_weight_g)^F2sp_coef_75), # plotted below based on SMA log(CR) log(TDW)
       treatment == 8.0 ~ OER_mghr*((1/animal_dry_weight_g)^F2sp_coef_8)  # plotted below based on SMA log(CR) log(TDW)                        )) %>% 
     )) %>% 
     
     # ORR == Organic Rejection Rate: POM of pseudofeces/pseudofeces collection time
     dplyr::mutate(ORR_correct = case_when( # prevviously ORR_mghr*((1/animal_dry_weight_g)^sp_COEF)) %>% 
-      treatment == 7.0 ~ IER_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
+      treatment == 7.0 ~ ORR_mghr*((1/animal_dry_weight_g)^F2sp_coef_7), # plotted below based on SMA log(CR) log(TDW)
       treatment == 7.5 ~ ORR_mghr*((1/animal_dry_weight_g)^F2sp_coef_75), # plotted below based on SMA log(CR) log(TDW)
       treatment == 8.0 ~ ORR_mghr*((1/animal_dry_weight_g)^F2sp_coef_8)  # plotted below based on SMA log(CR) log(TDW)                        )) %>% 
     )) %>% 
@@ -435,15 +436,15 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
     
     # CR  == Cleanrance Rate: IFR/PIM of the water
     dplyr::mutate(CR = case_when(
-      treatment == 7.0   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ (IRR_mghr + IER_mghr) / blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # FR  == Filtration Rate: CR * TPM of the water
     dplyr::mutate(FR = case_when(
-      treatment == 7.0   ~ CR * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ CR * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR * blanks_loop$TPM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ CR * blanks_loop$TPM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ CR * blanks_loop$TPM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # RR  == Rejection Rate: ORR+IRR
     dplyr::mutate(RR_correct = ORR_correct + IRR_correct) %>% 
@@ -451,9 +452,9 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
     dplyr::mutate(p = ORR_correct / RR_correct ) %>% 
     # f   == POM available: Average POM of the water
     dplyr::mutate(f =  case_when(
-      treatment == 7.0   ~ blanks_loop$Perc_ORG_1[1] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ blanks_loop$Perc_ORG_1[1] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ blanks_loop$Perc_ORG_1[2] / 100, # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ blanks_loop$Perc_ORG_1[3] / 100 # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ blanks_loop$Perc_ORG_1[3] / 100 # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # SE  == Selection Efficiency: 1-(p/f) (organic content of pseudofeces/organic content of the water)
     dplyr::mutate(SE = 1 - (p / f)) %>% 
@@ -461,15 +462,15 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
     dplyr::mutate(IFR = IER_correct + IRR_correct) %>% 
     # CR  == Cleanrance Rate: IFR/PIM of the water
     dplyr::mutate(CR_correct = case_when(
-      treatment == 7.0   ~ IFR /  blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ IFR /  blanks_loop$PIM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ IFR /  blanks_loop$PIM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ IFR /  blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ IFR /  blanks_loop$PIM_mgL_1[3]  # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # FR  == Filtration Rate: CR * TPM of the water
     dplyr::mutate(FR_correct = case_when(
-      treatment == 7.0   ~ CR_correct * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ CR_correct * blanks_loop$TPM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR_correct * blanks_loop$TPM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ CR_correct * blanks_loop$TPM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ CR_correct * blanks_loop$TPM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # %RR == RR/FR (amount rejected/total amount filtered)
     dplyr::mutate(RR_Percent = (RR_correct/FR_correct)*100) %>% 
@@ -478,9 +479,9 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
                     RR_correct) %>% 
     # OFR == Organic FIltration Rate: CR * POM of the water
     dplyr::mutate(OFR = case_when(
-      treatment == 7.0   ~ CR_correct * blanks_loop$POM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 7.0 ~ CR_correct * blanks_loop$POM_mgL_1[1], # changed from waterinput_loop to blanks_loop on 12/19/22
       treatment == 7.5 ~ CR_correct * blanks_loop$POM_mgL_1[2], # changed from waterinput_loop to blanks_loop on 12/19/22
-      treatment == 8.0   ~ CR_correct * blanks_loop$POM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
+      treatment == 8.0 ~ CR_correct * blanks_loop$POM_mgL_1[3] # changed from waterinput_loop to blanks_loop on 12/19/22
     )) %>% 
     # ORI == Organic INgestion Rate: OFR-ORR
     dplyr::mutate(OIR = OFR - ORR_correct) %>% 
@@ -493,15 +494,15 @@ for (i in 4:6) { # only the F2 data 20230201, 20230224
     # add column for uatm pCO2 treatment based on pH groups
     dplyr::mutate(pCO2 = case_when(treatment == 8.0 ~ "500 μatm", 
                                    treatment == 7.5 ~ "800 μatm",
-                                   treatment == 7.0   ~ "1200 μatm"))
+                                   treatment == 7.0 ~ "1200 μatm"))
   
   df                <- data.frame(data_loop) # name dataframe for this single row
   Biodep_Master_F2s <- rbind(Biodep_Master_F2s,df) #bind to a cumulative list dataframe
   print(Biodep_Master_F2s) # print to monitor progress
   
 }
-View(Biodep_Master_F2s)
-Biodep_Master_F2s_OM %>% 
+# View(Biodep_Master_F2s)
+Biodep_Master_F2s %>% 
   # dplyr::filter(!pCO2 %in% '1200 μatm') %>% 
   ggplot(aes(x = log(animal_dry_weight_g), y = log(CR))) +
   geom_point() +
@@ -516,11 +517,11 @@ Biodep_Master_F2s_OM %>%
   ggtitle("F2 Generation: log10_CI = log10_a + (b.factor * log10_TDW)") +
   facet_wrap(~pCO2)
 
-# b factor CR Low .303
+# b factor CR Low .301
 # b factor CR moderate  0.596
-# b factor CR moderate  0.445
+# b factor CR high  0.489
 
-Biodep_Master_F2s_OM %>% 
+Biodep_Master_F2s %>% 
   # dplyr::filter(!pCO2 %in% '1200 μatm') %>% 
   ggplot(aes(x = log(animal_dry_weight_g), y = log(CR))) +
   geom_point() +
@@ -534,17 +535,90 @@ Biodep_Master_F2s_OM %>%
   theme(legend.position="none") +
   ggtitle("F2 Generation: log10_CI = log10_a + (b.factor * log10_TDW)") 
 
-# b factor CR Low 0.452
+# b factor CR Low 0.46
+
+# Bding for TDW master b factor plots 
+nrow(rbind(Biodep_Master_F1s, Biodep_Master_F2s)) == sum(nrow(Biodep_Master_F1s), nrow(Biodep_Master_F2s))
+Biodep_Master_F1_and_F2s <- rbind(
+                                  (Biodep_Master_F1s %>% dplyr::mutate(Gen = 'F1')), 
+                                  (Biodep_Master_F2s %>% dplyr::mutate(Gen = 'F2'))
+                                )
+
+TDW_CI_b.factor_LowVMod <- Biodep_Master_F1_and_F2s %>% 
+                            dplyr::filter(!pCO2 %in% '1200 μatm') %>% 
+                            dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                            ggplot(aes(x=log10(as.numeric(animal_dry_weight_g)), 
+                                       y=log10(as.numeric(CR)), 
+                                       color = Gen_pCO2,
+                                       shape = Gen_pCO2)) +
+                            geom_point(size = 2) +
+                            ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                            ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                            scale_color_manual(values=c("forestgreen","darkorange","forestgreen","darkorange")) +
+                            scale_shape_manual(values=c(19, 19, 1,1)) +
+                            theme(panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank())+ 
+                            scale_x_continuous(name ="log10_TDW; in mm") +
+                            scale_y_continuous(name ="log10_CI; CI in μmol L-1 hr-1)") +
+                            # ylim(-1.5,2) +
+                            theme_classic() +
+                            theme(legend.position="none",
+                                  element_line(linewidth = 0.5, color = 'black'),
+                                  axis.title.y=element_text(size=12),
+                                  axis.text.x=element_text(size=(12)),
+                                  axis.text.y=element_text(size=(12))) + # legend.position="none",
+                            ggtitle("Allometric scaling: log10_CI = log10_a + (b.factor * log10_TDW)") 
+TDW_CI_b.factor_LowVMod_facetted  <- TDW_CI_b.factor_LowVMod + facet_wrap(~Gen)
 
 
-View(Biodep_Master_F2s)
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/Biodeposition/allometric_scaling/F1_F2_CI_bFactor_TDW_LowvMod.pdf"), 
+    width = 5, height = 10)
+print(ggpubr::ggarrange(TDW_CI_b.factor_LowVMod,
+                        TDW_CI_b.factor_LowVMod_facetted, nrow = 2, ncol = 1)) # print the model diagnostics
+dev.off() 
+
+
+
+TDW_CI_b.factor_F2_LowVHigh <- Biodep_Master_F1_and_F2s %>% 
+                              dplyr::filter(!pCO2 %in% '800 μatm') %>% 
+                              dplyr::filter(!Gen %in% 'F1') %>%
+                              dplyr::mutate(Gen_pCO2 = paste0(Gen,'_',pCO2)) %>% 
+                              ggplot(aes(x=log10(as.numeric(animal_dry_weight_g)), 
+                                         y=log10(as.numeric(CR)), 
+                                         color = Gen_pCO2,
+                                         shape = Gen_pCO2)) +
+                              geom_point(size = 2) +
+                              ggpmisc::stat_ma_line(method = "SMA") + # model 2 regression Standard major axis!
+                              ggpmisc::stat_ma_eq(ggpmisc::use_label(c("eq", "n", "R2"))) +  
+                              scale_color_manual(values=c("purple","forestgreen")) +
+                              scale_shape_manual(values=c(19, 19)) +
+                              theme(panel.grid.major = element_blank(), 
+                                    panel.grid.minor = element_blank())+ 
+                              scale_x_continuous(name ="log10_TDW; in mm") +
+                              scale_y_continuous(name ="log10_CI; CI in μmol L-1 hr-1)") +
+                              # ylim(-1.5,2) +
+                              theme_classic() +
+                              theme(legend.position="none",
+                                    element_line(linewidth = 0.5, color = 'black'),
+                                    axis.title.y=element_text(size=12),
+                                    axis.text.x=element_text(size=(12)),
+                                    axis.text.y=element_text(size=(12))) + # legend.position="none",
+                              ggtitle("Allometric scaling: log10_CI = log10_a + (b.factor * log10_TDW)") 
+
+
+
+pdf(paste0(filename = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis/Output/Biodeposition/allometric_scaling/F2_CI_bFactor_TDW_LowvHigh.pdf"), 
+    width = 5, height = 5)
+print(TDW_CI_b.factor_F2_LowVHigh) # print the model diagnostics
+dev.off() 
+
 
 # Shannon meeting 3/31/2023 - omit values that are NOT between -1 and 1 for AR 
 # note, two values for the F2s and no values for the F1s with this criteria - output the 'bad values' for the F2s and ommit in the master
 Biodep_Master_F2s_bad_data <- Biodep_Master_F2s %>% dplyr::filter(AE > 1 | AE < -1)
-nrow(Biodep_Master_F2s_bad_data) # nw 8 rows with the bfactor addressed! previously was 2 rows!
+nrow(Biodep_Master_F2s_bad_data) # only 2 rows!
 Biodep_Master_F2s_OM       <- Biodep_Master_F2s %>% dplyr::filter(!(AE > 1 | AE < -1))
-nrow(Biodep_Master_F2s_OM) # 55
+nrow(Biodep_Master_F2s_OM) # 61
 # WRITE CSV OF THE MASTER FILE
 write.csv(Biodep_Master_F1s, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F1.csv")
 write.csv(Biodep_Master_F2s_OM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master_F2.csv")

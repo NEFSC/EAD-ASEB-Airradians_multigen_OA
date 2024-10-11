@@ -61,7 +61,7 @@ knitr::opts_knit$set(root.dir = 'C:/Users/samuel.gurr/Documents/Github_repositor
 ```{r}
 
 Biodeposition    <- read.csv("Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
-nrow(Biodeposition) # 55
+nrow(Biodeposition) # 61
 
 RespirationRates <- read.csv(file="Output/Respiration/F2/F2_RR_calc_master.csv", header=T)
 nrow(RespirationRates) # 143
@@ -206,7 +206,7 @@ nrow(subset(ExcretionRates_adj,
 
 # now btwn RR and biodep
 nrow(subset(RespirationRates_adj, 
-            !(uniqueID %in% Biodeposition_adj$uniqueID))) # now it is 8 ever since i ran biodep b factors -  previously was 2 discrepancies, these are the removed outliers from biodep
+            !(uniqueID %in% Biodeposition_adj$uniqueID))) #  2 discrepancies, these are the removed outliers from biodep
 ```
 
 ### Let's merge this thang!
@@ -251,7 +251,7 @@ F2_Masterfile <- merge(RR_ER_merge, Biodeposition_adj,
                                   SE,
                                   AR,
                                   AE))
-nrow(F2_Masterfile) # now 55 every since biodep b fators - was preciously 59 rows - as expected!!!!!
+nrow(F2_Masterfile) # 61 rows as expected!!!!!
 # View(F2_Masterfile)
 
 
@@ -382,13 +382,12 @@ F2_Masterfile_2.0_LvH <- merge(Biodep_blanks,F2_Masterfile, by = c("Date", "pH")
 library(car)
 F2_Masterfile_1_31_23 <- F2_Masterfile_2.0_all %>% dplyr::filter(Date %in% '1/31/2023')
 SGFmod_131 <- aov(lm(SFG ~ pCO2 , data =F2_Masterfile_1_31_23 ))
-shapiro.test(resid(SGFmod_131)) # 0.6713
-leveneTest(SGFmod_131)# 0.3677
+shapiro.test(resid(SGFmod_131)) # 0.7896
+leveneTest(SGFmod_131)# 0.1664
 summary(SGFmod_131)
-#             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  44662   22331   7.749 0.00405 **
-# Residuals   17  48987    2882 
-
+#             Df Sum Sq Mean Sq F value  Pr(>F)    
+# pCO2         2  41072   20536   21.52 2.2e-05 ***
+# Residuals   17  16226     954 
 
 TukeyHSD(SGFmod_131)
 # $pCO2
@@ -736,26 +735,26 @@ library(rcompanion)
 library(FSA)
 F2_SGF_Means_by_tank_LvM$Age <- as.factor(F2_SGF_Means_by_tank_LvM$Age)
 TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F2_SGF_Means_by_tank_LvM)
-shapiro.test(resid(TwoWayANOVA_LvM)) # 0.03488 pass 
-leveneTest(TwoWayANOVA_LvM) # 0.002684  **
+shapiro.test(resid(TwoWayANOVA_LvM)) # 0.0339 no pass 
+leveneTest(TwoWayANOVA_LvM) # 0.002765   ** no pass
 
 scheirerRayHare(SFG ~ pCO2 * Age, data = F2_SGF_Means_by_tank_LvM)
 #           Df  Sum Sq       H p.value
 # pCO2       1  740.07  8.9525 0.00277
-# Age        2 1073.26 12.9830 0.00152
-# pCO2:Age   2   14.35  0.1735 0.91689
-# Residuals 25  825.01    
+# Age        2 1057.06 12.7870 0.00167
+# pCO2:Age   2   12.14  0.1468 0.92922
+# Residuals 25  843.43   
 SRH_LvM_Age = dunnTest(SFG ~ Age,
               data = F2_SGF_Means_by_tank_LvM,
               method="bh")      # Adjusts p-values for multiple comparisons;
 SRH_LvM_Age
-# 167 - 190	3.940527	0.0000813029	0.0002439087	
-# 167 - 222	2.781147	0.0054167216	0.0081250824	
-# 190 - 222	-1.345376	0.1785037179	0.1785037179	
+# 167 - 190	3.270772	0.001072545	0.003217634	
+# 167 - 222	1.927726	0.053889168	0.080833752	
+# 190 - 222	-1.533010	0.125273273	0.125273273		
 
 # measure effects of OA binary within date (ttest wilcox if needed)
 library(purrr)
-library(rst)
+library(rstatix)
 library(tidyverse)
 F2_SGF_Means_by_tank_LvM$GROUPvar <- F2_SGF_Means_by_tank_LvM$Age 
 F2_SGF_Means_by_tank_LvM$DPvar    <- F2_SGF_Means_by_tank_LvM$SFG 
@@ -770,7 +769,7 @@ write.csv(
          )
 
 
-F2_SGF_Means_by_tank_LvH$GROUPvar <- F2_SGF_Means_by_tank_LvH$Age 
+F2_SGF_Means_by_tank_LvH$GROUPvar <- as.factor(F2_SGF_Means_by_tank_LvH$Age) 
 F2_SGF_Means_by_tank_LvH$DPvar    <- F2_SGF_Means_by_tank_LvH$SFG 
 F2_SGF_Means_by_tank_LvH$INDvar   <- F2_SGF_Means_by_tank_LvH$pCO2 
 
