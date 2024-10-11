@@ -61,10 +61,14 @@ knitr::opts_knit$set(root.dir = 'C:/Users/samuel.gurr/Documents/Github_repositor
 ```{r}
 
 Biodeposition    <- read.csv("Output/Biodeposition/F2/F2_Biodeposition_master.csv", header = T)
+nrow(Biodeposition) # 55
 
 RespirationRates <- read.csv(file="Output/Respiration/F2/F2_RR_calc_master.csv", header=T)
-
+nrow(RespirationRates) # 143
 ExcretionRates   <- read.csv(file="Output/ExcretionRates/F2/F2_ExcretionRates_master.csv", header=T) %>% dplyr::filter(!Date %in% 20221116)
+nrow(ExcretionRates) # 63
+
+
 ```
 
 ## Add minor adjustments to these files to assist merging
@@ -202,7 +206,7 @@ nrow(subset(ExcretionRates_adj,
 
 # now btwn RR and biodep
 nrow(subset(RespirationRates_adj, 
-            !(uniqueID %in% Biodeposition_adj$uniqueID))) # 2 discrepancies, these are the removed outliers from biodep
+            !(uniqueID %in% Biodeposition_adj$uniqueID))) # now it is 8 ever since i ran biodep b factors -  previously was 2 discrepancies, these are the removed outliers from biodep
 ```
 
 ### Let's merge this thang!
@@ -247,7 +251,7 @@ F2_Masterfile <- merge(RR_ER_merge, Biodeposition_adj,
                                   SE,
                                   AR,
                                   AE))
-nrow(F2_Masterfile) # 59 rows - as expected!!!!!
+nrow(F2_Masterfile) # now 55 every since biodep b fators - was preciously 59 rows - as expected!!!!!
 # View(F2_Masterfile)
 
 
@@ -511,11 +515,12 @@ dev.off()
 
 F2_Masterfile_2.0_LvM$pCO2 <- factor(F2_Masterfile_2.0_LvM$pCO2, levels= c('500 μatm','800 μatm'))
 
-F2_SGF_Means_by_tank <- F2_Masterfile_2.0_LvM %>% 
+F2_SGF_Means_by_tank_LvM <- F2_Masterfile_2.0_LvM %>% 
+                            dplyr::filter(!SFG < 0) %>% 
                             Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2", "Replicate"))
 
-SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
+SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank_LvM, aes(x=pCO2, y=SFG, colour=pCO2)) +
                         scale_colour_manual(values=c("forestgreen","orange"))+
                         theme_classic() +  
                         geom_boxplot(fill="white", 
@@ -530,11 +535,11 @@ SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colo
 
 # convert meand by tank to summrizing means by treatment and age 
 
-F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
+F2_SGF_Means_plotting_LvM <- F2_SGF_Means_by_tank_LvM %>% 
                             Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2"))
 
-F2_SGF_MeanSE <-  F2_SGF_Means_plotting %>%
+F2_SGF_MeanSE <-  F2_SGF_Means_plotting_LvM %>%
                                  ggplot(aes(x=(as.factor(Age)), 
                                                y=SFG, 
                                                color=as.factor(pCO2))) +
@@ -568,11 +573,12 @@ dev.off()
 
 F2_Masterfile_2.0_LvH$pCO2 <- factor(F2_Masterfile_2.0_LvH$pCO2, levels= c('500 μatm','1200 μatm'))
 
-F2_SGF_Means_by_tank <- F2_Masterfile_2.0_LvH %>% 
+F2_SGF_Means_by_tank_LvH <- F2_Masterfile_2.0_LvH %>% 
+                            dplyr::filter(!SFG < 0) %>% 
                             Rmisc::summarySE(measurevar="SFG", 
-                                      groupvars=c("Age", "pCO2", "Replicate"))
+                                      groupvars=c("Age", "pCO2", "Replicate")) 
 
-SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colour=pCO2)) +
+SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank_LvH, aes(x=pCO2, y=SFG, colour=pCO2)) +
                         scale_colour_manual(values=c("forestgreen","purple"))+
                         theme_classic() +  
                         geom_boxplot(fill="white", 
@@ -587,7 +593,7 @@ SFG_Pousse_F2       <- ggplot(data=F2_SGF_Means_by_tank, aes(x=pCO2, y=SFG, colo
 
 # convert meand by tank to summrizing means by treatment and age 
 
-F2_SGF_Means_plotting <- F2_SGF_Means_by_tank %>% 
+F2_SGF_Means_plotting <- F2_SGF_Means_by_tank_LvH %>% 
                             Rmisc::summarySE(measurevar="SFG", 
                                       groupvars=c("Age", "pCO2"))
 
@@ -728,43 +734,45 @@ return(outputfilename)
 
 library(rcompanion)
 library(FSA)
-F2_Masterfile_2.0_LvM$Age <- as.factor(F2_Masterfile_2.0_LvM$Age)
-TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F2_Masterfile_2.0_LvM)
-shapiro.test(resid(TwoWayANOVA_LvM)) # 0.0517 pass 
-leveneTest(TwoWayANOVA_LvM) # 0.02117 * no pass
-scheirerRayHare(SFG ~ pCO2 * Age, data = F2_Masterfile_2.0_LvM)
-#           Df Sum Sq       H p.value
-# pCO2       1  952.0  6.9661 0.00831
-# Age        2 3358.0 24.5710 0.00000
-# pCO2:Age   2   37.5  0.2746 0.87172
-# Residuals 34 1050.8 
-SRH_LvM_Age = dunnTest(SFG ~ Age, 
-              data = F2_Masterfile_2.0_LvM,
+F2_SGF_Means_by_tank_LvM$Age <- as.factor(F2_SGF_Means_by_tank_LvM$Age)
+TwoWayANOVA_LvM <- lm(SFG ~ pCO2 * Age, data = F2_SGF_Means_by_tank_LvM)
+shapiro.test(resid(TwoWayANOVA_LvM)) # 0.03488 pass 
+leveneTest(TwoWayANOVA_LvM) # 0.002684  **
+
+scheirerRayHare(SFG ~ pCO2 * Age, data = F2_SGF_Means_by_tank_LvM)
+#           Df  Sum Sq       H p.value
+# pCO2       1  740.07  8.9525 0.00277
+# Age        2 1073.26 12.9830 0.00152
+# pCO2:Age   2   14.35  0.1735 0.91689
+# Residuals 25  825.01    
+SRH_LvM_Age = dunnTest(SFG ~ Age,
+              data = F2_SGF_Means_by_tank_LvM,
               method="bh")      # Adjusts p-values for multiple comparisons;
 SRH_LvM_Age
-# 167 - 190	4.778524	1.765864e-06	5.297591e-06	
-# 167 - 222	3.275168	1.055990e-03	1.583985e-03	
-# 190 - 222	-1.476266	1.398724e-01	1.398724e-01
+# 167 - 190	3.940527	0.0000813029	0.0002439087	
+# 167 - 222	2.781147	0.0054167216	0.0081250824	
+# 190 - 222	-1.345376	0.1785037179	0.1785037179	
 
 # measure effects of OA binary within date (ttest wilcox if needed)
 library(purrr)
+library(rst)
 library(tidyverse)
-F2_Masterfile_2.0_LvM$GROUPvar <- F2_Masterfile_2.0_LvM$Age 
-F2_Masterfile_2.0_LvM$DPvar    <- F2_Masterfile_2.0_LvM$SFG 
-F2_Masterfile_2.0_LvM$INDvar   <- F2_Masterfile_2.0_LvM$pCO2 
+F2_SGF_Means_by_tank_LvM$GROUPvar <- F2_SGF_Means_by_tank_LvM$Age 
+F2_SGF_Means_by_tank_LvM$DPvar    <- F2_SGF_Means_by_tank_LvM$SFG 
+F2_SGF_Means_by_tank_LvM$INDvar   <- F2_SGF_Means_by_tank_LvM$pCO2 
 
 
-as.data.frame(run_ttest(F2_Masterfile_2.0_LvM))
+as.data.frame(run_ttest(F2_SGF_Means_by_tank_LvM))
 
 write.csv( 
-          as.data.frame(run_ttest(F2_Masterfile_2.0_LvM)),
+          as.data.frame(run_ttest(F2_SGF_Means_by_tank_LvM)),
           "Output/F2_SFG_Ttests_LOWvMOD.csv"
          )
 
 
-F2_Masterfile_2.0_LvH$GROUPvar <- F2_Masterfile_2.0_LvH$Age 
-F2_Masterfile_2.0_LvH$DPvar    <- F2_Masterfile_2.0_LvH$SFG 
-F2_Masterfile_2.0_LvH$INDvar   <- F2_Masterfile_2.0_LvH$pCO2 
+F2_SGF_Means_by_tank_LvH$GROUPvar <- F2_SGF_Means_by_tank_LvH$Age 
+F2_SGF_Means_by_tank_LvH$DPvar    <- F2_SGF_Means_by_tank_LvH$SFG 
+F2_SGF_Means_by_tank_LvH$INDvar   <- F2_SGF_Means_by_tank_LvH$pCO2 
 
 
 as.data.frame(run_ttest(F2_Masterfile_2.0_LvH))
