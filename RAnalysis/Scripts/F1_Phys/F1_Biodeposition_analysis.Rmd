@@ -11,7 +11,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 # SET WORKING DIRECTORY 
 # knitr::opts_knit$set(root.dir = "C:/Users/katherine.mcfarland/Documents/GitHub/EAD-ASEB-Airradians_multigen_OA/larvae") # Katie's
-knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/EAD-ASEB-Airradians_Larvae_crossgen_OA/RAnalysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis") # Sam's
+knitr::opts_knit$set(root.dir = "C:/Users/samuel.gurr/Documents/Github_repositories/EAD-ASEB-Airradians_multigen_OA/RAnalysis") # Sam's
+
 ```
 
 
@@ -31,7 +33,7 @@ library(forcats)
 
 # F1s
 
-Biodep_Master_F1 <- read.csv("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1/F1_Biodeposition_master.csv", header = T)
+Biodep_Master_F1 <- read.csv("Output/Biodeposition/F1/F1_Biodeposition_master.csv", header = T)
 nrow(Biodep_Master_F1) # 43
 Biodep_Master_F1 <- na.omit(Biodep_Master_F1) # omit #6 pH7.5 on 20221027
 nrow(Biodep_Master_F1) # 43 - no NAs
@@ -247,10 +249,10 @@ Biodep_Master_F1_long$GROUPvar <- Biodep_Master_F1_long$Age
 
 # run the t test loop
 F1_Biodeposition_Ttest_Wilcox <- as.data.frame(run_ttest(Biodep_Master_F1_long))
-View(F1_Biodeposition_Ttest_Wilcox)
+# View(F1_Biodeposition_Ttest_Wilcox)
 
 # output stats
-write.csv(F1_Biodeposition_Ttest_Wilcox, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1/F1_Biodeposition_Ttest_table.csv")
+write.csv(F1_Biodeposition_Ttest_Wilcox, "Output/Biodeposition/F1/F1_Biodeposition_Ttest_table.csv")
 
 
 ```
@@ -655,13 +657,13 @@ F1_AE_Plot  <- F1_AE_MEANS %>%
                           geom_line(stat = "identity", size=1.0)+
                           theme(text = element_text(size=10))
 
-ggarrange(F1_OIR_Plot,F1_RR_correct_Plot, F1_CR_correct_Plot,
+ggpubr::ggarrange(F1_OIR_Plot,F1_RR_correct_Plot, F1_CR_correct_Plot,
           F1_SE_Plot, F1_AR_Plot, F1_AE_Plot,
           ncol = 3, nrow = 2)
 # output the plot 
 library(ggpubr)
-pdf(paste0("C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/F1/F1_Biodeposition_Boxplots.pdf"),width = 10, height= 6)
-ggarrange(F1_OIR_Plot,F1_RR_correct_Plot, F1_CR_correct_Plot,
+pdf(paste0("Output/Biodeposition/F1/F1_Biodeposition_Boxplots.pdf"),width = 10, height= 6)
+ggpubr::ggarrange(F1_OIR_Plot,F1_RR_correct_Plot, F1_CR_correct_Plot,
           F1_SE_Plot, F1_AR_Plot, F1_AE_Plot,
           ncol = 3, nrow = 2)
 dev.off()
