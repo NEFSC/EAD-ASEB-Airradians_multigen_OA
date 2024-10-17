@@ -1,0 +1,30 @@
+PLINK v1.90b6.23 64-bit (28 May 2021)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --out plink/F0_OM_plink
+  --vcf F0_OM_all_juveniles_doMaf1_minMaf0.05_majorminor4_minind321_minD5x1605_maxD20x6420minDind5_maxDind150_minq30_minmapQ.vcf
+
+Hostname: sedna.cluster
+Working directory: /home/sgurr/Airradians_lcWGS/snakemake_pipeline/angsd/output/F0_all_juveniles
+Start time: Thu Oct 17 13:17:17 2024
+
+Random number seed: 1729196237
+95103 MB RAM detected; reserving 47551 MB for main workspace.
+Allocated 35663 MB successfully, after larger attempt(s) failed.
+--vcf: plink/F0_OM_plink-temporary.bed + plink/F0_OM_plink-temporary.bim +
+plink/F0_OM_plink-temporary.fam written.
+3121 variants loaded from .bim file.
+338 people (0 males, 0 females, 338 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to plink/F0_OM_plink.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 338 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.961859.
+3121 variants and 338 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to plink/F0_OM_plink.bed + plink/F0_OM_plink.bim +
+plink/F0_OM_plink.fam ... done.
+
+End time: Thu Oct 17 13:17:17 2024
