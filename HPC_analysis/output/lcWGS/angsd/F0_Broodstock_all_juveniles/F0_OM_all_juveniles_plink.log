@@ -1,0 +1,56 @@
+PLINK v1.9.0-b.7.6 32-bit (13 Oct 2024)
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --make-bed
+  --mind 0.8
+  --out Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink
+  --pca
+  --set-missing-var-ids @:#
+  --vcf Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_doMaf1_minMaf0.05_majorminor4_minind321_minD5x1605_maxD20x6420minDind5_maxDind150_minq30_minmapQ.vcf.gz
+
+Hostname: THINKPAD-X1CG9-
+Working directory: C:\Users\samjg\Documents
+Start time: Thu Oct 17 21:20:28 2024
+
+Random number seed: 1729214428
+16087 MB RAM detected; reserving 2047 MB for main workspace.
+Allocated 1535 MB successfully, after larger attempt(s) failed.
+--vcf:
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink-temporary.bed
++
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink-temporary.bim
++
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink-temporary.fam
+written.
+3121 variants loaded from .bim file.
+3121 missing IDs set.
+338 people (0 males, 0 females, 338 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.nosex
+.
+3 people removed due to missing genotype data (--mind).
+IDs written to
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.irem
+.
+Using up to 8 threads (change this with --threads).
+Before main variant filters, 335 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate in remaining samples is 0.96992.
+3121 variants and 335 people pass filters and QC.
+Note: No phenotypes present.
+Relationship matrix calculation complete.
+--pca: Results saved to
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.eigenval
+and
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.eigenvec
+.
+--make-bed to
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.bed
++
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.bim
++
+Github_repositories/Airradians_multigen_OA/HPC_analysis/output/lcWGS/angsd/F0_Broodstock_all_juveniles/F0_OM_all_juveniles_plink.fam
+... done.
+
+End time: Thu Oct 17 21:20:28 2024

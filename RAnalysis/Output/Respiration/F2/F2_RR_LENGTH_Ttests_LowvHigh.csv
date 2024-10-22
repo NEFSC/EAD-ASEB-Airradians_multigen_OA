@@ -1,5 +1,5 @@
-"","Date","Age","Metric","model","ShapiroWilk","ResidNorm","Variance","HomogVar","DF.num","DF.denom","Tstat","P_val","SigDif"
-"1","11/16/2022",91,"RR; LENGTH b factor normalized","Welchs T test, non-equal variance",0.38647499882248,"YES",0.0108286463056623,"NO","3.13341131132779","NA",0.36012593444135,0.741667699731087,"NO"
-"2","1/31/2023",167,"RR; LENGTH b factor normalized","Welchs T test, equal variance",0.0870792245021308,"YES",0.195855211647508,"YES","6","NA",-3.39513324884944,0.0145830827348128,"YES"
-"3","2/23/2023",190,"RR; LENGTH b factor normalized","Wilcoxon rank sum exact test",0.0430849875795451,"NO",0.0955899232763158,"YES","NA","NA",26,0.901515151515152,"NO"
-"4","3/27/2023",222,"RR; LENGTH b factor normalized","Welchs T test, equal variance",0.898422582665812,"YES",0.464489880811241,"YES","10","NA",3.50299230038803,0.00569795143446021,"YES"
+"","Date","Age","Metric","model","ShapiroWilk","ResidNorm","Variance","HomogVar","DF.num","DF.denom","Tstat","P_val","SigDif","Bonferroni_cor"
+"1","11/16/2022",91,"RR; LENGTH b factor normalized","Wilcoxon rank sum exact test",0.0282385893726245,"NO",2.48660707219666e-05,"NO","NA","NA",0,0.0285714285714286,"YES",0.114285714285714
+"2","1/31/2023",167,"RR; LENGTH b factor normalized","Welchs T test, non-equal variance",0.137010106657934,"YES",0.00632793630591963,"NO","3.09252890798319","NA",-4.60100916093376,0.0180561420500484,"YES",0.0722245682001938
+"3","2/23/2023",190,"RR; LENGTH b factor normalized","Welchs T test, equal variance",0.43682776999662,"YES",0.054434696142275,"YES","12","NA",1.77926856549801,0.100513829061634,"NO",0.402055316246537
+"4","3/27/2023",222,"RR; LENGTH b factor normalized","Welchs T test, non-equal variance",0.068042182623384,"YES",0.000989089821721301,"NO","5.25046637922384","NA",4.76650693932937,0.00442703753635145,"YES",0.0177081501454058

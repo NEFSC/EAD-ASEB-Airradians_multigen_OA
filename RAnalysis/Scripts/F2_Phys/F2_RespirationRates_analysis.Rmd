@@ -58,7 +58,7 @@ F2_RR_Length_Meanbytank_LvH     <- RR_formatted_F2s %>%
                                       groupvars=c("Date", "Age", "pCO2", "Chamber_tank")) %>% 
                             dplyr::arrange(sort(Age)) %>% 
                             dplyr::filter(!Date %in% '9/22/2022')
-unique(F2_RR_Length_Meanbytank_LvMH$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"                     
+unique(F2_RR_Length_Meanbytank_LvH$Date)  # "1/31/2023"  "11/16/2022" "2/23/2023"  "3/27/2023"  "8/30/2022"                     
 
 
 write.csv(F2_RR_Length_Meanbytank_LvM, "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_Mean_RRLength_by_tank_LvM.csv")
@@ -123,7 +123,7 @@ F2s.BOXPLOT_Length_bfactor.MEAN_LvM <- RR_formatted_F2s %>%
                                                    axis.title.x=element_text(size=10),
                                                    axis.text.x=element_text(size=10)) +
                                              ylab("RR uatm hr (b factor corrrected)") +
-                                             scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                             scale_y_continuous(expand = c(0, 0), limits = c(0, 5)) +
                                              stat_summary(fun.y=mean, 
                                                           geom = "errorbar", 
                                                           aes(ymax = ..y.., ymin = ..y..), 
@@ -158,7 +158,7 @@ F2_RR_Length_MeanSE_LvM <-  F2_RR_Length_Means_LvM %>%
                                     theme(panel.grid.major = element_blank(), 
                                           panel.grid.minor = element_blank(),
                                           legend.position="none")+ 
-                                    scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+                                    scale_y_continuous(expand = c(0, 0), limits = c(0, 5)) +
                                     # labs(color='pCO2 treatment') + # legend name
                                     theme(text = element_text(size=10))
 
@@ -256,71 +256,6 @@ dev.off()
 ```
 
 ## statistics
-``` {r, standardize & ANOVA stats,echo = FALSE, results='hide',message = FALSE, warning = FALSE}
-
-# (1) First, run anova within date for all records (for looped!)
-ANOVA_Dates       <- as.data.frame(unique(F2_RR_Length_Meanbytank$Date)) # call a list to loop in 
-AOVdf_total       <- data.frame() # start dataframe, this will be the master output
-DF_loop           <- data.frame(matrix(nrow = 1, ncol = 13)) # create dataframe to save during for loop
-colnames(DF_loop) <- c('Date', 'Age', 'Metric', 'model', 'ShapiroWilk', 'ResidNorm', 'Levenes', 'HomogVar', 'DF.num' , 'DF.denom', 'F_val','P_val', 'SigDif') # names for comuns in the for loop
-
-for (i in 1:nrow(ANOVA_Dates)) {
-
-  date_loop     <- as.character(ANOVA_Dates[i,])
-  data_loop     <- F2_RR_Length_Meanbytank %>% 
-                          dplyr::filter(Date == date_loop) %>% 
-                          dplyr::select(Date, Age, pCO2, resp_umol_hr_bFactorNormLength.MEAN) %>% 
-                          na.omit()
-
-        AOVmod              <- aov(lm(data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ data_loop$pCO2))
-        DF_loop$Date        <- date_loop
-        DF_loop$Age         <- data_loop$Age[1]
-        DF_loop$Metric      <- 'RR; LENGTH b factor normalized'
-        
-        # run both modles
-        AOVmod              <- aov(lm(data_loop$resp_umol_hr_bFactorNormLength.MEAN ~ as.factor(data_loop$pCO2)))
-        KWmod               <- kruskal.test(data_loop$resp_umol_hr_bFactorNormLength.MEAN  ~ as.factor(data_loop$pCO2))
-        
-        # normality tests for the anova model - asign 
-        DF_loop$ShapiroWilk <- shapiro.test(resid(AOVmod))[[2]]
-        DF_loop$ResidNorm   <- if( shapiro.test(resid(AOVmod))[[2]] > 0.05) {
-          'YES'} else {'NO'}
-        DF_loop$Levenes     <- leveneTest(AOVmod)[[3]][[1]]
-        DF_loop$HomogVar    <- if( leveneTest(AOVmod)[[3]][[1]] > 0.05) {
-          'YES'} else {'NO'}
-        
-        if(shapiro.test(resid(AOVmod))[[2]] > 0.05 & leveneTest(AOVmod)[[3]][[1]] > 0.05) {
-            DF_loop$model       <- 'one-way AOV; x ~ treatment'
-            DF_loop$DF.num      <- summary(AOVmod)[[1]][["Df"]][1]
-            DF_loop$DF.denom    <- summary(AOVmod)[[1]][["Df"]][2]
-            DF_loop$F_val       <- summary(AOVmod)[[1]][["F value"]][1]
-            DF_loop$P_val       <- summary(AOVmod)[[1]][["Pr(>F)"]][1]
-            DF_loop$SigDif      <- if( (summary(AOVmod)[[1]][["Pr(>F)"]][1]) > 0.05) {
-              'NO'} else {'YES'}
-    
-          } else {
-            DF_loop$model       <- 'kruskal-wallis; x ~ treatment'
-            DF_loop$DF.num      <- (KWmod)[[2]][["df"]][1]
-            DF_loop$DF.denom    <- NA
-            DF_loop$F_val       <- NA
-            DF_loop$P_val       <- (KWmod)[[3]]
-            DF_loop$SigDif      <- if( ((KWmod)[[3]]) > 0.05) {
-          'NO'} else {'YES'}
-      }
-        
-        # asign loop and cumulative output table
-        df          <- data.frame(DF_loop) # name dataframe for this single row
-        AOVdf_total <- rbind(AOVdf_total,DF_loop) #bind to a cumulative list dataframe
-        print(AOVdf_total) # print to monitor progress
-        
-}
-# View(AOVdf_total) # view all the anova tests within data 
-
-AOVdf_total <- AOVdf_total %>% dplyr::arrange(sort(Date))
-# WRITE CSV OF THE MASTER FILE
-write.csv( (AOVdf_total %>% dplyr::arrange(sort(Date))), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Statistics.csv")
-#write.csv(Biodep_Master, "C:/Users/samuel.gurr/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Biodeposition/Biodeposition_master.csv")
-```
 
 ```{r ttests Lov v Mod}
 library(purrr)
@@ -419,6 +354,10 @@ for (i in 1:nrow(Ttest_Dates)) {
 }
 # View(AOVdf_total) # view all the anova tests within data 
 
+# add bonferroni correction for mutliple tests
+Ttest_total$Bonferroni_cor <- p.adjust(Ttest_total$P_val, method = "bonferroni")
+
+# write table
 write.csv( (Ttest_total %>% dplyr::arrange(Age)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Ttests_LowvMod.csv")
 
 ```
@@ -516,39 +455,13 @@ for (i in 1:4) { # 1-4 to not run row 5 "8/30/2022" this is at 133 dpf dp not ru
 }
 # View(AOVdf_total) # view all the anova tests within data 
 
+# add bonferroni correction for mutliple tests
+Ttest_total$Bonferroni_cor <- p.adjust(Ttest_total$P_val, method = "bonferroni")
+
+# write table
 write.csv( (Ttest_total %>% dplyr::arrange(Age)), "C:/Users/samjg/Documents/Github_repositories/Airradians_multigen_OA/RAnalysis/Output/Respiration/F2/F2_RR_LENGTH_Ttests_LowvHigh.csv")
 
 ```
-
-## posthc test -  one sig effect on Age 167 (during the grow out >40 DPF)
-```{r posthoc test 167 DPF }
-                    
-mod167 <- aov(lm(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data = (F2_RR_Length_Meanbytank %>% dplyr::filter(Age %in% 167)) ))
-summary(mod167)
-#             Df Sum Sq Mean Sq F value  Pr(>F)   
-# pCO2         2  27.86  13.928   8.792 0.00764 **
-# Residuals    9  14.26   1.584
-TukeyHSD(mod167)
-# $pCO2
-#                         diff        lwr      upr     p adj
-# 800 uatm-500 uatm  0.8451632 -1.6397649 3.330091 0.6246020
-# 1200 uatm-500 uatm 3.5706458  1.0857177 6.055574 0.0077249
-# 1200 uatm-800 uatm 2.7254827  0.2405546 5.210411 0.0328059
-```
-
-* test the spat 9/22/2022 at 36 DPF
-```{r spat 36 DPF}
-
-mod36 <- aov(lm(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data =  F2_RR_Length_Meanbytank_spat))
-summary(mod36)
-shapiro.test(resid(mod36)) #  8.295e-06- NOPE!
-leveneTest(mod36) # 0.5289 - YUP!
-
-KWmod36 <- kruskal.test(resp_umol_hr_bFactorNormLength.MEAN ~ pCO2,data =  F2_RR_Length_Meanbytank_spat)
-# Kruskal-Wallis chi-squared = 0.17515, df = 1, p-value = 0.6756 # NOPE!
-```
-
-
 
 
 # TDW (allometric scaling expnent applied - review "RespirationRates_calc_bfactor.Rmd")
